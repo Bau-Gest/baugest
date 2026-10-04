@@ -1164,8 +1164,9 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
         <div class="field"><span>Dossier de destination</span>
           <div class="copy"><input type="text" id="rootShow" readonly placeholder="Aucun dossier choisi"><button id="rootPick" class="btn">Choisir</button></div>
         </div>
-        <div class="field"><span>Rangement automatique</span>
-          <div class="opts" id="structOpts"></div>
+        <div class="field"><span>Dossiers de chaque chantier</span>
+          <p class="hint" style="margin:0">Créés automatiquement avec chaque nouveau chantier :<br><code>N° Nom / Photos</code><br><code>N° Nom / Documents / PV de séance · Rapports journaliers · Bons de régie · Constats · Notes</code><br><code>N° Nom / Plans</code> (tes propres sous-dossiers)</p>
+          <div class="opts" id="structOpts" hidden></div>
         </div>
       </section>
 
@@ -1927,14 +1928,7 @@ const clean = s => String(s).normalize('NFC').replace(/[\/\\:*?"<>|#%]+/g, '').t
 const slug = s => clean(s).replace(/\s+/g, '-');
 function siteFolder(s){ return s ? clean(s.number ? s.number + ' ' + s.name : s.name) : 'À classer'; }
 function pathFor(info){
-  const d = info.time, y = d.getFullYear(), mo = pad2(d.getMonth() + 1), da = pad2(d.getDate());
-  const sf = siteFolder(info.site);
-  switch (S.structure) {
-    case 'B': return [sf, 'Photos', `${y}-${mo}-${da}`];
-    case 'C': return [sf, 'Photos'];
-    case 'D': return ['Photos', `${y}-${mo}-${da}`, sf];
-    default:  return [sf, 'Photos', `${y}-${mo}`, da];
-  }
+  return [siteFolder(info.site), 'Photos'];
 }
 function fileName(info){
   const d = info.time;
@@ -2059,6 +2053,7 @@ function queueReason(){
   return null;
 }
 async function processQueue(){
+  if (!queueReason()) ensureSiteFolders();
   if (busy || queueReason()) { renderBanner(); return; }
   busy = true; $('#btnQueue').classList.add('busy'); var up = 0;
   try {
@@ -2306,6 +2301,29 @@ function saveSite(){
   if (seLogo && !S.logoLib.includes(seLogo)) { S.logoLib.unshift(seLogo); S.logoLib = S.logoLib.slice(0, 30); }
   save(); closeSheet($('#sheetSiteEdit')); renderSites(); renderSiteChip(); renderDpLayout(); note('Chantier enregistré');
   if (!$('#desk').hidden) { renderDeskSites(); renderDesk(); }
+  ensureSiteFolders();
+}
+
+/* ---------- Dossiers créés avec chaque chantier ---------- */
+const SITE_FOLDERS_KEY = 'baugest.siteFolders';
+function siteFolderPaths(site){
+  const sf = siteFolder(site);
+  return [[sf, 'Photos'], ...DOC_ORDER.map(k => [sf, 'Documents', DOCS[k].folder]), [sf, 'Plans', 'Mesures'], [sf, 'Plans', 'Exports']];
+}
+let siteFoldersBusy = false;
+async function ensureSiteFolders(){
+  if (siteFoldersBusy || queueReason() || (DEMO && !tokenValid())) return;
+  let done = {}; try { done = JSON.parse(localStorage.getItem(SITE_FOLDERS_KEY) || '{}') || {}; } catch (e) {}
+  const todo = S.sites.filter(s => !s.example && !done[S.drive.rootId + '|' + siteFolder(s)]);
+  if (!todo.length) return;
+  siteFoldersBusy = true;
+  try {
+    for (const site of todo) {
+      for (const p of siteFolderPaths(site)) await ensurePath(p);
+      done[S.drive.rootId + '|' + siteFolder(site)] = Date.now();
+      try { localStorage.setItem(SITE_FOLDERS_KEY, JSON.stringify(done)); } catch (e) {}
+    }
+  } catch (e) {} finally { siteFoldersBusy = false; }
 }
 
 /* ---------- Confirmation & suppression de chantiers ---------- */
