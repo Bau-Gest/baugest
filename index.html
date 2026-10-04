@@ -1203,7 +1203,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
           <li>Bouton <b>Photo</b> : insère une photo (appareil photo, galerie ou photos du chantier). Outil <b>Déplacer</b> : bouge la photo, coin jaune pour la taille.</li>
           <li><b>Enregistrer</b> range le document sur le Drive dans <span class="mono">Chantier / Documents / type</span>. Il reste <b>modifiable</b> sur la tablette et le téléphone. Sans réseau, il attend dans la file d'envoi.</li>
           <li>Touche un document pour le voir, le <b>modifier</b>, le <b>partager en PDF</b> (WhatsApp, e-mail…) ou le supprimer.</li>
-          <li>Pastille <b>Texte</b> : Claude a transcrit ton écriture en texte tapé (PDF à côté du document dans le Drive). En haut du document, <b>Manuscrit / Texte tapé</b> change l’affichage (le choix est retenu) ; <b>Texte tapé (PDF)</b> l’envoie par WhatsApp, e-mail ou une autre app.</li>
+          <li>Pastille <b>Texte</b> : Claude a transcrit ton écriture en texte tapé (PDF à côté du document dans le Drive). Un document transcrit s’ouvre toujours en texte tapé ; <b>Manuscrit / Texte tapé</b> en haut permet de revoir l’écriture d’origine ; <b>Texte tapé (PDF)</b> l’envoie par WhatsApp, e-mail ou une autre app.</li>
         </ol>
         <p class="muted">Mise en page : Paramètres › Documents (par défaut) ou fiche du chantier (propre au chantier).</p>
         <h3>Plans PDF (tablette)</h3>
@@ -3435,12 +3435,12 @@ function renderDesk(){
     return `<section class="dk-sec" id="dks-${t}"><div class="dk-sep"><h3>${esc(d.name)}</h3><span class="n">${list.length}</span><span class="p">${esc(d.purpose)}</span><button class="btn" data-dnew="${t}"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nouveau</button></div>
       ${list.length ? `<div class="dk-grid">${list.map(docCard).join('')}</div>` : `<p class="dk-empty">${desk.loading ? 'Chargement…' : 'Aucun document.'}</p>`}</section>`;
   }).join('');
-  $$('#dkList img[data-fallback]').forEach(i => i.addEventListener('error', () => { i.replaceWith(Object.assign(document.createElement('span'), {className:'dk-noimg', textContent:'DOC'})); }, {once:true}));
+  $$('#dkList img[data-fallback]').forEach(i => i.addEventListener('error', function onErr(){ if (i.dataset.alt) { i.src = i.dataset.alt; delete i.dataset.alt; return; } i.removeEventListener('error', onErr); i.replaceWith(Object.assign(document.createElement('span'), {className:'dk-noimg', textContent:'DOC'})); }));
 }
 function docCard(it){
   const st = it.src === 'demo' ? '<span class="dk-st">Exemple</span>' : it.src === 'drive' ? '<span class="dk-st ok">Sur le Drive</span>'
     : it.dirty ? '<span class="dk-st wait">À envoyer</span>' : '<span class="dk-st ok">Sur le Drive</span>';
-  return `<button class="dk-card" data-doc="${esc(it.key)}">${it.thumb ? `<img alt="" loading="lazy" src="${esc(it.thumb)}" data-fallback="1">` : '<span class="dk-noimg">DOC</span>'}<span class="dk-meta"><b>${esc(it.title)}</b><small>${fmtISO(it.date)}${it.pages > 1 ? ' · ' + it.pages + ' pages' : ''}</small><span>${st}${it.tx ? '<span class="dk-st tx">Texte</span>' : ''}</span></span></button>`;
+  return `<button class="dk-card" data-doc="${esc(it.key)}">${it.txThumb || it.thumb ? `<img alt="" loading="lazy" src="${esc(it.txThumb || it.thumb)}" data-fallback="1"${it.txThumb && it.thumb ? ` data-alt="${esc(it.thumb)}"` : ''}>` : '<span class="dk-noimg">DOC</span>'}<span class="dk-meta"><b>${esc(it.title)}</b><small>${fmtISO(it.date)}${it.pages > 1 ? ' · ' + it.pages + ' pages' : ''}</small><span>${st}${it.tx ? '<span class="dk-st tx">Texte</span>' : ''}</span></span></button>`;
 }
 
 /* ---------- Ouverture d'un document (appareil ou Drive) ---------- */
@@ -3485,25 +3485,27 @@ async function openDocView(it){
     const rec = await getDocRec(it); if (!rec) throw new Error('document introuvable sur cet appareil');
     if (!docCur || docCur.it !== it) return;
     docCur.rec = rec;
+    const txP = rec.demo ? Promise.resolve(false) : loadTranscript(it);
     await waitImgs(rec.doc);
-    $('#dvPages').innerHTML = '';
-    rec.doc.pages.forEach((_, i) => { const im = new Image(); im.alt = 'Page ' + (i + 1); im.src = docRender(rec.doc, i, 900).toDataURL('image/jpeg', .88); $('#dvPages').append(im); });
-    docCur.handImgs = [...$('#dvPages').children]; docCur.mode = 'hand';
+    if (!docCur || docCur.it !== it) return;
+    docCur.handImgs = rec.doc.pages.map((_, i) => { const im = new Image(); im.alt = 'Page ' + (i + 1); im.src = docRender(rec.doc, i, 900).toDataURL('image/jpeg', .88); return im; });
     $('#dvStatus').textContent = rec.demo ? 'Document d’exemple · modifiable' : rec.dirty ? 'Modifié sur cet appareil · envoi vers le Drive en attente' : 'Sur le Drive · modifiable sur la tablette et le téléphone';
-    if (!rec.demo) loadTranscript(it);
+    if (it.tx && !docCur.txDone) $('#dvPages').innerHTML = '<p class="hint" style="text-align:center">Ouverture du texte tapé…</p>';
+    else if (!docCur.tx) showDvMode('hand');
+    const has = await txP;
+    if (!docCur || docCur.it !== it) return;
+    if (!has && docCur.mode !== 'hand') showDvMode('hand');
+    if (docCur.tx) { const st = $('#dvStatus'); if (!/Version texte/.test(st.textContent)) st.textContent += ' · Version texte tapé'; }
   } catch (e) { $('#dvStatus').textContent = 'Ouverture impossible : ' + e.message; }
 }
 function closeDocView(){ $('#docView').hidden = true; $('#dvText').hidden = true; $('#dvMode').hidden = true; docCur = null; }
-const DV_KEY = 'baugest.dvmode';
-function dvPref(){ try { return localStorage.getItem(DV_KEY) || 'hand'; } catch (e) { return 'hand'; } }
 function setDvButtons(m){ $$('#dvMode [data-dv]').forEach(b => { b.classList.toggle('on', b.dataset.dv === m); b.setAttribute('aria-selected', b.dataset.dv === m); }); }
-async function showDvMode(m, remember){
+async function showDvMode(m){
   if (!docCur) return;
-  if (remember) { try { localStorage.setItem(DV_KEY, m); } catch (e) {} }
   if (m === 'text' && !docCur.tx) m = 'hand';
   docCur.mode = m; setDvButtons(m);
   const box = $('#dvPages');
-  if (m === 'hand') { if (docCur.handImgs) box.replaceChildren(...docCur.handImgs); return; }
+  if (m === 'hand') { if (docCur.handImgs) box.replaceChildren(...docCur.handImgs); else box.innerHTML = ''; return; }
   if (!docCur.txImgs) {
     const cur = docCur; box.innerHTML = '<p class="hint" style="text-align:center">Ouverture du texte tapé…</p>';
     try {
@@ -3532,9 +3534,9 @@ async function markTranscripts(items){
   for (let i = 0; i < named.length; i += 30) {
     const part = named.slice(i, i + 30);
     const q = `trashed=false and mimeType='application/pdf' and (${part.map(x => `name='${qEsc(txName(x.fname))}'`).join(' or ')})`;
-    const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, pageSize:'100', fields:'files(id,name)'}));
-    const have = new Set((r.files || []).map(f => f.name));
-    part.forEach(x => { x.tx = have.has(txName(x.fname)); });
+    const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, pageSize:'100', fields:'files(id,name,thumbnailLink)'}));
+    const have = new Map((r.files || []).map(f => [f.name, f]));
+    part.forEach(x => { const f = have.get(txName(x.fname)); x.tx = !!f; x.txThumb = f && f.thumbnailLink ? f.thumbnailLink.replace(/=s\d+$/, '=s400') : ''; });
   }
 }
 async function findTranscript(it){
@@ -3550,14 +3552,17 @@ async function findTranscript(it){
   return {file:new File([blob], f.name, {type:'application/pdf'}), modified:f.modifiedTime};
 }
 async function loadTranscript(it){
+  const cur = docCur;
   try {
     const tx = await findTranscript(it);
-    if (!docCur || docCur.it !== it || !tx) return;
-    docCur.tx = tx; it.tx = true;
+    if (!docCur || docCur !== cur) return false;
+    cur.txDone = true;
+    if (!tx) { it.tx = false; return false; }
+    cur.tx = tx; it.tx = true;
     $('#dvText').hidden = false; $('#dvMode').hidden = false;
-    if (dvPref() === 'text') showDvMode('text');
-    const st = $('#dvStatus'); if (st && !/Version texte/.test(st.textContent)) st.textContent += ' · Version texte tapé disponible';
-  } catch (e) {}
+    await showDvMode('text');
+    return docCur === cur && cur.mode === 'text';
+  } catch (e) { if (docCur === cur) cur.txDone = true; return false; }
 }
 async function shareTranscript(){
   const tx = docCur && docCur.tx; if (!tx) return;
@@ -3970,7 +3975,7 @@ function bindDocs(){
   $('#dvEdit').addEventListener('click', async () => { if (!docCur) return; try { const rec = docCur.rec || await getDocRec(docCur.it); if (rec) openEditor(null, null, rec); } catch (e) { note('Ouverture impossible : ' + e.message, 4000); } });
   $('#dvShare').addEventListener('click', () => docCur && shareDocItem(docCur.it));
   $('#dvText').addEventListener('click', shareTranscript);
-  $('#dvMode').addEventListener('click', e => { const b = e.target.closest('[data-dv]'); if (b) showDvMode(b.dataset.dv, true); });
+  $('#dvMode').addEventListener('click', e => { const b = e.target.closest('[data-dv]'); if (b) showDvMode(b.dataset.dv); });
   $('#dvDelete').addEventListener('click', () => docCur && askDeleteDoc(docCur.it));
   /* éditeur */
   $('#deClose').addEventListener('click', closeEditor);
