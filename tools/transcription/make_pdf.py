@@ -15,6 +15,8 @@ transcription.json :
 }
 x, y : position (ligne de base) en unités de page BauGest (page = 1000 x 1414),
 soit la position de l'écriture dans l'image rendue divisée par l'échelle du rendu.
+"images" / "signatures" : [{"x","y","w","h","src"}] images recopiées telles quelles
+(cases de signature fournies par prepare.py, jamais transcrites).
 "check": true dessine une croix dans une case à cocher (x, y = coin haut-gauche de la case).
 Un texte qui commence par "[x] " ou "[ ] " dessine une case cochée ou vide devant le texte ;
 un texte qui commence par "→ " dessine une flèche.
@@ -283,6 +285,8 @@ def main(src, out):
         header(p, T, pi, len(pages))
         if pi == 0 and show_form:
             form(p, kind, sign)
+        for im in pg.get("images", []) + pg.get("signatures", []):
+            c.drawImage(ImageReader(im["src"]), p.X(im["x"]), p.Y(im["y"] + im["h"]), im["w"] * K, im["h"] * K, mask="auto")
         items(p, pg.get("items", []), bg, T.get("snap", True))
         c.showPage()
     c.save()
