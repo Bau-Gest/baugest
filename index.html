@@ -758,7 +758,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
     </label>
     <div class="field"><span>Mise en page des photos de ce chantier</span>
       <canvas id="seLayPreview" width="720" height="540" aria-label="Aperçu de la mise en page"></canvas>
-      <div class="row"><div class="lbl"><b>Mise en page propre à ce chantier</b><small id="seCustomHint">Sinon : réglage par défaut (Paramètres › Photos)</small></div><label class="switch"><input type="checkbox" id="seCustom"><span></span></label></div>
+      <div class="row"><div class="lbl"><b>Mise en page propre à ce chantier</b><small id="seCustomHint">Sinon : mise en page par défaut (Paramètres › Photos)</small></div><label class="switch"><input type="checkbox" id="seCustom"><span></span></label></div>
       <div id="seLayBox" class="lay-box" hidden>
         <div class="row"><div class="lbl"><b>Logo de l'entreprise</b><small id="seLogoHint">Sur chaque photo de ce chantier</small></div><label class="switch"><input type="checkbox" id="seLayLogo"><span></span></label></div>
         <div id="seLogoOpts" style="display:grid;gap:10px">
@@ -1089,8 +1089,25 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
       <section class="group" id="g-photos">
         <h2>Photos</h2>
         <div class="row"><div class="lbl"><b>Rotation automatique</b><small>La photo suit la tenue du téléphone (portrait ou paysage), même si la rotation de l'écran est bloquée</small></div><label class="switch"><input type="checkbox" id="setRotate"><span></span></label></div>
-        <div class="row"><div class="lbl"><b>Horodatage incrusté (par défaut)</b><small>Chantier, date, heure et GPS en bas de l'image. Chaque chantier peut avoir sa propre mise en page (fiche du chantier).</small></div><label class="switch"><input type="checkbox" id="setStamp"><span></span></label></div>
-        <div class="preview-wrap"><canvas id="stampPreview" width="960" height="720" aria-label="Aperçu du rendu sur une photo"></canvas><p class="hint">Aperçu sur une photo d'exemple, avec le premier chantier qui a un logo et sa mise en page.</p></div>
+        <div class="field"><span>Mise en page par défaut des photos</span>
+          <div class="preview-wrap"><canvas id="stampPreview" width="960" height="720" aria-label="Aperçu de la mise en page par défaut"></canvas><p class="hint">Aperçu sur une photo d'exemple. S'applique à tous les chantiers sans mise en page propre. Chaque chantier peut toujours être personnalisé (Chantiers › fiche du chantier).</p></div>
+          <div class="lay-box">
+            <div class="row"><div class="lbl"><b>Logo de l'entreprise</b><small>Logo choisi dans la fiche de chaque chantier</small></div><label class="switch"><input type="checkbox" id="dpLogo"><span></span></label></div>
+            <div id="dpLogoOpts" style="display:grid;gap:10px">
+              <div class="seg" id="dpPos">
+                <label><input type="radio" name="dpPos" value="tl"><span>↖ Haut gauche</span></label>
+                <label><input type="radio" name="dpPos" value="tr"><span>↗ Haut droite</span></label>
+                <label><input type="radio" name="dpPos" value="bl"><span>↙ Bas gauche</span></label>
+                <label><input type="radio" name="dpPos" value="br"><span>↘ Bas droite</span></label>
+              </div>
+              <div class="range-row"><span class="muted" style="font-size:13px">Taille</span><input type="range" id="dpSize" min="8" max="32" step="1"><output id="dpSizeOut"></output></div>
+              <div class="row"><div class="lbl"><b>Fond blanc derrière le logo</b><small>Plus lisible sur une photo sombre</small></div><label class="switch"><input type="checkbox" id="dpBg"><span></span></label></div>
+            </div>
+            <div class="row"><div class="lbl"><b>Bandeau d'informations en bas</b><small>Choisis les informations affichées</small></div><label class="switch"><input type="checkbox" id="setStamp"><span></span></label></div>
+            <div id="dpLines" class="chips"></div>
+          </div>
+          <p id="dpCustomInfo" class="hint" hidden></p>
+        </div>
         <div class="field"><span>Qualité</span>
           <div class="opts">
             <label class="opt"><input type="radio" name="quality" value="standard"><div><b>Standard</b><small>≈ 1 à 2 Mo · recommandé sur chantier</small></div></label>
@@ -1161,6 +1178,8 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
           <li>Filtre par <b>chantier</b> (bandeau des chantiers) et par <b>période</b> (liste des dates). Les filtres valent pour la grille et la carte.</li>
           <li>Fond de carte : plan ou photo aérienne swisstopo, ou OpenStreetMap (bouton en haut à droite de la carte).</li>
         </ol>
+        <h3>Mise en page des photos</h3>
+        <p class="muted">Paramètres › Photos › « Mise en page par défaut des photos » : réglage commun à tous les chantiers (logo, position, taille, fond blanc, bandeau et informations affichées).</p>
         <h3>Mise en page par chantier</h3>
         <p class="muted">Paramètres › Chantiers › un chantier › « Mise en page propre à ce chantier » : logo oui/non, position, taille, fond blanc, bandeau du bas et informations affichées. Un aperçu montre le résultat.</p>
         <h3>Supprimer des photos</h3>
@@ -1225,7 +1244,7 @@ const ICON_FOLDER = '<svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1
 /* ---------- Réglages ---------- */
 const KEY = 'photochantier.v1';
 const DEF = {
-  v: 1, logoPos: 'tr', logoSize: 18, logoBg: false, logoLib: [],
+  v: 1, logoOn: true, logoPos: 'tr', logoSize: 18, logoBg: false, logoLib: [], stampLines: {site:true, tags:true, date:true, gps:true, note:true},
   stamp: true, quality: 'standard', tagPrompt: true, tagDelay: 5, structure: 'A', autoRotate: true, mapLayer: 'Plan CH', home: 'auto', docTitles: {}, theme: 'dark',
   tags: ['fouille','réseau EU','réseau EC','coffrage','armature','bétonnage','remblayage','enrobé','bordures','défaut','avant','après'],
   sites: [
@@ -1264,7 +1283,7 @@ function save(){
   if (ch || (S.drive.rootId && S.drive.token && S.drive.rootId !== S.syncRoot)) scheduleSync();
 }
 /* ---------- Synchronisation des chantiers et réglages entre appareils (v1.4) ---------- */
-const SYNC_FIELDS = ['tags', 'logoLib', 'docLay', 'docTitles', 'stamp', 'logoPos', 'logoSize', 'logoBg', 'quality', 'tagPrompt', 'tagDelay', 'structure'];
+const SYNC_FIELDS = ['tags', 'logoLib', 'docLay', 'docTitles', 'stamp', 'logoOn', 'logoPos', 'logoSize', 'logoBg', 'stampLines', 'quality', 'tagPrompt', 'tagDelay', 'structure'];
 const SYNC_NAME = 'Réglages PhotoChantier (ne pas supprimer).json';
 S.smod = S.smod || {}; S.sdel = S.sdel || {}; S.fmod = S.fmod || {}; S.remap = S.remap || {}; S.migrate = S.migrate || {};
 for (const s of S.sites) if (!s.example && !S.smod[s.id]) S.smod[s.id] = 1;
@@ -1406,7 +1425,7 @@ async function syncSettings(force){
 }
 function refreshAfterSync(){
   renderSiteChip();
-  if (!$('#settings').hidden) { renderSites(); renderTagList(); drawPreview(); renderDocSettings(); if (!$('#structOpts').contains(document.activeElement)) $$('input[name=struct]').forEach(r => r.checked = r.value === S.structure); }
+  if (!$('#settings').hidden) { renderSites(); renderTagList(); renderDpLayout(); renderDocSettings(); if (!$('#structOpts').contains(document.activeElement)) $$('input[name=struct]').forEach(r => r.checked = r.value === S.structure); }
   if (!$('#desk').hidden) { if (desk.site && desk.site !== '__none' && !siteById(desk.site)) desk.site = null; if (!desk.site) { const c = currentSite(); desk.site = c ? c.id : (S.sites[0]?.id || '__none'); } renderDeskHead(); renderDeskSites(); loadDocs(); }
   if (!$('#gallery').hidden) renderGalSites();
   if (!$('#sheetSite').hidden) renderSitePick();
@@ -1755,7 +1774,7 @@ function getImg(src){
 const fmtDate = d => pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear();
 const fmtTime = d => pad2(d.getHours()) + ':' + pad2(d.getMinutes());
 const LINES = [['site','Chantier'],['tags','Étiquettes'],['date','Date et heure'],['gps','GPS'],['note','Commentaire']];
-function defLayout(){ return {logo:true, logoPos:S.logoPos || 'tr', logoSize:S.logoSize || 18, logoBg:!!S.logoBg, band:!!S.stamp, lines:{site:true, tags:true, date:true, gps:true, note:true}}; }
+function defLayout(){ return {logo:S.logoOn !== false, logoPos:S.logoPos || 'tr', logoSize:S.logoSize || 18, logoBg:!!S.logoBg, band:!!S.stamp, lines:{site:true, tags:true, date:true, gps:true, note:true, ...(S.stampLines || {})}}; }
 function layoutFor(site){
   const d = defLayout(), l = site && site.layout;
   return l ? {...d, ...l, lines:{...d.lines, ...(l.lines || {})}} : d;
@@ -2057,7 +2076,7 @@ function renderSettings(){
   $('#setClientId').value = S.drive.clientId;
   $('#structOpts').innerHTML = Object.entries(STRUCT).map(([k, v]) => `<label class="opt"><input type="radio" name="struct" value="${k}" ${S.structure === k ? 'checked' : ''}><div><b>${v.t}</b><code>${v.ex}2026-09-27_14h32_GACO_armature.jpg</code></div></label>`).join('');
   $('#redirUri').value = IN_FRAME ? 'Visible une fois l’app en ligne (ex. https://tonnom.github.io/photochantier/)' : redirectUri();
-  renderDrive(); renderSites(); renderTagList(); drawPreview(); renderDocSettings(); renderSyncStatus();
+  renderDrive(); renderSites(); renderTagList(); renderDpLayout(); renderDocSettings(); renderSyncStatus();
   $$('input[name=theme]').forEach(r => r.checked = r.value === (S.theme || 'dark'));
 }
 function renderDrive(){
@@ -2096,7 +2115,20 @@ async function drawPreview(){
   const lg = await getImg(s?.logo);
   const c = $('#stampPreview'), g = c.getContext('2d'), W = c.width, H = c.height;
   drawScene(g, W, H);
-  decorate(g, W, H, SAMPLE(s), lg, layoutFor(s));
+  decorate(g, W, H, SAMPLE(s), lg, defLayout());
+}
+function renderDpLayout(){
+  const L = defLayout();
+  $('#dpLogo').checked = L.logo; $('#dpLogoOpts').hidden = !L.logo;
+  $$('input[name=dpPos]').forEach(r => r.checked = r.value === L.logoPos);
+  $('#dpSize').value = L.logoSize; $('#dpSizeOut').textContent = L.logoSize + ' %';
+  $('#dpBg').checked = L.logoBg; $('#setStamp').checked = L.band;
+  $('#dpLines').hidden = !L.band;
+  $('#dpLines').innerHTML = LINES.map(([k, t]) => `<button class="chip ${L.lines[k] ? 'on' : ''}" data-line="${k}" aria-pressed="${!!L.lines[k]}">${t}</button>`).join('');
+  const own = S.sites.filter(x => x.layout).map(siteLabel), info = $('#dpCustomInfo');
+  info.hidden = !own.length;
+  info.textContent = own.length ? `Mise en page propre (non concernés) : ${own.join(', ')}` : '';
+  drawPreview();
 }
 /* aperçu de la mise en page dans la fiche chantier */
 let seLay = null, seCustomOn = false;
@@ -2180,7 +2212,7 @@ function saveSite(){
   else S.sites.push({id:'s' + Date.now().toString(36), name, number, lat, lon, radius, logo:seLogo, ...(layout ? {layout} : {})});
   { const tgt = s || S.sites[S.sites.length - 1]; if (seDocOn) tgt.docLayout = clone(seDocLay); else delete tgt.docLayout; }
   if (seLogo && !S.logoLib.includes(seLogo)) { S.logoLib.unshift(seLogo); S.logoLib = S.logoLib.slice(0, 30); }
-  save(); closeSheet($('#sheetSiteEdit')); renderSites(); renderSiteChip(); drawPreview(); note('Chantier enregistré');
+  save(); closeSheet($('#sheetSiteEdit')); renderSites(); renderSiteChip(); renderDpLayout(); note('Chantier enregistré');
   if (!$('#desk').hidden) { renderDeskSites(); renderDesk(); }
 }
 
@@ -2205,7 +2237,7 @@ function removeSites(ids){
   if (ids.includes(manualSite)) manualSite = null;
   save();
   if (ids.includes(editId) && !$('#sheetSiteEdit').hidden) closeSheet($('#sheetSiteEdit'));
-  renderSites(); renderSiteChip(); drawPreview();
+  renderSites(); renderSiteChip(); renderDpLayout();
   if (!$('#gallery').hidden) { if (ids.includes(gal.site)) gal.site = '__all'; renderGalSites(); }
   if (!$('#sheetImport').hidden) { if (ids.includes(imp.site)) imp.site = undefined; renderImport(); }
   if (!$('#desk').hidden) { if (ids.includes(desk.site)) desk.site = null; openDesk(); }
@@ -4029,7 +4061,13 @@ function bind(){
   $('#seDelete').addEventListener('click', () => askDeleteSites([editId]));
 
   /* paramètres : photos */
-  $('#setStamp').addEventListener('change', e => { S.stamp = e.target.checked; save(); drawPreview(); });
+  $('#setStamp').addEventListener('change', e => { S.stamp = e.target.checked; save(); renderDpLayout(); });
+  $('#dpLogo').addEventListener('change', e => { S.logoOn = e.target.checked; save(); renderDpLayout(); });
+  $('#dpPos').addEventListener('change', e => { if (e.target.name === 'dpPos') { S.logoPos = e.target.value; save(); drawPreview(); } });
+  $('#dpSize').addEventListener('input', e => { S.logoSize = +e.target.value; $('#dpSizeOut').textContent = S.logoSize + ' %'; drawPreview(); });
+  $('#dpSize').addEventListener('change', () => save());
+  $('#dpBg').addEventListener('change', e => { S.logoBg = e.target.checked; save(); drawPreview(); });
+  $('#dpLines').addEventListener('click', e => { const b = e.target.closest('[data-line]'); if (!b) return; const L = defLayout().lines; L[b.dataset.line] = !L[b.dataset.line]; S.stampLines = L; save(); renderDpLayout(); });
   $('#setRotate').addEventListener('change', e => { S.autoRotate = e.target.checked; save(); applyUiRotation(); });
   $('#setTagPrompt').addEventListener('change', e => { S.tagPrompt = e.target.checked; $('#delayField').hidden = !S.tagPrompt; save(); });
   $$('input[name=quality]').forEach(r => r.addEventListener('change', () => { S.quality = r.value; save(); }));
