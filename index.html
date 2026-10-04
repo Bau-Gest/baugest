@@ -394,7 +394,8 @@ input[type=date]{min-height:42px;padding:6px 10px;border-radius:10px;border:1px 
 .dk-body{flex:1;min-height:0;display:grid;grid-template-columns:250px minmax(0,1fr)}
 .dk-side{border-right:1px solid var(--line);overflow:auto;padding:12px 10px calc(var(--sb) + 20px) calc(var(--sl) + 10px)}
 .dk-label{margin:4px 6px 8px;font:700 12px/1 var(--body);text-transform:uppercase;letter-spacing:.14em;color:var(--signal)}
-.dk-sites{display:grid;gap:4px}
+.dk-sites{display:grid;gap:4px;min-width:0}
+.dk-sites>*{min-width:0}
 .dk-site{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:12px;border:1px solid transparent;background:none;text-align:left}
 .dk-site:hover{background:var(--surface)}
 .dk-site.on{background:var(--surface2);border-color:var(--line)}
@@ -551,6 +552,84 @@ html[data-theme="light"] .scrim{background:rgba(20,22,26,.42)}
 .pl-card img,.pl-card .dk-noimg{aspect-ratio:1414/1000;object-position:center}
 .pl-card .pl-n{color:var(--signal)}
 html[data-theme="light"] .pl-card .pl-n{color:#8a6200}
+/* plans : explorateur de dossiers */
+.pl-card{position:relative;cursor:pointer}
+.pl-card .dk-meta{padding-right:30px}
+.pl-more{position:absolute;right:6px;bottom:6px;width:36px;height:36px;border-radius:9px;border:0;background:none;color:var(--muted);display:grid;place-items:center}
+.pl-more:hover{background:var(--surface2);color:var(--text)}
+[data-plan]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.pl-crumbs{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:6px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.pl-crumbs button{border:0;background:none;padding:7px 10px;border-radius:8px;font:700 16px/1 var(--display);text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+.pl-crumbs button:hover{background:var(--surface2);color:var(--text)}
+.pl-crumbs button.cur{color:var(--text)}
+.pl-crumbs .sep{color:var(--muted)}
+.pl-path{margin-left:auto;padding:0 8px;font:12px/1.3 var(--mono);color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.pl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:-16px}
+.pl-search{flex:1 1 240px;display:flex;align-items:center;gap:8px;min-height:46px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface)}
+.pl-search input{flex:1;min-width:0;border:0;background:none;color:var(--text);font:inherit;outline:none}
+.pl-seg{display:flex;gap:2px;padding:3px;border-radius:10px;border:1px solid var(--line);background:var(--surface2)}
+.pl-seg button{min-height:38px;min-width:44px;padding:0 10px;border:0;border-radius:8px;background:none;color:var(--muted);display:grid;place-items:center}
+.pl-seg button.on{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+
+.pl-folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.pl-folder{position:relative;display:flex;align-items:center;gap:12px;padding:12px 46px 12px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);min-width:0;cursor:pointer}
+.pl-folder:hover{border-color:#4a5058}
+.pl-folder .pl-fi{width:42px;height:34px;flex:none;color:var(--signal)}
+.pl-folder .t{min-width:0}
+.pl-folder b{display:block;font:700 17px/1.1 var(--display);text-transform:uppercase;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-folder small{display:block;font:12px/1.3 var(--mono);color:var(--muted)}
+.pl-folder .pl-more{top:50%;bottom:auto;transform:translateY(-50%)}
+.pl-list{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.pl-row{position:relative;display:grid;grid-template-columns:52px minmax(0,1fr) 100px 80px 120px 40px;align-items:center;gap:10px;padding:6px 10px;border-top:1px solid var(--line);cursor:pointer}
+.pl-row:first-child{border-top:0}
+.pl-row:hover{background:var(--surface2)}
+.pl-row.hd{font:600 11.5px/1 var(--body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:var(--surface2);cursor:default;min-height:34px}
+.pl-mini{width:52px;height:37px;border-radius:3px;background:#fbfaf6;display:grid;place-items:center;overflow:hidden;color:#98a3b1;font:700 12px/1 var(--display)}
+.pl-mini img{width:100%;height:100%;object-fit:cover}
+.pl-rn{min-width:0}
+.pl-rn b{display:block;font:700 15.5px/1.15 var(--display);text-transform:uppercase;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-rn small{display:block;font:12px/1.3 var(--mono);color:var(--muted)}
+.pl-c{font:12.5px/1.2 var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.pl-c.pl-n{color:var(--signal)}
+.pl-row .pl-more{position:static}
+.pl-tree{list-style:none;margin:2px 0 6px 16px;padding:0 0 0 4px;min-width:0;border-left:1px dashed var(--line);display:grid;gap:2px}
+.pl-tree .pl-tree{margin:2px 0 2px 12px}
+.pl-tree li{min-width:0}
+.pl-node{display:flex;align-items:center;gap:6px;min-height:42px;padding:4px 8px 4px 4px;border-radius:10px;border:1px solid transparent;cursor:pointer}
+.pl-node:hover{background:var(--surface)}
+.pl-node.on{background:var(--surface2);border-color:var(--line)}
+.pl-node>.ic{width:18px;height:18px;color:var(--signal);flex:none}
+.pl-node .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.pl-node .ct{font:500 12px/1 var(--mono);color:var(--muted)}
+.pl-tw{width:28px;height:28px;display:grid;place-items:center;border-radius:7px;color:var(--muted);flex:none}
+.pl-tw .ic{width:15px;height:15px;transition:transform .15s}
+.pl-node.open .pl-tw .ic{transform:rotate(90deg)}
+.pl-tw.none{visibility:hidden}
+.pl-drop,.pl-crumbs button.pl-drop{border-color:var(--signal)!important;background:var(--signal-soft)!important;color:var(--text)}
+.pl-dragging{opacity:.4}
+body.pl-is-dragging,body.pl-is-dragging *{cursor:grabbing!important}
+.pl-ghost{position:fixed;left:0;top:0;z-index:200;pointer-events:none;display:flex;align-items:center;gap:8px;max-width:300px;padding:9px 13px;border-radius:10px;background:var(--signal);color:var(--signal-ink);font:700 15px/1.1 var(--display);text-transform:uppercase;letter-spacing:.02em;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.pl-ghost span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-menu{position:fixed;z-index:120;min-width:230px;padding:6px;border-radius:12px;border:1px solid var(--line);background:var(--surface);box-shadow:0 10px 30px rgba(0,0,0,.35);display:grid;gap:2px}
+.pl-menu button{display:flex;align-items:center;gap:10px;min-height:46px;padding:0 12px;border:0;border-radius:8px;background:none;text-align:left;font-weight:600}
+.pl-menu button:hover{background:var(--surface2)}
+.pl-menu button.danger{color:var(--bad)}
+.pl-menu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.pl-input{width:100%;min-height:50px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--asphalt);color:var(--text);font:inherit;font-size:16px}
+.pl-chips{display:flex;flex-wrap:wrap;gap:6px}
+.pl-chip{min-height:38px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);font-size:14px;font-weight:600}
+.pl-chip:hover{border-color:var(--signal)}
+.pl-pick{display:grid;gap:2px;max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:4px}
+.pl-pick button{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 10px;border:0;border-radius:8px;background:none;text-align:left;font-weight:600}
+.pl-pick button .ic{color:var(--signal)}
+.pl-pick button.on{background:var(--signal);color:var(--signal-ink)}
+.pl-pick button.on .ic{color:var(--signal-ink)}
+.pl-pick button:disabled{opacity:.4;cursor:default}
+.pl-err{margin:0;color:var(--bad);font-size:14px}
+html[data-theme="light"] .pl-folder .pl-fi,html[data-theme="light"] .pl-node>.ic,html[data-theme="light"] .pl-pick button .ic{color:#8a6200}
+html[data-theme="light"] .pl-c.pl-n{color:#8a6200}
+@media (max-width:820px){.pl-row{grid-template-columns:52px minmax(0,1fr) 40px}.pl-row .pl-c{display:none}}
+
 .pv{z-index:34}
 .pv-top{gap:10px;flex-wrap:wrap;padding-top:calc(var(--st) + 8px);padding-bottom:8px}
 .pv-title{display:grid;min-width:0;flex:1 1 180px}
@@ -964,6 +1043,11 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 <input type="file" id="plFile" accept="application/pdf,.pdf" multiple hidden>
 
 <!-- PDF reçus d'une autre app -->
+<div id="sheetPlDlg" class="sheet" hidden role="dialog" aria-labelledby="plDlgTitle">
+  <div class="sheet-head"><h3 id="plDlgTitle">Dossier</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body" id="plDlgBody"></div>
+  <div class="sheet-foot" id="plDlgFoot"></div>
+</div>
 <div id="sheetPlanImp" class="sheet" hidden role="dialog" aria-labelledby="piTitle">
   <div class="sheet-head"><h3 id="piTitle">Plan reçu</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <div class="sheet-body">
@@ -3357,7 +3441,8 @@ function renderDeskHead(){
 function renderDeskSites(){
   const c = currentSite();
   const b = (id, s) => `<button class="dk-site ${desk.site === id ? 'on' : ''}" data-dsite="${esc(id)}">${s ? logoHTML(s) : '<span class="slogo none" aria-hidden="true">?</span>'}<span class="t"><b>${esc(s ? s.name : 'À classer')}</b><small>${s ? esc(s.number || '') + (c && c.id === s.id ? ' · ● ici' : '') : 'hors chantier'}</small></span></button>`;
-  $('#dkSites').innerHTML = S.sites.map(s => b(s.id, s)).join('') + b('__none', null);
+  const tree = id => desk.mode === 'plans' && desk.site === id && PL.tree && PL.sid === (id === '__none' ? 'none' : id) ? plTreeHTML(PL.tree) : '';
+  $('#dkSites').innerHTML = S.sites.map(s => b(s.id, s) + tree(s.id)).join('') + b('__none', null) + tree('__none');
 }
 function recItem(r){
   return {key:'u' + r.uid, uid:r.uid, src:r.demo ? 'demo' : 'local', title:r.doc.title, dtype:r.doc.kind, date:r.doc.date, siteId:r.doc.siteId, thumb:r.thumb || '',
@@ -3962,7 +4047,7 @@ function bindDocs(){
   $('#dkSettings').addEventListener('click', () => openSettings());
   $('#dkGps').addEventListener('click', () => { const c = currentSite(); desk.site = c ? c.id : '__none'; renderDeskSites(); loadDocs(); });
   $('#dkRefresh').addEventListener('click', () => { syncSettings(true); loadDocs(); });
-  $('#dkSites').addEventListener('click', e => { const b = e.target.closest('[data-dsite]'); if (!b) return; desk.site = b.dataset.dsite; renderDeskSites(); loadDocs(); $('#dkMain').scrollTop = 0; });
+  $('#dkSites').addEventListener('click', e => { const b = e.target.closest('[data-dsite]'); if (!b) return; if (desk.mode === 'plans' && desk.site === b.dataset.dsite && PL.path.length) { plGo([]); return; } desk.site = b.dataset.dsite; renderDeskSites(); loadDocs(); $('#dkMain').scrollTop = 0; });
   $('#desk').addEventListener('click', e => {
     if (e.target.closest('#dkNew')) { openKindPick(); return; }
     if (e.target.closest('#dkGalSite')) { openGallery(); gal.site = desk.site; renderGalSites(); loadGallery(true); return; }
@@ -4309,74 +4394,446 @@ function mesFlushAll(){
   } catch (e) {}
 }
 
-/* ---------- liste des plans du chantier (bureau tablette) ---------- */
-const PL = {items:[], counts:{}, err:null, loading:false};
-function renderDeskModes(){
-  const show = isTabletScreen();
-  $('#dkModes').hidden = !show;
-  $$('#dkModes [data-dmode]').forEach(b => { const on = b.dataset.dmode === desk.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
-  $('#dkTitle').textContent = desk.mode === 'plans' ? 'Plans' : 'Documents';
+/* ---------- Plans du chantier (bureau tablette) : explorateur de dossiers ----------
+   Arborescence = vrais sous-dossiers Drive sous « Chantier / Plans ». Mesures et Exports sont des dossiers de l'app, cachés.
+   Les mesures sont liées au plan par son identifiant : déplacer ou renommer un plan les garde. */
+const PL = {items:[], counts:{}, err:null, loading:false, sid:null, path:[], paths:{}, tree:null, q:'', view:'grid', open:new Set(), drag:null};
+const PL_RESERVED = new Set(['Mesures', 'Exports']);
+const PL_SUGG = ['Génie civil', 'Architecte', 'Ingénieur', 'Canalisations', 'Géomètre', 'Signalisation', 'Électricité', 'Exécution', 'Soumission', 'Archives'];
+const PL_IC = {
+  folder:'<svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  bigFolder:'<svg class="pl-fi" viewBox="0 0 42 34" aria-hidden="true"><path d="M2 6a3 3 0 0 1 3-3h10l4 4h18a3 3 0 0 1 3 3v19a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.8"/></svg>',
+  chev:'<svg class="ic" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
+  more:'<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="12" cy="19" r="1.3"/></svg>',
+  newFolder:'<svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13h6"/></svg>',
+  addPlan:'<svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15h6"/></svg>',
+  search:'<svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  grid:'<svg class="ic" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>',
+  rows:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
+  open:'<svg class="ic" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  move:'<svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M11 13h6m-2-2 2 2-2 2"/></svg>',
+  edit:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  trash:'<svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  photos:'<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>'
+};
+try { PL.view = localStorage.getItem('baugest.plView') === 'list' ? 'list' : 'grid'; PL.paths = JSON.parse(localStorage.getItem('baugest.plPaths') || '{}') || {}; } catch (e) {}
+
+const plKey = p => p.join('\u001f');
+const plSame = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+const plUnder = (p, base) => p.length >= base.length && base.every((x, i) => x === p[i]);
+const plSort = (a, b) => String(a.name).localeCompare(String(b.name), 'fr', {numeric:true});
+const plAttr = p => esc(JSON.stringify(p));
+const plSite = () => desk.site === '__none' ? null : siteById(desk.site);
+function plSavePath(){ PL.paths[PL.sid] = PL.path; try { localStorage.setItem('baugest.plPaths', JSON.stringify(PL.paths)); } catch (e) {} }
+function plTreeLoad(sid){ try { const t = JSON.parse(localStorage.getItem('baugest.pltree.' + sid) || 'null'); if (t && t.children) return t; } catch (e) {} return {id:'', name:'Plans', path:[], children:[]}; }
+function plTreeSave(){
+  const strip = n => ({id:n.id || '', name:n.name, path:n.path, children:n.children.map(strip)});
+  try { localStorage.setItem('baugest.pltree.' + PL.sid, JSON.stringify(strip(PL.tree))); } catch (e) {}
 }
+function plNode(path, root = PL.tree){ let n = root; for (const p of path) { n = n && n.children.find(c => c.name === p); if (!n) return null; } return n; }
+function plEnsureNode(path){
+  let n = PL.tree;
+  for (let i = 0; i < path.length; i++) {
+    let c = n.children.find(x => x.name === path[i]);
+    if (!c) { c = {id:'', name:path[i], path:path.slice(0, i + 1), children:[]}; n.children.push(c); n.children.sort(plSort); }
+    n = c;
+  }
+  return n;
+}
+function plStats(path){ let plans = 0, mes = 0; for (const it of PL.items) if (plUnder(it.folder || [], path)) { plans++; mes += PL.counts[it.key] || 0; } return {plans, mes}; }
+async function plApiAll(q, fields){
+  let out = [], token = '';
+  do {
+    const p = {q, pageSize:'1000', fields:'nextPageToken,' + fields}; if (token) p.pageToken = token;
+    const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams(p));
+    out = out.concat(r.files || []); token = r.nextPageToken || '';
+  } while (token);
+  return out;
+}
+const plChunks = (a, n) => { const o = []; for (let i = 0; i < a.length; i += n) o.push(a.slice(i, i + n)); return o; };
+function plOffline(){
+  if (DEMO && !tokenValid()) return 'Aperçu : dans l’app, cette action se fait sur ton Drive';
+  const r = queueReason(); return r ? r.t : null;
+}
+
 async function loadPlans(){
   const tok = ++desk.token, sid = desk.site === '__none' ? 'none' : desk.site, site = sid === 'none' ? null : siteById(sid);
+  if (PL.sid !== sid) { PL.sid = sid; PL.path = Array.isArray(PL.paths[sid]) ? PL.paths[sid] : []; PL.q = ''; PL.tree = plTreeLoad(sid); PL.items = []; }
   PL.loading = true; PL.err = null;
   const map = new Map();
   for (const r of await PLANCACHE.all()) if ((r.siteId || 'none') === sid)
-    map.set(r.key, {key:r.key, name:r.name, size:r.size || 0, modified:r.modified || '', driveId:r.driveId || '', parentId:r.parentId || '', local:true, pending:!!r.pending});
+    map.set(r.key, {key:r.key, name:r.name, size:r.size || 0, modified:r.modified || '', driveId:r.driveId || '', parentId:r.parentId || '', folder:r.folder || [], local:true, pending:!!r.pending});
   for (const it of await DB.all()) if (it.meta.kind === 'plan' && (it.meta.siteId || 'none') === sid) {
     const o = map.get(it.meta.uid) || {key:it.meta.uid, name:it.meta.name, size:it.blob.size, modified:'', driveId:''};
-    o.pending = true; map.set(it.meta.uid, o);
+    o.pending = true; o.folder = (it.meta.path || []).slice(2); map.set(it.meta.uid, o);
   }
   for (const k of Object.keys(PL.counts)) delete PL.counts[k];
   for (const o of map.values()) { const m = mesLocal(o.key); if (m && m.measures) PL.counts[o.key] = m.measures.length; }
-  PL.items = [...map.values()]; if (tok === desk.token) renderPlans();
+  PL.items = [...map.values()]; for (const o of PL.items) plEnsureNode(o.folder || []);
+  if (tok === desk.token) renderPlans();
   const r = queueReason();
-  if (DEMO && !tokenValid()) PL.err = 'Aperçu : dans l’app, la liste montre les PDF du dossier Plans du chantier sur ton Drive.';
+  if (DEMO && !tokenValid()) PL.err = 'Aperçu : dans l’app, la liste montre les dossiers et les PDF du dossier Plans du chantier sur ton Drive.';
   else if (r && r.a !== null) PL.err = r.t + ' · seulement les plans déjà ouverts sur cet appareil';
   else if (!navigator.onLine) PL.err = 'Hors ligne · seulement les plans déjà ouverts sur cet appareil';
   else {
     try {
-      const folder = await ensurePath([siteFolder(site), 'Plans']);
-      const q = `'${qEsc(folder)}' in parents and trashed=false and mimeType='application/pdf'`;
-      const res = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, orderBy:'name', pageSize:'500', fields:'files(id,name,size,modifiedTime,thumbnailLink,appProperties)'}));
-      const seen = new Set();
-      for (const f of res.files || []) {
-        const k = (f.appProperties && f.appProperties.uid) || f.id; seen.add(k);
-        const o = map.get(k) || {key:k};
-        Object.assign(o, {name:f.name, size:+f.size || o.size || 0, modified:f.modifiedTime || '', driveId:f.id, parentId:folder, thumb:f.thumbnailLink ? f.thumbnailLink.replace(/=s\d+$/, '=s400') : '', inDrive:true, pending:false});
-        map.set(k, o);
+      const rootId = await ensurePath([siteFolder(site), 'Plans']);
+      const tree = {id:rootId, name:'Plans', path:[], children:[]}, all = [tree];
+      let level = [tree];
+      for (let d = 0; d < 8 && level.length; d++) {
+        const next = [];
+        for (const ch of plChunks(level, 30)) {
+          const q = `(${ch.map(n => `'${qEsc(n.id)}' in parents`).join(' or ')}) and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+          for (const f of await plApiAll(q, 'files(id,name,parents)')) {
+            const p = ch.find(n => (f.parents || []).includes(n.id));
+            if (!p || (!p.path.length && PL_RESERVED.has(f.name))) continue;
+            const n = {id:f.id, name:f.name, path:[...p.path, f.name], children:[]};
+            p.children.push(n); next.push(n); all.push(n);
+          }
+        }
+        level = next;
+      }
+      (function srt(n){ n.children.sort(plSort); n.children.forEach(srt); })(tree);
+      const byId = new Map(all.map(n => [n.id, n])), seen = new Set();
+      for (const ch of plChunks(all, 30)) {
+        const q = `(${ch.map(n => `'${qEsc(n.id)}' in parents`).join(' or ')}) and trashed=false and mimeType='application/pdf'`;
+        for (const f of await plApiAll(q, 'files(id,name,size,modifiedTime,thumbnailLink,appProperties,parents)')) {
+          const node = byId.get((f.parents || []).find(id => byId.has(id))); if (!node) continue;
+          const k = (f.appProperties && f.appProperties.uid) || f.id; seen.add(k);
+          const o = map.get(k) || {key:k};
+          Object.assign(o, {name:f.name, size:+f.size || o.size || 0, modified:f.modifiedTime || '', driveId:f.id, parentId:node.id, folder:node.path,
+            thumb:f.thumbnailLink ? f.thumbnailLink.replace(/=s\d+$/, '=s400') : '', inDrive:true, pending:false});
+          map.set(k, o);
+        }
       }
       for (const [k, o] of map) if (!seen.has(k) && !o.pending) { map.delete(k); PLANCACHE.del(k); }
+      for (const o of map.values()) if (o.pending) { let n = tree; for (const p of o.folder || []) { let c = n.children.find(x => x.name === p); if (!c) { c = {id:'', name:p, path:[...n.path, p], children:[]}; n.children.push(c); } n = c; } }
+      if (tok !== desk.token) return;
+      PL.tree = tree; plTreeSave();
       const mq = `trashed=false and appProperties has { key='kind' and value='mesures' } and appProperties has { key='site' and value='${qEsc(sid)}' }`;
       const mr = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q:mq, pageSize:'500', fields:'files(appProperties)'}));
       for (const f of mr.files || []) { const a = f.appProperties || {}; if (a.plan && !(mesLocal(a.plan) || {}).dirty) PL.counts[a.plan] = +a.n || 0; }
     } catch (e) { PL.err = 'Lecture du Drive impossible : ' + e.message; }
   }
   if (tok !== desk.token) return;
-  PL.items = [...map.values()].sort((a, b) => String(a.name).localeCompare(String(b.name), 'fr', {numeric:true}));
+  PL.items = [...map.values()].sort(plSort);
   PL.loading = false; renderPlans();
 }
-function planCard(p){
+
+/* ---------- affichage ---------- */
+function plStatus(p){ return p.pending ? '<span class="dk-st wait">À envoyer</span>' : p.inDrive ? '<span class="dk-st ok">Sur le Drive</span>' : '<span class="dk-st">Sur cet appareil</span>'; }
+const plBase = n => String(n).replace(/\.pdf$/i, '');
+function planCard(p, where){
   const n = PL.counts[p.key] || 0;
-  const st = p.pending ? '<span class="dk-st wait">À envoyer</span>' : p.inDrive ? '<span class="dk-st ok">Sur le Drive</span>' : '<span class="dk-st">Sur cet appareil</span>';
-  const meta = [p.size ? fmtSize(p.size) : '', p.modified ? dateShort(p.modified) : ''].filter(Boolean).join(' · ');
-  return `<button class="dk-card pl-card" data-plan="${esc(p.key)}">${p.thumb ? `<img alt="" src="${esc(p.thumb)}" data-fallback loading="lazy">` : '<span class="dk-noimg">PDF</span>'}
-    <span class="dk-meta"><b>${esc(String(p.name).replace(/\.pdf$/i, ''))}</b><small>${esc(meta)}</small><small class="pl-n">${n ? n + ' mesure' + (n > 1 ? 's' : '') : 'Aucune mesure'}</small></span>${st}</button>`;
+  const meta = [where, p.size ? fmtSize(p.size) : '', p.modified ? dateShort(p.modified) : ''].filter(Boolean).join(' · ');
+  return `<div class="dk-card pl-card" role="button" tabindex="0" data-plan="${esc(p.key)}">${p.thumb ? `<img alt="" src="${esc(p.thumb)}" data-fallback loading="lazy">` : '<span class="dk-noimg">PDF</span>'}
+    <span class="dk-meta"><b>${esc(plBase(p.name))}</b><small>${esc(meta)}</small><small class="pl-n">${n ? n + ' mesure' + (n > 1 ? 's' : '') : 'Aucune mesure'}</small></span>${plStatus(p)}
+    <button class="pl-more" data-plmenu="${esc(p.key)}" aria-label="Actions du plan">${PL_IC.more}</button></div>`;
+}
+function planRow(p, where){
+  const n = PL.counts[p.key] || 0;
+  return `<div class="pl-row" role="button" tabindex="0" data-plan="${esc(p.key)}"><span class="pl-mini">${p.thumb ? `<img alt="" src="${esc(p.thumb)}" data-fallback loading="lazy">` : 'PDF'}</span>
+    <span class="pl-rn"><b>${esc(plBase(p.name))}</b>${where ? `<small>${esc(where)}</small>` : ''}</span>
+    <span class="pl-c">${p.modified ? esc(dateShort(p.modified)) : '–'}</span><span class="pl-c ${n ? 'pl-n' : ''}">${n || '–'}</span><span class="pl-c pl-cst">${plStatus(p)}</span>
+    <button class="pl-more" data-plmenu="${esc(p.key)}" aria-label="Actions du plan">${PL_IC.more}</button></div>`;
+}
+function plTreeHTML(n){
+  if (!n.children.length) return '';
+  return `<ul class="pl-tree">${n.children.map(c => {
+    const open = PL.open.has(plKey(c.path)) || (plUnder(PL.path, c.path) && !plSame(PL.path, c.path)), on = plSame(PL.path, c.path);
+    return `<li><div class="pl-node ${on ? 'on' : ''} ${open ? 'open' : ''}" role="button" tabindex="0" data-plpath="${plAttr(c.path)}" data-pldrop="${plAttr(c.path)}">
+      <span class="pl-tw ${c.children.length ? '' : 'none'}" data-pltog="${plAttr(c.path)}">${PL_IC.chev}</span>${PL_IC.folder}<span class="nm">${esc(c.name)}</span><span class="ct">${plStats(c.path).plans}</span></div>
+      ${open ? plTreeHTML(c) : ''}</li>`;
+  }).join('')}</ul>`;
 }
 function renderPlans(){
-  const s = desk.site === '__none' ? null : siteById(desk.site);
-  $('#dkHead').innerHTML = `${s ? logoHTML(s) : ''}<div class="t"><small>${s ? esc(s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(s ? s.name : 'À classer')}</h2></div>
-    <div class="dk-acts"><button class="btn" id="dkGalSite"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Photos</button><button class="btn primary" id="plAdd"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15h6"/></svg>Ajouter un plan</button></div>`;
+  if (!PL.tree) PL.tree = {id:'', name:'Plans', path:[], children:[]};
+  if (!plNode(PL.path)) { PL.path = []; plSavePath(); }
+  const s = plSite(), node = plNode(PL.path) || PL.tree, q = PL.q.trim().toLowerCase();
+  renderDeskSites();
+  $('#dkHead').innerHTML = `${s ? logoHTML(s) : ''}<div class="t"><small>${s ? esc(s.number || 'Chantier') : 'Hors chantier'}${PL.path.length ? ' · ' + esc(s ? s.name : 'À classer') : ''}</small><h2>${esc(PL.path.length ? PL.path[PL.path.length - 1] : s ? s.name : 'À classer')}</h2></div>
+    <div class="dk-acts"><button class="btn" id="dkGalSite">${PL_IC.photos}Photos</button><button class="btn" id="plNewFolder">${PL_IC.newFolder}Nouveau dossier</button><button class="btn primary" id="plAdd">${PL_IC.addPlan}Ajouter un plan</button></div>`;
   $('#dkInfo').hidden = !PL.err; $('#dkInfo').textContent = PL.err || '';
-  const list = PL.items;
-  $('#dkList').innerHTML = `<section class="dk-sec"><div class="dk-sep"><h3>Plans</h3><span class="n">${list.length}</span><span class="p">PDF du dossier ${esc(siteFolder(s))} / Plans</span></div>
-    ${list.length ? `<div class="dk-grid pl-grid">${list.map(planCard).join('')}</div>` : `<p class="dk-empty">${PL.loading ? 'Chargement…' : 'Aucun plan pour ce chantier. Touche « Ajouter un plan », dépose des PDF dans son dossier Plans sur ton Drive, ou partage un PDF vers BauGest.'}</p>`}</section>`;
+  const crumbs = `<button class="${PL.path.length ? '' : 'cur'}" data-plpath="[]" data-pldrop="[]">Plans</button>` + PL.path.map((n, i) => {
+    const p = PL.path.slice(0, i + 1);
+    return `<span class="sep">›</span><button class="${i === PL.path.length - 1 ? 'cur' : ''}" data-plpath="${plAttr(p)}" data-pldrop="${plAttr(p)}">${esc(n)}</button>`;
+  }).join('');
+  let folders = [], plans = [];
+  if (q) plans = PL.items.filter(it => plUnder(it.folder || [], PL.path) && String(it.name).toLowerCase().includes(q));
+  else { folders = node.children; plans = PL.items.filter(it => plSame(it.folder || [], PL.path)); }
+  const where = it => q ? ['Plans', ...(it.folder || [])].join(' / ') : '';
+  const list = PL.view === 'list'
+    ? `<div class="pl-list"><div class="pl-row hd"><span></span><span>Nom</span><span class="pl-c">Modifié</span><span class="pl-c">Mesures</span><span class="pl-c pl-cst">État</span><span></span></div>${plans.map(p => planRow(p, where(p))).join('')}</div>`
+    : `<div class="dk-grid pl-grid">${plans.map(p => planCard(p, where(p))).join('')}</div>`;
+  const empty = PL.loading ? 'Chargement…' : q ? 'Aucun plan ne correspond.' : folders.length ? 'Aucun plan à ce niveau. Ouvre un dossier, ou touche « Ajouter un plan » pour en déposer ici.'
+    : PL.path.length ? 'Dossier vide. Touche « Ajouter un plan », ou glisse un plan ici depuis un autre dossier.' : 'Aucun plan pour ce chantier. Touche « Ajouter un plan », dépose des PDF dans son dossier Plans sur ton Drive, ou partage un PDF vers BauGest.';
+  $('#dkList').innerHTML = `<nav class="pl-crumbs" aria-label="Emplacement">${crumbs}<span class="pl-path">Drive : ${esc([siteFolder(s), 'Plans', ...PL.path].join(' / '))}</span></nav>
+    <div class="pl-bar"><label class="pl-search">${PL_IC.search}<input id="plQ" type="search" placeholder="Chercher un plan ici et dans les sous-dossiers" value="${esc(PL.q)}" autocomplete="off"></label>
+      <div class="pl-seg" role="group" aria-label="Affichage"><button data-plview="grid" class="${PL.view === 'grid' ? 'on' : ''}" aria-label="Vignettes">${PL_IC.grid}</button><button data-plview="list" class="${PL.view === 'list' ? 'on' : ''}" aria-label="Liste">${PL_IC.rows}</button></div></div>
+    ${folders.length ? `<section class="dk-sec"><div class="dk-sep"><h3>Dossiers</h3><span class="n">${folders.length}</span><span class="p">Glisse un plan au stylet sur un dossier, dans l’arbre ou sur le chemin (au doigt : appui long puis glisser)</span></div>
+      <div class="pl-folders">${folders.map(c => { const st = plStats(c.path); return `<div class="pl-folder" role="button" tabindex="0" data-plpath="${plAttr(c.path)}" data-pldrop="${plAttr(c.path)}">${PL_IC.bigFolder}<span class="t"><b>${esc(c.name)}</b><small>${st.plans} plan${st.plans > 1 ? 's' : ''} · ${st.mes} mesure${st.mes > 1 ? 's' : ''}</small></span><button class="pl-more" data-plfmenu="${plAttr(c.path)}" aria-label="Actions du dossier">${PL_IC.more}</button></div>`; }).join('')}</div></section>` : ''}
+    <section class="dk-sec"><div class="dk-sep"><h3>${q ? 'Résultats' : 'Plans'}</h3><span class="n">${plans.length}</span><span class="p">${q ? 'Recherche dans ' + esc(['Plans', ...PL.path].join(' / ')) : 'PDF de ' + esc(['Plans', ...PL.path].join(' / '))}</span></div>
+    ${plans.length ? list : `<p class="dk-empty">${empty}</p>`}</section>`;
   $$('#dkList img[data-fallback]').forEach(i => i.addEventListener('error', () => { i.replaceWith(Object.assign(document.createElement('span'), {className:'dk-noimg', textContent:'PDF'})); }, {once:true}));
 }
-async function enqueuePlan(blob, name, site, uid){
+function plGo(path){ PL.path = path; PL.q = ''; plSavePath(); renderPlans(); $('#dkMain').scrollTop = 0; }
+
+/* ---------- menus et fenêtres ---------- */
+let plMenuEl = null, plMenuAt = 0;
+function plCloseMenu(){ if (plMenuEl) { plMenuEl.remove(); plMenuEl = null; } }
+function plMenu(btn, items){
+  plCloseMenu(); plMenuAt = Date.now();
+  plMenuEl = document.createElement('div'); plMenuEl.className = 'pl-menu'; plMenuEl.setAttribute('role', 'menu');
+  plMenuEl.innerHTML = items.map((it, i) => it === '-' ? '<hr>' : `<button role="menuitem" data-i="${i}" class="${it.danger ? 'danger' : ''}">${it.icon}${esc(it.label)}</button>`).join('');
+  document.body.appendChild(plMenuEl);
+  const r = btn.getBoundingClientRect(), w = plMenuEl.offsetWidth, h = plMenuEl.offsetHeight;
+  plMenuEl.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + 'px';
+  plMenuEl.style.top = (r.bottom + h + 8 > innerHeight ? Math.max(8, r.top - h - 4) : r.bottom + 4) + 'px';
+  plMenuEl.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; const it = items[+b.dataset.i]; plCloseMenu(); it.run(); });
+}
+function plDialog(title, body, foot){
+  $('#plDlgTitle').textContent = title; $('#plDlgBody').innerHTML = body; $('#plDlgFoot').replaceChildren();
+  const el = $('#sheetPlDlg');
+  for (const f of foot) { const b = document.createElement('button'); b.className = 'btn' + (f.primary ? ' primary' : '') + (f.danger ? ' danger' : ''); b.textContent = f.label; if (f.id) b.id = f.id; b.addEventListener('click', () => f.run ? f.run() : closeSheet(el)); $('#plDlgFoot').appendChild(b); }
+  openSheet('#sheetPlDlg');
+  const inp = el.querySelector('input'); if (inp) setTimeout(() => { inp.focus(); inp.select(); }, 60);
+  return el;
+}
+function plNameDialog(title, initial, taken, sugg, onOk){
+  const low = new Set(taken.map(x => x.toLowerCase()));
+  const el = plDialog(title, `<input id="plDlgName" class="pl-input" type="text" value="${esc(initial)}" placeholder="Nom" autocomplete="off">
+    ${sugg ? `<p class="imp-label">Suggestions</p><div class="pl-chips">${PL_SUGG.filter(x => !low.has(x.toLowerCase())).map(x => `<button class="pl-chip" type="button">${esc(x)}</button>`).join('')}</div>` : ''}
+    <p class="pl-err" id="plDlgErr" hidden></p>`, [{label:'Annuler'}, {label:'Valider', primary:true, id:'plDlgOk', run:() => go()}]);
+  const inp = $('#plDlgName'), err = $('#plDlgErr');
+  $$('#plDlgBody .pl-chip').forEach(c => c.addEventListener('click', () => { inp.value = c.textContent; inp.focus(); }));
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  async function go(){
+    const v = clean(inp.value).slice(0, 80);
+    const bad = !v ? 'Donne un nom.' : (v.toLowerCase() !== String(initial).toLowerCase() && low.has(v.toLowerCase())) ? 'Ce nom existe déjà à cet endroit.' : '';
+    if (bad) { err.textContent = bad; err.hidden = false; return; }
+    $('#plDlgOk').disabled = true;
+    try { await onOk(v); closeSheet(el); }
+    catch (e) { err.textContent = e.message || String(e); err.hidden = false; $('#plDlgOk').disabled = false; }
+  }
+}
+function plConfirm(title, text, label, run){
+  const el = plDialog(title, `<p class="hint">${esc(text)}</p><p class="pl-err" id="plDlgErr" hidden></p>`, [{label:'Annuler'}, {label, danger:true, id:'plDlgOk', run:async () => {
+    $('#plDlgOk').disabled = true;
+    try { await run(); closeSheet(el); } catch (e) { $('#plDlgErr').textContent = e.message || String(e); $('#plDlgErr').hidden = false; $('#plDlgOk').disabled = false; }
+  }}]);
+}
+function plMoveDialog(title, isBlocked, onPick){
+  const rows = [];
+  (function walk(n, d){ rows.push({path:n.path, name:d ? n.name : 'Plans (racine)', d}); n.children.forEach(c => walk(c, d + 1)); })(PL.tree, 0);
+  let sel = null;
+  const el = plDialog(title, `<p class="hint">Choisis le dossier de destination. Les mesures suivent le plan.</p>
+    <div class="pl-pick">${rows.map((r, i) => `<button type="button" data-r="${i}" ${isBlocked(r.path) ? 'disabled' : ''} style="padding-left:${10 + r.d * 18}px">${PL_IC.folder}${esc(r.name)}</button>`).join('')}</div>
+    <p class="pl-err" id="plDlgErr" hidden></p>`, [{label:'Annuler'}, {label:'Déplacer ici', primary:true, id:'plDlgOk', run:async () => {
+    if (!sel) return; $('#plDlgOk').disabled = true;
+    try { await onPick(sel); closeSheet(el); } catch (e) { $('#plDlgErr').textContent = e.message || String(e); $('#plDlgErr').hidden = false; $('#plDlgOk').disabled = false; }
+  }}]);
+  $('#plDlgOk').disabled = true;
+  $$('#plDlgBody [data-r]').forEach(b => b.addEventListener('click', () => { $$('#plDlgBody [data-r]').forEach(x => x.classList.remove('on')); b.classList.add('on'); sel = rows[+b.dataset.r].path; $('#plDlgOk').disabled = false; }));
+}
+
+/* ---------- opérations sur le Drive ---------- */
+const PL_FILES = 'https://www.googleapis.com/drive/v3/files/';
+const plPatch = (id, body, params = {}) => api(PL_FILES + encodeURIComponent(id) + '?' + new URLSearchParams({fields:'id,name,parents', ...params}),
+  {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body || {})});
+function plForgetFolder(id){ let ch = false; for (const k of Object.keys(S.drive.folderCache || {})) if (S.drive.folderCache[k] === id) { delete S.drive.folderCache[k]; ch = true; } if (ch) save(); }
+async function plFolderId(path){ const n = plNode(path); if (n && n.id) return n.id; return ensurePath([siteFolder(plSite()), 'Plans', ...path]); }
+async function plRepath(oldP, newP){
+  const swap = p => plUnder(p, oldP) ? [...newP, ...p.slice(oldP.length)] : p;
+  const base = [siteFolder(plSite()), 'Plans'];
+  for (const it of PL.items) it.folder = swap(it.folder || []);
+  for (const r of await PLANCACHE.all()) if ((r.siteId || 'none') === PL.sid && r.folder && plUnder(r.folder, oldP)) { r.folder = swap(r.folder); await PLANCACHE.put(r); }
+  for (const it of await DB.all()) if (it.meta.kind === 'plan' && (it.meta.siteId || 'none') === PL.sid) {
+    const f = (it.meta.path || []).slice(2);
+    if (plUnder(f, oldP)) { it.meta.path = [...base, ...swap(f)]; await DB.put(it); }
+  }
+  PL.path = swap(PL.path); plSavePath();
+  PL.open = new Set([...PL.open].map(k => plKey(swap(k.split('\u001f').filter(Boolean)))));
+  (function fix(n){ n.path = swap(n.path); n.children.forEach(fix); })(PL.tree);
+  plTreeSave();
+}
+async function plNewFolder(){
+  const node = plNode(PL.path) || PL.tree;
+  const taken = node.children.map(c => c.name).concat(PL.path.length ? [] : [...PL_RESERVED]);
+  plNameDialog('Nouveau dossier', '', taken, true, async name => {
+    const off = plOffline(); if (off) throw new Error('Connexion au Drive nécessaire · ' + off);
+    const parent = await plFolderId(PL.path);
+    const f = await createFolder(name, parent);
+    S.drive.folderCache[parent + '/' + name] = f.id; save();
+    node.children.push({id:f.id, name, path:[...PL.path, name], children:[]}); node.children.sort(plSort);
+    plTreeSave(); renderPlans(); note(`Dossier « ${name} » créé`, 2500);
+  });
+}
+function plFolderMenu(btn, path){
+  const n = plNode(path); if (!n) return;
+  const parentPath = path.slice(0, -1), parent = plNode(parentPath);
+  plMenu(btn, [
+    {icon:PL_IC.open, label:'Ouvrir', run:() => plGo(path)},
+    {icon:PL_IC.edit, label:'Renommer', run:() => plNameDialog('Renommer le dossier', n.name, parent.children.filter(c => c !== n).map(c => c.name).concat(parentPath.length ? [] : [...PL_RESERVED]), false, async name => {
+      if (name === n.name) return;
+      const off = plOffline(); if (off) throw new Error('Connexion au Drive nécessaire · ' + off);
+      const id = n.id || await plFolderId(path);
+      await plPatch(id, {name}); plForgetFolder(id);
+      n.name = name; parent.children.sort(plSort);
+      await plRepath(path, [...parentPath, name]); renderPlans(); note('Dossier renommé', 2200);
+    })},
+    {icon:PL_IC.move, label:'Déplacer vers…', run:() => plMoveDialog(`Déplacer « ${n.name} »`, p => plUnder(p, path) || plSame(p, parentPath), dest => plMoveFolder(path, dest))},
+    '-',
+    {icon:PL_IC.trash, label:'Supprimer le dossier', danger:true, run:() => plDeleteFolder(path)}
+  ]);
+}
+async function plMoveFolder(path, dest){
+  const n = plNode(path), from = plNode(path.slice(0, -1)), to = plNode(dest);
+  if (!n || !to || plUnder(dest, path)) return;
+  if (to.children.some(c => c.name.toLowerCase() === n.name.toLowerCase())) throw new Error('Un dossier porte déjà ce nom à cet endroit.');
+  const off = plOffline(); if (off) throw new Error('Connexion au Drive nécessaire · ' + off);
+  const id = n.id || await plFolderId(path), oldParent = from.id || await plFolderId(path.slice(0, -1)), newParent = await plFolderId(dest);
+  await plPatch(id, {}, {addParents:newParent, removeParents:oldParent}); plForgetFolder(id);
+  from.children = from.children.filter(c => c !== n); to.children.push(n); to.children.sort(plSort);
+  await plRepath(path, [...dest, n.name]); renderPlans(); note(`Dossier déplacé dans ${['Plans', ...dest].join(' / ')}`, 2600);
+}
+function plDeleteFolder(path){
+  const n = plNode(path); if (!n) return;
+  if (n.children.length || plStats(path).plans) {
+    plDialog('Dossier non vide', `<p class="hint">« ${esc(n.name)} » contient encore ${plStats(path).plans} plan(s)${n.children.length ? ' et des sous-dossiers' : ''}. Déplace-les ou supprime-les d’abord.</p>`, [{label:'OK'}]);
+    return;
+  }
+  plConfirm('Supprimer le dossier', `Le dossier « ${n.name} » ira dans la corbeille de ton Drive.`, 'Supprimer', async () => {
+    const off = plOffline(); if (off) throw new Error('Connexion au Drive nécessaire · ' + off);
+    const id = n.id || await plFolderId(path);
+    const other = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q:`'${qEsc(id)}' in parents and trashed=false`, pageSize:'1', fields:'files(id,name)'}));
+    if ((other.files || []).length) throw new Error(`Le dossier contient encore « ${other.files[0].name} » sur le Drive.`);
+    await plPatch(id, {trashed:true}); plForgetFolder(id);
+    const parent = plNode(path.slice(0, -1)); parent.children = parent.children.filter(c => c !== n);
+    if (plUnder(PL.path, path)) { PL.path = path.slice(0, -1); plSavePath(); }
+    plTreeSave(); renderPlans(); note('Dossier mis à la corbeille du Drive', 2500);
+  });
+}
+function plPlanMenu(btn, key){
+  const p = PL.items.find(x => x.key === key); if (!p) return;
+  plMenu(btn, [
+    {icon:PL_IC.open, label:'Ouvrir et mesurer', run:() => openPlan(key)},
+    {icon:PL_IC.move, label:'Déplacer vers…', run:() => plMoveDialog(`Déplacer « ${plBase(p.name)} »`, path => plSame(path, p.folder || []), dest => plMovePlan(p, dest))},
+    {icon:PL_IC.edit, label:'Renommer', run:() => plNameDialog('Renommer le plan', plBase(p.name), [], false, async name => {
+      const full = cleanPdfName(name);
+      if (full === p.name) return;
+      if (p.driveId) { const off = plOffline(); if (off) throw new Error('Connexion au Drive nécessaire · ' + off); await plPatch(p.driveId, {name:full}); }
+      for (const it of await DB.all()) if (it.meta.kind === 'plan' && it.meta.uid === p.key) { it.meta.name = full; await DB.put(it); }
+      const r = await PLANCACHE.get(p.key); if (r) { r.name = full; await PLANCACHE.put(r); }
+      const m = mesLocal(p.key); if (m) { m.planName = full; mesLocalSave(p.key, m); }
+      p.name = full; PL.items.sort(plSort); renderPlans(); note('Plan renommé', 2200);
+    })},
+    '-',
+    {icon:PL_IC.trash, label:'Mettre à la corbeille', danger:true, run:() => plConfirm('Supprimer le plan', `« ${plBase(p.name)} » ira dans la corbeille de ton Drive (récupérable pendant 30 jours). Ses mesures restent enregistrées.`, 'Supprimer', async () => {
+      if (p.driveId) { const off = plOffline(); if (off) throw new Error('Connexion au Drive nécessaire · ' + off); await plPatch(p.driveId, {trashed:true}); }
+      await DB.del('pl-' + p.key); await PLANCACHE.del(p.key); await refreshQueue();
+      PL.items = PL.items.filter(x => x !== p); renderPlans(); note('Plan mis à la corbeille', 2500);
+    })}
+  ]);
+}
+async function plMovePlan(p, dest){
+  if (plSame(p.folder || [], dest)) return;
+  const label = ['Plans', ...dest].join(' / ');
+  if (p.driveId) {
+    const off = plOffline(); if (off) throw new Error('Connexion au Drive nécessaire · ' + off);
+    const to = await plFolderId(dest), from = p.parentId || await plFolderId(p.folder || []);
+    await plPatch(p.driveId, {}, {addParents:to, removeParents:from});
+    p.parentId = to;
+  }
+  const base = [siteFolder(plSite()), 'Plans'];
+  for (const it of await DB.all()) if (it.meta.kind === 'plan' && it.meta.uid === p.key) { it.meta.path = [...base, ...dest]; await DB.put(it); }
+  const r = await PLANCACHE.get(p.key); if (r) { r.folder = dest; r.parentId = p.parentId || ''; await PLANCACHE.put(r); }
+  p.folder = dest; plEnsureNode(dest); renderPlans(); note('Déplacé dans ' + label, 2600);
+}
+
+/* ---------- glisser-déposer au stylet, au doigt et à la souris ----------
+   Stylet et souris : le glisser démarre dès que la pointe bouge. Doigt : appui long (0,4 s), sinon le doigt fait défiler. */
+const PLD = {cand:null, active:false, ghost:null, over:null, swallow:false, hoverT:0, raf:0, x:0, y:0};
+function plDropAt(x, y){ const el = document.elementFromPoint(x, y); return el ? el.closest('[data-pldrop]') : null; }
+function plDragStart(){
+  const c = PLD.cand; PLD.active = true; PLD.swallow = true;
+  c.el.classList.add('pl-dragging'); document.body.classList.add('pl-is-dragging');
+  PLD.ghost = document.createElement('div'); PLD.ghost.className = 'pl-ghost';
+  PLD.ghost.innerHTML = `${PL_IC.addPlan}<span>${esc(plBase(c.item.name))}</span>`;
+  document.body.appendChild(PLD.ghost); plGhostPos();
+  try { navigator.vibrate && navigator.vibrate(15); } catch (e) {}
+  plAutoScroll();
+}
+function plGhostPos(){ if (PLD.ghost) PLD.ghost.style.transform = `translate(${PLD.x + 14}px, ${PLD.y + 14}px)`; }
+function plSetOver(t){
+  if (t === PLD.over) return;
+  PLD.over?.classList.remove('pl-drop'); PLD.over = t; t?.classList.add('pl-drop');
+  clearTimeout(PLD.hoverT);
+  if (t && t.classList.contains('pl-node') && !t.classList.contains('open') && t.querySelector('.pl-tw:not(.none)')) PLD.hoverT = setTimeout(() => {
+    if (PLD.over !== t || !PLD.active) return;
+    PL.open.add(plKey(JSON.parse(t.dataset.plpath))); PLD.over = null; renderDeskSites(); plSetOver(plDropAt(PLD.x, PLD.y));
+  }, 700);
+}
+function plAutoScroll(){
+  cancelAnimationFrame(PLD.raf); if (!PLD.active) return;
+  for (const box of [$('#dkMain'), $('.dk-side')]) {
+    if (!box) continue; const r = box.getBoundingClientRect();
+    if (PLD.x < r.left || PLD.x > r.right) continue;
+    const edge = 60; let v = 0;
+    if (PLD.y < r.top + edge) v = -Math.ceil((r.top + edge - PLD.y) / 4); else if (PLD.y > r.bottom - edge) v = Math.ceil((PLD.y - r.bottom + edge) / 4);
+    if (v) { box.scrollTop += v; plSetOver(plDropAt(PLD.x, PLD.y)); }
+  }
+  PLD.raf = requestAnimationFrame(plAutoScroll);
+}
+function plDragEnd(drop){
+  const c = PLD.cand, target = PLD.over, was = PLD.active;
+  if (c) clearTimeout(c.timer); clearTimeout(PLD.hoverT); cancelAnimationFrame(PLD.raf);
+  PLD.cand = null; PLD.active = false; PLD.over = null;
+  PLD.ghost?.remove(); PLD.ghost = null; document.body.classList.remove('pl-is-dragging');
+  $$('.pl-dragging,.pl-drop').forEach(x => x.classList.remove('pl-dragging', 'pl-drop'));
+  if (was) setTimeout(() => { PLD.swallow = false; }, 60);
+  if (!was || !drop || !target) return;
+  const dest = JSON.parse(target.dataset.pldrop);
+  if (plSame(dest, c.item.folder || [])) return;
+  plMovePlan(c.item, dest).catch(e => note('Déplacement impossible : ' + (e.message || e), 4000));
+}
+function bindPlanDrag(){
+  document.addEventListener('pointerdown', e => {
+    if (e.button > 0 || PLD.cand || $('#desk').hidden || desk.mode !== 'plans') return;
+    const el = e.target.closest('#dkList [data-plan]'); if (!el || e.target.closest('.pl-more')) return;
+    const item = PL.items.find(x => x.key === el.dataset.plan); if (!item) return;
+    PLD.swallow = false; PLD.x = e.clientX; PLD.y = e.clientY;
+    PLD.cand = {el, item, type:e.pointerType, id:e.pointerId, sx:e.clientX, sy:e.clientY, timer:0};
+    if (e.pointerType === 'touch') PLD.cand.timer = setTimeout(() => { if (PLD.cand && !PLD.active) plDragStart(); }, 400);
+  });
+  document.addEventListener('pointermove', e => {
+    const c = PLD.cand; if (!c || e.pointerId !== c.id) return;
+    PLD.x = e.clientX; PLD.y = e.clientY;
+    if (!PLD.active) {
+      const d = hyp(e.clientX - c.sx, e.clientY - c.sy);
+      if (c.type === 'touch') { if (d > 10) plDragEnd(false); return; }
+      if (d < 6) return;
+      plDragStart();
+    }
+    plGhostPos(); plSetOver(plDropAt(PLD.x, PLD.y));
+  });
+  document.addEventListener('pointerup', e => { if (PLD.cand && e.pointerId === PLD.cand.id) plDragEnd(true); });
+  document.addEventListener('pointercancel', e => { if (PLD.cand && e.pointerId === PLD.cand.id) plDragEnd(false); });
+  document.addEventListener('touchmove', e => { if (PLD.active || (PLD.cand && PLD.cand.type === 'pen')) e.preventDefault(); }, {passive:false});
+  document.addEventListener('contextmenu', e => { if (e.target.closest('#dkList [data-plan]')) e.preventDefault(); });
+  document.addEventListener('click', e => { if (PLD.swallow) { PLD.swallow = false; e.stopPropagation(); e.preventDefault(); } }, true);
+}
+
+async function enqueuePlan(blob, name, site, uid, folder = []){
   await DB.put({id:'pl-' + uid, blob, created:Date.now(), thumb:PDF_THUMB,
-    meta:{kind:'plan', mime:'application/pdf', uid, name, path:[siteFolder(site), 'Plans'], description:`Chantier : ${siteLabel(site)}\nPlan ajouté avec BauGest`,
+    meta:{kind:'plan', mime:'application/pdf', uid, name, path:[siteFolder(site), 'Plans', ...folder], description:`Chantier : ${siteLabel(site)}\nPlan ajouté avec BauGest`,
       siteId:site ? site.id : 'none', taken:new Date().toISOString(), tags:[]}, error:''});
+}
+
+function renderDeskModes(){
+  const show = isTabletScreen();
+  $('#dkModes').hidden = !show;
+  $$('#dkModes [data-dmode]').forEach(b => { const on = b.dataset.dmode === desk.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  $('#dkTitle').textContent = desk.mode === 'plans' ? 'Plans' : 'Documents';
 }
 async function planUploaded(uid, f){
   const r = await PLANCACHE.get(uid);
@@ -4389,12 +4846,12 @@ async function addPlanFiles(files){
   let first = null;
   for (const f of files) {
     const uid = pvUid(), name = cleanPdfName(f.name);
-    await PLANCACHE.put({key:uid, name, siteId:sid, size:f.size, blob:f, used:Date.now(), pending:true});
-    await enqueuePlan(f, name, site, uid);
+    await PLANCACHE.put({key:uid, name, siteId:sid, size:f.size, blob:f, used:Date.now(), pending:true, folder:PL.path.slice()});
+    await enqueuePlan(f, name, site, uid, PL.path.slice());
     first = first || uid;
   }
   await refreshQueue(); processQueue();
-  note(`${files.length} plan${files.length > 1 ? 's' : ''} ajouté${files.length > 1 ? 's' : ''} → ${siteFolder(site)} / Plans`, 3500);
+  note(`${files.length} plan${files.length > 1 ? 's' : ''} ajouté${files.length > 1 ? 's' : ''} → ${[siteFolder(site), 'Plans', ...PL.path].join(' / ')}`, 3500);
   await loadPlans();
   if (files.length === 1 && first) openPlan(first);
 }
@@ -4498,10 +4955,10 @@ async function openPlan(key){
       pvBusy('Téléchargement depuis le Drive…');
       const r = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(item.driveId)}?alt=media&supportsAllDrives=true`);
       blob = await r.blob();
-      rec = {key, name:item.name, siteId:PV.siteId, size:blob.size, driveId:item.driveId, parentId:item.parentId || '', modified:item.modified || '', blob, used:Date.now()};
+      rec = {key, name:item.name, siteId:PV.siteId, size:blob.size, driveId:item.driveId, parentId:item.parentId || '', folder:item.folder || [], modified:item.modified || '', blob, used:Date.now()};
     } else if (!blob && rec && rec.blob) blob = rec.blob;
     if (!blob) throw new Error(navigator.onLine ? 'plan introuvable' : 'plan pas encore téléchargé sur cet appareil (hors ligne)');
-    PLANCACHE.put({...(rec || {key, name:item.name, siteId:PV.siteId, size:blob.size}), blob, used:Date.now()});
+    PLANCACHE.put({...(rec || {key, name:item.name, siteId:PV.siteId, size:blob.size}), folder:item.folder || (rec && rec.folder) || [], blob, used:Date.now()});
     await needPdfJs();
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const doc = await pdfjsLib.getDocument({data:bytes.slice(), isEvalSupported:false}).promise;
@@ -4871,8 +5328,33 @@ function bindPlans(){
     const b = e.target.closest('[data-dmode]'); if (!b || b.dataset.dmode === desk.mode) return;
     desk.mode = b.dataset.dmode; renderDeskModes(); $('#dkList').innerHTML = ''; loadDocs(); $('#dkMain').scrollTop = 0;
   });
-  $('#dkList').addEventListener('click', e => { const c = e.target.closest('[data-plan]'); if (c) openPlan(c.dataset.plan); });
-  $('#dkMain').addEventListener('click', e => { if (e.target.closest('#plAdd')) $('#plFile').click(); });
+  $('#dkMain').addEventListener('click', e => {
+    if (desk.mode !== 'plans') return;
+    const t = e.target;
+    if (t.closest('#plAdd')) { $('#plFile').click(); return; }
+    if (t.closest('#plNewFolder')) { plNewFolder(); return; }
+    const v = t.closest('[data-plview]'); if (v) { PL.view = v.dataset.plview; try { localStorage.setItem('baugest.plView', PL.view); } catch (err) {} renderPlans(); return; }
+    const fm = t.closest('[data-plfmenu]'); if (fm) { e.stopPropagation(); plFolderMenu(fm, JSON.parse(fm.dataset.plfmenu)); return; }
+    const pm = t.closest('[data-plmenu]'); if (pm) { e.stopPropagation(); plPlanMenu(pm, pm.dataset.plmenu); return; }
+    const go = t.closest('[data-plpath]'); if (go) { plGo(JSON.parse(go.dataset.plpath)); return; }
+    const c = t.closest('[data-plan]'); if (c) openPlan(c.dataset.plan);
+  });
+  $('#dkMain').addEventListener('input', e => {
+    if (e.target.id !== 'plQ') return;
+    PL.q = e.target.value; const pos = e.target.selectionStart; renderPlans();
+    const q = $('#plQ'); q.focus(); try { q.setSelectionRange(pos, pos); } catch (err) {}
+  });
+  $('#dkMain').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-plan],[data-plpath]')) { e.preventDefault(); e.target.click(); } });
+  $('#dkSites').addEventListener('click', e => {
+    const tg = e.target.closest('[data-pltog]');
+    if (tg) { e.stopPropagation(); const k = plKey(JSON.parse(tg.dataset.pltog)); if (PL.open.has(k)) PL.open.delete(k); else PL.open.add(k); renderDeskSites(); return; }
+    const n = e.target.closest('[data-plpath]'); if (n) { e.stopPropagation(); plGo(JSON.parse(n.dataset.plpath)); }
+  }, true);
+  $('#dkSites').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-plpath]')) { e.preventDefault(); e.target.click(); } });
+  document.addEventListener('click', e => { if (plMenuEl && !e.target.closest('.pl-menu')) plCloseMenu(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') plCloseMenu(); });
+  $('#dkMain').addEventListener('scroll', () => { if (Date.now() - plMenuAt > 400) plCloseMenu(); }, {passive:true});
+  bindPlanDrag();
   $('#plFile').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; addPlanFiles(f); });
   $('#piSites').addEventListener('click', e => { const b = e.target.closest('[data-pisite]'); if (!b || PI.busy) return; PI.site = b.dataset.pisite; renderPlanImport(); });
   $('#piGo').addEventListener('click', doPlanImport);
