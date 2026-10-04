@@ -485,6 +485,9 @@ html[data-theme="light"] .dk-st.tx{color:#1f4fbf}
 }
 
 #docView{z-index:44}
+#docView .panel-head{flex-wrap:wrap}
+#dvMode button{flex:1}
+@media (max-width:600px){#dvMode{order:3;flex:1 1 100%}}
 .dv-t{flex:1;min-width:0}
 .dv-t h1{font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dv-t small{display:block;font:12.5px/1.3 var(--mono);color:var(--muted);margin-top:4px}
@@ -1032,6 +1035,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
   <header class="panel-head">
     <button id="dvClose" class="icon-btn" aria-label="Retour"><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="dv-t"><h1 id="dvTitle"></h1><small id="dvSub"></small></div>
+    <div id="dvMode" class="dk-modes" hidden role="tablist" aria-label="Affichage du document"><button data-dv="hand" class="on" role="tab">Manuscrit</button><button data-dv="text" role="tab">Texte tapé</button></div>
   </header>
   <div class="panel-body"><div class="dv-pages" id="dvPages"></div></div>
   <div class="dv-bar">
@@ -1199,7 +1203,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
           <li>Bouton <b>Photo</b> : insère une photo (appareil photo, galerie ou photos du chantier). Outil <b>Déplacer</b> : bouge la photo, coin jaune pour la taille.</li>
           <li><b>Enregistrer</b> range le document sur le Drive dans <span class="mono">Chantier / Documents / type</span>. Il reste <b>modifiable</b> sur la tablette et le téléphone. Sans réseau, il attend dans la file d'envoi.</li>
           <li>Touche un document pour le voir, le <b>modifier</b>, le <b>partager en PDF</b> (WhatsApp, e-mail…) ou le supprimer.</li>
-          <li>Pastille <b>Texte</b> : Claude a transcrit ton écriture en texte tapé (PDF à côté du document dans le Drive). Ouvre le document → <b>Texte tapé (PDF)</b> pour l’envoyer par WhatsApp, e-mail ou une autre app.</li>
+          <li>Pastille <b>Texte</b> : Claude a transcrit ton écriture en texte tapé (PDF à côté du document dans le Drive). En haut du document, <b>Manuscrit / Texte tapé</b> change l’affichage (le choix est retenu) ; <b>Texte tapé (PDF)</b> l’envoie par WhatsApp, e-mail ou une autre app.</li>
         </ol>
         <p class="muted">Mise en page : Paramètres › Documents (par défaut) ou fiche du chantier (propre au chantier).</p>
         <h3>Plans PDF (tablette)</h3>
@@ -3476,7 +3480,7 @@ async function openDocView(it){
   $('#dvSub').textContent = [DOCS[it.dtype].name, fmtISO(it.date), s ? siteLabel(s) : 'À classer'].join(' · ');
   $('#dvStatus').textContent = 'Ouverture…';
   $('#dvPages').innerHTML = '';
-  $('#docView').hidden = false; $('#dvText').hidden = true;
+  $('#docView').hidden = false; $('#dvText').hidden = true; $('#dvMode').hidden = true; setDvButtons('hand');
   try {
     const rec = await getDocRec(it); if (!rec) throw new Error('document introuvable sur cet appareil');
     if (!docCur || docCur.it !== it) return;
@@ -3484,11 +3488,43 @@ async function openDocView(it){
     await waitImgs(rec.doc);
     $('#dvPages').innerHTML = '';
     rec.doc.pages.forEach((_, i) => { const im = new Image(); im.alt = 'Page ' + (i + 1); im.src = docRender(rec.doc, i, 900).toDataURL('image/jpeg', .88); $('#dvPages').append(im); });
+    docCur.handImgs = [...$('#dvPages').children]; docCur.mode = 'hand';
     $('#dvStatus').textContent = rec.demo ? 'Document d’exemple · modifiable' : rec.dirty ? 'Modifié sur cet appareil · envoi vers le Drive en attente' : 'Sur le Drive · modifiable sur la tablette et le téléphone';
     if (!rec.demo) loadTranscript(it);
   } catch (e) { $('#dvStatus').textContent = 'Ouverture impossible : ' + e.message; }
 }
-function closeDocView(){ $('#docView').hidden = true; $('#dvText').hidden = true; docCur = null; }
+function closeDocView(){ $('#docView').hidden = true; $('#dvText').hidden = true; $('#dvMode').hidden = true; docCur = null; }
+const DV_KEY = 'baugest.dvmode';
+function dvPref(){ try { return localStorage.getItem(DV_KEY) || 'hand'; } catch (e) { return 'hand'; } }
+function setDvButtons(m){ $$('#dvMode [data-dv]').forEach(b => { b.classList.toggle('on', b.dataset.dv === m); b.setAttribute('aria-selected', b.dataset.dv === m); }); }
+async function showDvMode(m, remember){
+  if (!docCur) return;
+  if (remember) { try { localStorage.setItem(DV_KEY, m); } catch (e) {} }
+  if (m === 'text' && !docCur.tx) m = 'hand';
+  docCur.mode = m; setDvButtons(m);
+  const box = $('#dvPages');
+  if (m === 'hand') { if (docCur.handImgs) box.replaceChildren(...docCur.handImgs); return; }
+  if (!docCur.txImgs) {
+    const cur = docCur; box.innerHTML = '<p class="hint" style="text-align:center">Ouverture du texte tapé…</p>';
+    try {
+      const lib = await needPdfJs();
+      const pdf = await lib.getDocument({data:new Uint8Array(await cur.tx.file.arrayBuffer()), isEvalSupported:false}).promise;
+      const imgs = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const pg = await pdf.getPage(i), v0 = pg.getViewport({scale:1}), vp = pg.getViewport({scale:1240 / v0.width});
+        const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+        await pg.render({canvasContext:c.getContext('2d'), viewport:vp}).promise;
+        const im = new Image(); im.alt = 'Texte tapé · page ' + i; im.src = c.toDataURL('image/jpeg', .9); imgs.push(im);
+      }
+      cur.txImgs = imgs; pdf.destroy?.();
+    } catch (e) {
+      if (docCur === cur) { box.innerHTML = ''; note('Texte tapé illisible : ' + e.message, 4000); showDvMode('hand'); }
+      return;
+    }
+    if (docCur !== cur || cur.mode !== 'text') return;
+  }
+  box.replaceChildren(...docCur.txImgs);
+}
 /* ---------- Version texte tapé (PDF déposé par Claude à côté du document dans le Drive) ---------- */
 const txName = n => String(n || '').replace(/\.json$/i, '') + '.pdf';
 async function markTranscripts(items){
@@ -3518,7 +3554,8 @@ async function loadTranscript(it){
     const tx = await findTranscript(it);
     if (!docCur || docCur.it !== it || !tx) return;
     docCur.tx = tx; it.tx = true;
-    $('#dvText').hidden = false;
+    $('#dvText').hidden = false; $('#dvMode').hidden = false;
+    if (dvPref() === 'text') showDvMode('text');
     const st = $('#dvStatus'); if (st && !/Version texte/.test(st.textContent)) st.textContent += ' · Version texte tapé disponible';
   } catch (e) {}
 }
@@ -3933,6 +3970,7 @@ function bindDocs(){
   $('#dvEdit').addEventListener('click', async () => { if (!docCur) return; try { const rec = docCur.rec || await getDocRec(docCur.it); if (rec) openEditor(null, null, rec); } catch (e) { note('Ouverture impossible : ' + e.message, 4000); } });
   $('#dvShare').addEventListener('click', () => docCur && shareDocItem(docCur.it));
   $('#dvText').addEventListener('click', shareTranscript);
+  $('#dvMode').addEventListener('click', e => { const b = e.target.closest('[data-dv]'); if (b) showDvMode(b.dataset.dv, true); });
   $('#dvDelete').addEventListener('click', () => docCur && askDeleteDoc(docCur.it));
   /* éditeur */
   $('#deClose').addEventListener('click', closeEditor);
