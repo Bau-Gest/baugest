@@ -428,6 +428,8 @@ input[type=date]{min-height:42px;padding:6px 10px;border-radius:10px;border:1px 
 .dk-st{justify-self:start;padding:2px 8px;border-radius:999px;font:600 11px/1.5 var(--body);text-transform:uppercase;letter-spacing:.05em;background:var(--surface2);color:var(--muted)}
 .dk-st.ok{background:rgba(72,201,133,.15);color:var(--ok)}
 .dk-st.wait{background:rgba(240,160,75,.16);color:var(--warn)}
+.dk-st.tx{background:rgba(31,79,191,.16);color:#5b8cff;margin-left:4px}
+html[data-theme="light"] .dk-st.tx{color:#1f4fbf}
 .dk-st.err{background:rgba(239,95,88,.16);color:var(--bad)}
 .dk-empty{margin:0;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);font-size:14px}
 @media (max-width:760px){
@@ -1037,6 +1039,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
     <div class="btn-row">
       <button id="dvEdit" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Modifier</button>
       <button id="dvShare" class="btn"><svg class="ic" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager en PDF</button>
+      <button id="dvText" class="btn" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>Texte tapé (PDF)</button>
       <button id="dvDelete" class="btn danger" aria-label="Supprimer le document"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>Supprimer</button>
     </div>
   </div>
@@ -1196,6 +1199,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
           <li>Bouton <b>Photo</b> : insère une photo (appareil photo, galerie ou photos du chantier). Outil <b>Déplacer</b> : bouge la photo, coin jaune pour la taille.</li>
           <li><b>Enregistrer</b> range le document sur le Drive dans <span class="mono">Chantier / Documents / type</span>. Il reste <b>modifiable</b> sur la tablette et le téléphone. Sans réseau, il attend dans la file d'envoi.</li>
           <li>Touche un document pour le voir, le <b>modifier</b>, le <b>partager en PDF</b> (WhatsApp, e-mail…) ou le supprimer.</li>
+          <li>Pastille <b>Texte</b> : Claude a transcrit ton écriture en texte tapé (PDF à côté du document dans le Drive). Ouvre le document → <b>Texte tapé (PDF)</b> pour l’envoyer par WhatsApp, e-mail ou une autre app.</li>
         </ol>
         <p class="muted">Mise en page : Paramètres › Documents (par défaut) ou fiche du chantier (propre au chantier).</p>
         <h3>Plans PDF (tablette)</h3>
@@ -3359,7 +3363,7 @@ function driveDocItem(f){
   const ap = f.appProperties || {};
   return {key:'u' + (ap.uid || f.id), uid:ap.uid || '', src:'drive', title:ap.title || f.name, dtype:DOCS[ap.dtype] ? ap.dtype : 'libre',
     date:(ap.taken || f.createdTime || '').slice(0, 10), siteId:remapId(ap.site) || 'none', thumb:f.thumbnailLink ? f.thumbnailLink.replace(/=s\d+$/, '=s400') : '',
-    pages:0, driveId:f.id, modified:f.modifiedTime || ''};
+    pages:0, driveId:f.id, fname:f.name || '', modified:f.modifiedTime || ''};
 }
 async function seedDemo(){
   if (!DEMO || tokenValid()) return;
@@ -3406,9 +3410,10 @@ async function loadDocsRaw(){
         for (const f of res.files || []) {
           const it = driveDocItem(f), rec = known.get(it.uid);
           if (!rec) more.push(it);
-          else { const li = local.find(x => x.uid === it.uid); if (li) { li.driveId = f.id; if (!rec.dirty && f.modifiedTime && rec.modified && f.modifiedTime > rec.modified) li.stale = true; if (!li.thumb) li.thumb = it.thumb; } }
+          else { const li = local.find(x => x.uid === it.uid); if (li) { li.driveId = f.id; li.fname = f.name || ''; if (!rec.dirty && f.modifiedTime && rec.modified && f.modifiedTime > rec.modified) li.stale = true; if (!li.thumb) li.thumb = it.thumb; } }
         }
       } catch (e) { desk.err = 'Lecture du Drive impossible : ' + e.message; }
+      try { await markTranscripts(local.concat(more)); } catch (e) {}
     }
   }
   if (tok !== desk.token) return;
@@ -3431,7 +3436,7 @@ function renderDesk(){
 function docCard(it){
   const st = it.src === 'demo' ? '<span class="dk-st">Exemple</span>' : it.src === 'drive' ? '<span class="dk-st ok">Sur le Drive</span>'
     : it.dirty ? '<span class="dk-st wait">À envoyer</span>' : '<span class="dk-st ok">Sur le Drive</span>';
-  return `<button class="dk-card" data-doc="${esc(it.key)}">${it.thumb ? `<img alt="" loading="lazy" src="${esc(it.thumb)}" data-fallback="1">` : '<span class="dk-noimg">DOC</span>'}<span class="dk-meta"><b>${esc(it.title)}</b><small>${fmtISO(it.date)}${it.pages > 1 ? ' · ' + it.pages + ' pages' : ''}</small>${st}</span></button>`;
+  return `<button class="dk-card" data-doc="${esc(it.key)}">${it.thumb ? `<img alt="" loading="lazy" src="${esc(it.thumb)}" data-fallback="1">` : '<span class="dk-noimg">DOC</span>'}<span class="dk-meta"><b>${esc(it.title)}</b><small>${fmtISO(it.date)}${it.pages > 1 ? ' · ' + it.pages + ' pages' : ''}</small><span>${st}${it.tx ? '<span class="dk-st tx">Texte</span>' : ''}</span></span></button>`;
 }
 
 /* ---------- Ouverture d'un document (appareil ou Drive) ---------- */
@@ -3471,7 +3476,7 @@ async function openDocView(it){
   $('#dvSub').textContent = [DOCS[it.dtype].name, fmtISO(it.date), s ? siteLabel(s) : 'À classer'].join(' · ');
   $('#dvStatus').textContent = 'Ouverture…';
   $('#dvPages').innerHTML = '';
-  $('#docView').hidden = false;
+  $('#docView').hidden = false; $('#dvText').hidden = true;
   try {
     const rec = await getDocRec(it); if (!rec) throw new Error('document introuvable sur cet appareil');
     if (!docCur || docCur.it !== it) return;
@@ -3480,9 +3485,56 @@ async function openDocView(it){
     $('#dvPages').innerHTML = '';
     rec.doc.pages.forEach((_, i) => { const im = new Image(); im.alt = 'Page ' + (i + 1); im.src = docRender(rec.doc, i, 900).toDataURL('image/jpeg', .88); $('#dvPages').append(im); });
     $('#dvStatus').textContent = rec.demo ? 'Document d’exemple · modifiable' : rec.dirty ? 'Modifié sur cet appareil · envoi vers le Drive en attente' : 'Sur le Drive · modifiable sur la tablette et le téléphone';
+    if (!rec.demo) loadTranscript(it);
   } catch (e) { $('#dvStatus').textContent = 'Ouverture impossible : ' + e.message; }
 }
-function closeDocView(){ $('#docView').hidden = true; docCur = null; }
+function closeDocView(){ $('#docView').hidden = true; $('#dvText').hidden = true; docCur = null; }
+/* ---------- Version texte tapé (PDF déposé par Claude à côté du document dans le Drive) ---------- */
+const txName = n => String(n || '').replace(/\.json$/i, '') + '.pdf';
+async function markTranscripts(items){
+  const named = items.filter(i => i.fname);
+  for (let i = 0; i < named.length; i += 30) {
+    const part = named.slice(i, i + 30);
+    const q = `trashed=false and mimeType='application/pdf' and (${part.map(x => `name='${qEsc(txName(x.fname))}'`).join(' or ')})`;
+    const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, pageSize:'100', fields:'files(id,name)'}));
+    const have = new Set((r.files || []).map(f => f.name));
+    part.forEach(x => { x.tx = have.has(txName(x.fname)); });
+  }
+}
+async function findTranscript(it){
+  const id = it.driveId || (docCur && docCur.rec && docCur.rec.driveId);
+  if (!id || !tokenValid() || !navigator.onLine) return null;
+  const m = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?fields=name,parents`);
+  const q = `trashed=false and mimeType='application/pdf' and name='${qEsc(txName(m.name))}'` + (m.parents && m.parents[0] ? ` and '${qEsc(m.parents[0])}' in parents` : '');
+  const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, orderBy:'modifiedTime desc', pageSize:'1', fields:'files(id,name,modifiedTime)'}));
+  const f = (r.files || [])[0]; if (!f) return null;
+  const res = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(f.id)}?alt=media`);
+  const blob = res && typeof res.blob === 'function' ? await res.blob() : null;
+  if (!blob) return null;
+  return {file:new File([blob], f.name, {type:'application/pdf'}), modified:f.modifiedTime};
+}
+async function loadTranscript(it){
+  try {
+    const tx = await findTranscript(it);
+    if (!docCur || docCur.it !== it || !tx) return;
+    docCur.tx = tx; it.tx = true;
+    $('#dvText').hidden = false;
+    const st = $('#dvStatus'); if (st && !/Version texte/.test(st.textContent)) st.textContent += ' · Version texte tapé disponible';
+  } catch (e) {}
+}
+async function shareTranscript(){
+  const tx = docCur && docCur.tx; if (!tx) return;
+  const it = docCur.it, s = siteById(it.siteId);
+  const text = `${it.title} (texte) · ${siteLabel(s)} · ${fmtISO(it.date)}`;
+  if (navigator.canShare && navigator.canShare({files:[tx.file]})) {
+    try { await navigator.share({files:[tx.file], title:text, text}); }
+    catch (e) { if (e.name !== 'AbortError') note(IN_FRAME ? 'Partage bloqué dans cet aperçu. Il fonctionne dans l’app installée.' : 'Partage impossible : ' + e.message, 4000); }
+    return;
+  }
+  const u = URL.createObjectURL(tx.file), a = Object.assign(document.createElement('a'), {href:u, download:tx.file.name});
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 30000);
+  note('Partage non disponible ici : PDF téléchargé.', 3500);
+}
 async function docToPdf(doc){
   await waitImgs(doc);
   return makePdf(doc.pages.map((_, i) => docRender(doc, i, 1240)), doc.title);
@@ -3880,6 +3932,7 @@ function bindDocs(){
   $('#dvClose').addEventListener('click', closeDocView);
   $('#dvEdit').addEventListener('click', async () => { if (!docCur) return; try { const rec = docCur.rec || await getDocRec(docCur.it); if (rec) openEditor(null, null, rec); } catch (e) { note('Ouverture impossible : ' + e.message, 4000); } });
   $('#dvShare').addEventListener('click', () => docCur && shareDocItem(docCur.it));
+  $('#dvText').addEventListener('click', shareTranscript);
   $('#dvDelete').addEventListener('click', () => docCur && askDeleteDoc(docCur.it));
   /* éditeur */
   $('#deClose').addEventListener('click', closeEditor);
