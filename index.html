@@ -854,6 +854,18 @@ input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{
   .dz-ml .dz-mln{order:2}
   .dz-ml.nonly{grid-template-columns:70px minmax(0,1fr) 40px}
 }
+
+/* ---------- Devis : mémos (v1.9) ---------- */
+.dz-memos{display:grid;gap:8px;margin-top:18px}
+.dz-memos h3{margin:0;font:700 15px/1 var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.dz-memo{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);text-align:left;min-height:56px}
+.dz-memo .t{flex:1;min-width:0;display:grid;gap:2px}
+.dz-memo b{font:700 17px/1.15 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.dz-memo small{font:12px/1.35 var(--mono);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz-memo .ic{color:var(--muted)}
+.dz-memo>.ic:first-child{color:var(--signal)}
+.dz-memo .wait{color:var(--warn)}
+#mvPages canvas,#mvPages img{width:100%;max-width:760px;height:auto;border-radius:4px;background:#fff;display:block;box-shadow:0 6px 24px rgba(0,0,0,.45)}
 </style>
 </head>
 <body>
@@ -1310,6 +1322,24 @@ input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{
     <p id="dmRead" class="dm-read" role="status"></p>
     <div id="dmList" class="dm-list" hidden></div>
     <div id="dmTools" class="dm-tools"></div>
+  </div>
+</section>
+
+
+<!-- Devis : visionneuse du mémo PDF (v1.9) -->
+<section id="memoView" class="panel dv" hidden aria-labelledby="mvTitle">
+  <header class="panel-head">
+    <button id="mvClose" class="icon-btn" aria-label="Retour à la fiche"><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+    <div class="dv-t"><h1 id="mvTitle">Mémo travaux</h1><small id="mvSub"></small></div>
+  </header>
+  <div class="panel-body" id="mvScroll"><div class="dv-pages" id="mvPages"></div></div>
+  <div class="dv-bar">
+    <small id="mvStatus"></small>
+    <div class="btn-row">
+      <button id="mvSave" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.9-9.9A6 6 0 0 1 17.7 9 4.5 4.5 0 0 1 17 18"/><path d="M12 12v8M9 15l3-3 3 3"/></svg>Enregistrer sur le Drive</button>
+      <button id="mvDown" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg>Télécharger</button>
+      <button id="mvShare" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>
+    </div>
   </div>
 </section>
 
@@ -5992,10 +6022,11 @@ function renderDzFiche(){
   <div class="dz-foot">
     <small>Drive › ${esc(DZ_ROOT)} › ${esc(d.folder)}</small>
     <button class="btn danger" id="dzDel">${ICON_TRASH}Supprimer</button>
-    <button class="btn primary" id="dzMemo">${ICON_DOC}Mémo PDF</button>
-  </div>`;
+    <button class="btn primary" id="dzMemo">${ICON_DOC}Créer le mémo PDF</button>
+  </div>
+  <div class="dz-memos" id="dzMemos" hidden></div>`;
   renderDzHead(d); renderDzActs(d); renderDzGps(); renderDzItems();
-  dz.photos = []; renderDzPhotos(); dzLoadPhotos();
+  dz.photos = []; dz.memos = []; renderDzPhotos(); dzLoadPhotos();
 }
 
 /* ---------- Photos de la fiche ---------- */
@@ -6003,6 +6034,7 @@ function dzFreeUrls(){ dz.urls.forEach(u => URL.revokeObjectURL(u)); dz.urls = [
 async function dzLoadPhotos(){
   const d = devById(dz.cur); if (!d) return;
   const tok = ++dz.ptok, sid = devSid(d);
+  dzLoadMemos(d);
   const local = (await DB.all()).filter(it => it.meta && it.meta.siteId === sid && it.meta.kind !== 'export' && it.blob).map(localItem);
   let drive = [], err = '';
   const r = queueReason();
@@ -6242,21 +6274,23 @@ function dzMemoPages(d, photos, logo){
 function dzMemoName(d){ return `Memo-travaux_${slug(devName(d))}${devCity(d) ? '_' + slug(devCity(d)) : ''}_${todayISO()}.pdf`; }
 async function dzShareFile(file, text){
   if (navigator.canShare && navigator.canShare({files:[file]})) {
-    try { await navigator.share({files:[file], title:text, text}); $('#note').hidden = true; dz.share = null; return; }
+    try { await navigator.share({files:[file], title:text, text}); $('#note').hidden = true; return true; }
     catch (e) {
-      if (e.name === 'NotAllowedError') { dz.share = {file, text}; note('Mémo prêt. Touchez encore « Mémo PDF » pour le partager.', 4200); return; }
-      if (e.name === 'AbortError') { $('#note').hidden = true; return; }
-      if (IN_FRAME) { note('Partage bloqué dans cet aperçu. Il fonctionne dans l’app installée.', 4000); return; }
+      if (e.name === 'AbortError') { $('#note').hidden = true; return false; }
+      if (e.name === 'NotAllowedError') { note('Touchez encore « Partager ».', 3500); return false; }
+      if (IN_FRAME) { note('Partage bloqué dans cet aperçu. Il fonctionne dans l’app installée.', 4000); return false; }
     }
   }
-  if (IN_FRAME) { note('Mémo créé (' + Math.round(file.size / 1024) + ' Ko). Le partage est bloqué dans cet aperçu ; dans l’app : WhatsApp, e-mail…', 4800); return; }
+  if (IN_FRAME) { note('Le partage est bloqué dans cet aperçu ; dans l’app : WhatsApp, e-mail…', 4000); return false; }
+  dzDownload(file); note('Partage non disponible ici : mémo téléchargé.', 3500); return true;
+}
+function dzDownload(file){
   const u = URL.createObjectURL(file), a = Object.assign(document.createElement('a'), {href:u, download:file.name});
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 30000);
-  note('Partage non disponible ici : mémo téléchargé.', 3500);
 }
+/* « Créer le mémo PDF » : le mémo s'ouvre d'abord dans l'app ; on l'enregistre ou on le partage depuis la visionneuse */
 async function dzMemo(){
   const d = devById(dz.cur); if (!d || dz.busy) return;
-  if (dz.share && dz.share.id === d.id + ':' + d.mod) { const s = dz.share; dz.share = null; return dzShareFile(s.file, s.text); }
   dzFlush(); dz.busy = true; $('#dzMemo').disabled = true;
   note('Création du mémo…', 15000);
   const bmps = [];
@@ -6272,16 +6306,99 @@ async function dzMemo(){
     const pages = dzMemoPages(d, bmps, logo);
     const blob = await makePdf(pages, 'Mémo travaux – ' + devName(d));
     const file = new File([blob], dzMemoName(d), {type:'application/pdf'});
-    /* copie du mémo dans le dossier Drive de la fiche */
-    await DB.put({id:'memo-' + d.id, blob, created:Date.now(), thumb:'', meta:{kind:'export', mime:'application/pdf', name:file.name, path:[DZ_ROOT, d.folder],
-      description:`${devLabel(d)}\nMémo travaux établi avec BauGest`, siteId:devSid(d), taken:new Date().toISOString(), tags:[]}, error:''});
-    refreshQueue().then(processQueue);
-    const text = `Mémo travaux · ${devName(d)}${devCity(d) ? ' – ' + devCity(d) : ''}`;
-    dz.share = null;
-    await dzShareFile(file, text);
-    if (dz.share) dz.share.id = d.id + ':' + d.mod;
+    $('#note').hidden = true;
+    openMemoView({d, file, pages, saved:false, when:new Date()});
   } catch (e) { note('Mémo impossible : ' + e.message, 4500); }
   finally { bmps.forEach(b => b.bmp.close?.()); dz.busy = false; const btn = $('#dzMemo'); if (btn) btn.disabled = false; }
+}
+
+/* ---------- Visionneuse du mémo (v1.9) ---------- */
+let mv = null;
+function mvText(d){ return `Mémo travaux · ${devName(d)}${devCity(d) ? ' – ' + devCity(d) : ''}`; }
+function openMemoView(o){
+  mv = o;
+  $('#mvTitle').textContent = 'Mémo · ' + devName(o.d);
+  $('#mvSub').textContent = `${o.name || o.file.name} · ${fmtDate(o.when)} ${fmtTime(o.when)}`;
+  const box = $('#mvPages');
+  if (o.pages) { o.pages.forEach((c, i) => c.setAttribute('aria-label', 'Page ' + (i + 1))); box.replaceChildren(...o.pages); }
+  else box.innerHTML = '<p class="hint" style="text-align:center">Ouverture du mémo…</p>';
+  mvStatus();
+  $('#memoView').hidden = false; $('#mvScroll').scrollTop = 0;
+}
+function mvStatus(){
+  if (!mv) return;
+  $('#mvSave').hidden = mv.saved;
+  $('#mvStatus').textContent = mv.saved ? (mv.pending ? 'Enregistré dans l’app · envoi au Drive dès que possible' : 'Enregistré dans Drive › ' + DZ_ROOT + ' › ' + mv.d.folder)
+    : 'Aperçu · pas encore enregistré. « Partager » l’enregistre aussi sur le Drive.';
+}
+function closeMemoView(){ $('#memoView').hidden = true; $('#mvPages').innerHTML = ''; mv = null; }
+async function mvSaveDrive(){
+  if (!mv || mv.saved) return;
+  const d = mv.d;
+  await DB.put({id:'memo-' + d.id + '-' + Date.now().toString(36), blob:mv.file, created:Date.now(), thumb:'', meta:{kind:'export', mime:'application/pdf', name:mv.file.name, path:[DZ_ROOT, d.folder],
+    description:`${devLabel(d)}\nMémo travaux établi avec BauGest`, siteId:devSid(d), taken:mv.when.toISOString(), tags:[]}, error:''});
+  mv.saved = true; mv.pending = true; mvStatus();
+  await refreshQueue(); processQueue();
+  if (dz.cur === d.id) dzLoadMemos(d);
+}
+async function mvShare(){
+  if (!mv) return;
+  const cur = mv, ok = await dzShareFile(cur.file, mvText(cur.d));
+  if (ok && cur === mv && !cur.saved) { await mvSaveDrive(); note('Mémo enregistré sur le Drive de la fiche.', 3000); }
+}
+/* mémos déjà enregistrés : sur le Drive et en attente d'envoi */
+async function dzLoadMemos(d){
+  const sid = devSid(d), tok = dz.mtok = (dz.mtok || 0) + 1;
+  const local = (await DB.all()).filter(it => it.meta && it.meta.siteId === sid && it.meta.kind === 'export' && it.blob)
+    .map(it => ({key:'l' + it.id, src:'local', blob:it.blob, name:it.meta.name, time:new Date(it.meta.taken || it.created)}));
+  let drive = [];
+  if (!queueReason() && !(DEMO && !tokenValid())) {
+    try {
+      const q = `trashed=false and mimeType='application/pdf' and appProperties has { key='site' and value='${qEsc(sid)}' }`;
+      const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, orderBy:'createdTime desc', pageSize:'50', fields:'files(id,name,createdTime,appProperties)'}));
+      drive = (r.files || []).map(f => ({key:'d' + f.id, src:'drive', id:f.id, name:f.name, time:new Date(f.appProperties?.taken || f.createdTime)}));
+    } catch (e) {}
+  }
+  if (tok !== dz.mtok || dz.cur !== d.id) return;
+  dz.memos = local.concat(drive).sort((a, b) => b.time - a.time);
+  renderDzMemos();
+}
+function renderDzMemos(){
+  const el = $('#dzMemos'); if (!el) return;
+  const list = dz.memos || [];
+  el.hidden = !list.length;
+  el.innerHTML = list.length ? `<h3>Mémos enregistrés · ${list.length}</h3>` + list.map(m => `<button class="dz-memo" data-memo="${esc(m.key)}">${ICON_DOC}<span class="t"><b>Mémo du ${fmtDate(m.time)} · ${fmtTime(m.time)}</b><small>${m.src === 'local' ? '<span class="wait">En attente d’envoi</span> · ' : 'Sur le Drive · '}${esc(m.name)}</small></span>${ICON_CHEV}</button>`).join('') : '';
+}
+async function dzOpenMemo(key){
+  const d = devById(dz.cur), m = (dz.memos || []).find(x => x.key === key); if (!d || !m) return;
+  openMemoView({d, file:null, pages:null, saved:true, pending:m.src === 'local', when:m.time, name:m.name});
+  const cur = mv;
+  try {
+    const blob = m.src === 'local' ? m.blob : await driveBlob(m.id);
+    cur.file = new File([blob], m.name, {type:'application/pdf'});
+    const lib = await needPdfJs();
+    const pdf = await lib.getDocument({data:new Uint8Array(await blob.arrayBuffer()), isEvalSupported:false}).promise;
+    const out = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pg = await pdf.getPage(i), v0 = pg.getViewport({scale:1}), vp = pg.getViewport({scale:1240 / v0.width});
+      const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+      await pg.render({canvasContext:c.getContext('2d'), viewport:vp}).promise;
+      c.setAttribute('aria-label', 'Page ' + i); out.push(c);
+    }
+    pdf.destroy?.();
+    if (mv !== cur) return;
+    $('#mvPages').replaceChildren(...out);
+  } catch (e) {
+    if (mv !== cur) return;
+    $('#mvPages').innerHTML = `<p class="hint" style="text-align:center">Mémo illisible ici : ${esc(e.message)}${cur.file ? '<br>« Télécharger » ou « Partager » pour l’ouvrir dans une autre app.' : ''}</p>`;
+  }
+}
+function bindMemoView(){
+  $('#mvClose').addEventListener('click', closeMemoView);
+  $('#mvSave').addEventListener('click', async () => { await mvSaveDrive(); note('Mémo enregistré sur le Drive de la fiche.', 3000); });
+  $('#mvDown').addEventListener('click', () => { if (!mv || !mv.file) return; if (IN_FRAME) { note('Le téléchargement est bloqué dans cet aperçu.', 3000); return; } dzDownload(mv.file); });
+  $('#mvShare').addEventListener('click', () => { if (mv && mv.file) mvShare(); });
+  $('#dzMain').addEventListener('click', e => { const b = e.target.closest('[data-memo]'); if (b) dzOpenMemo(b.dataset.memo); });
 }
 
 /* ---------- Entreprises (Paramètres) ---------- */
@@ -6869,6 +6986,7 @@ function backLayers(){
   if (isOpen('#settings')) n++;
   if (isOpen('#devis')) { n++; if (isOpen('#dzMain') && !isOpen('#dzSide')) n++; if (isOpen('#dzSelBar')) n++; }
   if (isOpen('#dzMapP')) n++;
+  if (isOpen('#memoView')) n++;
   if (isOpen('#gallery')) { n++; if (gal.view === 'map' && isOpen('#mapStrip')) n++; if (gal.selMode) n++; }
   if (deskHome() ? !isOpen('#desk') : isOpen('#desk')) n++;
   return n;
@@ -6880,6 +6998,7 @@ function backCloseTop(){
   if (isOpen('#docView')) { closeDocView(); return true; }
   if (isOpen('#planView')) { if (PV.imm) { pvToggleImm(false); return true; } closePlan(); return true; }
   if (isOpen('#settings')) { $('#setBack').click(); return true; }
+  if (isOpen('#memoView')) { closeMemoView(); return true; }
   if (isOpen('#dzMapP')) { if (dm.mode) { dm.mode = null; dm.pts = []; dmRender(); } else closeDzMap(); return true; }
   if (isOpen('#devis') && isOpen('#dzSelBar') && isOpen('#dzSide')) { dz.selMode = false; dz.sel.clear(); renderDzList(); dzSelUI(); return true; }
   if (isOpen('#devis')) { if (!isOpen('#dzSide')) { dzFlush(); dz.view = 'list'; applyDzView(); renderDzList(); } else closeDevis(); return true; }
@@ -6905,7 +7024,7 @@ function initBackNav(){
   BACK.on = true;
   try { history.replaceState({pc:0}, ''); } catch (e) {}
   const mo = new MutationObserver(backSchedule);
-  ['.sheet', '#docEditor', '#viewer', '#docView', '#planView', '#settings', '#gallery', '#mapStrip', '#galBar', '#desk', '#devis', '#dzSide', '#dzMapP', '#dzSelBar'].forEach(q => $$(q).forEach(el => mo.observe(el, {attributes:true, attributeFilter:['hidden']})));
+  ['.sheet', '#docEditor', '#viewer', '#docView', '#planView', '#settings', '#gallery', '#mapStrip', '#galBar', '#desk', '#devis', '#dzSide', '#dzMapP', '#dzSelBar', '#memoView'].forEach(q => $$(q).forEach(el => mo.observe(el, {attributes:true, attributeFilter:['hidden']})));
   window.addEventListener('popstate', () => {
     if (BACK.ignore) { BACK.ignore--; return; }
     if (BACK.depth > 0) BACK.depth--;
@@ -6921,7 +7040,7 @@ async function init(){
   const shareParam = new URLSearchParams(location.search).get('share');
   if (shareParam !== null) history.replaceState(null, '', location.pathname + location.hash);
   await DB.open();
-  bind(); bindDocs(); bindPlans(); bindDevis(); bindDzSel(); bindDzMap(); applyBrand(); renderSiteChip(); renderActiveTag();
+  bind(); bindDocs(); bindPlans(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); applyBrand(); renderSiteChip(); renderActiveTag();
   startGeo();
   if (auth === 'cid') note('Client ID enregistré. Ouvre Paramètres › Google Drive › Connecter.', 4500);
   if (auth === 'ok') { try { await fetchAbout(); note('Google Drive connecté : ' + S.drive.email, 3500); } catch (e) {} }
