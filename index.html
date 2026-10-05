@@ -716,6 +716,64 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
   .pv-tool .lb{display:none}
   .pv-save{display:none}
 }
+
+/* ---------- Devis particuliers (v1.7) ---------- */
+input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{width:100%;min-height:46px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:16px var(--body)}
+.dot.devis{background:var(--warn)}
+.dz-body{flex:1;min-height:0;display:grid;grid-template-columns:330px minmax(0,1fr)}
+.dz-side{border-right:1px solid var(--line);overflow:auto;padding:14px 12px calc(var(--sb) + 24px) calc(var(--sl) + 12px);display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.dz-count{margin:6px 2px 0;font:700 12.5px/1 var(--body);text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+.dz-pick{align-items:flex-start}
+.dz-pick .t small+small{margin-top:2px}
+.dz-live{font:600 11px/1 var(--mono);color:var(--warn);white-space:nowrap;padding-top:4px}
+.dz-main{overflow:auto;padding:18px calc(var(--sr) + 22px) calc(var(--sb) + 40px) 22px;min-width:0}
+.dz-empty{color:var(--muted);text-align:center;padding:48px 16px;margin:0}
+.dz-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.dz-head .slogo{width:52px;height:52px}
+.dz-head .t{flex:1 1 220px;min-width:0}
+.dz-head h2{margin:0;font:700 30px/1.05 var(--display);text-transform:uppercase;letter-spacing:.02em;overflow-wrap:anywhere}
+.dz-head small{font:12px/1.4 var(--mono);color:var(--muted)}
+.dz-acts{display:flex;gap:8px;flex-wrap:wrap}
+.dz-acts .btn{min-height:44px;padding:0 13px}
+#dzListBtn{display:none;background:var(--surface2);border:1px solid var(--line)}
+.dz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start}
+.dz-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+.dz-card h3{margin:0;font:700 15px/1 var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.dz-ch{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.dz-ch small{font:12px var(--mono);color:var(--muted);text-align:right}
+.dz-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.dz-2.npa{grid-template-columns:96px minmax(0,1fr)}
+.dz-gps{display:flex;gap:4px 10px;flex-wrap:wrap;font:12.5px/1.4 var(--mono);color:var(--muted)}
+.dz-gps .ok{color:var(--ok)}
+.dz-gps a{color:var(--text)}
+.dz-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.dz-photos button{aspect-ratio:1;border-radius:9px;border:1px solid var(--line);background:var(--surface2);padding:0;overflow:hidden;position:relative}
+.dz-photos img{width:100%;height:100%;object-fit:cover;display:block}
+.dz-wait{position:absolute;left:4px;bottom:4px;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.66);color:#fff;font:600 10px/1.3 var(--body)}
+.dz-notes-wrap{position:relative}
+.dz-notes{width:100%;min-height:140px;padding:10px 56px 10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:16px/1.45 var(--body);resize:vertical;display:block}
+.dz-notes:focus{outline:2px solid var(--signal);outline-offset:0;border-color:transparent}
+.dz-notes-wrap .mic{position:absolute;top:6px;right:6px;width:44px;height:44px;background:var(--signal-soft);color:var(--signal);border:0}
+.dz-items{display:grid;gap:8px}
+.dz-row{display:grid;grid-template-columns:minmax(0,1fr) 72px 92px 44px;gap:6px;align-items:center}
+.dz-row input,.dz-row select{min-height:44px;padding:8px 10px}
+.dz-row .icon-btn{width:44px;height:44px;background:transparent;border:1px solid var(--line);color:var(--muted)}
+.dz-foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.dz-foot small{flex:1 1 240px;min-width:0;font:12px/1.4 var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.dz-pick-h{margin:10px 2px 0;font:700 12.5px/1 var(--body);text-transform:uppercase;letter-spacing:.14em;color:var(--warn)}
+@media (max-width:860px){
+  .dz-body{grid-template-columns:minmax(0,1fr)}
+  .dz-side{border-right:none}
+  #dzListBtn{display:grid}
+  .dz-main{padding:14px calc(var(--sr) + 14px) calc(var(--sb) + 40px) calc(var(--sl) + 14px)}
+  .dz-head h2{font-size:25px}
+  .dz-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .dz-row{grid-template-columns:minmax(0,1fr) 96px 44px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .dz-row [data-k="d"]{grid-column:1/-1}
+  .dz-acts .btn{flex:1 1 40%}
+}
 </style>
 </head>
 <body>
@@ -974,7 +1032,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
     <div class="brand"><span>Bau<b>Gest</b></span></div>
     <h1 id="dkTitle" class="sr">Documents</h1>
     <button id="dkGps" class="dk-gps" aria-label="Aller au chantier détecté"><span id="dkGpsDot" class="dot"></span><span class="t"><b id="dkGpsName">À classer</b><small id="dkGpsSub">Recherche GPS…</small></span></button>
-    <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button></div>
+    <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button><button data-dmode="devis">Devis</button></div>
     <span class="spacer"></span>
     <button id="dkRefresh" class="icon-btn" aria-label="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
     <button id="dkPhoto" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg><span class="lb">Caméra</span></button>
@@ -1135,6 +1193,61 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
   </div>
 </section>
 
+
+<!-- Devis particuliers (v1.7) -->
+<section id="devis" class="panel" hidden aria-labelledby="dzTitle">
+  <header class="panel-head">
+    <button id="dzBack" class="icon-btn" aria-label="Retour"><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+    <h1 id="dzTitle">Devis</h1>
+    <div id="dzModes" class="dk-modes" hidden><button data-zmode="plans">Plans</button><button data-zmode="docs">Documents</button><button data-zmode="devis" class="on" aria-pressed="true">Devis</button></div>
+    <span class="spacer"></span>
+    <button id="dzCam" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg>Caméra</button>
+  </header>
+  <div class="dz-body">
+    <nav class="dz-side" id="dzSide" aria-label="Fiches devis">
+      <button id="dzNew" class="btn primary block"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nouvelle fiche devis</button>
+      <input type="search" id="dzSearch" placeholder="Nom, lieu, téléphone…" aria-label="Chercher une fiche" autocomplete="off">
+      <p class="dz-count" id="dzCount">Fiches</p>
+      <div id="dzList" class="list"></div>
+    </nav>
+    <div class="dz-main" id="dzMain"></div>
+  </div>
+</section>
+
+<!-- Nouvelle fiche devis -->
+<div id="sheetDevNew" class="sheet" hidden role="dialog" aria-labelledby="dnTitle">
+  <div class="sheet-head"><h3 id="dnTitle">Nouvelle fiche devis</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body">
+    <div class="field"><span>Entreprise (en-tête du mémo PDF)</span><div id="dnComp" class="list"></div><button id="dnCompAdd" class="btn ghost" style="justify-self:start">Ajouter une entreprise</button></div>
+    <label class="field"><span>Nom du client</span><input type="text" id="dnName" placeholder="ex. M. et Mme Dupont" autocomplete="off"></label>
+    <label class="field"><span>Localité des travaux</span><input type="text" id="dnCity" placeholder="ex. Fully" autocomplete="off"></label>
+    <p class="hint">Les photos de cette fiche vont dans Drive › Devis particuliers, jamais dans un chantier, même si vous êtes dans le rayon d’un chantier.</p>
+  </div>
+  <div class="sheet-foot"><button id="dnCancel" class="btn">Annuler</button><button id="dnGo" class="btn primary">Créer la fiche</button></div>
+</div>
+
+<!-- Entreprise (devis) -->
+<div id="sheetComp" class="sheet" hidden role="dialog" aria-labelledby="compTitle">
+  <div class="sheet-head"><h3 id="compTitle">Entreprise</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body">
+    <label class="field"><span>Nom de l’entreprise</span><input type="text" id="cpName" autocomplete="off"></label>
+    <div class="field"><span>Logo (en-tête du mémo et photos de la fiche)</span>
+      <div class="logo-line">
+        <div class="logo-box" id="cpLogoBox"><span>Aucun logo</span></div>
+        <div class="btn-row" style="flex:1">
+          <label class="btn file-btn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Choisir un logo<input type="file" id="cpLogoFile" accept="image/*"></label>
+          <button id="cpLogoRm" class="btn danger" hidden>Retirer</button>
+        </div>
+      </div>
+      <div id="cpLibWrap" hidden><p class="hint" style="margin:6px 0 8px">Logos disponibles · un appui pour le choisir</p><div id="cpLib" class="loglib"></div></div>
+    </div>
+    <label class="field"><span>Adresse</span><input type="text" id="cpAddr" placeholder="Rue, NPA Localité" autocomplete="off"></label>
+    <div class="dz-2"><label class="field"><span>Téléphone</span><input type="tel" id="cpTel" inputmode="tel" autocomplete="off"></label><label class="field"><span>E-mail</span><input type="email" id="cpMail" inputmode="email" autocomplete="off"></label></div>
+    <p id="cpMsg" class="msg" hidden></p>
+  </div>
+  <div class="sheet-foot"><button id="cpDel" class="btn danger" hidden>Supprimer</button><button id="cpSave" class="btn primary">Enregistrer</button></div>
+</div>
+
 <div id="note" class="note" hidden role="status"></div>
 
 <!-- Paramètres -->
@@ -1146,7 +1259,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
   <div class="panel-body" id="setScroll">
     <div class="panel-inner">
       <nav class="jump" aria-label="Sections">
-        <a href="#g-look">Affichage</a><a href="#g-drive">Google Drive</a><a href="#g-sites">Chantiers</a><a href="#g-photos">Photos</a><a href="#g-docs">Documents</a><a href="#g-tags">Étiquettes</a><a href="#g-help">Aide</a>
+        <a href="#g-look">Affichage</a><a href="#g-drive">Google Drive</a><a href="#g-sites">Chantiers</a><a href="#g-comp">Entreprises</a><a href="#g-photos">Photos</a><a href="#g-docs">Documents</a><a href="#g-tags">Étiquettes</a><a href="#g-help">Aide</a>
       </nav>
 
       <section class="group" id="g-look">
@@ -1178,6 +1291,13 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
         <button id="siteDelExamples" class="btn block danger" hidden></button>
         <div id="siteList" class="list"></div>
         <button id="siteAdd" class="btn block"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Ajouter un chantier</button>
+      </section>
+
+      <section class="group" id="g-comp">
+        <h2>Entreprises (devis)</h2>
+        <p class="hint">L’entreprise choisie à la création d’une fiche devis donne l’en-tête du mémo PDF (logo, adresse, contact) et le logo des photos de la fiche. Partagées entre le téléphone et la tablette.</p>
+        <div id="compList" class="list"></div>
+        <button id="compAdd" class="btn block"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Ajouter une entreprise</button>
       </section>
 
       <section class="group" id="g-photos">
@@ -1339,7 +1459,7 @@ const ICON_FOLDER = '<svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1
 /* ---------- Réglages ---------- */
 const KEY = 'photochantier.v1';
 const DEF = {
-  v: 1, logoOn: true, logoPos: 'tr', logoSize: 18, logoBg: false, logoLib: [], stampLines: {site:true, tags:true, date:true, gps:true, note:true},
+  v: 1, companies: [], devis: [], ddel: {}, logoOn: true, logoPos: 'tr', logoSize: 18, logoBg: false, logoLib: [], stampLines: {site:true, tags:true, date:true, gps:true, note:true},
   stamp: true, quality: 'standard', tagPrompt: true, tagDelay: 5, structure: 'A', autoRotate: true, mapLayer: 'Plan CH', home: 'auto', docTitles: {}, theme: 'dark',
   tags: ['fouille','réseau EU','réseau EC','coffrage','armature','bétonnage','remblayage','enrobé','bordures','défaut','avant','après'],
   sites: [
@@ -1378,7 +1498,7 @@ function save(){
   if (ch || (S.drive.rootId && S.drive.token && S.drive.rootId !== S.syncRoot)) scheduleSync();
 }
 /* ---------- Synchronisation des chantiers et réglages entre appareils (v1.4) ---------- */
-const SYNC_FIELDS = ['tags', 'logoLib', 'docLay', 'docTitles', 'stamp', 'logoOn', 'logoPos', 'logoSize', 'logoBg', 'stampLines', 'quality', 'tagPrompt', 'tagDelay', 'structure'];
+const SYNC_FIELDS = ['companies', 'tags', 'logoLib', 'docLay', 'docTitles', 'stamp', 'logoOn', 'logoPos', 'logoSize', 'logoBg', 'stampLines', 'quality', 'tagPrompt', 'tagDelay', 'structure'];
 const SYNC_NAME = 'Réglages PhotoChantier (ne pas supprimer).json';
 S.smod = S.smod || {}; S.sdel = S.sdel || {}; S.fmod = S.fmod || {}; S.remap = S.remap || {}; S.migrate = S.migrate || {};
 for (const s of S.sites) if (!s.example && !S.smod[s.id]) S.smod[s.id] = 1;
@@ -1387,6 +1507,7 @@ function syncSnapNow(){
   const o = {f:{}, s:{}};
   for (const k of SYNC_FIELDS) o.f[k] = JSON.stringify(S[k] ?? null);
   for (const s of S.sites) if (!s.example) o.s[s.id] = JSON.stringify(s);
+  o.dv = JSON.stringify([S.devis || [], S.ddel || {}]);
   return o;
 }
 let syncSnap = syncSnapNow();
@@ -1395,6 +1516,7 @@ function stampChanges(){
   for (const k of SYNC_FIELDS) if (cur.f[k] !== syncSnap.f[k]) { S.fmod[k] = now; ch = true; }
   for (const id in cur.s) if (cur.s[id] !== syncSnap.s[id]) { S.smod[id] = now; delete S.sdel[id]; ch = true; }
   for (const id in syncSnap.s) if (!(id in cur.s) && !S.remapping) { S.sdel[id] = now; delete S.smod[id]; ch = true; }
+  if (cur.dv !== syncSnap.dv) ch = true;
   syncSnap = cur;
   return ch;
 }
@@ -1407,7 +1529,7 @@ function syncPayload(){
   sites.forEach(s => smod[s.id] = S.smod[s.id] || 1);
   const fields = {}, fmod = {};
   for (const k of SYNC_FIELDS) { fields[k] = S[k] ?? null; fmod[k] = S.fmod[k] || 0; }
-  return {v:1, sites, smod, sdel:S.sdel, fields, fmod};
+  return {v:1, sites, smod, sdel:S.sdel, fields, fmod, devis:S.devis || [], ddel:S.ddel || {}};
 }
 const sameSite = (a, b) => {
   const n = x => String(x || '').trim().toLowerCase();
@@ -1425,7 +1547,7 @@ function applyRemap(map){
 }
 function mergeRemote(R){
   const rSites = Array.isArray(R.sites) ? R.sites : [], rsmod = R.smod || {}, rsdel = R.sdel || {}, rf = R.fields || {}, rfm = R.fmod || {};
-  const before = JSON.stringify({s:S.sites, f:SYNC_FIELDS.map(k => S[k])});
+  const before = JSON.stringify({s:S.sites, f:SYNC_FIELDS.map(k => S[k]), d:S.devis});
   /* même chantier créé sur deux appareils : on garde l'identifiant du Drive */
   const map = {}, rIds = new Set(rSites.map(s => s.id));
   for (const rs of rSites) {
@@ -1457,9 +1579,21 @@ function mergeRemote(R){
     const lt = S.fmod[k] || 0, rt = rfm[k] || 0;
     if (k in rf && rt >= lt && rf[k] != null) { S[k] = clone(rf[k]); S.fmod[k] = rt; }
   }
+  /* fiches devis : la plus récente gagne, fiche par fiche */
+  {
+    const rD = Array.isArray(R.devis) ? R.devis : [], ddel = {...(S.ddel || {})};
+    for (const k in (R.ddel || {})) ddel[k] = Math.max(ddel[k] || 0, R.ddel[k] || 0);
+    const L = new Map((S.devis || []).map(d => [d.id, d])), Rm = new Map(rD.map(d => [d.id, d])), out = [];
+    for (const id of new Set([...L.keys(), ...Rm.keys()])) {
+      const a = L.get(id), b = Rm.get(id), best = !a ? b : !b ? a : ((b.mod || 0) > (a.mod || 0) ? b : a);
+      if (ddel[id] && ddel[id] >= (best.mod || 0)) continue;
+      out.push(best === a ? a : clone(best));
+    }
+    S.devis = out; S.ddel = ddel;
+  }
   if (manualSite && manualSite !== '__none' && !S.sites.some(s => s.id === manualSite)) manualSite = null;
   syncSnap = syncSnapNow();
-  return before !== JSON.stringify({s:S.sites, f:SYNC_FIELDS.map(k => S[k])});
+  return before !== JSON.stringify({s:S.sites, f:SYNC_FIELDS.map(k => S[k]), d:S.devis});
 }
 async function findSyncFile(){
   const q = `'${qEsc(S.drive.rootId)}' in parents and trashed=false and appProperties has { key='kind' and value='settings' }`;
@@ -1492,7 +1626,7 @@ async function syncSettings(force){
         received = S.sites.filter(s => !had.has(s.id)).length;
       }
       const P = syncPayload(), body = JSON.stringify(P);
-      const need = !R || JSON.stringify({v:1, sites:R.sites, smod:R.smod, sdel:R.sdel, fields:R.fields, fmod:R.fmod}) !== body;
+      const need = !R || JSON.stringify({v:1, sites:R.sites, smod:R.smod, sdel:R.sdel, fields:R.fields, fmod:R.fmod, devis:R.devis || [], ddel:R.ddel || {}}) !== body;
       let mod = meta ? meta.modifiedTime : '';
       if (need) {
         if (S.syncFile) {
@@ -1524,6 +1658,8 @@ function refreshAfterSync(){
   if (!$('#desk').hidden) { if (desk.site && desk.site !== '__none' && !siteById(desk.site)) desk.site = null; if (!desk.site) { const c = currentSite(); desk.site = c ? c.id : (S.sites[0]?.id || '__none'); } renderDeskHead(); renderDeskSites(); loadDocs(); }
   if (!$('#gallery').hidden) renderGalSites();
   if (!$('#sheetSite').hidden) renderSitePick();
+  if (!$('#settings').hidden) renderComps();
+  dzAfterSync(); renderSiteChip();
 }
 function renderSyncStatus(){
   const el = $('#syncStatus'); if (!el) return;
@@ -1649,11 +1785,21 @@ function startGeo(){
   if (!('geolocation' in navigator)) { geoErr = 'none'; renderSiteChip(); return; }
   try {
     navigator.geolocation.watchPosition(p => {
-      pos = {lat:p.coords.latitude, lon:p.coords.longitude, acc:p.coords.accuracy, t:Date.now()}; geoErr = null; renderSiteChip();
+      pos = {lat:p.coords.latitude, lon:p.coords.longitude, acc:p.coords.accuracy, t:Date.now()}; geoErr = null; if (activeDevis) dzGrabPos(devActive()); renderSiteChip();
     }, e => { geoErr = e.code || 'err'; renderSiteChip(); }, {enableHighAccuracy:true, maximumAge:10000, timeout:30000});
   } catch (e) { geoErr = 'err'; renderSiteChip(); }
 }
 function renderSiteChip(){
+  const dv = devActive();
+  if (dv) {
+    const c = compById(dv.comp), lg = $('#siteLogo');
+    $('#siteName').textContent = devLabel(dv);
+    if (c && c.logo) { lg.className = 'slogo'; lg.innerHTML = `<img src="${c.logo}" alt="Logo ${esc(c.name)}">`; lg.hidden = false; } else { lg.hidden = true; lg.innerHTML = ''; }
+    $('#siteSub').textContent = 'Fiche devis · hors chantier · ' + (pos ? 'GPS ±' + Math.round(pos.acc) + ' m' : 'GPS en attente');
+    $('#siteDot').className = 'dot devis';
+    if (!$('#desk').hidden) renderDeskHead();
+    return;
+  }
   const s = currentSite(), dot = $('#siteDot');
   $('#siteName').textContent = siteLabel(s);
   const lg = $('#siteLogo');
@@ -1672,12 +1818,16 @@ function renderSiteChip(){
 function renderSitePick(){
   const cur = currentSite();
   const sorted = S.sites.slice().sort((a, b) => (siteDist(a) ?? 1e12) - (siteDist(b) ?? 1e12));
-  let h = `<button class="pick ${!manualSite ? 'cur' : ''}" data-pick="__auto"><span class="dot ${autoSite() ? 'auto' : ''}"></span><span class="t"><b>Auto (GPS)</b><small>${pos ? 'Chantier le plus proche dans son rayon' : 'En attente de position GPS'}</small></span></button>`;
+  const dvA = devActive();
+  let h = `<button class="pick ${!manualSite && !dvA ? 'cur' : ''}" data-pick="__auto"><span class="dot ${autoSite() ? 'auto' : ''}"></span><span class="t"><b>Auto (GPS)</b><small>${pos ? 'Chantier le plus proche dans son rayon' : 'En attente de position GPS'}</small></span></button>`;
   for (const s of sorted) {
     const d = siteDist(s);
-    h += `<button class="pick ${manualSite === s.id ? 'cur' : ''}" data-pick="${esc(s.id)}">${logoHTML(s)}<span class="t"><b>${esc(siteLabel(s))}</b><small>Rayon ${fmtDist(s.radius || 300)}${s.example ? ' · exemple' : ''}</small></span><span class="d">${d != null ? fmtDist(d) : ''}</span></button>`;
+    h += `<button class="pick ${manualSite === s.id && !dvA ? 'cur' : ''}" data-pick="${esc(s.id)}">${logoHTML(s)}<span class="t"><b>${esc(siteLabel(s))}</b><small>Rayon ${fmtDist(s.radius || 300)}${s.example ? ' · exemple' : ''}</small></span><span class="d">${d != null ? fmtDist(d) : ''}</span></button>`;
   }
-  h += `<button class="pick ${manualSite === '__none' ? 'cur' : ''}" data-pick="__none"><span class="t"><b>À classer</b><small>Dossier de tri, hors chantier</small></span></button>`;
+  h += `<button class="pick ${manualSite === '__none' && !dvA ? 'cur' : ''}" data-pick="__none"><span class="t"><b>À classer</b><small>Dossier de tri, hors chantier</small></span></button>`;
+  h += '<p class="dz-pick-h">Devis particuliers</p>';
+  for (const d of dzSorted().slice(0, 6)) h += `<button class="pick ${dvA && dvA.id === d.id ? 'cur' : ''}" data-pdev="${esc(d.id)}">${compLogoHTML(compById(d.comp))}<span class="t"><b>${esc(devName(d))}</b><small>${esc(devCity(d) || 'Fiche devis')} · photos dans la fiche</small></span></button>`;
+  h += `<button class="pick" data-pdev="${devList().length ? '__open' : '__new'}"><span class="t"><b>${devList().length ? 'Toutes les fiches devis…' : 'Nouvelle fiche devis…'}</b><small>Client particulier, hors chantier</small></span></button>`;
   $('#sitePickList').innerHTML = h;
 }
 
@@ -1767,11 +1917,11 @@ let lastThumbUrl = null;
 const nameCount = {};
 
 function newShot(src){
-  const s = currentSite();
+  const dv = devActive(), s = dv ? null : currentSite();
   return {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
     src, info: {
-      time: new Date(), site: s ? {...s} : null, pos: pos ? {...pos} : null,
+      time: new Date(), site: s ? {...s} : null, devis: dv ? dzInfo(dv) : null, pos: pos ? {...pos} : null,
       tags: activeTag ? activeTag.tags.slice() : [], note: activeTag ? (activeTag.note || '') : ''
     }
   };
@@ -1849,7 +1999,7 @@ async function commit(shot){
     const blob = await render(shot.src, shot.info);
     shot.src.close?.(); shot.src = null;
     const name = fileName(shot.info);
-    await DB.put({id:shot.id, blob, created:Date.now(), thumb:shot.thumb, meta:{name, path:pathFor(shot.info), description:describe(shot.info), siteId:shot.info.site ? shot.info.site.id : 'none', taken:shot.info.time.toISOString(), tags:shot.info.tags.slice(), ...(shot.info.pos ? {lat:shot.info.pos.lat, lon:shot.info.pos.lon} : {})}, error:''});
+    await DB.put({id:shot.id, blob, created:Date.now(), thumb:shot.thumb, meta:{name, path:pathFor(shot.info), description:describe(shot.info), siteId:shot.info.devis ? 'devis:' + shot.info.devis.id : shot.info.site ? shot.info.site.id : 'none', taken:shot.info.time.toISOString(), tags:shot.info.tags.slice(), ...(shot.info.pos ? {lat:shot.info.pos.lat, lon:shot.info.pos.lon} : {})}, error:''});
     await refreshQueue();
     processQueue();
   } catch (e) { note("Erreur d'enregistrement : " + e.message); }
@@ -1877,7 +2027,7 @@ function layoutFor(site){
 function stampLines(info, lay = layoutFor(info.site)){
   const L = lay.lines;
   const gps = info.pos ? `${info.pos.lat.toFixed(5)} N  ${info.pos.lon.toFixed(5)} E` + (info.pos.acc != null ? `  ±${Math.round(info.pos.acc)} m` : '') : (info.imported ? 'Photo importée' : 'Position GPS indisponible');
-  const l1 = [L.site ? siteLabel(info.site) : '', L.tags && info.tags.length ? info.tags.join(', ') : ''].filter(Boolean).join('  ·  ');
+  const l1 = [L.site ? infoLabel(info) : '', L.tags && info.tags.length ? info.tags.join(', ') : ''].filter(Boolean).join('  ·  ');
   const l2 = [L.date ? fmtDate(info.time) + '  ' + fmtTime(info.time) : '', L.gps ? gps : ''].filter(Boolean).join('  ·  ');
   const l3 = L.note ? info.note || '' : '';
   return [l1, l2, l3].filter(Boolean);
@@ -1923,24 +2073,25 @@ async function render(src, info, opt = {}){
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d'); g.imageSmoothingQuality = 'high';
   g.drawImage(src, 0, 0, W, H);
-  if (opt.stamp !== false) decorate(g, W, H, info, await getImg(info.site?.logo), layoutFor(info.site));
+  if (opt.stamp !== false) decorate(g, W, H, info, await getImg(info.site?.logo || info.devis?.logo), layoutFor(info.site));
   return await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('encodage JPEG')), 'image/jpeg', q.q));
 }
 const clean = s => String(s).normalize('NFC').replace(/[\/\\:*?"<>|#%]+/g, '').trim();
 const slug = s => clean(s).replace(/\s+/g, '-');
 function siteFolder(s){ return s ? clean(s.number ? s.number + ' ' + s.name : s.name) : 'À classer'; }
 function pathFor(info){
+  if (info.devis) return [DZ_ROOT, clean(info.devis.folder) || 'Devis', 'Photos'];
   return [siteFolder(info.site), 'Photos'];
 }
 function fileName(info){
   const d = info.time;
-  let base = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}_${pad2(d.getHours())}h${pad2(d.getMinutes())}_${slug(info.site ? info.site.name : 'A-classer')}`;
+  let base = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}_${pad2(d.getHours())}h${pad2(d.getMinutes())}_${slug(info.devis ? 'Devis-' + info.devis.name : info.site ? info.site.name : 'A-classer')}`;
   if (info.tags.length) base += '_' + slug(info.tags.join('-'));
   nameCount[base] = (nameCount[base] || 0) + 1;
   return base + (nameCount[base] > 1 ? '_' + nameCount[base] : '') + '.jpg';
 }
 function describe(info){
-  const L = ['Chantier : ' + siteLabel(info.site), 'Date : ' + fmtDate(info.time) + ' ' + fmtTime(info.time)];
+  const L = [info.devis ? 'Fiche : ' + infoLabel(info) : 'Chantier : ' + siteLabel(info.site), 'Date : ' + fmtDate(info.time) + ' ' + fmtTime(info.time)];
   if (info.pos) L.push(`GPS : ${info.pos.lat.toFixed(6)}, ${info.pos.lon.toFixed(6)}` + (info.pos.acc != null ? ` (±${Math.round(info.pos.acc)} m)` : ''), `Carte : https://maps.google.com/?q=${info.pos.lat.toFixed(6)},${info.pos.lon.toFixed(6)}`);
   if (info.tags.length) L.push('Étiquettes : ' + info.tags.join(', '));
   if (info.note) L.push('Commentaire : ' + info.note);
@@ -2077,7 +2228,7 @@ async function processQueue(){
         if (e.status >= 500 || e.status === 403 || e.status === 429) break;
       }
     }
-  } finally { busy = false; $('#btnQueue').classList.remove('busy'); await refreshQueue(); if (up) { refreshView(); if (!$('#desk').hidden) loadDocs(); } }
+  } finally { busy = false; $('#btnQueue').classList.remove('busy'); await refreshQueue(); if (up) { refreshView(); if (!$('#desk').hidden) loadDocs(); if (!$('#devis').hidden) dzLoadPhotos(); } }
 }
 function renderBanner(){
   const r = queueReason(), bn = $('#banner');
@@ -2165,7 +2316,7 @@ function renderSettings(){
   $('#setClientId').value = S.drive.clientId;
   $('#structOpts').innerHTML = Object.entries(STRUCT).map(([k, v]) => `<label class="opt"><input type="radio" name="struct" value="${k}" ${S.structure === k ? 'checked' : ''}><div><b>${v.t}</b><code>${v.ex}2026-09-27_14h32_GACO_armature.jpg</code></div></label>`).join('');
   $('#redirUri').value = IN_FRAME ? 'Visible une fois l’app en ligne (ex. https://tonnom.github.io/photochantier/)' : redirectUri();
-  renderDrive(); renderSites(); renderTagList(); renderDpLayout(); renderDocSettings(); renderSyncStatus();
+  renderDrive(); renderSites(); renderComps(); renderTagList(); renderDpLayout(); renderDocSettings(); renderSyncStatus();
   $$('input[name=theme]').forEach(r => r.checked = r.value === (S.theme || 'dark'));
 }
 function renderDrive(){
@@ -4129,11 +4280,12 @@ function bind(){
   $('#shutter').addEventListener('click', capture);
   $('#fileCam').addEventListener('change', e => { fromFile(e.target.files[0]); e.target.value = ''; });
   $('#btnSettings').addEventListener('click', () => openSettings());
-  $('#setBack').addEventListener('click', () => { $('#settings').hidden = true; if (!$('#desk').hidden) { renderDeskSites(); renderDesk(); } });
+  $('#setBack').addEventListener('click', () => { $('#settings').hidden = true; if (!$('#desk').hidden) { renderDeskSites(); renderDesk(); } if (!$('#devis').hidden) { renderDzList(); renderDzFiche(); } });
   $('#siteChip').addEventListener('click', () => { renderSitePick(); openSheet('#sheetSite'); });
   $('#sitePickList').addEventListener('click', e => {
     const b = e.target.closest('[data-pick]'); if (!b) return;
     const v = b.dataset.pick; manualSite = v === '__auto' ? null : v;
+    if (activeDevis) setActiveDevis(null);
     renderSiteChip(); closeSheet($('#sheetSite'));
   });
   $('#sitePickNew').addEventListener('click', () => { closeSheet($('#sheetSite')); openSiteEdit(null, true); });
@@ -5400,7 +5552,9 @@ async function pvExport(what, dest){
 
 function bindPlans(){
   $('#dkModes').addEventListener('click', e => {
-    const b = e.target.closest('[data-dmode]'); if (!b || b.dataset.dmode === desk.mode) return;
+    const b = e.target.closest('[data-dmode]'); if (!b) return;
+    if (b.dataset.dmode === 'devis') { openDevis(); return; }
+    if (b.dataset.dmode === desk.mode) return;
     desk.mode = b.dataset.dmode; renderDeskModes(); $('#dkList').innerHTML = ''; loadDocs(); $('#dkMain').scrollTop = 0;
   });
   $('#dkMain').addEventListener('click', e => {
@@ -5548,6 +5702,585 @@ function bindPlans(){
 }
 
 
+/* ---------- Devis particuliers (v1.7) ---------- */
+/* Une fiche par demande de particulier : client, adresse, visite (photos, notes), travaux à faire.
+   Les photos vont dans Drive › Devis particuliers › <fiche> › Photos, jamais dans un chantier, même dans le rayon d'un chantier.
+   Le mémo PDF reprend l'en-tête de l'entreprise choisie à la création de la fiche. */
+const DZ_ROOT = 'Devis particuliers';
+const DZ_ACCESS = ['Accès camion OK', 'Place pour benne', 'Conduites à repérer', 'Voisins à prévenir', 'Accès difficile'];
+const DZ_UNITS = ['m²', 'ml', 'm³', 'pce', 't', 'h', 'forfait'];
+const ICON_PLUS = '<svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+const ICON_CAM = '<svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg>';
+const ICON_PHONE = '<svg class="ic" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>';
+const ICON_WA = '<svg class="ic" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.5 8.5 0 1 1 21 11.5z"/></svg>';
+const ICON_PIN = '<svg class="ic" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+const ICON_MAIL = '<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+const ICON_DOC = '<svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>';
+const ICON_MIC = '<svg class="ic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg>';
+const ICON_IMG = '<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>';
+
+const dz = {cur:null, view:'list', q:'', photos:[], perr:'', ptok:0, saveT:0, urls:[], newComp:null, share:null, busy:false};
+let activeDevis = null;
+try { activeDevis = localStorage.getItem('baugest.activeDevis') || null; } catch (e) {}
+const devList = () => Array.isArray(S.devis) ? S.devis : (S.devis = []);
+const compList = () => Array.isArray(S.companies) ? S.companies : (S.companies = []);
+const devById = id => devList().find(d => d.id === id) || null;
+const compById = id => compList().find(c => c.id === id) || null;
+const devName = d => (d.client && d.client.name || '').trim() || 'Sans nom';
+const devCity = d => (d.addr && d.addr.city || '').trim();
+const devLabel = d => 'Devis · ' + devName(d) + (devCity(d) ? ' – ' + devCity(d) : '');
+const devSid = d => 'devis:' + d.id;
+const dzSorted = () => devList().slice().sort((a, b) => (b.mod || 0) - (a.mod || 0));
+const dzNarrow = () => matchMedia('(max-width:860px)').matches;
+const compLogoHTML = c => c && c.logo ? `<span class="slogo"><img src="${c.logo}" alt="Logo ${esc(c.name)}"></span>` : `<span class="slogo none" aria-hidden="true">${esc(initials(c ? c.name : 'D'))}</span>`;
+
+function devActive(){
+  const d = activeDevis ? devById(activeDevis) : null;
+  if (activeDevis && !d) setActiveDevis(null);
+  return d;
+}
+function setActiveDevis(id){
+  activeDevis = id || null;
+  try { id ? localStorage.setItem('baugest.activeDevis', id) : localStorage.removeItem('baugest.activeDevis'); } catch (e) {}
+  if (id) { manualSite = null; dzGrabPos(devById(id)); }
+  renderSiteChip();
+}
+/* infos de la fiche copiées dans chaque photo */
+function dzInfo(d){ const c = compById(d.comp); return {id:d.id, folder:d.folder, name:devName(d), city:devCity(d), logo:c ? c.logo || '' : ''}; }
+const infoLabel = info => info.devis ? 'Devis · ' + info.devis.name + (info.devis.city ? ' – ' + info.devis.city : '') : siteLabel(info.site);
+/* le GPS est actif en mode devis, mais n'associe jamais la photo à un chantier : il note la position de la visite */
+function dzGrabPos(d){
+  if (!d || d.pos || !pos || pos.acc > 150) return;
+  d.pos = {lat:+pos.lat.toFixed(6), lon:+pos.lon.toFixed(6), acc:Math.round(pos.acc)};
+  devSave(d);
+  if (!$('#devis').hidden && dz.cur === d.id) renderDzGps();
+}
+function devSave(d){
+  d.mod = Date.now();
+  clearTimeout(dz.saveT); dz.saveT = setTimeout(save, 400);
+}
+function setPath(o, path, v){ const k = path.split('.'); let x = o; while (k.length > 1) { const p = k.shift(); x = x[p] = x[p] || {}; } x[k[0]] = v; }
+function getPath(o, path){ return path.split('.').reduce((x, k) => x == null ? x : x[k], o); }
+
+/* ---------- Ouverture / fermeture ---------- */
+function openDevis(id){
+  if (id) { dz.cur = id; dz.view = 'fiche'; }
+  if (dz.cur && !devById(dz.cur)) dz.cur = null;
+  if (!dz.cur && !dzNarrow()) { const f = dzSorted()[0]; if (f) dz.cur = f.id; }
+  $('#dzModes').hidden = !isTabletScreen();
+  $('#devis').hidden = false; stopCamera();
+  renderDzList(); renderDzFiche(); applyDzView();
+}
+function closeDevis(toDesk){
+  dzFlush();
+  $('#devis').hidden = true;
+  dzFreeUrls();
+  if (!toDesk && $('#desk').hidden) startCamera();
+}
+function dzFlush(){ if (dz.saveT) { clearTimeout(dz.saveT); dz.saveT = 0; save(); } }
+function applyDzView(){
+  const narrow = dzNarrow(), fiche = dz.view === 'fiche' && !!dz.cur;
+  $('#dzSide').hidden = narrow && fiche;
+  $('#dzMain').hidden = narrow && !fiche;
+}
+function dzOpenFiche(id){ dzFlush(); dz.cur = id; dz.view = 'fiche'; renderDzList(); renderDzFiche(); applyDzView(); $('#dzMain').scrollTop = 0; }
+
+/* ---------- Liste des fiches ---------- */
+function renderDzList(){
+  const q = dz.q.trim().toLowerCase();
+  const list = dzSorted().filter(d => !q || [devName(d), devCity(d), d.client?.tel, d.addr?.street, compById(d.comp)?.name].join(' ').toLowerCase().includes(q));
+  $('#dzCount').textContent = `Fiches · ${list.length}`;
+  $('#dzList').innerHTML = list.length ? list.map(d => {
+    const n = d.items ? d.items.filter(i => (i.d || '').trim()).length : 0;
+    const info = [d.visit ? 'Visite ' + dzFmtVisit(d.visit) : 'Visite à fixer', n ? n + ' poste' + (n > 1 ? 's' : '') : ''].filter(Boolean).join(' · ');
+    return `<button class="pick dz-pick ${d.id === dz.cur ? 'cur' : ''}" data-dz="${esc(d.id)}">${compLogoHTML(compById(d.comp))}<span class="t"><b>${esc(devName(d))}</b><small>${esc(devCity(d) || 'Localité à préciser')}</small><small>${esc(info)}</small></span>${activeDevis === d.id ? '<span class="dz-live" title="Photos de la caméra rangées ici">● Caméra</span>' : ''}</button>`;
+  }).join('') : `<p class="dz-empty">${q ? 'Aucune fiche trouvée.' : 'Aucune fiche devis.<br>Touchez « Nouvelle fiche devis ».'}</p>`;
+}
+function dzFmtVisit(v){ try { const d = new Date(v); if (isNaN(d)) return ''; return fmtDate(d) + (v.length > 10 ? ' ' + fmtTime(d) : ''); } catch (e) { return ''; } }
+
+/* ---------- Fiche ---------- */
+function dzLinks(d){
+  const tel = (d.client?.tel || '').replace(/[^\d+]/g, '');
+  let wa = tel.replace(/^\+/, '').replace(/^00/, ''); if (/^0\d/.test(tel)) wa = '41' + tel.slice(1);
+  const addr = [d.addr?.street, [d.addr?.npa, d.addr?.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  const dest = addr || (d.pos ? d.pos.lat + ',' + d.pos.lon : '');
+  return {
+    tel: tel ? 'tel:' + tel : '', wa: wa.length >= 9 ? 'https://wa.me/' + wa : '',
+    mail: (d.client?.email || '').includes('@') ? 'mailto:' + d.client.email.trim() : '',
+    map: dest ? 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest) : ''
+  };
+}
+function renderDzActs(d){
+  const L = dzLinks(d), a = (href, icon, t) => href ? `<a class="btn" href="${esc(href)}"${href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${icon}${t}</a>` : `<button class="btn" disabled>${icon}${t}</button>`;
+  $('#dzActs').innerHTML = a(L.tel, ICON_PHONE, 'Appeler') + a(L.wa, ICON_WA, 'WhatsApp') + a(L.mail, ICON_MAIL, 'E-mail') + a(L.map, ICON_PIN, 'Itinéraire');
+}
+function renderDzHead(d){
+  const c = compById(d.comp);
+  $('#dzHeadLogo').innerHTML = compLogoHTML(c);
+  $('#dzName').textContent = devName(d);
+  $('#dzSub').textContent = `${c ? c.name : 'Sans entreprise'} · fiche du ${fmtDate(new Date(d.created || Date.now()))}`;
+}
+function renderDzGps(){
+  const d = devById(dz.cur); const el = $('#dzGps'); if (!d || !el) return;
+  el.innerHTML = d.pos
+    ? `<span class="ok">● Position de la visite enregistrée</span><a href="https://maps.google.com/?q=${d.pos.lat},${d.pos.lon}" target="_blank" rel="noopener">${d.pos.lat.toFixed(5)}, ${d.pos.lon.toFixed(5)}${d.pos.acc ? ' ±' + d.pos.acc + ' m' : ''}</a>`
+    : `<span>${pos ? 'Position pas encore enregistrée' : 'GPS en attente'}</span>`;
+  $('#dzPosHere').textContent = d.pos ? 'Remplacer par la position actuelle' : 'Enregistrer la position ici';
+}
+function dzItemRow(it, i){
+  return `<div class="dz-row" data-it="${i}">
+    <input type="text" data-k="d" value="${esc(it.d || '')}" placeholder="Description du poste" aria-label="Description du poste ${i + 1}">
+    <input type="number" data-k="q" value="${esc(it.q ?? '')}" inputmode="decimal" step="any" placeholder="Qté" aria-label="Quantité">
+    <select data-k="u" aria-label="Unité">${DZ_UNITS.map(u => `<option ${u === (it.u || 'm²') ? 'selected' : ''}>${u}</option>`).join('')}</select>
+    <button class="icon-btn" data-itdel="${i}" aria-label="Supprimer le poste ${i + 1}">${ICON_X}</button></div>`;
+}
+function renderDzItems(){
+  const d = devById(dz.cur); if (!d) return;
+  d.items = d.items || [];
+  $('#dzItems').innerHTML = d.items.length ? d.items.map(dzItemRow).join('') : '<p class="hint">Aucun poste. Ajoutez les travaux constatés pendant la visite.</p>';
+}
+function renderDzFiche(){
+  dzFreeUrls();
+  const d = dz.cur ? devById(dz.cur) : null, m = $('#dzMain');
+  if (!d) { m.innerHTML = `<p class="dz-empty">${devList().length ? 'Choisissez une fiche dans la liste.' : 'Créez votre première fiche devis avec « Nouvelle fiche devis ».'}</p>`; return; }
+  const f = (path, label, o = {}) => `<label class="field"><span>${label}</span><input type="${o.type || 'text'}" data-f="${path}" value="${esc(getPath(d, path) || '')}"${o.ph ? ` placeholder="${esc(o.ph)}"` : ''}${o.im ? ` inputmode="${o.im}"` : ''} autocomplete="off"></label>`;
+  const comps = compList();
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  m.innerHTML = `
+  <div class="dz-head">
+    <button id="dzListBtn" class="icon-btn" aria-label="Retour à la liste des fiches"><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+    <span id="dzHeadLogo"></span>
+    <div class="t"><h2 id="dzName"></h2><small id="dzSub"></small></div>
+    <div class="dz-acts" id="dzActs"></div>
+  </div>
+  <div class="dz-grid">
+    <section class="dz-card">
+      <h3>Client</h3>
+      ${f('client.name', 'Nom', {ph:'ex. M. et Mme Dupont'})}
+      <div class="dz-2">${f('client.tel', 'Téléphone', {type:'tel', im:'tel', ph:'079 000 00 00'})}${f('client.email', 'E-mail', {type:'email', im:'email'})}</div>
+      <label class="field"><span>Entreprise (en-tête du mémo)</span><select data-f="comp"><option value="">Sans entreprise</option>${comps.map(c => `<option value="${esc(c.id)}" ${c.id === d.comp ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
+      <h3 style="margin-top:6px">Adresse des travaux</h3>
+      ${f('addr.street', 'Rue et n°')}
+      <div class="dz-2 npa">${f('addr.npa', 'NPA', {im:'numeric'})}${f('addr.city', 'Localité')}</div>
+      <div class="dz-gps" id="dzGps"></div>
+      <button class="btn" id="dzPosHere">${ICON_PIN}<span>Enregistrer la position ici</span></button>
+      <label class="field"><span>Date de la visite</span><input type="datetime-local" data-f="visit" value="${esc(d.visit || '')}"></label>
+    </section>
+    <section class="dz-card">
+      <div class="dz-ch"><h3>Photos de la visite</h3><small id="dzPhotoInfo"></small></div>
+      <div class="dz-photos" id="dzPhotos"></div>
+      <div class="btn-row"><button class="btn primary" id="dzShoot">${ICON_CAM}Prendre des photos</button><label class="btn file-btn">${ICON_IMG}Importer<input type="file" id="dzFile" accept="image/*" multiple></label></div>
+      <h3 style="margin-top:6px">Notes de visite</h3>
+      <div class="dz-notes-wrap"><textarea class="dz-notes" data-f="notes" placeholder="Constats, souhaits du client, variantes à chiffrer…">${esc(d.notes || '')}</textarea>
+        ${SR ? `<button class="icon-btn mic" id="dzMic" aria-label="Dicter une note">${ICON_MIC}</button>` : ''}</div>
+    </section>
+    <section class="dz-card">
+      <h3>Travaux à faire</h3>
+      <div id="dzItems" class="dz-items"></div>
+      <button class="btn" id="dzItemAdd">${ICON_PLUS}Ajouter un poste</button>
+      <h3 style="margin-top:6px">Accès &amp; contraintes</h3>
+      <div class="chips" id="dzAccess">${DZ_ACCESS.map(a => `<button class="chip ${(d.access || []).includes(a) ? 'on' : ''}" data-acc="${esc(a)}" aria-pressed="${(d.access || []).includes(a)}">${esc(a)}</button>`).join('')}</div>
+      ${f('accessNote', 'Autre contrainte', {ph:'ex. portail 2.50 m, pas d’eau sur place'})}
+    </section>
+  </div>
+  <div class="dz-foot">
+    <small>Drive › ${esc(DZ_ROOT)} › ${esc(d.folder)}</small>
+    <button class="btn danger" id="dzDel">${ICON_TRASH}Supprimer</button>
+    <button class="btn primary" id="dzMemo">${ICON_DOC}Mémo PDF</button>
+  </div>`;
+  renderDzHead(d); renderDzActs(d); renderDzGps(); renderDzItems();
+  dz.photos = []; renderDzPhotos(); dzLoadPhotos();
+}
+
+/* ---------- Photos de la fiche ---------- */
+function dzFreeUrls(){ dz.urls.forEach(u => URL.revokeObjectURL(u)); dz.urls = []; }
+async function dzLoadPhotos(){
+  const d = devById(dz.cur); if (!d) return;
+  const tok = ++dz.ptok, sid = devSid(d);
+  const local = (await DB.all()).filter(it => it.meta && it.meta.siteId === sid && it.meta.kind !== 'export' && it.blob).map(localItem);
+  let drive = [], err = '';
+  const r = queueReason();
+  if (DEMO && !tokenValid()) err = 'Aperçu : photos de cet appareil seulement';
+  else if (r) err = r.t + ' · photos de cet appareil seulement';
+  else {
+    try {
+      const q = `trashed=false and mimeType='image/jpeg' and appProperties has { key='site' and value='${qEsc(sid)}' }`;
+      const res = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, orderBy:'createdTime', pageSize:'200', fields:'files(id,name,thumbnailLink,webViewLink,createdTime,description,appProperties)'}));
+      drive = (res.files || []).map(driveItem);
+    } catch (e) { err = 'Lecture du Drive impossible : ' + e.message; }
+  }
+  if (tok !== dz.ptok || dz.cur !== d.id) return;
+  dz.photos = drive.concat(local).sort((a, b) => a.time - b.time); dz.perr = err;
+  renderDzPhotos();
+}
+function renderDzPhotos(){
+  const el = $('#dzPhotos'); if (!el) return;
+  dzFreeUrls();
+  const n = dz.photos.length;
+  $('#dzPhotoInfo').textContent = dz.perr || (n ? n + ' photo' + (n > 1 ? 's' : '') : '');
+  el.innerHTML = n ? dz.photos.map(it => {
+    let src = it.thumb || '';
+    if (it.src === 'local') { src = URL.createObjectURL(it.blob); dz.urls.push(src); }
+    else if (blobCache[it.id]) src = blobCache[it.id];
+    return `<button data-dzp="${esc(it.key)}" aria-label="Photo du ${esc(fmtDate(it.time))}"><img alt="" loading="lazy" ${src ? `src="${esc(src)}"` : ''} data-fid="${it.src === 'drive' ? esc(it.id) : ''}">${it.src === 'local' ? '<span class="dz-wait">En attente</span>' : ''}</button>`;
+  }).join('') : '<p class="hint" style="grid-column:1/-1">Aucune photo. « Prendre des photos » ouvre la caméra : chaque photo est rangée dans cette fiche.</p>';
+  $$('#dzPhotos img[data-fid]').forEach(img => {
+    if (!img.dataset.fid) return;
+    if (!img.getAttribute('src')) { fetchThumb(img); return; }
+    img.addEventListener('error', () => { if (img.dataset.fid) fetchThumb(img); }, {once:true});
+  });
+}
+async function dzImport(files){
+  const d = devById(dz.cur); if (!d || !files.length) return;
+  note(`Import de ${files.length} photo${files.length > 1 ? 's' : ''}…`, 6000);
+  let ok = 0;
+  for (const f of files) {
+    let src = null;
+    try { src = await createImageBitmap(f, {imageOrientation:'from-image'}); } catch (e) { continue; }
+    try {
+      const info = {time:new Date(f.lastModified || Date.now()), site:null, devis:dzInfo(d), pos:null, tags:[], note:'', imported:true};
+      const thumb = thumbOf(src), blob = await render(src, info);
+      await DB.put({id:newUid(), blob, created:Date.now(), thumb, meta:{name:fileName(info), path:pathFor(info), description:describe(info), siteId:devSid(d), taken:info.time.toISOString(), tags:[], imported:true}, error:''});
+      ok++;
+    } catch (e) {} finally { src.close?.(); }
+  }
+  note(ok ? `${ok} photo${ok > 1 ? 's' : ''} ajoutée${ok > 1 ? 's' : ''} à la fiche` : 'Aucune photo lisible.', 3000);
+  await refreshQueue(); processQueue(); dzLoadPhotos();
+}
+function dzShoot(){
+  const d = devById(dz.cur); if (!d) return;
+  dzFlush(); setActiveDevis(d.id);
+  $('#devis').hidden = true; dzFreeUrls();
+  if (!$('#desk').hidden) closeDesk(); else startCamera();
+  note('Caméra : photos rangées dans la fiche « ' + devName(d) + ' »', 3500);
+}
+
+/* ---------- Création, suppression ---------- */
+function openDevNew(){
+  const comps = compList();
+  if (!dz.newComp || !compById(dz.newComp)) dz.newComp = comps[0]?.id || '';
+  $('#dnComp').innerHTML = comps.length
+    ? comps.map(c => `<button class="pick ${c.id === dz.newComp ? 'cur' : ''}" data-dncomp="${esc(c.id)}" aria-pressed="${c.id === dz.newComp}">${compLogoHTML(c)}<span class="t"><b>${esc(c.name)}</b><small>${esc(c.addr || 'En-tête du mémo')}</small></span></button>`).join('')
+    : '<p class="hint">Aucune entreprise enregistrée : le mémo aura un en-tête neutre.</p>';
+  $('#dnCompAdd').textContent = comps.length ? 'Gérer les entreprises' : 'Ajouter une entreprise';
+  $('#dnName').value = ''; $('#dnCity').value = '';
+  openSheet('#sheetDevNew'); setTimeout(() => $('#dnName').focus(), 250);
+}
+function createDevis(){
+  const name = $('#dnName').value.trim(), city = $('#dnCity').value.trim();
+  if (!name) { note('Indiquez le nom du client.'); $('#dnName').focus(); return; }
+  const now = new Date();
+  let folder = clean(`${now.getFullYear()}-${pad2(now.getMonth() + 1)} ${name}${city ? ' – ' + city : ''}`) || 'Devis';
+  const used = new Set(devList().map(d => d.folder));
+  if (used.has(folder)) { let i = 2; while (used.has(folder + ' (' + i + ')')) i++; folder += ' (' + i + ')'; }
+  const d = {id:newUid(), created:Date.now(), mod:Date.now(), comp:compById(dz.newComp) ? dz.newComp : '', folder,
+    client:{name, tel:'', email:''}, addr:{street:'', npa:'', city}, pos:null, visit:'', access:[], accessNote:'', items:[], notes:''};
+  devList().unshift(d); save();
+  closeSheet($('#sheetDevNew'));
+  dzGrabPos(d);
+  dzOpenFiche(d.id);
+}
+function askDeleteDevis(){
+  const d = devById(dz.cur); if (!d) return;
+  confirmBox('Supprimer cette fiche ?', `« ${esc(devName(d))} »${devCity(d) ? ' – ' + esc(devCity(d)) : ''}.<small>La fiche est effacée sur le téléphone et la tablette. Les photos et mémos déjà sur le Drive restent dans « ${esc(DZ_ROOT)} › ${esc(d.folder)} ».</small>`, 'Supprimer', () => {
+    S.devis = devList().filter(x => x.id !== d.id);
+    S.ddel = S.ddel || {}; S.ddel[d.id] = Date.now();
+    if (activeDevis === d.id) setActiveDevis(null);
+    dz.cur = null; dz.view = 'list'; save();
+    if (!dzNarrow()) dz.cur = dzSorted()[0]?.id || null;
+    renderDzList(); renderDzFiche(); applyDzView();
+    note('Fiche supprimée');
+  });
+}
+
+/* ---------- Mémo PDF ---------- */
+const MW = 794, MH = 1123, MK = 1240 / 794, MX = 56, MBOT = MH - 58;
+function wrapText(g, t, w){
+  const out = [];
+  for (const para of String(t || '').split(/\n/)) {
+    let line = '';
+    for (const word of para.split(/\s+/).filter(Boolean)) {
+      const tryL = line ? line + ' ' + word : word;
+      if (g.measureText(tryL).width <= w || !line) line = tryL; else { out.push(line); line = word; }
+    }
+    out.push(line);
+  }
+  while (out.length && !out[out.length - 1]) out.pop();
+  return out;
+}
+function dzMemoPages(d, photos, logo){
+  const c = compById(d.comp), pages = [];
+  let g, y;
+  const font = (w, s, disp) => { g.font = `${w} ${s}px ${disp ? '"Barlow Condensed","Arial Narrow"' : 'Barlow,Arial'}, sans-serif`; };
+  const t = (s, x, yy, o = {}) => { font(o.w || 400, o.s || 13, o.disp); g.fillStyle = o.c || '#1c1f23'; g.textAlign = o.a || 'left'; g.textBaseline = 'alphabetic'; g.fillText(s, x, yy); g.textAlign = 'left'; };
+  const rule = (yy, c = '#e2dfd6', w = 1) => { g.fillStyle = c; g.fillRect(MX, yy, MW - 2 * MX, w); };
+  const newPage = () => {
+    const cv = document.createElement('canvas'); cv.width = Math.round(MW * MK); cv.height = Math.round(MH * MK);
+    g = cv.getContext('2d'); g.scale(MK, MK); g.fillStyle = '#ffffff'; g.fillRect(0, 0, MW, MH);
+    pages.push(cv);
+    if (pages.length > 1) { t('MÉMO TRAVAUX · ' + devName(d).toUpperCase() + ' (SUITE)', MX, 58, {w:700, s:16, disp:true, c:'#5a5f66'}); rule(68, '#1c1f23', 2); y = 96; }
+  };
+  const ensure = h => { if (y + h > MBOT) newPage(); };
+  const h2 = s => { ensure(40); t(s.toUpperCase(), MX, y, {w:700, s:15, disp:true, c:'#5a5f66'}); y += 18; };
+  newPage();
+  /* en-tête */
+  let ly = 48;
+  if (logo) { const k = Math.min(170 / logo.naturalWidth, 60 / logo.naturalHeight); const w = logo.naturalWidth * k, h = logo.naturalHeight * k; g.drawImage(logo, MX, ly, w, h); ly += h + 14; }
+  if (c) {
+    t(c.name, MX, ly + 12, {w:600, s:14}); ly += 18;
+    for (const l of [c.addr, [c.tel, c.email].filter(Boolean).join(' · ')].filter(Boolean)) { t(l, MX, ly + 12, {s:11.5, c:'#5a5f66'}); ly += 16; }
+  }
+  const visit = d.visit ? dzFmtVisit(d.visit) : '';
+  t('MÉMO TRAVAUX', MW - MX, 70, {w:700, s:32, disp:true, a:'right'});
+  let ry = 94;
+  for (const l of [visit ? 'Visite du ' + visit : '', 'Établi le ' + fmtDate(new Date()), 'Réf. ' + d.folder]) { if (!l) continue; t(l, MW - MX, ry, {s:11.5, c:'#5a5f66', a:'right'}); ry += 16; }
+  y = Math.max(ly, ry) + 10; rule(y, '#1c1f23', 3); y += 34;
+  /* client et adresse */
+  const col2 = MX + (MW - 2 * MX) / 2 + 12, top = y;
+  t('CLIENT', MX, y, {w:700, s:15, disp:true, c:'#5a5f66'}); t('ADRESSE DES TRAVAUX', col2, y, {w:700, s:15, disp:true, c:'#5a5f66'});
+  let a = y + 22, b = y + 22;
+  for (const l of [devName(d), d.client?.tel, d.client?.email].filter(Boolean)) { t(l, MX, a, {s:13.5}); a += 19; }
+  for (const l of [d.addr?.street, [d.addr?.npa, d.addr?.city].filter(Boolean).join(' ')].filter(Boolean)) { t(l, col2, b, {s:13.5}); b += 19; }
+  if (d.pos) { t(`GPS ${d.pos.lat.toFixed(5)} N  ${d.pos.lon.toFixed(5)} E`, col2, b, {s:11, c:'#5a5f66'}); b += 17; }
+  if (a === top + 22 && b === top + 22) a += 19;
+  y = Math.max(a, b) + 16;
+  /* accès */
+  const acc = (d.access || []).slice(); if ((d.accessNote || '').trim()) acc.push(d.accessNote.trim());
+  if (acc.length) {
+    h2('Accès & contraintes'); font(400, 13.5);
+    for (const l of wrapText(g, acc.join(' · '), MW - 2 * MX)) { ensure(20); t(l, MX, y + 4, {s:13.5}); y += 19; }
+    y += 18;
+  }
+  /* travaux */
+  const items = (d.items || []).filter(i => (i.d || '').trim() || i.q);
+  h2('Travaux à faire');
+  if (items.length) {
+    const qx = MW - MX, dw = MW - 2 * MX - 40 - 100;
+    ensure(30); t('N°', MX, y + 4, {w:600, s:12.5}); t('Description', MX + 40, y + 4, {w:600, s:12.5}); t('Quantité', qx, y + 4, {w:600, s:12.5, a:'right'});
+    y += 12; rule(y, '#1c1f23', 1.2); y += 8;
+    items.forEach((it, i) => {
+      font(400, 13.5); const lines = wrapText(g, it.d || '—', dw), h = lines.length * 18 + 12;
+      ensure(h);
+      t(String(i + 1), MX, y + 14, {s:13.5}); lines.forEach((l, k) => t(l, MX + 40, y + 14 + k * 18, {s:13.5}));
+      const qv = it.q !== '' && it.q != null ? fmtN(+it.q, Number.isInteger(+it.q) ? 0 : 2) + ' ' + (it.u || '') : (it.u === 'forfait' ? 'forfait' : '');
+      t(qv, qx, y + 14, {s:13.5, a:'right'});
+      y += h; rule(y - 4);
+    });
+  } else { ensure(22); t('Aucun poste saisi.', MX, y + 4, {s:13, c:'#5a5f66'}); y += 10; }
+  y += 22;
+  /* remarques */
+  if ((d.notes || '').trim()) {
+    h2('Remarques'); font(400, 13.5);
+    for (const l of wrapText(g, d.notes, MW - 2 * MX)) { ensure(20); t(l, MX, y + 4, {s:13.5}); y += 19; }
+    y += 18;
+  }
+  /* photos : 2 par ligne */
+  if (photos.length) {
+    h2('Photos'); y -= 4;
+    const gap = 16, cw = (MW - 2 * MX - gap) / 2, ch = 232, rowH = ch + 30;
+    photos.forEach((p, i) => {
+      const col = i % 2;
+      if (col === 0) ensure(rowH);
+      const x = MX + col * (cw + gap), bm = p.bmp;
+      const k = Math.min(cw / bm.width, ch / bm.height), dw = bm.width * k, dh = bm.height * k;
+      g.fillStyle = '#f2f0eb'; g.fillRect(x, y, cw, ch);
+      g.drawImage(bm, x + (cw - dw) / 2, y + (ch - dh) / 2, dw, dh);
+      g.strokeStyle = '#d6d2c8'; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, cw - 1, ch - 1);
+      t(`${i + 1} · ${p.cap}`, x, y + ch + 17, {s:11, c:'#5a5f66'});
+      if (col === 1 || i === photos.length - 1) y += rowH;
+    });
+  }
+  /* pieds de page */
+  pages.forEach((cv, i) => {
+    g = cv.getContext('2d');
+    g.fillStyle = '#d6d2c8'; g.fillRect(MX, MH - 42, MW - 2 * MX, 1);
+    t('Mémo établi avec BauGest · ' + fmtDate(new Date()), MX, MH - 24, {s:10, c:'#8a8f96'});
+    t(`${i + 1} / ${pages.length}`, MW - MX, MH - 24, {s:10, c:'#8a8f96', a:'right'});
+  });
+  return pages;
+}
+function dzMemoName(d){ return `Memo-travaux_${slug(devName(d))}${devCity(d) ? '_' + slug(devCity(d)) : ''}_${todayISO()}.pdf`; }
+async function dzShareFile(file, text){
+  if (navigator.canShare && navigator.canShare({files:[file]})) {
+    try { await navigator.share({files:[file], title:text, text}); $('#note').hidden = true; dz.share = null; return; }
+    catch (e) {
+      if (e.name === 'NotAllowedError') { dz.share = {file, text}; note('Mémo prêt. Touchez encore « Mémo PDF » pour le partager.', 4200); return; }
+      if (e.name === 'AbortError') { $('#note').hidden = true; return; }
+      if (IN_FRAME) { note('Partage bloqué dans cet aperçu. Il fonctionne dans l’app installée.', 4000); return; }
+    }
+  }
+  if (IN_FRAME) { note('Mémo créé (' + Math.round(file.size / 1024) + ' Ko). Le partage est bloqué dans cet aperçu ; dans l’app : WhatsApp, e-mail…', 4800); return; }
+  const u = URL.createObjectURL(file), a = Object.assign(document.createElement('a'), {href:u, download:file.name});
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 30000);
+  note('Partage non disponible ici : mémo téléchargé.', 3500);
+}
+async function dzMemo(){
+  const d = devById(dz.cur); if (!d || dz.busy) return;
+  if (dz.share && dz.share.id === d.id + ':' + d.mod) { const s = dz.share; dz.share = null; return dzShareFile(s.file, s.text); }
+  dzFlush(); dz.busy = true; $('#dzMemo').disabled = true;
+  note('Création du mémo…', 15000);
+  const bmps = [];
+  try {
+    for (const p of dz.photos) {
+      try {
+        const blob = p.src === 'local' ? p.blob : await driveBlob(p.id);
+        bmps.push({bmp:await createImageBitmap(blob), cap:fmtDate(p.time) + ' ' + fmtTime(p.time) + (p.tags.length ? ' · ' + p.tags.join(', ') : '')});
+      } catch (e) {}
+    }
+    const c = compById(d.comp), logo = c && c.logo ? await getImg(c.logo) : null;
+    if (document.fonts?.load) await Promise.all([document.fonts.load('400 14px Barlow'), document.fonts.load('700 20px "Barlow Condensed"')]).catch(() => {});
+    const pages = dzMemoPages(d, bmps, logo);
+    const blob = await makePdf(pages, 'Mémo travaux – ' + devName(d));
+    const file = new File([blob], dzMemoName(d), {type:'application/pdf'});
+    /* copie du mémo dans le dossier Drive de la fiche */
+    await DB.put({id:'memo-' + d.id, blob, created:Date.now(), thumb:'', meta:{kind:'export', mime:'application/pdf', name:file.name, path:[DZ_ROOT, d.folder],
+      description:`${devLabel(d)}\nMémo travaux établi avec BauGest`, siteId:devSid(d), taken:new Date().toISOString(), tags:[]}, error:''});
+    refreshQueue().then(processQueue);
+    const text = `Mémo travaux · ${devName(d)}${devCity(d) ? ' – ' + devCity(d) : ''}`;
+    dz.share = null;
+    await dzShareFile(file, text);
+    if (dz.share) dz.share.id = d.id + ':' + d.mod;
+  } catch (e) { note('Mémo impossible : ' + e.message, 4500); }
+  finally { bmps.forEach(b => b.bmp.close?.()); dz.busy = false; const btn = $('#dzMemo'); if (btn) btn.disabled = false; }
+}
+
+/* ---------- Entreprises (Paramètres) ---------- */
+let cpEdit = null, cpLogo = '';
+function renderComps(){
+  const el = $('#compList'); if (!el) return;
+  const list = compList();
+  el.innerHTML = list.length ? list.map(c => `<button class="site-row" data-comp="${esc(c.id)}">${compLogoHTML(c)}<span class="t"><b>${esc(c.name)}</b><small>${esc([c.addr, c.tel].filter(Boolean).join(' · ') || 'Adresse et contact à compléter')}</small></span>${ICON_CHEV}</button>`).join('')
+    : '<p class="hint">Aucune entreprise. Ajoutez celles pour lesquelles vous faites des devis.</p>';
+}
+function openComp(id){
+  const c = id ? compById(id) : null;
+  cpEdit = c ? c.id : null; cpLogo = c ? c.logo || '' : '';
+  $('#compTitle').textContent = c ? 'Entreprise' : 'Nouvelle entreprise';
+  $('#cpName').value = c ? c.name : ''; $('#cpAddr').value = c ? c.addr || '' : ''; $('#cpTel').value = c ? c.tel || '' : ''; $('#cpMail').value = c ? c.email || '' : '';
+  $('#cpDel').hidden = !c; $('#cpMsg').hidden = true;
+  renderCpLogo(); openSheet('#sheetComp');
+}
+function renderCpLogo(){
+  $('#cpLogoBox').innerHTML = cpLogo ? `<img src="${cpLogo}" alt="Logo de l’entreprise">` : '<span>Aucun logo</span>';
+  $('#cpLogoRm').hidden = !cpLogo;
+  const lib = [...new Set([...allLogos(), ...compList().map(c => c.logo)].filter(Boolean))];
+  $('#cpLibWrap').hidden = !lib.length;
+  $('#cpLib').innerHTML = lib.map(u => `<button class="libitem ${u === cpLogo ? 'on' : ''}" data-cplib="${esc(u)}" aria-label="Reprendre ce logo"><img src="${u}" alt=""></button>`).join('');
+}
+function saveComp(){
+  const name = $('#cpName').value.trim();
+  if (!name) { const m = $('#cpMsg'); m.textContent = 'Indiquez le nom de l’entreprise.'; m.className = 'msg err'; m.hidden = false; return; }
+  const data = {name, logo:cpLogo, addr:$('#cpAddr').value.trim(), tel:$('#cpTel').value.trim(), email:$('#cpMail').value.trim()};
+  const list = compList(), c = cpEdit ? compById(cpEdit) : null;
+  if (c) Object.assign(c, data); else { const n = {id:'co' + newUid(), ...data}; list.push(n); dz.newComp = n.id; }
+  S.companies = list.slice();
+  if (cpLogo && !S.logoLib.includes(cpLogo) && !PRESET_LOGOS.includes(cpLogo)) S.logoLib = [cpLogo, ...S.logoLib].slice(0, 30);
+  save(); closeSheet($('#sheetComp')); renderComps(); dzRefreshComp();
+}
+function deleteComp(){
+  const c = compById(cpEdit); if (!c) return;
+  const n = devList().filter(d => d.comp === c.id).length;
+  confirmBox('Supprimer cette entreprise ?', `« ${esc(c.name)} ».<small>${n ? n + ' fiche' + (n > 1 ? 's' : '') + ' devis l’utilise' + (n > 1 ? 'nt' : '') + ' : leur mémo aura un en-tête neutre.' : 'Aucune fiche devis ne l’utilise.'}</small>`, 'Supprimer', () => {
+    S.companies = compList().filter(x => x.id !== c.id); save();
+    closeSheet($('#sheetComp')); renderComps(); dzRefreshComp();
+  });
+}
+function dzRefreshComp(){
+  if (!$('#sheetDevNew').hidden) openDevNewRefresh();
+  if (!$('#devis').hidden) { renderDzList(); if (dz.cur && !$('#dzMain').contains(document.activeElement)) renderDzFiche(); }
+}
+function openDevNewRefresh(){ const n = $('#dnName').value, c = $('#dnCity').value; closeSheet($('#sheetDevNew')); openDevNew(); $('#dnName').value = n; $('#dnCity').value = c; }
+function dzAfterSync(){
+  if ($('#devis').hidden) return;
+  if (dz.cur && !devById(dz.cur)) { dz.cur = dzNarrow() ? null : dzSorted()[0]?.id || null; if (!dz.cur) dz.view = 'list'; renderDzFiche(); applyDzView(); }
+  else if (!$('#dzMain').contains(document.activeElement)) renderDzFiche();
+  renderDzList();
+}
+
+function bindDevis(){
+  $('#dzBack').addEventListener('click', () => closeDevis());
+  $('#dzCam').addEventListener('click', () => { if (dz.cur) dzShoot(); else { closeDevis(true); if (!$('#desk').hidden) closeDesk(); else startCamera(); } });
+  $('#dzModes').addEventListener('click', e => {
+    const b = e.target.closest('[data-zmode]'); if (!b || b.dataset.zmode === 'devis') return;
+    closeDevis(true); desk.mode = b.dataset.zmode;
+    if ($('#desk').hidden) openDesk(); else { renderDeskModes(); $('#dkList').innerHTML = ''; loadDocs(); }
+  });
+  $('#dzNew').addEventListener('click', openDevNew);
+  $('#dzSearch').addEventListener('input', e => { dz.q = e.target.value; renderDzList(); });
+  $('#dzList').addEventListener('click', e => { const b = e.target.closest('[data-dz]'); if (b) dzOpenFiche(b.dataset.dz); });
+  window.addEventListener('resize', () => { if (!$('#devis').hidden) applyDzView(); });
+  const main = $('#dzMain');
+  main.addEventListener('input', e => {
+    const t = e.target, d = devById(dz.cur); if (!d) return;
+    if (t.dataset.f) {
+      setPath(d, t.dataset.f, t.value); devSave(d);
+      if (/^client\.name|^addr\.city/.test(t.dataset.f)) renderDzHead(d);
+      renderDzList();
+      if (/^client\.|^addr\./.test(t.dataset.f)) renderDzActs(d);
+      if (t.dataset.f === 'comp') { renderDzHead(d); renderDzList(); }
+      if (activeDevis === d.id) renderSiteChip();
+      return;
+    }
+    const row = t.closest('[data-it]');
+    if (row && t.dataset.k) { const it = d.items[+row.dataset.it]; if (it) { it[t.dataset.k] = t.value; devSave(d); if (t.dataset.k === 'd') renderDzList(); } }
+  });
+  main.addEventListener('change', e => { if (e.target.id === 'dzFile') { dzImport([...e.target.files]); e.target.value = ''; } });
+  main.addEventListener('click', e => {
+    const t = e.target, d = devById(dz.cur); if (!d) return;
+    if (t.closest('#dzListBtn')) { dzFlush(); dz.view = 'list'; applyDzView(); return; }
+    if (t.closest('#dzShoot')) { dzShoot(); return; }
+    if (t.closest('#dzMemo')) { dzMemo(); return; }
+    if (t.closest('#dzDel')) { askDeleteDevis(); return; }
+    if (t.closest('#dzPosHere')) {
+      if (!pos) { note('Position GPS pas encore disponible.'); return; }
+      d.pos = {lat:+pos.lat.toFixed(6), lon:+pos.lon.toFixed(6), acc:Math.round(pos.acc)}; devSave(d); renderDzGps(); renderDzActs(d); note('Position enregistrée (±' + Math.round(pos.acc) + ' m)'); return;
+    }
+    if (t.closest('#dzItemAdd')) {
+      d.items = d.items || []; d.items.push({d:'', q:'', u:d.items.length ? d.items[d.items.length - 1].u || 'm²' : 'm²'}); devSave(d); renderDzItems();
+      const ins = $$('#dzItems [data-k="d"]'); ins[ins.length - 1]?.focus(); return;
+    }
+    const del = t.closest('[data-itdel]'); if (del) { d.items.splice(+del.dataset.itdel, 1); devSave(d); renderDzItems(); return; }
+    const acc = t.closest('[data-acc]');
+    if (acc) {
+      const a = acc.dataset.acc; d.access = d.access || [];
+      d.access = d.access.includes(a) ? d.access.filter(x => x !== a) : [...d.access, a];
+      acc.classList.toggle('on'); acc.setAttribute('aria-pressed', String(d.access.includes(a))); devSave(d); return;
+    }
+    const ph = t.closest('[data-dzp]'); if (ph) { const it = dz.photos.find(p => p.key === ph.dataset.dzp); if (it) openViewer(it, dz.photos); return; }
+    if (t.closest('#dzMic')) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition, btn = $('#dzMic');
+      if (dz.rec) { dz.rec.stop(); return; }
+      try {
+        const r = dz.rec = new SR(); r.lang = 'fr-CH'; r.interimResults = false; r.maxAlternatives = 1;
+        r.onresult = ev => { const txt = ev.results[0][0].transcript, ta = $('#dzMain textarea[data-f="notes"]'); const dd = devById(dz.cur); if (!ta || !dd) return; ta.value = (ta.value ? ta.value.replace(/\s*$/, '') + '\n' : '') + txt; dd.notes = ta.value; devSave(dd); };
+        r.onend = () => { dz.rec = null; btn?.classList.remove('rec'); };
+        r.onerror = () => note('Dictée indisponible');
+        r.start(); btn.classList.add('rec');
+      } catch (err) { dz.rec = null; note('Dictée indisponible'); }
+    }
+  });
+  /* nouvelle fiche */
+  $('#dnComp').addEventListener('click', e => { const b = e.target.closest('[data-dncomp]'); if (!b) return; dz.newComp = b.dataset.dncomp; $$('#dnComp [data-dncomp]').forEach(x => { const on = x === b; x.classList.toggle('cur', on); x.setAttribute('aria-pressed', String(on)); }); });
+  $('#dnGo').addEventListener('click', createDevis);
+  $('#dnCancel').addEventListener('click', () => closeSheet($('#sheetDevNew')));
+  $('#dnCity').addEventListener('keydown', e => { if (e.key === 'Enter') createDevis(); });
+  $('#dnCompAdd').addEventListener('click', () => { closeSheet($('#sheetDevNew')); openSettings('g-comp'); });
+  /* entreprises */
+  $('#compAdd').addEventListener('click', () => openComp(null));
+  $('#compList').addEventListener('click', e => { const b = e.target.closest('[data-comp]'); if (b) openComp(b.dataset.comp); });
+  $('#cpSave').addEventListener('click', saveComp);
+  $('#cpDel').addEventListener('click', deleteComp);
+  $('#cpLogoFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; try { cpLogo = await fileToLogo(f); renderCpLogo(); } catch (err) { note('Image illisible'); } });
+  $('#cpLogoRm').addEventListener('click', () => { cpLogo = ''; renderCpLogo(); });
+  $('#cpLib').addEventListener('click', e => { const b = e.target.closest('[data-cplib]'); if (b) { cpLogo = b.dataset.cplib; renderCpLogo(); } });
+  /* choix « devis » depuis la caméra */
+  $('#sitePickList').addEventListener('click', e => {
+    const b = e.target.closest('[data-pdev]'); if (!b) return;
+    closeSheet($('#sheetSite'));
+    if (b.dataset.pdev === '__open') openDevis(); else if (b.dataset.pdev === '__new') { openDevis(); openDevNew(); } else setActiveDevis(b.dataset.pdev);
+  });
+}
+
 /* ---------- Bouton « retour » d'Android (v1.6) ---------- */
 /* Chaque écran ou fenêtre ouvert ajoute une étape dans l'historique : « retour » ferme le dernier ouvert.
    À l'écran de départ (caméra sur le téléphone, documents sur la tablette), « retour » quitte l'app comme toute app Android. */
@@ -5560,6 +6293,7 @@ function backLayers(){
   if (isOpen('#docView')) n++;
   if (isOpen('#planView')) n++;
   if (isOpen('#settings')) n++;
+  if (isOpen('#devis')) { n++; if (isOpen('#dzMain') && !isOpen('#dzSide')) n++; }
   if (isOpen('#gallery')) { n++; if (gal.view === 'map' && isOpen('#mapStrip')) n++; if (gal.selMode) n++; }
   if (deskHome() ? !isOpen('#desk') : isOpen('#desk')) n++;
   return n;
@@ -5571,6 +6305,7 @@ function backCloseTop(){
   if (isOpen('#docView')) { closeDocView(); return true; }
   if (isOpen('#planView')) { if (PV.imm) { pvToggleImm(false); return true; } closePlan(); return true; }
   if (isOpen('#settings')) { $('#setBack').click(); return true; }
+  if (isOpen('#devis')) { if (!isOpen('#dzSide')) { dzFlush(); dz.view = 'list'; applyDzView(); renderDzList(); } else closeDevis(); return true; }
   if (isOpen('#gallery')) {
     if (gal.view === 'map' && isOpen('#mapStrip')) { $('#mapStrip').hidden = true; return true; }
     if (gal.selMode) { gal.selMode = false; gal.sel.clear(); renderGallery(); return true; }
@@ -5593,7 +6328,7 @@ function initBackNav(){
   BACK.on = true;
   try { history.replaceState({pc:0}, ''); } catch (e) {}
   const mo = new MutationObserver(backSchedule);
-  ['.sheet', '#docEditor', '#viewer', '#docView', '#planView', '#settings', '#gallery', '#mapStrip', '#galBar', '#desk'].forEach(q => $$(q).forEach(el => mo.observe(el, {attributes:true, attributeFilter:['hidden']})));
+  ['.sheet', '#docEditor', '#viewer', '#docView', '#planView', '#settings', '#gallery', '#mapStrip', '#galBar', '#desk', '#devis', '#dzSide'].forEach(q => $$(q).forEach(el => mo.observe(el, {attributes:true, attributeFilter:['hidden']})));
   window.addEventListener('popstate', () => {
     if (BACK.ignore) { BACK.ignore--; return; }
     if (BACK.depth > 0) BACK.depth--;
@@ -5609,7 +6344,7 @@ async function init(){
   const shareParam = new URLSearchParams(location.search).get('share');
   if (shareParam !== null) history.replaceState(null, '', location.pathname + location.hash);
   await DB.open();
-  bind(); bindDocs(); bindPlans(); applyBrand(); renderSiteChip(); renderActiveTag();
+  bind(); bindDocs(); bindPlans(); bindDevis(); applyBrand(); renderSiteChip(); renderActiveTag();
   startGeo();
   if (auth === 'cid') note('Client ID enregistré. Ouvre Paramètres › Google Drive › Connecter.', 4500);
   if (auth === 'ok') { try { await fetchAbout(); note('Google Drive connecté : ' + S.drive.email, 3500); } catch (e) {} }
