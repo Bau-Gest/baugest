@@ -653,8 +653,10 @@ html[data-theme="light"] .pv-scale label{color:#8a6200}
 .pv.imm .pv-top{display:none}
 .pv-stage{position:relative;overflow:hidden;background-color:var(--surface2);background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:18px 18px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .pv-stage.measuring{cursor:crosshair} .pv-stage.dragging{cursor:grabbing}
-.pv-world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
-#pvHost canvas{display:block;background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.35)}
+.pv-world{position:absolute;left:0;top:0;transform-origin:0 0}
+#pvHost{position:relative}
+#pvHost .pv-base{display:block;background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.35)}
+#pvHost .pv-det{position:absolute;display:block;pointer-events:none}
 #pvOv{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
 .pv-readout{position:absolute;top:12px;left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);background:#1b1d21;color:#f4f2ea;padding:8px 14px;border-radius:10px;font-size:14px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;justify-content:center;pointer-events:none;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.3)}
 .pv-readout .mono{font-size:16px;font-weight:600;color:var(--signal)}
@@ -4298,6 +4300,8 @@ function applyBrand(){}
 
 /* ---------- BauGest : plans PDF (tablette) — lecture, métrés, exports ---------- */
 const PDFJS_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+/* polices standard et tables de caractères : texte des cartouches fidèle même quand le PDF n'embarque pas ses polices */
+const PDFJS_RES = {standardFontDataUrl:'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/', cMapUrl:'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/', cMapPacked:true};
 const PDFLIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
 const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
 const PT_M = 25.4 / 72 / 1000;
@@ -4979,7 +4983,7 @@ async function openPlan(key){
     PLANCACHE.put({...(rec || {key, name:item.name, siteId:PV.siteId, size:blob.size}), folder:item.folder || (rec && rec.folder) || [], blob, used:Date.now()});
     await needPdfJs();
     const bytes = new Uint8Array(await blob.arrayBuffer());
-    const doc = await pdfjsLib.getDocument({data:bytes.slice(), isEvalSupported:false}).promise;
+    const doc = await pdfjsLib.getDocument({data:bytes.slice(), isEvalSupported:false, ...PDFJS_RES}).promise;
     if (tok !== PV.loadTok) { doc.destroy(); return; }
     if (PV.doc) { try { PV.doc.destroy(); } catch (e) {} }
     PV.doc = doc; PV.bytes = bytes; PV.pages = doc.numPages;
@@ -5025,7 +5029,7 @@ function pvChanged(){
 }
 function closePlan(silent){
   if (PV.key && !silent) { clearTimeout(PV.upT); mesUpload(PV.key); }
-  PV.loadTok++; $('#planView').hidden = true; pvBusy('');
+  PV.loadTok++; pvCancelDetail(); PV.det = null; $('#planView').hidden = true; pvBusy('');
   if (PV.imm) pvToggleImm(false);
   $('#pvHost').replaceChildren(); $('#pvOv').innerHTML = '';
   if (PV.doc) { try { PV.doc.destroy(); } catch (e) {} PV.doc = null; }
@@ -5052,27 +5056,70 @@ function pvScaleUI(){
   $('#pvWarn').hidden = !!PV.confirmed[PV.page];
 }
 function pvSetScale(n){ if (!(n > 0)) return; PV.scales[PV.page] = n; PV.confirmed[PV.page] = true; $('#pvWarn').hidden = true; pvDraw(); pvRenderList(); pvReadout(); pvChanged(); }
-let pvRenderTask = null, pvRenderTok = 0, pvRerT = 0;
-function pvTargetRS(){ const dpr = devicePixelRatio || 1, w = PV.vp.width, h = PV.vp.height; return Math.max(0.2, Math.min(PV.view.s * dpr, Math.sqrt(14e6 / (w * h)), 8192 / Math.max(w, h))); }
+let pvRenderTask = null, pvRenderTok = 0, pvRerT = 0, pvBaseBusy = false;
+/* Rendu net à tous les zooms :
+   - fond : la page entière, rendue une fois par page à la résolution de l'écran (limitée en mémoire) ;
+   - détail : la zone visible, re-rendue à la pleine résolution de l'écran dès que le zoom ou le déplacement s'arrête. */
+const PV_BASE_MAX = 10e6, PV_DET_MAX = 10e6, PV_CANVAS_MAX = 8192;
+function pvDpr(){ return Math.min(devicePixelRatio || 1, 3); }
+function pvBaseRS(){
+  const w = PV.vp.width, h = PV.vp.height;
+  return Math.max(0.2, Math.min(Math.max(PV.fitS * pvDpr() * 1.5, 1.5), Math.sqrt(PV_BASE_MAX / (w * h)), PV_CANVAS_MAX / Math.max(w, h)));
+}
 async function pvRender(force){
   if (!PV.pdfPage) return;
-  const rs = pvTargetRS();
-  if (!force && PV.rs && rs <= PV.rs * 1.3 && rs >= PV.rs / 2.5) return;
-  const tok = ++pvRenderTok;
+  if (!force && PV.rs) { pvRenderDetail(); return; }
+  if (!force && pvBaseBusy) return;
+  const rs = pvBaseRS(), tok = ++pvRenderTok; pvBaseBusy = true;
   if (pvRenderTask) { try { pvRenderTask.cancel(); } catch (e) {} }
+  pvCancelDetail();
   const page = PV.pdfPage, vp = page.getViewport({scale:rs});
-  const cv = document.createElement('canvas'); cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
-  const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
-  pvRenderTask = page.render({canvasContext:ctx, viewport:vp});
+  const cv = document.createElement('canvas'); cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height); cv.className = 'pv-base';
+  const ctx = cv.getContext('2d', {alpha:false}); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+  pvRenderTask = page.render({canvasContext:ctx, viewport:vp, intent:'display'});
   try { await pvRenderTask.promise; }
-  catch (e) { if (e && e.name === 'RenderingCancelledException') return; if (tok === pvRenderTok) { pvBusy(''); note('Erreur de rendu de la page.', 3000); } return; }
+  catch (e) { if (tok === pvRenderTok) pvBaseBusy = false; if (e && e.name === 'RenderingCancelledException') return; if (tok === pvRenderTok) { pvBusy(''); note('Erreur de rendu de la page.', 3000); } return; }
+  if (tok === pvRenderTok) pvBaseBusy = false;
   if (tok !== pvRenderTok || page !== PV.pdfPage) return;
   cv.style.width = PV.vp.width + 'px'; cv.style.height = PV.vp.height + 'px';
-  $('#pvHost').replaceChildren(cv); PV.rs = rs; pvBusy('');
+  $('#pvHost').replaceChildren(cv); PV.rs = rs; PV.det = null; pvBusy('');
+  pvRenderDetail();
+}
+let pvDetTask = null, pvDetTok = 0;
+function pvCancelDetail(){ pvDetTok++; if (pvDetTask) { try { pvDetTask.cancel(); } catch (e) {} pvDetTask = null; } }
+async function pvRenderDetail(){
+  if (!PV.pdfPage || !PV.rs || $('#planView').hidden) return;
+  const v = PV.view, want = v.s * pvDpr(), host = $('#pvHost');
+  if (want <= PV.rs * 1.1) { host.querySelector('.pv-det')?.remove(); PV.det = null; return; }
+  const r = pvStage().getBoundingClientRect(), W = PV.vp.width, H = PV.vp.height;
+  const vx0 = Math.max(0, -v.tx / v.s), vy0 = Math.max(0, -v.ty / v.s), vx1 = Math.min(W, (r.width - v.tx) / v.s), vy1 = Math.min(H, (r.height - v.ty) / v.s);
+  if (vx1 <= vx0 || vy1 <= vy0) return;
+  const d = PV.det;
+  if (d && Math.abs(d.rs - want) / want < 0.08 && d.x0 <= vx0 + 0.5 && d.y0 <= vy0 + 0.5 && d.x1 >= vx1 - 0.5 && d.y1 >= vy1 - 0.5) return;
+  const mx = (vx1 - vx0) * 0.12, my = (vy1 - vy0) * 0.12;
+  let x0 = Math.max(0, vx0 - mx), y0 = Math.max(0, vy0 - my), x1 = Math.min(W, vx1 + mx), y1 = Math.min(H, vy1 + my);
+  let rs = want;
+  const area = (x1 - x0) * (y1 - y0) * rs * rs; if (area > PV_DET_MAX) rs *= Math.sqrt(PV_DET_MAX / area);
+  rs = Math.min(rs, PV_CANVAS_MAX / Math.max(x1 - x0, y1 - y0));
+  if (rs <= PV.rs * 1.1) return;
+  x0 = Math.floor(x0 * rs) / rs; y0 = Math.floor(y0 * rs) / rs;
+  const cw = Math.ceil((x1 - x0) * rs), ch = Math.ceil((y1 - y0) * rs);
+  pvCancelDetail(); const tok = pvDetTok, page = PV.pdfPage;
+  const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch; cv.className = 'pv-det';
+  const ctx = cv.getContext('2d', {alpha:false}); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch);
+  pvDetTask = page.render({canvasContext:ctx, viewport:page.getViewport({scale:rs}), transform:[1, 0, 0, 1, -x0 * rs, -y0 * rs], intent:'display'});
+  try { await pvDetTask.promise; } catch (e) { return; }
+  if (tok !== pvDetTok || page !== PV.pdfPage) return;
+  pvDetTask = null;
+  Object.assign(cv.style, {left:x0 + 'px', top:y0 + 'px', width:cw / rs + 'px', height:ch / rs + 'px'});
+  host.querySelector('.pv-det')?.remove(); host.appendChild(cv);
+  PV.det = {x0, y0, x1:x0 + cw / rs, y1:y0 + ch / rs, rs};
 }
 function pvApply(){
-  const v = PV.view; $('#pvWorld').style.transform = `translate(${v.tx}px,${v.ty}px) scale(${v.s})`;
-  pvSchedDraw(); clearTimeout(pvRerT); pvRerT = setTimeout(() => pvRender(false), 260);
+  const v = PV.view, w = $('#pvWorld');
+  w.style.transform = `translate(${v.tx}px,${v.ty}px) scale(${v.s})`; w.style.willChange = 'transform';
+  pvSchedDraw(); if (pvDetTask) pvCancelDetail();
+  clearTimeout(pvRerT); pvRerT = setTimeout(() => { w.style.willChange = 'auto'; pvRender(false); }, 180);
 }
 function pvFit(){
   if (!PV.vp) return;
