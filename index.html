@@ -3472,8 +3472,7 @@ function renderDeskHead(){
 function renderDeskSites(){
   const c = currentSite();
   const b = (id, s) => `<button class="dk-site ${desk.site === id ? 'on' : ''}" data-dsite="${esc(id)}">${s ? logoHTML(s) : '<span class="slogo none" aria-hidden="true">?</span>'}<span class="t"><b>${esc(s ? s.name : 'À classer')}</b><small>${s ? esc(s.number || '') + (c && c.id === s.id ? ' · ● ici' : '') : 'hors chantier'}</small></span></button>`;
-  const tree = id => desk.mode === 'plans' && desk.site === id && PL.tree && PL.sid === (id === '__none' ? 'none' : id) ? plTreeHTML(PL.tree) : '';
-  $('#dkSites').innerHTML = S.sites.map(s => b(s.id, s) + tree(s.id)).join('') + b('__none', null) + tree('__none');
+  $('#dkSites').innerHTML = S.sites.map(s => b(s.id, s)).join('') + b('__none', null);
 }
 function recItem(r){
   return {key:'u' + r.uid, uid:r.uid, src:r.demo ? 'demo' : 'local', title:r.doc.title, dtype:r.doc.kind, date:r.doc.date, siteId:r.doc.siteId, thumb:r.thumb || '',
@@ -4603,7 +4602,7 @@ function renderPlans(){
   $('#dkList').innerHTML = `<nav class="pl-crumbs" aria-label="Emplacement">${crumbs}<span class="pl-path">Drive : ${esc([siteFolder(s), 'Plans', ...PL.path].join(' / '))}</span></nav>
     <div class="pl-bar"><label class="pl-search">${PL_IC.search}<input id="plQ" type="search" placeholder="Chercher un plan ici et dans les sous-dossiers" value="${esc(PL.q)}" autocomplete="off"></label>
       <div class="pl-seg" role="group" aria-label="Affichage"><button data-plview="grid" class="${PL.view === 'grid' ? 'on' : ''}" aria-label="Vignettes">${PL_IC.grid}</button><button data-plview="list" class="${PL.view === 'list' ? 'on' : ''}" aria-label="Liste">${PL_IC.rows}</button></div></div>
-    ${folders.length ? `<section class="dk-sec"><div class="dk-sep"><h3>Dossiers</h3><span class="n">${folders.length}</span><span class="p">Glisse un plan au stylet sur un dossier, dans l’arbre ou sur le chemin (au doigt : appui long puis glisser)</span></div>
+    ${folders.length ? `<section class="dk-sec"><div class="dk-sep"><h3>Dossiers</h3><span class="n">${folders.length}</span><span class="p">Glisse un plan au stylet sur un dossier ou sur le chemin (au doigt : appui long puis glisser)</span></div>
       <div class="pl-folders">${folders.map(c => { const st = plStats(c.path); return `<div class="pl-folder" role="button" tabindex="0" data-plpath="${plAttr(c.path)}" data-pldrop="${plAttr(c.path)}">${PL_IC.bigFolder}<span class="t"><b>${esc(c.name)}</b><small>${st.plans} plan${st.plans > 1 ? 's' : ''} · ${st.mes} mesure${st.mes > 1 ? 's' : ''}</small></span><button class="pl-more" data-plfmenu="${plAttr(c.path)}" aria-label="Actions du dossier">${PL_IC.more}</button></div>`; }).join('')}</div></section>` : ''}
     <section class="dk-sec"><div class="dk-sep"><h3>${q ? 'Résultats' : 'Plans'}</h3><span class="n">${plans.length}</span><span class="p">${q ? 'Recherche dans ' + esc(['Plans', ...PL.path].join(' / ')) : 'PDF de ' + esc(['Plans', ...PL.path].join(' / '))}</span></div>
     ${plans.length ? list : `<p class="dk-empty">${empty}</p>`}</section>`;
