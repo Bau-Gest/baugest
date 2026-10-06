@@ -23,6 +23,14 @@
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
+:root[data-contrast][data-theme]{
+  color-scheme:light;
+  --bg:#ffffff;--surface:#ffffff;--surface2:#f0efea;--surface3:#e2e0da;--line:#1d1f22;
+  --text:#000000;--muted:#2b2e33;--signal:#f2c230;--signal-ink:#000000;--signal-soft:#ffe58a;
+  --ok:#0b6b38;--warn:#8a4500;--bad:#b3140c;--sel:#cfe0f7;--sel-line:#1f5bb0;--paper:#d9d6cf;
+}
+:root[data-contrast][data-theme] :is(.btn,.navtabs,input[type=text],input[type=search],select){border-width:2px}
+#btnContrast.on{background:var(--signal);border-color:var(--signal);color:var(--signal-ink)}
 :root[data-theme="light"]{
   color-scheme:light;
   --bg:#eceae4;--surface:#f7f6f2;--surface2:#ffffff;--surface3:#e6e3dc;--line:#d3cfc6;
@@ -408,13 +416,14 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
 <div id="app" hidden>
   <header class="top">
     <div class="brand">Bau<b>Gest</b><small>PC</small></div>
-    <button id="btnBack" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Explorateur</button>
+    <button id="btnBack" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Plans &amp; documents</button>
     <button id="btnViewerShow" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Visionneuse</button>
-    <div class="navtabs" id="navtabs"><button data-nav="files" class="on">Explorateur</button><button data-nav="photos">Photos</button><button data-nav="pvdt">PV DT</button><button data-nav="devis">Devis</button></div>
+    <div class="navtabs" id="navtabs"><button data-nav="photos"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M9 8.5h.01"/></svg>Photos</button><button data-nav="files" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg>Plans &amp; documents</button><button data-nav="pvdt"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/></svg>PV DT</button><button data-nav="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button></div>
     <div class="gsearch"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="gSearch" placeholder="Rechercher dans tous les chantiers" title="Nom, date (2026-09), indice (ind C)… puis Entrée"></div>
     <div class="grow"></div>
     <button id="btnSync" class="btn syncbtn" hidden title="Zoom et défilement liés entre les deux volets"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Lier les vues</button>
     <button id="btnSplit" class="btn" title="Afficher deux fichiers côte à côte"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg>Double vue</button>
+    <button id="btnContrast" class="ibtn" title="Fort contraste (noir sur blanc)" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
     <button id="btnTheme" class="ibtn" title="Thème clair / sombre"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     <span id="acct" class="acct"></span>
     <button id="btnLogout" class="ibtn" title="Changer de compte ou de dossier"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
@@ -467,7 +476,7 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
       <div class="pq-drop" id="pqDrop">
         <svg class="ic big" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 18v-6M9 15l3-3 3 3"/></svg>
         <b>Glisse ici les PDF des PV de chantier de la DT</b>
-        <span>Le chantier, le n° du PV et la date de séance sont lus dans le PDF. Tu vérifies, puis « Ranger » les envoie dans « Chantier / PV de chantier » (consultation sur la tablette, onglet PV chantier). Le nom du fichier est gardé.</span>
+        <span>Le chantier, le n° du PV et la date de séance sont lus dans le PDF. Tu vérifies, puis « Ranger » les envoie dans « Chantier / PV de chantier » (consultation sur la tablette, rubrique PV DT). Le nom du fichier est gardé.</span>
         <label class="btn primary">Choisir des PDF…<input type="file" id="pqFile" accept="application/pdf,.pdf" multiple hidden></label>
       </div>
       <div id="pqQueue"></div>
@@ -4052,11 +4061,14 @@ $('#tbReport').addEventListener('click', () => photoReport(selItems()));
    ===================================================================== */
 
 function applyTheme(){
-  const t = P.theme || ((sharedTablet() || {}).theme === 'light' ? 'light' : 'dark');
+  const t = P.contrast ? 'light' : P.theme || ((sharedTablet() || {}).theme === 'light' ? 'light' : 'dark');
   document.documentElement.dataset.theme = t;
+  if (P.contrast) document.documentElement.dataset.contrast = '1'; else delete document.documentElement.dataset.contrast;
+  const cb = $('#btnContrast'); if (cb) { cb.classList.toggle('on', !!P.contrast); cb.setAttribute('aria-pressed', String(!!P.contrast)); }
   document.querySelector('meta[name=theme-color]').content = t === 'light' ? '#f7f6f2' : '#131518';
 }
-$('#btnTheme').addEventListener('click', () => { P.theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; saveP(); applyTheme(); });
+$('#btnTheme').addEventListener('click', () => { P.contrast = false; P.theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; saveP(); applyTheme(); });
+$('#btnContrast').addEventListener('click', () => { P.contrast = !P.contrast; saveP(); applyTheme(); });
 $('#btnSplit').addEventListener('click', () => {
   P.split = !P.split; saveP();
   if (!P.split && V.panes[1].item) closePane(V.panes[1]);
