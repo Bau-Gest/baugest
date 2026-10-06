@@ -1,4 +1,4 @@
-const C='baugest-v8';
+const C='baugest-v9';
 const A=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(A)));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))));self.clients.claim();});
@@ -31,4 +31,13 @@ self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET'||u.origin!==location.origin)return;
   e.respondWith(fetch(e.request).then(r=>{const cp=r.clone();caches.open(C).then(c=>c.put(e.request,cp));return r;})
     .catch(()=>caches.match(e.request,{ignoreSearch:true}).then(r=>r||caches.match('./index.html'))));
+});
+self.addEventListener('notificationclick',e=>{
+  e.notification.close();
+  const d=e.notification.data||{},url=self.registration.scope+(d.pvdt?'?pvdt='+encodeURIComponent(d.pvdt)+'&site='+encodeURIComponent(d.site||''):'');
+  e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>{
+    const c=cs.find(x=>x.url.startsWith(self.registration.scope));
+    if(c){c.postMessage(d);return c.focus();}
+    return self.clients.openWindow(url);
+  }));
 });

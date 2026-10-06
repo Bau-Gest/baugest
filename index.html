@@ -717,6 +717,53 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
   .pv-save{display:none}
 }
 
+/* ---------- PV de chantier de la DT (v2.0) ---------- */
+.pd-path{margin:0 0 10px;font-size:12.5px;color:var(--muted)}
+.pd-list{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);margin-top:10px}
+.pd-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 12px;border-top:1px solid var(--line);cursor:pointer}
+.pd-row:first-child{border-top:0}
+.pd-row:hover{background:var(--surface2)}
+.pd-row.new{background:linear-gradient(90deg,var(--signal-soft),transparent 65%)}
+.pd-ic{width:56px;height:56px;border-radius:10px;background:var(--surface2);border:1px solid var(--line);display:grid;place-items:center;align-content:center;gap:2px;font:700 13px/1 var(--display);color:var(--muted);letter-spacing:.06em}
+.pd-ic b{font:700 22px/1 var(--display);color:var(--text);letter-spacing:0}
+.pd-t{display:grid;gap:3px;min-width:0}
+.pd-t b{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-t small{color:var(--muted);font-size:13px}
+.pd-new{display:inline-block;margin-right:8px;padding:2px 8px;border-radius:999px;background:var(--signal);color:var(--signal-ink);font:700 11px/1.5 var(--body);text-transform:uppercase;letter-spacing:.05em;vertical-align:2px}
+.pd-pts{font-size:12.5px;font-weight:600;color:var(--warn)}
+.pd-pts.ok{color:var(--ok)}
+.pdv{z-index:34}
+.pdv-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:calc(8px + var(--st)) calc(10px + var(--sr)) 8px calc(10px + var(--sl));border-bottom:1px solid var(--line);background:var(--surface)}
+.pdv-t{display:grid;min-width:160px;flex:1}
+.pdv-t b{font:700 19px/1.15 var(--display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pdv-t small{color:var(--muted);font-size:12.5px}
+.pdv-cols{display:flex;gap:6px}
+.pdv-cols button{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:var(--c);padding:0}
+.pdv-cols button.on{border-color:var(--text);box-shadow:0 0 0 2px var(--signal)}
+.pdv-n{min-width:22px;height:22px;border-radius:11px;padding:0 6px;background:var(--warn);color:#1b1600;font:700 12.5px/22px var(--body)}
+.pdv-n:empty{display:none}
+#pdPtsBtn.on{border-color:var(--signal)}
+.pdv-body{flex:1;min-height:0;display:flex;position:relative}
+.pdv-scroll{flex:1;min-width:0;overflow:auto;background:#3a3f46;touch-action:pan-x pan-y pinch-zoom}
+.pdv-pages{display:grid;justify-items:center;gap:14px;padding:14px 14px calc(40px + var(--sb));width:max-content;min-width:100%}
+.pd-page{position:relative;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.pd-page canvas{position:absolute;inset:0;width:100%;height:100%}
+.pd-ov{touch-action:none}
+.pd-wait{color:#ddd;padding:30px}
+.pdv-side{width:340px;flex:none;overflow:auto;border-left:1px solid var(--line);background:var(--surface);padding:14px calc(14px + var(--sr)) calc(14px + var(--sb)) 14px}
+.pdv-side h3{margin:0 0 4px;font:700 19px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04em}
+.pd-pt{display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--line);cursor:pointer;font-size:14px}
+.pd-pt small{display:block;color:var(--muted);font-size:12px}
+.pd-pt.done span{color:var(--muted);text-decoration:line-through}
+.pd-chk{width:32px;height:32px;border-radius:8px;border:2px solid var(--line);background:var(--surface2);color:var(--ok);font:700 18px/1 var(--body);padding:0}
+.pd-pt.done .pd-chk{border-color:var(--ok)}
+.pdv-save{position:absolute;left:12px;bottom:calc(10px + var(--sb));margin:0;padding:4px 10px;border-radius:8px;background:rgba(19,21,24,.85);color:var(--muted);font-size:12.5px;pointer-events:none}
+.pdv-save:empty{display:none}
+.pdv-save.ok{color:var(--ok)}
+.pdv-save.err{color:var(--bad)}
+.pi-kind{margin-bottom:4px}
+@media (max-width:720px){.pdv-side{position:absolute;inset:auto 0 0 0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line)}}
+
 /* ---------- Devis particuliers (v1.7) ---------- */
 input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{width:100%;min-height:46px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:16px var(--body)}
 .dot.devis{background:var(--warn)}
@@ -1124,7 +1171,7 @@ input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{
     <div class="brand"><span>Bau<b>Gest</b></span></div>
     <h1 id="dkTitle" class="sr">Documents</h1>
     <button id="dkGps" class="dk-gps" aria-label="Aller au chantier détecté"><span id="dkGpsDot" class="dot"></span><span class="t"><b id="dkGpsName">À classer</b><small id="dkGpsSub">Recherche GPS…</small></span></button>
-    <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button><button data-dmode="devis">Devis</button></div>
+    <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button><button data-dmode="pvdt">PV chantier</button><button data-dmode="devis">Devis</button></div>
     <span class="spacer"></span>
     <button id="dkRefresh" class="icon-btn" aria-label="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
     <button id="dkPhoto" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg><span class="lb">Caméra</span></button>
@@ -1193,6 +1240,28 @@ input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{
   </div>
 </section>
 <input type="file" id="plFile" accept="application/pdf,.pdf" multiple hidden>
+<input type="file" id="pdFile" accept="application/pdf,.pdf" multiple hidden>
+
+<!-- PV de chantier de la DT : visionneuse avec annotation au stylo (tablette) -->
+<section id="pdView" class="panel pdv" hidden aria-label="PV de chantier">
+  <header class="pdv-top">
+    <button id="pdClose" class="icon-btn" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div class="pdv-t"><b id="pdTitle">PV de chantier</b><small id="pdSub"></small></div>
+    <div id="pdTools" class="dk-modes" role="group" aria-label="Outil"><button data-pdt="read">Lire</button><button data-pdt="pen">Stylo</button><button data-pdt="hl">Surligneur</button><button data-pdt="erase">Gomme</button></div>
+    <div id="pdCols" class="pdv-cols" hidden></div>
+    <button id="pdUndo" class="icon-btn" aria-label="Annuler le dernier trait" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+    <button id="pdZout" class="icon-btn" aria-label="Zoom arrière"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6"/></svg></button>
+    <button id="pdZin" class="icon-btn" aria-label="Zoom avant"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6M11 8v6"/></svg></button>
+    <button id="pdPtsBtn" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Points <span id="pdPtsN" class="pdv-n"></span></button>
+    <button id="pdShare" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>
+  </header>
+  <div class="pdv-body">
+    <div id="pdScroll" class="pdv-scroll"><div id="pdPages" class="pdv-pages"></div></div>
+    <aside id="pdSide" class="pdv-side" hidden aria-label="Points à notre charge"><h3>Points à notre charge</h3><p class="hint">Lignes du PV qui citent notre entreprise. Touche une ligne pour aller à la page, coche quand c’est réglé.</p><div id="pdPtsList"></div></aside>
+    <p id="pdSave" class="pdv-save" role="status"></p>
+  </div>
+</section>
+
 
 <!-- PDF reçus d'une autre app -->
 <div id="sheetPlDlg" class="sheet" hidden role="dialog" aria-labelledby="plDlgTitle">
@@ -1203,6 +1272,7 @@ input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{
 <div id="sheetPlanImp" class="sheet" hidden role="dialog" aria-labelledby="piTitle">
   <div class="sheet-head"><h3 id="piTitle">Plan reçu</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <div class="sheet-body">
+    <div id="piKind" class="dk-modes pi-kind" role="group" aria-label="Type de PDF"><button data-pik="plans" class="on">Plan</button><button data-pik="pvdt">PV de chantier</button></div>
     <div id="piFiles" class="pi-files"></div>
     <p class="imp-label">Ranger dans le chantier</p>
     <div id="piSites" class="pi-sites"></div>
@@ -1291,7 +1361,7 @@ input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{
   <header class="panel-head">
     <button id="dzBack" class="icon-btn" aria-label="Retour"><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <h1 id="dzTitle">Devis</h1>
-    <div id="dzModes" class="dk-modes" hidden><button data-zmode="plans">Plans</button><button data-zmode="docs">Documents</button><button data-zmode="devis" class="on" aria-pressed="true">Devis</button></div>
+    <div id="dzModes" class="dk-modes" hidden><button data-zmode="plans">Plans</button><button data-zmode="docs">Documents</button><button data-zmode="pvdt">PV chantier</button><button data-zmode="devis" class="on" aria-pressed="true">Devis</button></div>
     <span class="spacer"></span>
     <button id="dzCam" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg>Caméra</button>
   </header>
@@ -1427,6 +1497,14 @@ input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{
         <p class="hint">L’entreprise choisie à la création d’une fiche devis donne l’en-tête du mémo PDF (logo, adresse, contact) et le logo des photos de la fiche. Partagées entre le téléphone et la tablette.</p>
         <div id="compList" class="list"></div>
         <button id="compAdd" class="btn block"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Ajouter une entreprise</button>
+      </section>
+
+      <section class="group" id="g-pvdt">
+        <h2>PV de chantier (DT)</h2>
+        <p class="hint">Les PV de la direction des travaux vont dans « Chantier / PV de chantier ». Un PV corrigé avec le même n° remplace l’ancien, rangé dans « PV annulés ». Dépôt des PDF depuis BauGest PC (onglet PV DT).</p>
+        <label class="field"><span>Noms de notre entreprise dans les PV (séparés par des virgules)</span><input type="text" id="setPvKeys" placeholder="ex. Sabeco, Entreprise, Ent." autocomplete="off"></label>
+        <p class="hint">Sert à repérer les points à notre charge. Les noms des entreprises (devis) sont déjà pris en compte. Partagé entre les appareils.</p>
+        <div class="row"><div class="lbl"><b>Notification nouveau PV</b><small>Sur cet appareil : vérifié à l’ouverture de BauGest puis toutes les 10 min tant qu’il tourne</small></div><label class="switch"><input type="checkbox" id="setPvNotif"><span></span></label></div>
       </section>
 
       <section class="group" id="g-photos">
@@ -1589,7 +1667,7 @@ const ICON_FOLDER = '<svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1
 const KEY = 'photochantier.v1';
 const DEF = {
   v: 1, companies: [], devis: [], ddel: {}, logoOn: true, logoPos: 'tr', logoSize: 18, logoBg: false, logoLib: [], stampLines: {site:true, tags:true, date:true, gps:true, note:true},
-  stamp: true, quality: 'standard', tagPrompt: true, tagDelay: 5, structure: 'A', autoRotate: true, mapLayer: 'Plan CH', home: 'auto', docTitles: {}, theme: 'dark',
+  stamp: true, quality: 'standard', tagPrompt: true, tagDelay: 5, structure: 'A', autoRotate: true, mapLayer: 'Plan CH', home: 'auto', docTitles: {}, theme: 'dark', pvKeys: [], pvNotif: false,
   tags: ['fouille','réseau EU','réseau EC','coffrage','armature','bétonnage','remblayage','enrobé','bordures','défaut','avant','après'],
   sites: [
     {id:'ex1', number:'000001', name:'Exemple Saillon', lat:46.17170, lon:7.18830, radius:300, example:true},
@@ -1627,7 +1705,7 @@ function save(){
   if (ch || (S.drive.rootId && S.drive.token && S.drive.rootId !== S.syncRoot)) scheduleSync();
 }
 /* ---------- Synchronisation des chantiers et réglages entre appareils (v1.4) ---------- */
-const SYNC_FIELDS = ['companies', 'tags', 'logoLib', 'docLay', 'docTitles', 'stamp', 'logoOn', 'logoPos', 'logoSize', 'logoBg', 'stampLines', 'quality', 'tagPrompt', 'tagDelay', 'structure'];
+const SYNC_FIELDS = ['companies', 'tags', 'logoLib', 'docLay', 'docTitles', 'stamp', 'logoOn', 'logoPos', 'logoSize', 'logoBg', 'stampLines', 'quality', 'tagPrompt', 'tagDelay', 'structure', 'pvKeys'];
 const SYNC_NAME = 'Réglages PhotoChantier (ne pas supprimer).json';
 S.smod = S.smod || {}; S.sdel = S.sdel || {}; S.fmod = S.fmod || {}; S.remap = S.remap || {}; S.migrate = S.migrate || {};
 for (const s of S.sites) if (!s.example && !S.smod[s.id]) S.smod[s.id] = 1;
@@ -2300,7 +2378,7 @@ async function uploadFile(blob, meta, parent){
   const mime = meta.mime || 'image/jpeg';
   const md = {name:meta.name, parents:[parent], description:meta.description, mimeType:mime,
     appProperties:{pc:'1', site:meta.siteId || 'none', taken:meta.taken || '', tags:(meta.tags || []).join('|').slice(0, 60), ...(meta.imported ? {imp:'1'} : {}), ...(meta.lat != null ? {lat:(+meta.lat).toFixed(6), lon:(+meta.lon).toFixed(6)} : {}),
-      ...(meta.kind === 'plan' ? {kind:'plan', uid:meta.uid} : {}), ...(meta.kind === 'export' ? {kind:'export'} : {}),
+      ...(meta.kind === 'plan' ? {kind:'plan', uid:meta.uid} : {}), ...(meta.kind === 'export' ? {kind:'export'} : {}), ...(meta.kind === 'pvdt' ? {kind:'pvdt', pvn:meta.pvn || '', pvdate:meta.pvdate || ''} : {}),
       ...(meta.kind === 'doc' ? {kind:'doc', dtype:meta.dtype || 'libre', title:String(meta.title || '').slice(0, 50)} : {})}};
   const auth = {Authorization:'Bearer ' + S.drive.token};
   if (blob.size < 4.5e6) {
@@ -2346,6 +2424,7 @@ async function processQueue(){
         const folder = await ensurePath(it.meta.path);
         const f = it.meta.kind === 'doc' ? await uploadDoc(it, folder) : await uploadFile(it.blob, it.meta, folder);
         if (it.meta.kind === 'plan') await planUploaded(it.meta.uid, f);
+        if (it.meta.kind === 'pvdt') await pdUploaded(it.meta, f, it.blob);
         if (it.meta.kind === 'doc') { const cur = (await DB.all()).find(x => x.id === it.id); if (!cur || cur.created === it.created) await DB.del(it.id); } else await DB.del(it.id);
         up++;
         done.unshift({name:it.meta.name, path:it.meta.path.join(' / '), link:f.webViewLink || '', thumb:it.thumb});
@@ -2445,7 +2524,7 @@ function renderSettings(){
   $('#setClientId').value = S.drive.clientId;
   $('#structOpts').innerHTML = Object.entries(STRUCT).map(([k, v]) => `<label class="opt"><input type="radio" name="struct" value="${k}" ${S.structure === k ? 'checked' : ''}><div><b>${v.t}</b><code>${v.ex}2026-09-27_14h32_GACO_armature.jpg</code></div></label>`).join('');
   $('#redirUri').value = IN_FRAME ? 'Visible une fois l’app en ligne (ex. https://tonnom.github.io/photochantier/)' : redirectUri();
-  renderDrive(); renderSites(); renderComps(); renderTagList(); renderDpLayout(); renderDocSettings(); renderSyncStatus();
+  renderDrive(); renderSites(); renderComps(); renderTagList(); renderDpLayout(); renderDocSettings(); renderPvdtSettings(); renderSyncStatus();
   $$('input[name=theme]').forEach(r => r.checked = r.value === (S.theme || 'dark'));
 }
 function renderDrive(){
@@ -2587,10 +2666,10 @@ function saveSite(){
 }
 
 /* ---------- Dossiers créés avec chaque chantier ---------- */
-const SITE_FOLDERS_KEY = 'baugest.siteFolders';
+const SITE_FOLDERS_KEY = 'baugest.siteFolders.v2';
 function siteFolderPaths(site){
   const sf = siteFolder(site);
-  return [[sf, 'Photos'], ...DOC_ORDER.map(k => [sf, 'Documents', DOCS[k].folder]), [sf, 'Plans', 'Mesures'], [sf, 'Plans', 'Exports']];
+  return [[sf, 'Photos'], ...DOC_ORDER.map(k => [sf, 'Documents', DOCS[k].folder]), [sf, 'Plans', 'Mesures'], [sf, 'Plans', 'Exports'], [sf, PVDT_DIR, PVDT_OLD]];
 }
 let siteFoldersBusy = false;
 async function ensureSiteFolders(){
@@ -3787,7 +3866,7 @@ async function seedDemo(){
     hw(g, 'Maçon', 80, 486, 26); hw(g, 'CFC', 480, 486, 26); hw(g, '3.5', 780, 486, 26); hw(g, 'Mini-pelle 3 t', 80, 756, 26); hw(g, '2', 780, 756, 26);
     hw(g, 'Béton C25/30', 80, 940, 26); hw(g, '0.4', 600, 940, 26); hw(g, 'm³', 780, 940, 26); });
 }
-function loadDocs(){ return desk.mode === 'plans' ? loadPlans() : loadDocsRaw(); }
+function loadDocs(){ return desk.mode === 'plans' ? loadPlans() : desk.mode === 'pvdt' ? loadPvdt() : loadDocsRaw(); }
 async function loadDocsRaw(){
   const tok = ++desk.token, sid = desk.site === '__none' ? 'none' : desk.site;
   desk.loading = true; desk.err = null;
@@ -3820,6 +3899,7 @@ async function loadDocsRaw(){
 }
 function renderDesk(){
   if (desk.mode === 'plans') return renderPlans();
+  if (desk.mode === 'pvdt') return renderPvdt();
   const s = desk.site === '__none' ? null : siteById(desk.site);
   $('#dkHead').innerHTML = `${s ? logoHTML(s) : ''}<div class="t"><small>${s ? esc(s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(s ? s.name : 'À classer')}</h2></div>
     <div class="dk-acts"><button class="btn" id="dkGalSite"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Photos</button><button class="btn primary" id="dkNew"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Nouveau document</button></div>`;
@@ -5146,7 +5226,7 @@ function renderDeskModes(){
   const show = isTabletScreen();
   $('#dkModes').hidden = !show;
   $$('#dkModes [data-dmode]').forEach(b => { const on = b.dataset.dmode === desk.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
-  $('#dkTitle').textContent = desk.mode === 'plans' ? 'Plans' : 'Documents';
+  $('#dkTitle').textContent = desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV de chantier' : 'Documents';
 }
 async function planUploaded(uid, f){
   const r = await PLANCACHE.get(uid);
@@ -5175,6 +5255,7 @@ async function pdfInbox(){ return (await INBOX.all()).filter(isPdfItem).sort((a,
 async function openPlanImport(){
   PI.items = await pdfInbox();
   if (!PI.items.length) return false;
+  PI.kind = 'plans'; PI.detected = false; PI.auto = null;
   if (PI.site === undefined) { const c = currentSite(); PI.site = c ? c.id : (S.sites[0] ? S.sites[0].id : '__none'); }
   renderPlanImport(); openSheet('#sheetPlanImp');
   return true;
@@ -5187,14 +5268,30 @@ function renderPlanImport(){
   const b = (id, s) => `<button class="dk-site ${PI.site === id ? 'on' : ''}" data-pisite="${esc(id)}">${s ? logoHTML(s) : '<span class="slogo none" aria-hidden="true">?</span>'}<span class="t"><b>${esc(s ? s.name : 'À classer')}</b><small>${s ? esc(s.number || '') + (c && c.id === s.id ? ' · ● ici' : '') : 'hors chantier'}</small></span></button>`;
   $('#piSites').innerHTML = S.sites.filter(s => !s.example || S.sites.every(x => x.example)).map(s => b(s.id, s)).join('') + b('__none', null);
   const site = PI.site === '__none' ? null : siteById(PI.site);
-  $('#piDest').textContent = siteFolder(site) + ' / Plans';
-  $('#piHint').textContent = isTabletScreen() ? 'Le plan s’ouvrira dans Plans, sur cette tablette.' : 'Sur le téléphone, les plans ne s’affichent pas : ouvre-les ensuite sur la tablette.';
+  const pvk = PI.kind === 'pvdt';
+  $$('#piKind [data-pik]').forEach(b => { const on = b.dataset.pik === (PI.kind || 'plans'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  if (pvk) $('#piTitle').textContent = n > 1 ? `${n} PV reçus` : 'PV de chantier reçu';
+  $('#piGo').textContent = pvk ? 'Ranger dans PV de chantier' : 'Ranger dans Plans';
+  $('#piDest').textContent = siteFolder(site) + (pvk ? ' / ' + PVDT_DIR : ' / Plans');
+  $('#piHint').textContent = pvk ? (PI.auto && PI.auto === PI.site ? 'Chantier détecté dans le PDF : vérifie avant de ranger. ' : '') + (isTabletScreen() ? 'Le PV s’ouvrira dans PV chantier, sur cette tablette.' : 'Consulte-le ensuite sur la tablette.')
+    : isTabletScreen() ? 'Le plan s’ouvrira dans Plans, sur cette tablette.' : 'Sur le téléphone, les plans ne s’affichent pas : ouvre-les ensuite sur la tablette.';
   $('#piGo').disabled = PI.busy || !n;
 }
 async function doPlanImport(){
   if (PI.busy || !PI.items.length) return;
   PI.busy = true; renderPlanImport();
   const sid = PI.site === '__none' || !PI.site ? 'none' : PI.site, site = sid === 'none' ? null : siteById(sid);
+  if (PI.kind === 'pvdt') {
+    const ids = [];
+    for (const it of PI.items) { const name = cleanPdfName(it.name), m = await pdReadMeta(it.blob, name); await enqueuePvdt(it.blob, name, site, m); ids.push(it.id); }
+    await INBOX.del(ids);
+    PI.busy = false; PI.items = [];
+    closeSheet($('#sheetPlanImp'));
+    await refreshQueue(); processQueue();
+    note(`${ids.length} PV rangé${ids.length > 1 ? 's' : ''} → ${siteFolder(site)} / ${PVDT_DIR}`, 3800);
+    if (isTabletScreen()) { desk.site = sid === 'none' ? '__none' : sid; desk.mode = 'pvdt'; if ($('#desk').hidden) openDesk(); else { renderDeskModes(); renderDeskSites(); loadPvdt(); } }
+    return;
+  }
   const ids = [], keys = [];
   for (const it of PI.items) {
     const uid = pvUid(), name = cleanPdfName(it.name);
@@ -5830,6 +5927,545 @@ function bindPlans(){
   setInterval(() => { if (!document.hidden) mesFlushAll(); }, 60000);
 }
 
+
+/* ---------- PV de chantier de la DT : lecture du PDF (n°, date, chantier, points) ---------- */
+const PVDT_DIR = 'PV de chantier', PVDT_OLD = 'PV annulés', PVDT_ANN = 'Annotations';
+const pdNorm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const pdReEsc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const PD_MOIS = {janvier:1, fevrier:2, mars:3, avril:4, mai:5, juin:6, juillet:7, aout:8, septembre:9, octobre:10, novembre:11, decembre:12};
+const pdP2 = n => String(n).padStart(2, '0');
+async function pdLines(doc, maxPages = 99){
+  const out = [];
+  for (let p = 1; p <= Math.min(doc.numPages, maxPages); p++) {
+    const pg = await doc.getPage(p), tc = await pg.getTextContent(), rows = [];
+    for (const it of tc.items) {
+      if (!it.str || !it.str.trim()) continue;
+      const y = it.transform[5], x = it.transform[4];
+      let r = rows.find(q => Math.abs(q.y - y) < 3);
+      if (!r) rows.push(r = {y, parts:[]});
+      r.parts.push({x, s:it.str});
+    }
+    rows.sort((a, b) => b.y - a.y);
+    for (const r of rows) { r.parts.sort((a, b) => a.x - b.x); const t = r.parts.map(q => q.s).join(' ').replace(/\s+/g, ' ').trim(); if (t) out.push({page:p, text:t}); }
+  }
+  return out;
+}
+function pdDateIn(t){
+  t = String(t || '');
+  let m = t.match(/(?:^|[^\d])(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4}|\d{2})(?!\d)/);
+  if (m) { let y = +m[3]; if (y < 100) y += 2000; const d = +m[1], mo = +m[2]; if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12 && y >= 2000 && y < 2100) return y + '-' + pdP2(mo) + '-' + pdP2(d); }
+  m = pdNorm(t).match(/(?:^|[^\d])(\d{1,2})(?:er)?\s+(janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre)\s+(\d{4})/);
+  if (m) return m[3] + '-' + pdP2(PD_MOIS[m[2]]) + '-' + pdP2(+m[1]);
+  m = t.match(/(?:^|[^\d])(20\d{2})-(\d{2})-(\d{2})(?!\d)/);
+  if (m) return m[1] + '-' + m[2] + '-' + m[3];
+  return '';
+}
+const PD_RE_NUM = /(?:\bP\.?V\.?|proc[eè]s[- ]verbal|s[ée]ance)\s*(?:de\s+(?:la\s+)?(?:chantier|s[ée]ance|direction)\s*)?(?:n[°o.º]\s*|no\.?\s*|nr\.?\s*|num[ée]ro\s*)?(\d{1,3})(?![\d.\/:h])/i;
+function pdMeta(lines, fname){
+  const top = lines.slice(0, 80);
+  let num = '', date = '';
+  for (const l of top) { const m = l.text.match(PD_RE_NUM); if (m) { num = String(+m[1]); date = pdDateIn(l.text); break; } }
+  if (!num) { const m = String(fname || '').replace(/[_]+/g, ' ').match(PD_RE_NUM); if (m) num = String(+m[1]); }
+  if (!date) for (const l of top) if (/s[ée]ance|date|r[ée]union|du\s/i.test(l.text)) { const d = pdDateIn(l.text); if (d) { date = d; break; } }
+  if (!date) for (const l of top) { const d = pdDateIn(l.text); if (d) { date = d; break; } }
+  if (!date) date = pdDateIn(fname);
+  return {num, date};
+}
+function pdGuessSite(lines, sites){
+  const T = ' ' + pdNorm(lines.slice(0, 120).map(l => l.text).join(' ')) + ' ';
+  let best = null, bs = 0;
+  for (const s of sites) {
+    if (s.example) continue;
+    let sc = 0;
+    const num = pdNorm(s.number).trim(), nm = pdNorm(s.name).trim();
+    if (num.length >= 3 && T.includes(num)) sc += 10;
+    if (nm.length >= 4 && T.includes(nm)) sc += 8;
+    for (const w of nm.split(/[^a-z0-9]+/)) if (w.length >= 4 && new RegExp('[^a-z0-9]' + pdReEsc(w) + '[^a-z0-9]').test(T)) sc += 2;
+    if (sc > bs) { bs = sc; best = s; }
+  }
+  return bs >= 2 ? best : null;
+}
+function pdPoints(lines, keys){
+  const res = keys.map(k => pdNorm(k).trim()).filter(k => k.length >= 2).map(k => new RegExp('(^|[^a-z0-9])' + pdReEsc(k) + '($|[^a-z0-9])'));
+  if (!res.length) return [];
+  const out = [];
+  lines.forEach((l, i) => {
+    const nt = pdNorm(l.text);
+    if (!res.some(r => r.test(nt)) || /^(presents?|excuses?|absents?|participants?|diffusion|distribution|copies?|invites?|convoques?)\b/.test(nt)) return;
+    let t = l.text;
+    if (t.length < 40 && i > 0 && lines[i - 1].page === l.page && !res.some(r => r.test(pdNorm(lines[i - 1].text)))) t = lines[i - 1].text + ' · ' + t;
+    out.push({id:l.page + ':' + i, page:l.page, text:t.slice(0, 300)});
+  });
+  return out;
+}
+
+/* ---------- PV de chantier de la DT : liste (tablette) (v2.0) ---------- */
+const PDX = {items:[], old:[], err:null, loading:false, showOld:false};
+const PDCACHE = {
+  db:null,
+  async open(){
+    if (this.db !== null) return this.db;
+    try { this.db = await new Promise((res, rej) => { const r = indexedDB.open('baugest-pvdt', 1); r.onupgradeneeded = () => r.result.createObjectStore('pdf', {keyPath:'key'}); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+    catch (e) { this.db = false; }
+    return this.db;
+  },
+  async tx(mode, fn){ const db = await this.open(); if (!db) return null; return new Promise((res, rej) => { const t = db.transaction('pdf', mode), st = t.objectStore('pdf'); const r = fn(st); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }); },
+  get(k){ return this.tx('readonly', s => s.get(k)).catch(() => null); },
+  put(o){ return this.tx('readwrite', s => s.put(o)).catch(() => null); },
+  del(k){ return this.tx('readwrite', s => s.delete(k)).catch(() => null); },
+  all(){ return this.tx('readonly', s => s.getAll()).then(r => r || []).catch(() => []); }
+};
+function pdSeen(){ try { return JSON.parse(localStorage.getItem('baugest.pvdt.seen') || '{}') || {}; } catch (e) { return {}; } }
+function pdMarkSeen(id){ if (!id) return; const s = pdSeen(); s[id] = Date.now(); try { localStorage.setItem('baugest.pvdt.seen', JSON.stringify(s)); } catch (e) {} }
+function pdPtsInfo(id){ try { return JSON.parse(localStorage.getItem('baugest.pvpts.' + id) || 'null'); } catch (e) { return null; } }
+function pdKeys(){
+  const k = new Set();
+  for (const c of S.companies || []) { const n = String(c.name || '').trim(); if (n) { k.add(n); const f = n.split(/\s+/)[0]; if (f.length >= 4) k.add(f); } }
+  for (const x of S.pvKeys || []) if (String(x).trim()) k.add(String(x).trim());
+  return [...k];
+}
+const pdDir = site => ensurePath([siteFolder(site), PVDT_DIR]);
+const pdOldDir = site => ensurePath([siteFolder(site), PVDT_DIR, PVDT_OLD]);
+const pdSiteOf = sid => sid === 'none' ? null : siteById(sid);
+function pdItem(f, old){
+  const a = f.appProperties || {};
+  return {key:f.id, driveId:f.id, name:f.name, size:+f.size || 0, modified:f.modifiedTime || '', created:f.createdTime || '', num:a.pvn || '', date:a.pvdate || '',
+    thumb:f.thumbnailLink ? f.thumbnailLink.replace(/=s\d+$/, '=s400') : '', old:!!old, inDrive:true};
+}
+const pdDay = it => it.date || (it.created || it.modified || '').slice(0, 10);
+const pdSort = (a, b) => pdDay(b).localeCompare(pdDay(a)) || (+b.num || 0) - (+a.num || 0) || String(b.created).localeCompare(String(a.created));
+async function loadPvdt(){
+  const tok = ++desk.token, sid = desk.site === '__none' ? 'none' : desk.site, site = pdSiteOf(sid);
+  PDX.loading = true; PDX.err = null;
+  const map = new Map();
+  for (const r of await PDCACHE.all()) if ((r.siteId || 'none') === sid && !r.old) map.set(r.key, {key:r.key, driveId:r.driveId || '', name:r.name, size:r.size || 0, modified:r.modified || '', created:r.created || '', num:r.num || '', date:r.date || '', local:true});
+  for (const it of await DB.all()) if (it.meta.kind === 'pvdt' && (it.meta.siteId || 'none') === sid)
+    map.set('q:' + it.meta.uid, {key:'q:' + it.meta.uid, name:it.meta.name, size:it.blob.size, num:it.meta.pvn || '', date:it.meta.pvdate || '', created:it.meta.taken || '', pending:true, qid:it.id});
+  PDX.items = [...map.values()].sort(pdSort); PDX.old = [];
+  if (tok === desk.token) renderPvdt();
+  const r = queueReason();
+  if (DEMO && !tokenValid()) PDX.err = 'Aperçu : dans l’app, la liste montre les PDF du dossier « PV de chantier » du chantier sur ton Drive.';
+  else if (r && r.a !== null) PDX.err = r.t + ' · seulement les PV déjà ouverts sur cet appareil';
+  else if (!navigator.onLine) PDX.err = 'Hors ligne · seulement les PV déjà ouverts sur cet appareil';
+  else {
+    try {
+      const dir = await pdDir(site), old = await pdOldDir(site), F = 'files(id,name,size,modifiedTime,createdTime,thumbnailLink,appProperties)';
+      const cur = await plApiAll(`'${qEsc(dir)}' in parents and trashed=false and mimeType='application/pdf'`, F);
+      const olds = await plApiAll(`'${qEsc(old)}' in parents and trashed=false and mimeType='application/pdf'`, F);
+      if (tok !== desk.token) return;
+      const keep = [...map.values()].filter(o => o.pending);
+      const ids = new Set(cur.map(f => f.id));
+      for (const o of map.values()) if (o.local && !ids.has(o.key)) PDCACHE.del(o.key);
+      PDX.items = cur.map(f => pdItem(f)).concat(keep).sort(pdSort);
+      PDX.old = olds.map(f => pdItem(f, true)).sort(pdSort);
+    } catch (e) { PDX.err = 'Lecture du Drive impossible : ' + e.message; }
+  }
+  if (tok !== desk.token) return;
+  PDX.loading = false; renderPvdt();
+}
+function pdRow(it){
+  const seen = pdSeen(), isNew = !it.pending && !it.old && !seen[it.key], pts = pdPtsInfo(it.key);
+  const st = it.pending ? '<span class="dk-st wait">À envoyer</span>' : it.old ? '<span class="dk-st">Annulé</span>' : it.local && !it.inDrive ? '<span class="dk-st">Sur cet appareil</span>' : '<span class="dk-st ok">Sur le Drive</span>';
+  const ptsT = pts ? (pts.open ? `<span class="pd-pts">${pts.open} point${pts.open > 1 ? 's' : ''} à notre charge</span>` : pts.n ? '<span class="pd-pts ok">Points réglés</span>' : '') : '';
+  return `<div class="pd-row ${isNew ? 'new' : ''}" role="button" tabindex="0" data-pd="${esc(it.key)}">
+    <span class="pd-ic">PV${it.num ? `<b>${esc(it.num)}</b>` : ''}</span>
+    <span class="pd-t"><b>${isNew ? '<span class="pd-new">Nouveau</span>' : ''}${esc(plBase(it.name))}</b><small>${esc([it.num ? 'PV n° ' + it.num : '', pdDay(it) ? 'Séance du ' + fmtISO(pdDay(it)) : '', it.size ? fmtSize(it.size) : ''].filter(Boolean).join(' · '))}</small>${ptsT}</span>
+    ${st}</div>`;
+}
+function renderPvdt(){
+  const s = desk.site === '__none' ? null : siteById(desk.site);
+  renderDeskSites();
+  $('#dkHead').innerHTML = `${s ? logoHTML(s) : ''}<div class="t"><small>${s ? esc(s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(s ? s.name : 'À classer')}</h2></div>
+    <div class="dk-acts"><button class="btn" id="dkGalSite">${PL_IC.photos}Photos</button><button class="btn primary" id="pdAdd">${PL_IC.addPlan}Ajouter un PV</button></div>`;
+  $('#dkInfo').hidden = !PDX.err; $('#dkInfo').textContent = PDX.err || '';
+  const n = PDX.items.length, nNew = PDX.items.filter(i => !i.pending && !pdSeen()[i.key]).length;
+  $('#dkList').innerHTML = `<p class="pl-path pd-path">Drive : ${esc([siteFolder(s), PVDT_DIR].join(' / '))}</p>
+    <section class="dk-sec"><div class="dk-sep"><h3>PV de chantier</h3><span class="n">${n}</span><span class="p">PV de la direction des travaux · le plus récent en haut${nNew ? ` · ${nNew} nouveau${nNew > 1 ? 'x' : ''}` : ''}</span></div>
+      ${n ? `<div class="pd-list">${PDX.items.map(pdRow).join('')}</div>` : `<p class="dk-empty">${PDX.loading ? 'Chargement…' : 'Aucun PV pour ce chantier. Dépose les PDF depuis BauGest PC (onglet PV DT), touche « Ajouter un PV », ou partage un PDF vers BauGest.'}</p>`}</section>
+    ${PDX.old.length ? `<section class="dk-sec"><div class="dk-sep"><h3>PV annulés</h3><span class="n">${PDX.old.length}</span><span class="p">Remplacés par un PV corrigé (même n°)</span><button class="btn" id="pdOldTog">${PDX.showOld ? 'Masquer' : 'Afficher'}</button></div>
+      ${PDX.showOld ? `<div class="pd-list">${PDX.old.map(pdRow).join('')}</div>` : ''}</section>` : ''}`;
+  renderDeskModes();
+}
+
+/* ---------- ajout et envoi ---------- */
+async function pdReadMeta(blob, name){
+  try {
+    await needPdfJs();
+    const doc = await pdfjsLib.getDocument({data:new Uint8Array(await blob.arrayBuffer()), isEvalSupported:false, ...PDFJS_RES}).promise;
+    const lines = await pdLines(doc, 3); doc.destroy();
+    return {...pdMeta(lines, name), site:pdGuessSite(lines, S.sites)};
+  } catch (e) { return {...pdMeta([], name), site:null}; }
+}
+async function enqueuePvdt(blob, name, site, m){
+  const uid = pvUid();
+  await DB.put({id:'pd-' + uid, blob, created:Date.now(), thumb:PDF_THUMB,
+    meta:{kind:'pvdt', mime:'application/pdf', uid, name, pvn:m.num || '', pvdate:m.date || '', path:[siteFolder(site), PVDT_DIR],
+      description:`Chantier : ${siteLabel(site)}\nPV de chantier de la DT${m.num ? ' n° ' + m.num : ''}${m.date ? ' du ' + fmtISO(m.date) : ''}`,
+      siteId:site ? site.id : 'none', taken:new Date().toISOString(), tags:[]}, error:''});
+  return uid;
+}
+async function pdUploaded(meta, f, blob){
+  pdMarkSeen(f.id);
+  const site = pdSiteOf(meta.siteId || 'none');
+  if (isTabletScreen() && blob) await PDCACHE.put({key:f.id, driveId:f.id, name:meta.name, siteId:meta.siteId || 'none', size:blob.size, num:meta.pvn || '', date:meta.pvdate || '', created:new Date().toISOString(), blob});
+  try { const n = await pdSupersede(site, meta.pvn, f.id); if (n) note(`PV n° ${meta.pvn} : ancienne version rangée dans « ${PVDT_OLD} »`, 3500); } catch (e) {}
+}
+async function pdSupersede(site, num, keepId){
+  if (!num) return 0;
+  const dir = await pdDir(site), old = await pdOldDir(site);
+  const fs = await plApiAll(`'${qEsc(dir)}' in parents and trashed=false and appProperties has { key='pvn' and value='${qEsc(String(num))}' }`, 'files(id)');
+  let n = 0;
+  for (const f of fs) if (f.id !== keepId) { await plPatch(f.id, {}, {addParents:old, removeParents:dir, fields:'id'}); PDCACHE.del(f.id); n++; }
+  return n;
+}
+async function pdAddFiles(files){
+  files = files.filter(f => /pdf/i.test(f.type || '') || /\.pdf$/i.test(f.name || ''));
+  if (!files.length) { note('Choisis des fichiers PDF', 2500); return; }
+  const sid = desk.site === '__none' ? 'none' : desk.site, site = pdSiteOf(sid);
+  for (const f of files) { const name = cleanPdfName(f.name), m = await pdReadMeta(f, name); await enqueuePvdt(f, name, site, m); }
+  await refreshQueue(); processQueue(); loadPvdt();
+  note(`${files.length} PV ajouté${files.length > 1 ? 's' : ''} → ${siteFolder(site)} / ${PVDT_DIR}`, 3500);
+}
+
+/* ---------- notification « nouveau PV » ---------- */
+async function pdCheckNew(){
+  if (!S.pvNotif || queueReason() || DEMO || !('Notification' in window) || Notification.permission !== 'granted') return;
+  let last = ''; try { last = localStorage.getItem('baugest.pvdt.last') || ''; } catch (e) {}
+  const now = new Date().toISOString();
+  if (!last) { try { localStorage.setItem('baugest.pvdt.last', now); } catch (e) {} return; }
+  try {
+    const q = `trashed=false and appProperties has { key='kind' and value='pvdt' } and createdTime > '${last}'`;
+    const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, pageSize:'50', fields:'files(id,name,createdTime,appProperties)'}));
+    try { localStorage.setItem('baugest.pvdt.last', now); } catch (e) {}
+    const seen = pdSeen(), fresh = (r.files || []).filter(f => !seen[f.id]);
+    if (!fresh.length) return;
+    const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
+    for (const f of fresh.slice(0, 5)) {
+      const a = f.appProperties || {}, s = siteById(remapId(a.site));
+      const title = 'Nouveau PV de chantier' + (s ? ' · ' + s.name : ''), body = plBase(f.name) + (a.pvn ? ' · PV n° ' + a.pvn : '') + (a.pvdate ? ' · séance du ' + fmtISO(a.pvdate) : '');
+      const opt = {body, tag:'pvdt-' + f.id, icon:'icon-192.png', badge:'icon-192.png', data:{pvdt:f.id, site:s ? s.id : 'none'}};
+      if (reg) reg.showNotification(title, opt); else new Notification(title, opt);
+    }
+    if (!$('#desk').hidden && desk.mode === 'pvdt') loadPvdt();
+  } catch (e) {}
+}
+async function pdOpenFromParam(id, sid){
+  if (!isTabletScreen()) return;
+  desk.site = sid && siteById(sid) ? sid : desk.site; desk.mode = 'pvdt';
+  if ($('#desk').hidden) openDesk(); else { renderDeskModes(); loadPvdt(); }
+  setTimeout(() => openPvdt(id), 400);
+}
+
+/* ---------- visionneuse avec annotation au stylo ---------- */
+const PDV = {it:null, doc:null, bytes:null, zoom:1, tool:'read', color:'#e5312b', ann:null, undo:[], cur:null, pan:null, erase:false, ovs:[], rtok:0, points:[], pushT:0, siteId:'none', lines:null};
+const PD_COLS = ['#e5312b', '#1f5fd6', '#111111', '#0f9d58'];
+function pdAnnLocal(k){ try { return JSON.parse(localStorage.getItem('baugest.pvann.' + k) || 'null'); } catch (e) { return null; } }
+function pdAnnSaveLocal(k, a){ try { localStorage.setItem('baugest.pvann.' + k, JSON.stringify(a)); } catch (e) { pdSaveState('Mémoire de l’appareil pleine : annotations non gardées', 'err'); } }
+function pdSaveState(t, c){ const el = $('#pdSave'); el.textContent = t || ''; el.className = 'pdv-save ' + (c || ''); }
+async function pdAnnFind(id){
+  const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q:`trashed=false and appProperties has { key='kind' and value='pvann' } and appProperties has { key='pv' and value='${qEsc(id)}' }`, pageSize:'1', fields:'files(id,modifiedTime)'}));
+  return (r.files || [])[0] || null;
+}
+async function pdAnnLoad(it){
+  let loc = pdAnnLocal(it.key) || {strokes:[], done:{}, mod:0, dirty:false};
+  if (it.driveId && !queueReason() && !DEMO) {
+    try {
+      const f = await pdAnnFind(it.driveId);
+      if (f) {
+        loc.fileId = f.id;
+        const at = Date.parse(f.modifiedTime) || 0;
+        if (!loc.dirty && (loc.syncedAt || 0) < at - 1000) {
+          const d = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(f.id)}?alt=media`);
+          loc = {strokes:d.strokes || [], done:d.done || {}, mod:d.mod || at, fileId:f.id, syncedAt:at, dirty:false};
+        }
+      }
+      pdAnnSaveLocal(it.key, loc);
+    } catch (e) {}
+  }
+  return loc;
+}
+async function pdAnnPush(){
+  clearTimeout(PDV.pushT); PDV.pushT = 0;
+  const it = PDV.it, a = PDV.ann; if (!it || !a || !a.dirty) return;
+  if (!it.driveId || queueReason() || DEMO) { pdSaveState('Enregistré sur cet appareil · envoi au Drive plus tard'); return; }
+  const body = JSON.stringify({v:1, pv:it.driveId, name:it.name, strokes:a.strokes, done:a.done, mod:a.mod});
+  try {
+    if (!a.fileId) { const f = await pdAnnFind(it.driveId); if (f) a.fileId = f.id; }
+    let res;
+    if (a.fileId) res = await api(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(a.fileId)}?uploadType=media&fields=id,modifiedTime`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body});
+    else {
+      const parent = await ensurePath([siteFolder(pdSiteOf(PDV.siteId)), PVDT_DIR, PVDT_ANN]), b = 'pd' + Math.random().toString(36).slice(2);
+      const md = {name:plBase(it.name) + ' - annotations BauGest.json', parents:[parent], mimeType:'application/json', appProperties:{kind:'pvann', pv:it.driveId, site:PDV.siteId}};
+      res = await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime', {method:'POST', headers:{'Content-Type':'multipart/related; boundary=' + b},
+        body:new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`, JSON.stringify(md), `\r\n--${b}\r\nContent-Type: application/json\r\n\r\n`, body, `\r\n--${b}--`])});
+    }
+    a.fileId = res.id; a.syncedAt = Date.parse(res.modifiedTime) || Date.now(); a.dirty = false;
+    pdAnnSaveLocal(it.key, a); if (PDV.ann === a) pdSaveState('Annotations enregistrées sur le Drive', 'ok');
+  } catch (e) { pdSaveState('Enregistré sur cet appareil · Drive : ' + e.message, 'err'); }
+}
+async function pdFlushAll(){
+  if (queueReason() || DEMO) return;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i); if (!k || !k.startsWith('baugest.pvann.')) continue;
+    const a = pdAnnLocal(k.slice(14)); if (!a || !a.dirty || k.slice(14).startsWith('q:')) continue;
+    if (PDV.it && PDV.it.key === k.slice(14)) continue;
+    const save = PDV.it, ann = PDV.ann, sid = PDV.siteId;
+    PDV.it = {key:k.slice(14), driveId:k.slice(14), name:a.name || 'PV.pdf'}; PDV.ann = a; PDV.siteId = a.site || 'none';
+    try { await pdAnnPush(); } finally { PDV.it = save; PDV.ann = ann; PDV.siteId = sid; }
+  }
+}
+function pdChanged(){
+  const a = PDV.ann; a.mod = Date.now(); a.dirty = true; a.name = PDV.it.name; a.site = PDV.siteId;
+  pdAnnSaveLocal(PDV.it.key, a); pdSaveState('Enregistré sur cet appareil…');
+  clearTimeout(PDV.pushT); PDV.pushT = setTimeout(pdAnnPush, 2500);
+  $('#pdUndo').disabled = !PDV.undo.length;
+}
+function pdFindItem(key){ return PDX.items.concat(PDX.old).find(x => x.key === key) || null; }
+async function openPvdt(key){
+  const it = pdFindItem(key); if (!it) return;
+  const s = pdSiteOf(desk.site === '__none' ? 'none' : desk.site);
+  Object.assign(PDV, {it, zoom:1, undo:[], cur:null, pan:null, ovs:[], points:[], lines:null, siteId:s ? s.id : 'none', ann:{strokes:[], done:{}, mod:0}});
+  if (PDV.doc) { try { PDV.doc.destroy(); } catch (e) {} PDV.doc = null; }
+  $('#pdTitle').textContent = plBase(it.name);
+  $('#pdSub').textContent = [it.num ? 'PV n° ' + it.num : '', pdDay(it) ? 'Séance du ' + fmtISO(pdDay(it)) : '', s ? siteLabel(s) : 'À classer', it.old ? 'ANNULÉ' : ''].filter(Boolean).join(' · ');
+  $('#pdPages').innerHTML = '<p class="hint pd-wait">Ouverture du PV…</p>'; $('#pdPtsList').innerHTML = ''; $('#pdPtsN').textContent = '';
+  pdSaveState(''); pdSetTool('read'); $('#pdUndo').disabled = true;
+  $('#pdView').hidden = false;
+  try {
+    let blob = null, rec = await PDCACHE.get(it.key);
+    if (rec && rec.blob && (!it.modified || !rec.modified || rec.modified >= it.modified)) blob = rec.blob;
+    if (!blob && it.pending) { const q = (await DB.all()).find(x => x.id === it.qid); blob = q && q.blob; }
+    if (!blob && it.driveId) {
+      const r = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(it.driveId)}?alt=media&supportsAllDrives=true`);
+      blob = await r.blob();
+      if (!it.old) PDCACHE.put({key:it.key, driveId:it.driveId, name:it.name, siteId:PDV.siteId, size:blob.size, modified:it.modified, created:it.created, num:it.num, date:it.date, blob});
+    }
+    if (!blob) throw new Error(navigator.onLine ? 'PV introuvable' : 'PV pas encore téléchargé sur cet appareil (hors ligne)');
+    if (!it.pending) pdMarkSeen(it.key);
+    await needPdfJs();
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const doc = await pdfjsLib.getDocument({data:bytes.slice(), isEvalSupported:false, ...PDFJS_RES}).promise;
+    if (PDV.it !== it) { doc.destroy(); return; }
+    PDV.doc = doc; PDV.bytes = bytes;
+    PDV.ann = await pdAnnLoad(it);
+    if (PDV.it !== it) return;
+    await pdLayout();
+    pdLoadPoints(it);
+  } catch (e) { $('#pdPages').innerHTML = `<p class="hint pd-wait">Ouverture impossible : ${esc(e.message || e)}</p>`; }
+}
+function closePvdt(){
+  if (PDV.pushT) pdAnnPush();
+  $('#pdView').hidden = true; PDV.rtok++;
+  if (PDV.doc) { try { PDV.doc.destroy(); } catch (e) {} PDV.doc = null; }
+  PDV.it = null; PDV.ann = null;
+  if (!$('#desk').hidden && desk.mode === 'pvdt') renderPvdt();
+}
+async function pdLayout(){
+  const tok = ++PDV.rtok, doc = PDV.doc, sc = $('#pdScroll'), host = $('#pdPages');
+  const ratio = sc.scrollHeight > sc.clientHeight ? sc.scrollTop / sc.scrollHeight : 0;
+  const W = Math.round(Math.max(280, Math.min(sc.clientWidth - 28, 1500)) * PDV.zoom);
+  host.innerHTML = ''; PDV.ovs = [];
+  const pgs = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const pg = await doc.getPage(i); if (tok !== PDV.rtok) return;
+    const v1 = pg.getViewport({scale:1}), H = Math.round(W * v1.height / v1.width);
+    const wrap = document.createElement('div'); wrap.className = 'pd-page'; wrap.style.width = W + 'px'; wrap.style.height = H + 'px';
+    const c = document.createElement('canvas'), o = document.createElement('canvas');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2.5, 4000 / W);
+    c.width = o.width = Math.round(W * dpr); c.height = o.height = Math.round(H * dpr);
+    o.className = 'pd-ov'; o.dataset.pg = i;
+    wrap.append(c, o); host.appendChild(wrap); PDV.ovs[i] = o; pgs.push({pg, c, v1});
+    pdDraw(i);
+  }
+  pdApplyTool();
+  if (ratio) sc.scrollTop = ratio * sc.scrollHeight;
+  for (const {pg, c, v1} of pgs) {
+    if (tok !== PDV.rtok) return;
+    await pg.render({canvasContext:c.getContext('2d'), viewport:pg.getViewport({scale:c.width / v1.width})}).promise.catch(() => {});
+  }
+}
+function pdDrawStroke(g, s, W, H){
+  const p = s.pts; if (p.length < 2) return;
+  g.globalAlpha = s.tool === 'hl' ? .35 : 1; g.strokeStyle = s.c; g.lineWidth = Math.max(1, s.w * W); g.lineCap = 'round'; g.lineJoin = 'round';
+  g.beginPath(); g.moveTo(p[0] * W, p[1] * H);
+  if (p.length === 2) g.lineTo(p[0] * W + .1, p[1] * H);
+  for (let i = 2; i < p.length; i += 2) g.lineTo(p[i] * W, p[i + 1] * H);
+  g.stroke(); g.globalAlpha = 1;
+}
+function pdDraw(i){
+  const o = PDV.ovs[i]; if (!o || !PDV.ann) return;
+  const g = o.getContext('2d'); g.clearRect(0, 0, o.width, o.height);
+  for (const s of PDV.ann.strokes) if (s.pg === i) pdDrawStroke(g, s, o.width, o.height);
+  if (PDV.cur && PDV.cur.pg === i) pdDrawStroke(g, PDV.cur, o.width, o.height);
+}
+function pdSetTool(t){
+  PDV.tool = t;
+  $$('#pdTools [data-pdt]').forEach(b => { const on = b.dataset.pdt === t; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  $('#pdCols').hidden = t !== 'pen';
+  pdApplyTool();
+}
+function pdApplyTool(){ const draw = PDV.tool !== 'read'; for (const o of PDV.ovs) if (o) { o.style.pointerEvents = draw ? 'auto' : 'none'; o.style.cursor = PDV.tool === 'erase' ? 'cell' : draw ? 'crosshair' : ''; } }
+function pdPt(o, e){ const r = o.getBoundingClientRect(); return [pvClamp((e.clientX - r.left) / r.width, 0, 1), pvClamp((e.clientY - r.top) / r.height, 0, 1)]; }
+function pdEraseAt(pg, o, q){
+  const r = o.getBoundingClientRect(), k = r.height / r.width, tol = 14 / r.width;
+  const st = PDV.ann.strokes;
+  for (let i = st.length - 1; i >= 0; i--) {
+    const s = st[i]; if (s.pg !== pg) continue;
+    let hit = false;
+    for (let j = 0; j < s.pts.length && !hit; j += 2) if (Math.hypot(s.pts[j] - q[0], (s.pts[j + 1] - q[1]) * k) < tol + s.w / 2) hit = true;
+    if (hit) { st.splice(i, 1); PDV.undo.push({op:'del', s, i}); pdDraw(pg); pdChanged(); }
+  }
+}
+function bindPvdtViewer(){
+  const host = $('#pdPages'), sc = $('#pdScroll');
+  host.addEventListener('pointerdown', e => {
+    const o = e.target.closest('.pd-ov'); if (!o || PDV.tool === 'read' || !PDV.ann) return;
+    if (e.pointerType === 'touch') { PDV.pan = {id:e.pointerId, x:e.clientX, y:e.clientY, l:sc.scrollLeft, t:sc.scrollTop}; o.setPointerCapture(e.pointerId); return; }
+    e.preventDefault(); o.setPointerCapture(e.pointerId);
+    const pg = +o.dataset.pg, q = pdPt(o, e);
+    if (PDV.tool === 'erase') { PDV.erase = true; pdEraseAt(pg, o, q); return; }
+    const hl = PDV.tool === 'hl';
+    PDV.cur = {pg, tool:PDV.tool, c:hl ? '#ffd400' : PDV.color, w:hl ? .02 : .0028, pts:q.slice()};
+    pdDraw(pg);
+  });
+  host.addEventListener('pointermove', e => {
+    const o = e.target.closest('.pd-ov') || (PDV.cur && PDV.ovs[PDV.cur.pg]);
+    if (PDV.pan && e.pointerId === PDV.pan.id) { sc.scrollLeft = PDV.pan.l - (e.clientX - PDV.pan.x); sc.scrollTop = PDV.pan.t - (e.clientY - PDV.pan.y); return; }
+    if (!o) return;
+    if (PDV.erase) { pdEraseAt(+o.dataset.pg, o, pdPt(o, e)); return; }
+    if (!PDV.cur) return;
+    const ov = PDV.ovs[PDV.cur.pg], evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of evs.length ? evs : [e]) { const q = pdPt(ov, ev), p = PDV.cur.pts; if (Math.hypot(q[0] - p[p.length - 2], q[1] - p[p.length - 1]) > .0012) p.push(q[0], q[1]); }
+    pdDraw(PDV.cur.pg);
+  });
+  const end = e => {
+    if (PDV.pan && e.pointerId === PDV.pan.id) { PDV.pan = null; return; }
+    if (PDV.erase) { PDV.erase = false; return; }
+    if (!PDV.cur) return;
+    const s = PDV.cur; PDV.cur = null;
+    s.pts = s.pts.map(v => Math.round(v * 1e5) / 1e5);
+    PDV.ann.strokes.push(s); PDV.undo.push({op:'add', s}); pdDraw(s.pg); pdChanged();
+  };
+  host.addEventListener('pointerup', end); host.addEventListener('pointercancel', end);
+  $('#pdClose').addEventListener('click', closePvdt);
+  $('#pdTools').addEventListener('click', e => { const b = e.target.closest('[data-pdt]'); if (b) pdSetTool(b.dataset.pdt); });
+  $('#pdCols').innerHTML = PD_COLS.map(c => `<button data-pdc="${c}" style="--c:${c}" aria-label="Couleur"></button>`).join('');
+  $('#pdCols').addEventListener('click', e => { const b = e.target.closest('[data-pdc]'); if (!b) return; PDV.color = b.dataset.pdc; $$('#pdCols [data-pdc]').forEach(x => x.classList.toggle('on', x === b)); });
+  $('#pdCols [data-pdc]').classList.add('on');
+  $('#pdUndo').addEventListener('click', () => {
+    const u = PDV.undo.pop(); if (!u) return;
+    const st = PDV.ann.strokes;
+    if (u.op === 'add') { const i = st.lastIndexOf(u.s); if (i >= 0) st.splice(i, 1); } else st.splice(Math.min(u.i, st.length), 0, u.s);
+    pdDraw(u.s.pg); pdChanged();
+  });
+  $('#pdZin').addEventListener('click', () => { if (PDV.doc && PDV.zoom < 4) { PDV.zoom = Math.min(4, PDV.zoom * 1.4); pdLayout(); } });
+  $('#pdZout').addEventListener('click', () => { if (PDV.doc && PDV.zoom > 1) { PDV.zoom = Math.max(1, PDV.zoom / 1.4); pdLayout(); } });
+  $('#pdPtsBtn').addEventListener('click', () => { $('#pdSide').hidden = !$('#pdSide').hidden; $('#pdPtsBtn').classList.toggle('on', !$('#pdSide').hidden); if (PDV.doc) pdLayout(); });
+  $('#pdPtsList').addEventListener('click', e => {
+    const c = e.target.closest('[data-pdpt]');
+    if (c && e.target.closest('.pd-chk')) { const id = c.dataset.pdpt; if (PDV.ann.done[id]) delete PDV.ann.done[id]; else PDV.ann.done[id] = Date.now(); pdChanged(); pdRenderPoints(); return; }
+    if (c) { const p = PDV.points.find(x => x.id === c.dataset.pdpt), o = p && PDV.ovs[p.page]; if (o) o.parentElement.scrollIntoView({behavior:'smooth', block:'start'}); }
+  });
+  $('#pdShare').addEventListener('click', pdShareDlg);
+  let rz = 0; window.addEventListener('resize', () => { if ($('#pdView').hidden || !PDV.doc) return; clearTimeout(rz); rz = setTimeout(pdLayout, 300); });
+}
+
+/* ---------- points à notre charge ---------- */
+async function pdLoadPoints(it){
+  try {
+    if (!PDV.lines) PDV.lines = await pdLines(PDV.doc);
+    if (PDV.it !== it) return;
+    if (it.driveId && !it.old && (!it.num || !it.date)) {
+      const m = pdMeta(PDV.lines, it.name), props = {};
+      if (!it.num && m.num) props.pvn = it.num = m.num;
+      if (!it.date && m.date) props.pvdate = it.date = m.date;
+      if (Object.keys(props).length && !queueReason()) plPatch(it.driveId, {appProperties:{kind:'pvdt', site:PDV.siteId, ...props}}).catch(() => {});
+    }
+    PDV.points = pdPoints(PDV.lines, pdKeys());
+  } catch (e) { PDV.points = []; }
+  pdRenderPoints();
+}
+function pdRenderPoints(){
+  const P = PDV.points, done = PDV.ann ? PDV.ann.done : {}, open = P.filter(p => !done[p.id]).length;
+  $('#pdPtsN').textContent = P.length ? String(open) : '';
+  try { localStorage.setItem('baugest.pvpts.' + PDV.it.key, JSON.stringify({n:P.length, open})); } catch (e) {}
+  const keys = pdKeys();
+  $('#pdPtsList').innerHTML = !keys.length ? '<p class="hint">Indique le nom de ton entreprise dans Paramètres › PV de chantier (DT) pour repérer les points à ta charge.</p>'
+    : !P.length ? `<p class="hint">Aucun point trouvé avec : ${esc(keys.join(', '))}.</p>`
+    : P.map(p => `<div class="pd-pt ${done[p.id] ? 'done' : ''}" data-pdpt="${esc(p.id)}"><button class="pd-chk" aria-label="Fait">${done[p.id] ? '✓' : ''}</button><span><small>Page ${p.page}</small>${esc(p.text)}</span></div>`).join('');
+}
+
+/* ---------- partage (PDF d'origine ou avec annotations) ---------- */
+function pdShareDlg(){
+  if (!PDV.bytes) return;
+  const has = PDV.ann && PDV.ann.strokes.length;
+  if (!has) { pdShare(false); return; }
+  plDialog('Partager le PV', '<p class="hint">Le PDF part par e-mail, WhatsApp ou une autre app.</p>', [{label:'PDF d’origine', run:() => { closeSheet($('#sheetPlDlg')); pdShare(false); }}, {label:'Avec mes annotations', primary:true, run:() => { closeSheet($('#sheetPlDlg')); pdShare(true); }}]);
+}
+async function pdBuildPdf(withAnn){
+  if (!withAnn) return PDV.bytes.slice();
+  await loadScript(PDFLIB_URL);
+  const {PDFDocument, rgb, LineCapStyle} = PDFLib;
+  const doc = await PDFDocument.load(PDV.bytes.slice(), {ignoreEncryption:true}), pages = doc.getPages();
+  for (const s of PDV.ann.strokes) {
+    const p = pages[s.pg - 1]; if (!p) continue;
+    const {width:w, height:h} = p.getSize(), rot = ((p.getRotation().angle % 360) + 360) % 360;
+    const map = (x, y) => rot === 90 ? [y * w, x * h] : rot === 180 ? [(1 - x) * w, y * h] : rot === 270 ? [(1 - y) * w, (1 - x) * h] : [x * w, (1 - y) * h];
+    const dispW = rot === 90 || rot === 270 ? h : w, n = parseInt(s.c.slice(1), 16);
+    const opt = {thickness:Math.max(.5, s.w * dispW), color:rgb((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255), opacity:s.tool === 'hl' ? .35 : 1, lineCap:LineCapStyle.Round};
+    const pts = s.pts.length === 2 ? [...s.pts, s.pts[0] + .0005, s.pts[1]] : s.pts;
+    for (let i = 2; i < pts.length; i += 2) { const a = map(pts[i - 2], pts[i - 1]), b = map(pts[i], pts[i + 1]); p.drawLine({start:{x:a[0], y:a[1]}, end:{x:b[0], y:b[1]}, ...opt}); }
+  }
+  return doc.save();
+}
+async function pdShare(withAnn){
+  try {
+    pdSaveState('Préparation du PDF…');
+    const bytes = await pdBuildPdf(withAnn), name = plBase(PDV.it.name) + (withAnn ? '_annoté' : '') + '.pdf';
+    const file = new File([bytes], name, {type:'application/pdf'});
+    pdSaveState('');
+    if (navigator.canShare && navigator.canShare({files:[file]})) { try { await navigator.share({files:[file], title:name}); return; } catch (e) { if (e.name === 'AbortError') return; } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  } catch (e) { pdSaveState('Partage impossible : ' + (e.message || e), 'err'); }
+}
+
+/* ---------- liaison ---------- */
+function renderPvdtSettings(){
+  const k = $('#setPvKeys'); if (k && document.activeElement !== k) k.value = (S.pvKeys || []).join(', ');
+  const n = $('#setPvNotif'); if (n) n.checked = !!S.pvNotif && 'Notification' in window && Notification.permission === 'granted';
+}
+function bindPvdt(){
+  $('#dkMain').addEventListener('click', e => {
+    if (desk.mode !== 'pvdt') return;
+    if (e.target.closest('#pdAdd')) { $('#pdFile').click(); return; }
+    if (e.target.closest('#pdOldTog')) { PDX.showOld = !PDX.showOld; renderPvdt(); return; }
+    const r = e.target.closest('[data-pd]'); if (r) openPvdt(r.dataset.pd);
+  });
+  $('#dkMain').addEventListener('keydown', e => { if (desk.mode === 'pvdt' && (e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pd]')) { e.preventDefault(); e.target.click(); } });
+  $('#pdFile').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; pdAddFiles(f); });
+  $('#setPvKeys').addEventListener('change', e => { S.pvKeys = e.target.value.split(/[,;]+/).map(x => x.trim()).filter(Boolean).slice(0, 20); save(); note('Noms enregistrés', 2000); });
+  $('#setPvNotif').addEventListener('change', async e => {
+    if (!e.target.checked) { S.pvNotif = false; save(); return; }
+    if (!('Notification' in window)) { e.target.checked = false; note('Notifications non disponibles sur cet appareil', 3500); return; }
+    const p = await Notification.requestPermission();
+    S.pvNotif = p === 'granted'; e.target.checked = S.pvNotif; save();
+    if (S.pvNotif) { try { localStorage.removeItem('baugest.pvdt.last'); } catch (err) {} pdCheckNew(); note('Notification activée pour les nouveaux PV', 3000); }
+    else note('Notifications refusées : autorise-les pour BauGest dans les réglages Android', 4500);
+  });
+  $('#piKind').addEventListener('click', async e => {
+    const b = e.target.closest('[data-pik]'); if (!b || PI.busy) return;
+    PI.kind = b.dataset.pik; renderPlanImport();
+    if (PI.kind === 'pvdt' && PI.items[0] && !PI.detected) {
+      PI.detected = true; const m = await pdReadMeta(PI.items[0].blob, PI.items[0].name);
+      if (m.site && PI.kind === 'pvdt') { PI.site = m.site.id; PI.auto = m.site.id; renderPlanImport(); }
+    }
+  });
+  bindPvdtViewer();
+  pdCheckNew(); setInterval(() => { if (!document.hidden) pdCheckNew(); }, 600000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) pdCheckNew(); });
+  setInterval(pdFlushAll, 120000); setTimeout(pdFlushAll, 8000);
+  navigator.serviceWorker?.addEventListener('message', e => { const d = e.data || {}; if (d.pvdt) pdOpenFromParam(d.pvdt, d.site); });
+}
 
 /* ---------- Devis particuliers (v1.7) ---------- */
 /* Une fiche par demande de particulier : client, adresse, visite (photos, notes), travaux à faire.
@@ -6983,6 +7619,7 @@ function backLayers(){
   if (isOpen('#viewer')) n++;
   if (isOpen('#docView')) n++;
   if (isOpen('#planView')) n++;
+  if (isOpen('#pdView')) n++;
   if (isOpen('#settings')) n++;
   if (isOpen('#devis')) { n++; if (isOpen('#dzMain') && !isOpen('#dzSide')) n++; if (isOpen('#dzSelBar')) n++; }
   if (isOpen('#dzMapP')) n++;
@@ -6997,6 +7634,7 @@ function backCloseTop(){
   if (isOpen('#viewer')) { closeViewer(); return true; }
   if (isOpen('#docView')) { closeDocView(); return true; }
   if (isOpen('#planView')) { if (PV.imm) { pvToggleImm(false); return true; } closePlan(); return true; }
+  if (isOpen('#pdView')) { closePvdt(); return true; }
   if (isOpen('#settings')) { $('#setBack').click(); return true; }
   if (isOpen('#memoView')) { closeMemoView(); return true; }
   if (isOpen('#dzMapP')) { if (dm.mode) { dm.mode = null; dm.pts = []; dmRender(); } else closeDzMap(); return true; }
@@ -7024,7 +7662,7 @@ function initBackNav(){
   BACK.on = true;
   try { history.replaceState({pc:0}, ''); } catch (e) {}
   const mo = new MutationObserver(backSchedule);
-  ['.sheet', '#docEditor', '#viewer', '#docView', '#planView', '#settings', '#gallery', '#mapStrip', '#galBar', '#desk', '#devis', '#dzSide', '#dzMapP', '#dzSelBar', '#memoView'].forEach(q => $$(q).forEach(el => mo.observe(el, {attributes:true, attributeFilter:['hidden']})));
+  ['.sheet', '#docEditor', '#viewer', '#docView', '#planView', '#pdView', '#settings', '#gallery', '#mapStrip', '#galBar', '#desk', '#devis', '#dzSide', '#dzMapP', '#dzSelBar', '#memoView'].forEach(q => $$(q).forEach(el => mo.observe(el, {attributes:true, attributeFilter:['hidden']})));
   window.addEventListener('popstate', () => {
     if (BACK.ignore) { BACK.ignore--; return; }
     if (BACK.depth > 0) BACK.depth--;
@@ -7038,9 +7676,10 @@ function initBackNav(){
 async function init(){
   const auth = readAuthHash();
   const shareParam = new URLSearchParams(location.search).get('share');
-  if (shareParam !== null) history.replaceState(null, '', location.pathname + location.hash);
+  const pvParam = new URLSearchParams(location.search).get('pvdt'), pvSite = new URLSearchParams(location.search).get('site');
+  if (shareParam !== null || pvParam) history.replaceState(null, '', location.pathname + location.hash);
   await DB.open();
-  bind(); bindDocs(); bindPlans(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); applyBrand(); renderSiteChip(); renderActiveTag();
+  bind(); bindDocs(); bindPlans(); bindPvdt(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); applyBrand(); renderSiteChip(); renderActiveTag();
   startGeo();
   if (auth === 'cid') note('Client ID enregistré. Ouvre Paramètres › Google Drive › Connecter.', 4500);
   if (auth === 'ok') { try { await fetchAbout(); note('Google Drive connecté : ' + S.drive.email, 3500); } catch (e) {} }
@@ -7059,6 +7698,7 @@ async function init(){
   else if (await refreshInboxBadge()) openImport();
   else if (shareParam === '0') note('Aucune photo reçue.', 3000);
   mesFlushAll();
+  if (pvParam) pdOpenFromParam(pvParam, pvSite);
   initBackNav();
   if ('serviceWorker' in navigator && !IN_FRAME && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
   if (document.fonts?.load) document.fonts.load('700 20px Barlow').then(() => { if (!$('#settings').hidden) drawPreview(); }).catch(() => {});
