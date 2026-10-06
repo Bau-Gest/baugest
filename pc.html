@@ -62,6 +62,34 @@ a.btn{text-decoration:none;color:inherit}
 .muted{color:var(--muted)}
 input[type=text],input[type=search],select{height:32px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);padding:0 10px;min-width:0}
 
+
+/* ---------- Ergonomie v2 : barre de sélection, cases à cocher, aperçu ---------- */
+.selbar{display:flex;align-items:center;gap:8px;margin:8px 14px 0;padding:5px 6px 5px 12px;border-radius:9px;background:var(--signal-soft);border:1px solid var(--signal);flex-wrap:wrap}
+.selbar b{font-weight:700;white-space:nowrap}
+.selbar .grow{flex:1}
+.selacts{display:flex;gap:6px;flex-wrap:wrap}
+.selacts .btn,.selacts .ibtn{background:var(--surface2);border-color:var(--line)}
+.files .row .ck{position:relative;top:auto;right:auto;opacity:1;width:18px;height:18px;border:1.5px solid var(--muted);background:transparent;cursor:pointer}
+.files .row .ck .ic{width:13px;height:13px;color:#fff;opacity:0}
+.files .row.sel .ck{background:var(--sel-line);border-color:var(--sel-line)}
+.files .row.sel .ck .ic{opacity:1}
+.prev{width:var(--prevw,320px);border-left:1px solid var(--line);background:var(--surface);overflow:auto;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.prev[hidden]{display:none}
+.prev .ph{border-radius:8px;background:var(--surface2);aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden;position:relative}
+.prev .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fbfaf6}
+.prev .ph .ic{width:56px;height:56px;color:var(--muted);stroke-width:1.3}
+.prev h3{margin:0;font-size:15px;line-height:1.3;word-break:break-word}
+.prev dl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:5px 10px;margin:0;font-size:13px}
+.prev dt{color:var(--muted)}
+.prev dd{margin:0;word-break:break-word}
+.prev .acts{display:grid;gap:6px}
+.prev .acts .btn{justify-content:center;height:34px}
+.prev .hint{color:var(--muted);font-size:13px;margin:0}
+.prev .tagl{display:flex;gap:4px;flex-wrap:wrap}
+.prev .tagl span{padding:1px 8px;border-radius:99px;background:var(--surface2);border:1px solid var(--line);font-size:12px}
+#tbPrev.on{background:var(--signal-soft);border-color:var(--signal)}
+.tn .ic.sec{color:var(--signal)}
+.tn .ic.sec.dim{color:var(--muted)}
 /* ---------- connexion ---------- */
 #login{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg)}
 .login-card{width:min(440px,92vw);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:30px;display:grid;gap:16px}
@@ -92,8 +120,9 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
 .tn .fi{color:var(--signal)}
 .resizer{position:absolute;top:48px;bottom:0;left:calc(var(--sidew,270px) - 3px);width:6px;cursor:col-resize;z-index:5}
 
-.main{display:grid;grid-template-rows:auto auto auto auto minmax(0,1fr) auto;min-width:0;min-height:0;position:relative}
-.main>.tools{grid-row:1}.main>.pickbar{grid-row:2}.main>.phbar{grid-row:3}.main>.crumbs{grid-row:4}.main>.files,.main>.phmap{grid-row:5}.main>.status{grid-row:6}
+.main{display:grid;grid-template-rows:auto auto auto auto auto minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr) auto;min-width:0;min-height:0;position:relative}
+.main>*{grid-column:1}.main>.tools,.main>.status{grid-column:1/-1}
+.main>.tools{grid-row:1}.main>.pickbar{grid-row:2}.main>.phbar{grid-row:3}.main>.selbar{grid-row:4}.main>.crumbs{grid-row:5}.main>.files,.main>.phmap{grid-row:6}.main>.status{grid-row:7}.main>.prev{grid-column:2;grid-row:2/7}
 .tools{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--surface)}
 .tools .grow{flex:1}
 .crumbs{display:flex;align-items:center;gap:2px;padding:8px 14px 6px;flex-wrap:wrap;min-height:38px}
@@ -123,7 +152,7 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
 .tile .ck .ic{width:14px;height:14px;color:#fff;opacity:0}
 .tile.sel .ck .ic{opacity:1}
 .files.list{display:block}
-.lhead,.row{display:grid;grid-template-columns:28px minmax(200px,1fr) 150px 90px 140px;align-items:center;gap:8px;padding:0 8px}
+.lhead,.row{display:grid;grid-template-columns:24px 28px minmax(200px,1fr) 150px 90px 140px;align-items:center;gap:8px;padding:0 8px}
 .lhead{position:sticky;top:-6px;z-index:2;height:32px;background:var(--bg);border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
 .lhead button{border:0;background:none;text-align:left;padding:0;color:inherit;font:inherit}
 .lhead button.on{color:var(--text);font-weight:600}
@@ -450,6 +479,7 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
       <button id="tbRename" class="ibtn" title="Renommer (F2)" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
       <button id="tbDelete" class="ibtn" title="Mettre à la corbeille (Suppr)" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>
       <div class="grow"></div>
+      <button id="tbPrev" class="btn" title="Afficher ou masquer l’aperçu à droite"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg>Aperçu</button>
       <input type="search" id="tbFilter" placeholder="Filtrer ce dossier" style="width:170px">
       <select id="tbType" title="Type de fichier"><option value="">Tous les types</option><option value="pdf">PDF</option><option value="img">Photos</option><option value="doc">Documents BauGest</option><option value="office">Word, Excel…</option></select>
       <div class="seg" id="tbView"><button data-v="grid" title="Vignettes"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button><button data-v="list" title="Liste détaillée"><svg class="ic" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button></div>
@@ -464,9 +494,11 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
       <div class="seg" id="phView"><button data-pv="grid" class="on">Photos</button><button data-pv="map">Carte</button></div>
       <div class="phtags" id="phTags"></div>
     </div>
+    <div id="selbar" class="selbar" hidden><b id="selN"></b><span class="selacts" id="selActs"></span><div class="grow"></div><button id="selClear" class="ibtn" title="Désélectionner"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <nav class="crumbs" id="crumbs"></nav>
     <div class="files grid" id="files" tabindex="0"></div>
     <div class="phmap" id="phMap" hidden><div id="phMapEl"></div><div class="mapinfo" id="phMapInfo"></div></div>
+    <aside id="prev" class="prev" aria-label="Aperçu"></aside>
     <div class="status"><span id="stCount"></span><span id="stSel"></span><div class="grow"></div><span id="stHint">Double-clic : ouvrir · Ctrl/Maj + clic : sélection multiple · glisse des fichiers depuis Windows pour les envoyer</span></div>
     <div id="dropzone" class="dropzone" hidden><span id="dropText">Dépose ici pour envoyer dans ce dossier</span></div>
   </section>
@@ -1030,7 +1062,7 @@ function renderTree(){
     const n = FN.get(id), hasKids = n.kids === null || n.kids.length > 0;
     const open = n.open && n.kids;
     return `<li><div class="tn ${id === E.cur ? 'cur' : ''}" data-fid="${esc(id)}" draggable="false" title="${esc(n.name)}">
-      <span class="tw ${hasKids ? '' : 'leaf'} ${open ? 'open' : ''}" data-tw="1">${IC.chev}</span>${IC.folder}<span class="tl">${esc(n.name)}</span></div>
+      <span class="tw ${hasKids ? '' : 'leaf'} ${open ? 'open' : ''}" data-tw="1">${IC.chev}</span>${treeIcon(n.name)}<span class="tl">${esc(n.name)}</span></div>
       ${open ? `<ul class="tree">${n.kids.map(li).join('')}</ul>` : ''}</li>`;
   };
   $('#tree').innerHTML = `<li><div class="tn ${E.cur === P.rootId ? 'cur' : ''}" data-fid="${esc(P.rootId)}"><span class="tw leaf"></span>${IC.folder}<span class="tl"><b>${esc(root.name)}</b></span></div></li>` + (root.kids || []).map(li).join('');
@@ -1149,13 +1181,13 @@ function renderFiles(){
   } else {
     const h = (k, l) => E.mode === 'folder' ? `<button data-sort="${k}" class="${P.sort === k ? 'on' : ''}">${l}${P.sort === k ? (P.dir > 0 ? ' ▲' : ' ▼') : ''}</button>` : `<span>${l}</span>`;
     const c2 = E.mode === 'photos' ? 'Chantier' : E.mode === 'search' ? 'Dossier' : 'Type', c4 = E.mode === 'photos' ? 'Prise le' : 'Modifié';
-    box.innerHTML = `<div class="lhead"><span></span>${h('name', 'Nom')}${h('type', c2)}<span style="text-align:right">${h('size', 'Taille')}</span>${h('date', c4)}</div>` +
+    box.innerHTML = `<div class="lhead"><span></span><span></span>${h('name', 'Nom')}${h('type', c2)}<span style="text-align:right">${h('size', 'Taille')}</span>${h('date', c4)}</div>` +
       E.shown.map(f => {
         const th = f._k === 'img' || f._k === 'img2' || f._k === 'doc' ? thumbOf(f, 64) : '';
         const col2 = E.mode === 'photos' ? (f._siteLabel || '') : E.mode === 'search' ? (f._path || '') : TYPE_LABEL[f._k];
         const nm = E.mode === 'photos' ? [f._tags.join(', '), f._note].filter(Boolean).join(' · ') || f.name : displayName(f);
         return head(f) + `<div class="row ${E.sel.has(f.id) ? 'sel' : ''}" data-id="${esc(f.id)}" draggable="true" title="${esc(f.name)}">
-          <span class="ri">${iconOf(f._k)}${th ? `<img src="${esc(th)}" alt="" loading="lazy" draggable="false" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span>
+          <span class="ck">${IC.check}</span><span class="ri">${iconOf(f._k)}${th ? `<img src="${esc(th)}" alt="" loading="lazy" draggable="false" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span>
           <span class="rn">${esc(nm)}${f._k === 'doc' && f._tx ? ' <small class="muted">· texte tapé</small>' : ''}</span>
           <span class="rt">${esc(col2)}</span><span class="rs">${esc(fmtSize(f.size))}</span><span class="rd">${esc(E.mode === 'photos' ? dFmt(f._taken) + ' ' + tFmt(f._taken) : fmtDate(f.modifiedTime))}</span></div>`;
       }).join('');
@@ -1177,6 +1209,8 @@ function updateStatus(){
   $('#tbSave').disabled = !files.length;
   $('#tbRename').disabled = s.length !== 1;
   $('#tbDelete').disabled = !s.length;
+  $('#selbar').hidden = !s.length; $('#selN').textContent = s.length ? `${s.length} sélectionné${s.length > 1 ? 's' : ''}` : '';
+  renderPrev(s);
   $('#tbReport').disabled = !files.some(f => f._k === 'img');
   const fm = E.mode === 'folder';
   $('#tbFilter').hidden = E.mode === 'photos'; $('#tbType').hidden = E.mode === 'photos';
@@ -1263,6 +1297,45 @@ filesEl.addEventListener('keydown', e => {
 function goUp(){ if (E.mode !== 'folder') return; const n = FN.get(E.cur); if (n && n.parent && E.cur !== P.rootId) navigate(n.parent); }
 $('#tbUp').addEventListener('click', goUp);
 $('#tbRefresh').addEventListener('click', () => refreshMode());
+
+/* ---------- Ergonomie v2 : actions sur la sélection, aperçu, icônes des rubriques ---------- */
+['tbOpen', 'tbPrint', 'tbReport', 'tbSave', 'tbRename', 'tbDelete'].forEach(id => $('#selActs').appendChild($('#' + id)));
+$('#selClear').addEventListener('click', () => { E.sel.clear(); paintSel(); });
+if (P.prev === undefined) P.prev = true;
+function syncPrevBtn(){ $('#tbPrev').classList.toggle('on', !!P.prev); $('#prev').hidden = !P.prev; }
+$('#tbPrev').addEventListener('click', () => { P.prev = !P.prev; saveP(); syncPrevBtn(); renderPrev(selItems()); });
+function renderPrev(s){
+  const el = $('#prev'); if (!el || !P.prev) return;
+  if (!s.length) { el.innerHTML = '<p class="hint">Sélectionne un fichier pour voir son aperçu ici. Double-clic pour l’ouvrir.</p>'; return; }
+  if (s.length > 1) {
+    const tot = s.reduce((a, f) => a + (+f.size || 0), 0);
+    el.innerHTML = `<h3>${s.length} éléments sélectionnés</h3><dl><dt>Taille</dt><dd>${esc(fmtSize(tot) || '—')}</dd></dl><div class="acts"><button class="btn primary" data-pa="open">Ouvrir</button><button class="btn" data-pa="print">${IC.print}Imprimer</button></div>`;
+    return;
+  }
+  const f = s[0], th = f._k === 'folder' ? '' : thumbOf(f, 640), ph = E.mode === 'photos';
+  const rows = [['Type', TYPE_LABEL[f._k] || 'Fichier']];
+  if (ph) { rows.push(['Prise le', dFmt(f._taken) + ' ' + tFmt(f._taken)]); if (f._siteLabel) rows.push(['Chantier', f._siteLabel]); if (f._note) rows.push(['Commentaire', f._note]); }
+  else { if (f.size) rows.push(['Taille', fmtSize(f.size)]); if (f.modifiedTime) rows.push(['Modifié', fmtDate(f.modifiedTime)]); if (f._path) rows.push(['Dossier', f._path]); if (f._k === 'doc') rows.push(['État', f._tx ? 'Texte tapé' : 'Manuscrit']); }
+  el.innerHTML = `<div class="ph">${iconOf(f._k)}${th ? `<img src="${esc(th)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</div>
+    <h3>${esc(displayName(f))}</h3><dl>${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+    ${ph && f._tags && f._tags.length ? `<div class="tagl">${f._tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
+    <div class="acts"><button class="btn primary" data-pa="open">Ouvrir</button>${f._k !== 'folder' ? `<button class="btn" data-pa="print">${IC.print}Imprimer</button>` : ''}</div>`;
+}
+$('#prev').addEventListener('click', e => { const b = e.target.closest('[data-pa]'); if (!b) return; $(b.dataset.pa === 'open' ? '#tbOpen' : '#tbPrint').click(); });
+syncPrevBtn();
+const SEC_IC = {
+  photos: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
+  plans: '<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/>',
+  docs: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
+  pv: '<path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/>',
+  devis: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/>'
+};
+function treeIcon(name){
+  const n = String(name || '').toLowerCase(), dim = /annul/.test(n);
+  const k = /^photos?$/.test(n) ? 'photos' : /^plans?\b/.test(n) && !dim ? 'plans' : /^documents?$/.test(n) ? 'docs' : /^pv\b|pv de chantier/.test(n) ? 'pv' : /^devis/.test(n) ? 'devis' : '';
+  return k ? `<svg class="ic sec${dim ? ' dim' : ''}" viewBox="0 0 24 24">${SEC_IC[k]}</svg>` : IC.folder;
+}
+
 $('#tbOpen').addEventListener('click', () => { const s = selItems(); if (s.length === 1) openItem(s[0]); else if (s.length) openMany(s); });
 $('#tbPrint').addEventListener('click', () => printSel());
 $('#tbSave').addEventListener('click', () => saveToPc(selItems().filter(f => f._k !== 'folder')));
