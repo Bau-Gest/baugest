@@ -45,6 +45,7 @@ button{cursor:pointer}
 .btn.ghost{background:transparent;border-color:transparent}
 .btn.ghost:hover:not(:disabled){background:var(--surface2);border-color:var(--line)}
 .btn.on{background:var(--signal-soft);border-color:var(--signal);color:var(--text)}
+a.btn{text-decoration:none;color:inherit}
 .ibtn{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--text)}
 .ibtn:hover:not(:disabled){background:var(--surface2);border-color:var(--line)}
 .ibtn.on{background:var(--signal-soft);border-color:var(--signal)}
@@ -83,7 +84,8 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
 .tn .fi{color:var(--signal)}
 .resizer{position:absolute;top:48px;bottom:0;left:calc(var(--sidew,270px) - 3px);width:6px;cursor:col-resize;z-index:5}
 
-.main{display:grid;grid-template-rows:auto auto 1fr auto;min-width:0;min-height:0;position:relative}
+.main{display:grid;grid-template-rows:auto auto auto auto minmax(0,1fr) auto;min-width:0;min-height:0;position:relative}
+.main>.tools{grid-row:1}.main>.pickbar{grid-row:2}.main>.phbar{grid-row:3}.main>.crumbs{grid-row:4}.main>.files,.main>.phmap{grid-row:5}.main>.status{grid-row:6}
 .tools{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--surface)}
 .tools .grow{flex:1}
 .crumbs{display:flex;align-items:center;gap:2px;padding:8px 14px 6px;flex-wrap:wrap;min-height:38px}
@@ -93,7 +95,7 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
 .crumbs button.drop{background:var(--signal-soft);outline:1px dashed var(--signal)}
 .crumbs .cs{color:var(--muted);opacity:.6}
 .files{overflow:auto;padding:6px 14px 30px;position:relative;outline:none}
-.files.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--tile,150px),1fr));gap:10px;align-content:start}
+.files.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--tile,150px),1fr));grid-auto-rows:max-content;gap:10px;align-content:start}
 .tile{position:relative;border:1px solid var(--line);border-radius:9px;background:var(--surface);overflow:hidden;cursor:default;user-select:none;display:flex;flex-direction:column}
 .tile:hover{border-color:var(--muted)}
 .tile .th{aspect-ratio:4/3;background:var(--surface2);display:grid;place-items:center;overflow:hidden;position:relative}
@@ -204,6 +206,151 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
 .job.done .bar i{background:var(--ok)}
 .job.err{color:var(--bad)}
 #printFrame{position:fixed;width:2px;height:2px;border:0;right:0;bottom:0;opacity:0;pointer-events:none}
+
+/* ---------- onglets, recherche globale ---------- */
+.navtabs{display:flex;gap:3px;padding:3px;border-radius:9px;border:1px solid var(--line);background:var(--surface2)}
+.navtabs button{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 13px;border:0;border-radius:7px;background:none;color:var(--muted);font:700 14px var(--display);letter-spacing:.05em;text-transform:uppercase}
+.navtabs button.on{background:var(--signal);color:var(--signal-ink)}
+.gsearch{position:relative;display:flex;align-items:center}
+.gsearch input{width:280px;padding-left:32px}
+.gsearch .ic{position:absolute;left:9px;color:var(--muted);width:16px;height:16px;pointer-events:none}
+.dis{opacity:.45;pointer-events:none}
+/* ---------- photos : filtres ---------- */
+.phbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--surface)}
+.phbar label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
+.phbar input[type=date]{height:32px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);padding:0 8px;color:var(--text)}
+.phtags{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.phtags:empty{display:none}
+.ptag{height:28px;padding:0 12px;border-radius:14px;border:1px solid var(--line);background:var(--surface2);font-size:13px}
+.ptag.on{background:var(--signal);border-color:var(--signal);color:var(--signal-ink);font-weight:600}
+.gday{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;padding:12px 2px 2px;font:700 16px var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--text)}
+.files.list .gday{padding:14px 8px 4px}
+.gday small{font:500 12px var(--body);text-transform:none;letter-spacing:0;color:var(--muted)}
+.tile .pth{padding:0 8px 7px;font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phmap{position:relative;min-height:0}
+#phMapEl{position:absolute;inset:0;background:#2a2e33}
+.pm-wrap{background:none;border:0}
+.pm{display:block;width:48px;height:48px;border-radius:50%;border:3px solid var(--signal);background:#2a2e33;box-shadow:0 2px 10px rgba(0,0,0,.55);overflow:hidden;position:relative}
+.pm img{width:100%;height:100%;object-fit:cover;display:block}
+.pmc{position:absolute;top:-7px;right:-9px;min-width:22px;height:22px;border-radius:11px;padding:0 6px;background:var(--signal);color:var(--signal-ink);font:700 12px/22px var(--body);text-align:center}
+.pmpop{display:grid;grid-template-columns:repeat(4,64px);gap:4px;max-height:300px;overflow:auto}
+.pmpop button{width:64px;height:64px;padding:0;border:0;border-radius:6px;overflow:hidden;background:#ddd;cursor:pointer}
+.pmpop img{width:100%;height:100%;object-fit:cover}
+.mapinfo{position:absolute;z-index:500;left:10px;bottom:22px;padding:7px 12px;border-radius:9px;background:rgba(19,21,24,.85);color:#ecebe6;font-size:13px}
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0;}.leaflet-container{overflow:hidden;}.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-user-drag:none;}.leaflet-tile::selection{background:transparent;}.leaflet-safari .leaflet-tile{image-rendering:-webkit-optimize-contrast;}.leaflet-safari .leaflet-tile-container{width:1600px;height:1600px;-webkit-transform-origin:0 0;}.leaflet-marker-icon,.leaflet-marker-shadow{display:block;}.leaflet-container .leaflet-overlay-pane svg{max-width:none !important;max-height:none !important;}.leaflet-container .leaflet-marker-pane img,.leaflet-container .leaflet-shadow-pane img,.leaflet-container .leaflet-tile-pane img,.leaflet-container img.leaflet-image-layer,.leaflet-container .leaflet-tile{max-width:none !important;max-height:none !important;width:auto;padding:0;}.leaflet-container img.leaflet-tile{mix-blend-mode:plus-lighter;}.leaflet-container.leaflet-touch-zoom{-ms-touch-action:pan-x pan-y;touch-action:pan-x pan-y;}.leaflet-container.leaflet-touch-drag{-ms-touch-action:pinch-zoom;touch-action:none;touch-action:pinch-zoom;}.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom{-ms-touch-action:none;touch-action:none;}.leaflet-container{-webkit-tap-highlight-color:transparent;}.leaflet-container a{-webkit-tap-highlight-color:rgba(51,181,229,0.4);}.leaflet-tile{filter:inherit;visibility:hidden;}.leaflet-tile-loaded{visibility:inherit;}.leaflet-zoom-box{width:0;height:0;-moz-box-sizing:border-box;box-sizing:border-box;z-index:800;}.leaflet-overlay-pane svg{-moz-user-select:none;}.leaflet-pane{z-index:400;}.leaflet-tile-pane{z-index:200;}.leaflet-overlay-pane{z-index:400;}.leaflet-shadow-pane{z-index:500;}.leaflet-marker-pane{z-index:600;}.leaflet-tooltip-pane{z-index:650;}.leaflet-popup-pane{z-index:700;}.leaflet-map-pane canvas{z-index:100;}.leaflet-map-pane svg{z-index:200;}.leaflet-vml-shape{width:1px;height:1px;}.lvml{display:inline-block;position:absolute;}.leaflet-control{position:relative;z-index:800;pointer-events:visiblePainted;pointer-events:auto;}.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none;}.leaflet-top{top:0;}.leaflet-right{right:0;}.leaflet-bottom{bottom:0;}.leaflet-left{left:0;}.leaflet-control{float:left;clear:both;}.leaflet-right .leaflet-control{float:right;}.leaflet-top .leaflet-control{margin-top:10px;}.leaflet-bottom .leaflet-control{margin-bottom:10px;}.leaflet-left .leaflet-control{margin-left:10px;}.leaflet-right .leaflet-control{margin-right:10px;}.leaflet-fade-anim .leaflet-popup{opacity:0;-webkit-transition:opacity 0.2s linear;-moz-transition:opacity 0.2s linear;transition:opacity 0.2s linear;}.leaflet-fade-anim .leaflet-map-pane .leaflet-popup{opacity:1;}.leaflet-zoom-animated{-webkit-transform-origin:0 0;-ms-transform-origin:0 0;transform-origin:0 0;}svg.leaflet-zoom-animated{will-change:transform;}.leaflet-zoom-anim .leaflet-zoom-animated{-webkit-transition:-webkit-transform 0.25s cubic-bezier(0,0,0.25,1);-moz-transition:-moz-transform 0.25s cubic-bezier(0,0,0.25,1);transition:transform 0.25s cubic-bezier(0,0,0.25,1);}.leaflet-zoom-anim .leaflet-tile,.leaflet-pan-anim .leaflet-tile{-webkit-transition:none;-moz-transition:none;transition:none;}.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden;}.leaflet-interactive{cursor:pointer;}.leaflet-grab{cursor:-webkit-grab;cursor:-moz-grab;cursor:grab;}.leaflet-crosshair,.leaflet-crosshair .leaflet-interactive{cursor:crosshair;}.leaflet-popup-pane,.leaflet-control{cursor:auto;}.leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-grab .leaflet-interactive,.leaflet-dragging .leaflet-marker-draggable{cursor:move;cursor:-webkit-grabbing;cursor:-moz-grabbing;cursor:grabbing;}.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-image-layer,.leaflet-pane>svg path,.leaflet-tile-container{pointer-events:none;}.leaflet-marker-icon.leaflet-interactive,.leaflet-image-layer.leaflet-interactive,.leaflet-pane>svg path.leaflet-interactive,svg.leaflet-image-layer.leaflet-interactive path{pointer-events:visiblePainted;pointer-events:auto;}.leaflet-container{background:#ddd;outline-offset:1px;}.leaflet-container a{color:#0078A8;}.leaflet-zoom-box{border:2px dotted #38f;background:rgba(255,255,255,0.5);}.leaflet-container{font-family:"Helvetica Neue",Arial,Helvetica,sans-serif;font-size:12px;font-size:0.75rem;line-height:1.5;}.leaflet-bar{box-shadow:0 1px 5px rgba(0,0,0,0.65);border-radius:4px;}.leaflet-bar a{background-color:#fff;border-bottom:1px solid #ccc;width:26px;height:26px;line-height:26px;display:block;text-align:center;text-decoration:none;color:black;}.leaflet-bar a,.leaflet-control-layers-toggle{background-position:50% 50%;background-repeat:no-repeat;display:block;}.leaflet-bar a:hover,.leaflet-bar a:focus{background-color:#f4f4f4;}.leaflet-bar a:first-child{border-top-left-radius:4px;border-top-right-radius:4px;}.leaflet-bar a:last-child{border-bottom-left-radius:4px;border-bottom-right-radius:4px;border-bottom:none;}.leaflet-bar a.leaflet-disabled{cursor:default;background-color:#f4f4f4;color:#bbb;}.leaflet-touch .leaflet-bar a{width:30px;height:30px;line-height:30px;}.leaflet-touch .leaflet-bar a:first-child{border-top-left-radius:2px;border-top-right-radius:2px;}.leaflet-touch .leaflet-bar a:last-child{border-bottom-left-radius:2px;border-bottom-right-radius:2px;}.leaflet-control-zoom-in,.leaflet-control-zoom-out{font:bold 18px 'Lucida Console',Monaco,monospace;text-indent:1px;}.leaflet-touch .leaflet-control-zoom-in,.leaflet-touch .leaflet-control-zoom-out{font-size:22px;}.leaflet-control-layers{box-shadow:0 1px 5px rgba(0,0,0,0.4);background:#fff;border-radius:5px;}.leaflet-control-layers-toggle{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23222' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='m12 3 9 5-9 5-9-5z'/%3E%3Cpath d='m3 12 9 5 9-5M3 16l9 5 9-5'/%3E%3C/svg%3E");width:36px;height:36px;}.leaflet-retina .leaflet-control-layers-toggle{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23222' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='m12 3 9 5-9 5-9-5z'/%3E%3Cpath d='m3 12 9 5 9-5M3 16l9 5 9-5'/%3E%3C/svg%3E");background-size:22px 22px;background-position:center;}.leaflet-touch .leaflet-control-layers-toggle{width:44px;height:44px;}.leaflet-control-layers .leaflet-control-layers-list,.leaflet-control-layers-expanded .leaflet-control-layers-toggle{display:none;}.leaflet-control-layers-expanded .leaflet-control-layers-list{display:block;position:relative;}.leaflet-control-layers-expanded{padding:6px 10px 6px 6px;color:#333;background:#fff;}.leaflet-control-layers-scrollbar{overflow-y:scroll;overflow-x:hidden;padding-right:5px;}.leaflet-control-layers-selector{margin-top:2px;position:relative;top:1px;}.leaflet-control-layers label{display:block;font-size:13px;font-size:1.08333em;}.leaflet-control-layers-separator{height:0;border-top:1px solid #ddd;margin:5px -10px 5px -6px;}.leaflet-container .leaflet-control-attribution{background:#fff;background:rgba(255,255,255,0.8);margin:0;}.leaflet-control-attribution,.leaflet-control-scale-line{padding:0 5px;color:#333;line-height:1.4;}.leaflet-control-attribution a{text-decoration:none;}.leaflet-control-attribution a:hover,.leaflet-control-attribution a:focus{text-decoration:underline;}.leaflet-attribution-flag{display:inline !important;vertical-align:baseline !important;width:1em;height:0.6669em;}.leaflet-left .leaflet-control-scale{margin-left:5px;}.leaflet-bottom .leaflet-control-scale{margin-bottom:5px;}.leaflet-control-scale-line{border:2px solid #777;border-top:none;line-height:1.1;padding:2px 5px 1px;white-space:nowrap;-moz-box-sizing:border-box;box-sizing:border-box;background:rgba(255,255,255,0.8);text-shadow:1px 1px #fff;}.leaflet-control-scale-line:not(:first-child){border-top:2px solid #777;border-bottom:none;margin-top:-2px;}.leaflet-control-scale-line:not(:first-child):not(:last-child){border-bottom:2px solid #777;}.leaflet-touch .leaflet-control-attribution,.leaflet-touch .leaflet-control-layers,.leaflet-touch .leaflet-bar{box-shadow:none;}.leaflet-touch .leaflet-control-layers,.leaflet-touch .leaflet-bar{border:2px solid rgba(0,0,0,0.2);background-clip:padding-box;}.leaflet-popup{position:absolute;text-align:center;margin-bottom:20px;}.leaflet-popup-content-wrapper{padding:1px;text-align:left;border-radius:12px;}.leaflet-popup-content{margin:13px 24px 13px 20px;line-height:1.3;font-size:13px;font-size:1.08333em;min-height:1px;}.leaflet-popup-content p{margin:17px 0;margin:1.3em 0;}.leaflet-popup-tip-container{width:40px;height:20px;position:absolute;left:50%;margin-top:-1px;margin-left:-20px;overflow:hidden;pointer-events:none;}.leaflet-popup-tip{width:17px;height:17px;padding:1px;margin:-10px auto 0;pointer-events:auto;-webkit-transform:rotate(45deg);-moz-transform:rotate(45deg);-ms-transform:rotate(45deg);transform:rotate(45deg);}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:white;color:#333;box-shadow:0 3px 14px rgba(0,0,0,0.4);}.leaflet-container a.leaflet-popup-close-button{position:absolute;top:0;right:0;border:none;text-align:center;width:24px;height:24px;font:16px/24px Tahoma,Verdana,sans-serif;color:#757575;text-decoration:none;background:transparent;}.leaflet-container a.leaflet-popup-close-button:hover,.leaflet-container a.leaflet-popup-close-button:focus{color:#585858;}.leaflet-popup-scrolled{overflow:auto;}.leaflet-oldie .leaflet-popup-content-wrapper{-ms-zoom:1;}.leaflet-oldie .leaflet-popup-tip{width:24px;margin:0 auto;-ms-filter:"progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678,M12=0.70710678,M21=-0.70710678,M22=0.70710678)";filter:progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678,M12=0.70710678,M21=-0.70710678,M22=0.70710678);}.leaflet-oldie .leaflet-control-zoom,.leaflet-oldie .leaflet-control-layers,.leaflet-oldie .leaflet-popup-content-wrapper,.leaflet-oldie .leaflet-popup-tip{border:1px solid #999;}.leaflet-div-icon{background:#fff;border:1px solid #666;}.leaflet-tooltip{position:absolute;padding:6px;background-color:#fff;border:1px solid #fff;border-radius:3px;color:#222;white-space:nowrap;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,0.4);}.leaflet-tooltip.leaflet-interactive{cursor:pointer;pointer-events:auto;}.leaflet-tooltip-top:before,.leaflet-tooltip-bottom:before,.leaflet-tooltip-left:before,.leaflet-tooltip-right:before{position:absolute;pointer-events:none;border:6px solid transparent;background:transparent;content:"";}.leaflet-tooltip-bottom{margin-top:6px;}.leaflet-tooltip-top{margin-top:-6px;}.leaflet-tooltip-bottom:before,.leaflet-tooltip-top:before{left:50%;margin-left:-6px;}.leaflet-tooltip-top:before{bottom:0;margin-bottom:-12px;border-top-color:#fff;}.leaflet-tooltip-bottom:before{top:0;margin-top:-12px;margin-left:-6px;border-bottom-color:#fff;}.leaflet-tooltip-left{margin-left:-6px;}.leaflet-tooltip-right{margin-left:6px;}.leaflet-tooltip-left:before,.leaflet-tooltip-right:before{top:50%;margin-top:-6px;}.leaflet-tooltip-left:before{right:0;margin-right:-12px;border-left-color:#fff;}.leaflet-tooltip-right:before{left:0;margin-left:-12px;border-right-color:#fff;}@media print{.leaflet-control{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+.leaflet-container{font:13px var(--body)}
+/* ---------- devis ---------- */
+#devis{position:absolute;inset:0;grid-column:1/-1;grid-row:2;z-index:25;background:var(--bg);display:grid;grid-template-columns:330px minmax(0,1fr);min-height:0}
+#devis .icon-btn,#dzMapP .icon-btn{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--muted);flex:none;padding:0}
+#devis .icon-btn.on{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+#devis .icon-btn.has{color:var(--signal);border-color:var(--signal)}
+#devis input[type=text],#devis input[type=tel],#devis input[type=email],#devis input[type=search],#devis input[type=datetime-local],#devis select{width:100%;height:34px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);padding:0 9px;color:var(--text)}
+#devis .field{display:grid;gap:4px}
+#devis .field>span{font-size:12.5px;color:var(--muted)}
+#devis .hint{margin:0;color:var(--muted);font-size:13px}
+#devis .chips{display:flex;flex-wrap:wrap;gap:6px}
+#devis .chip{height:30px;padding:0 12px;border-radius:15px;border:1px solid var(--line);background:var(--surface2);font-size:13px}
+#devis .chip.on{background:var(--signal);color:var(--signal-ink);border-color:var(--signal);font-weight:600}
+.slogo{width:40px;height:40px;border-radius:8px;background:#fff;display:grid;place-items:center;flex:none;overflow:hidden}
+.slogo img{max-width:88%;max-height:88%;object-fit:contain}
+.slogo.none{background:var(--surface2);border:1px solid var(--line);color:var(--muted);font:700 15px/1 var(--display)}
+.dz-side{border-right:1px solid var(--line);overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.dz-count{margin:6px 2px 0;font:700 12px/1 var(--body);text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+.dz-pick{display:flex;align-items:flex-start;gap:10px;width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:var(--surface2);text-align:left}
+.dz-pick.cur{border-color:var(--signal);background:var(--signal-soft)}
+.dz-pick .t{flex:1;min-width:0}
+.dz-pick .t b{display:block;font:700 16px/1.15 var(--display);text-transform:uppercase;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz-pick .t small{display:block;font:11.5px/1.35 var(--mono);color:var(--muted)}
+.dz-chk{width:22px;height:22px;border-radius:6px;border:2px solid var(--line);display:grid;place-items:center;flex:none;font-weight:700;color:var(--signal-ink)}
+.dz-pick.cur .dz-chk{background:var(--signal);border-color:var(--signal)}
+.dz-main{overflow:auto;padding:18px 22px 40px;min-width:0}
+.dz-empty{color:var(--muted);text-align:center;padding:48px 16px;margin:0}
+.dz-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.dz-head .t{flex:1 1 220px;min-width:0}
+.dz-head h2{margin:0;font:700 28px/1.05 var(--display);text-transform:uppercase;letter-spacing:.02em;overflow-wrap:anywhere}
+.dz-head small{font:12px/1.4 var(--mono);color:var(--muted)}
+.dz-acts{display:flex;gap:6px;flex-wrap:wrap}
+.dz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;align-items:start}
+.dz-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;min-width:0}
+.dz-card h3{margin:0;font:700 14px/1 var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.dz-card.dz-work{grid-column:1/-1}
+.dz-ch{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.dz-ch small{font:12px var(--mono);color:var(--muted)}
+.dz-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.dz-2.npa{grid-template-columns:90px minmax(0,1fr)}
+.dz-gps{display:flex;gap:4px 10px;flex-wrap:wrap;font:12.5px/1.4 var(--mono);color:var(--muted)}
+.dz-gps .ok{color:var(--ok)}
+.dz-gps a{color:var(--text)}
+.dz-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;min-height:60px;border-radius:9px}
+.dz-photos.drop{outline:2px dashed var(--signal);outline-offset:4px}
+.dz-photos button{aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:var(--surface2);padding:0;overflow:hidden;position:relative}
+.dz-photos img{width:100%;height:100%;object-fit:cover;display:block}
+.dz-notes{width:100%;min-height:130px;padding:9px 11px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:15px/1.45 var(--body);resize:vertical;display:block}
+.dz-items{display:grid;gap:8px}
+.dz-item{display:grid;gap:8px}
+.dz-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px 34px 34px;gap:6px;align-items:center}
+.dz-row input.calc{background:var(--signal-soft)!important;border-color:transparent!important;font-weight:700}
+.dz-met{display:grid;gap:8px;padding:10px;border-radius:9px;background:var(--surface2);border:1px dashed var(--line)}
+.dz-met .hint{font-size:12.5px}
+.dz-ml{display:grid;grid-template-columns:minmax(0,1.2fr) 60px minmax(0,2fr) auto 34px;gap:6px;align-items:center}
+.dz-ml.nonly{grid-template-columns:minmax(0,1fr) 70px auto 34px}
+.dz-ml.nonly .dz-mlv{display:none}
+#devis .dz-ml input,#devis .dz-ml select{background:var(--surface)}
+.dz-mlv{display:flex;gap:6px;min-width:0}
+.dz-mlv>*{flex:1 1 0;min-width:0}
+.dz-mlv select{flex:0 0 110px}
+.dz-mapv{display:flex;align-items:center;gap:6px;font:600 13px var(--mono);padding:0 4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dz-mapv .ic{width:16px;height:16px;color:var(--signal)}
+.dz-mlr{font:600 13px var(--mono);white-space:nowrap;text-align:right;min-width:74px}
+.dz-metfoot{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#devis .dz-metfoot select{width:auto;flex:1 1 220px}
+.dz-mtot{margin-left:auto;font:700 15px var(--mono);color:var(--signal)}
+.dz-dens{max-width:360px}
+.dz-measrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;padding:8px 12px;border-radius:9px;background:var(--surface2);border:1px solid var(--line)}
+.dz-measrow>span{display:flex;gap:8px;align-items:center;font:600 13px var(--mono);color:var(--muted)}
+.dz-foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.dz-foot small{flex:1 1 240px;min-width:0;font:12px/1.4 var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.dz-memos{display:grid;gap:6px;margin-top:14px}
+.dz-memos h3{margin:0 0 4px;font:700 14px var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.dz-memo{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface);text-align:left}
+.dz-memo .t{flex:1;display:grid}
+.dz-memo small{color:var(--muted);font-size:12px}
+.dz-selbar{display:flex;gap:6px;margin-top:auto;position:sticky;bottom:0;background:var(--surface);padding-top:8px}
+.dz-selbar .btn{flex:1;justify-content:center;padding:0 6px}
+/* ---------- devis : orthophoto ---------- */
+#dzMapP{position:absolute;inset:0;grid-column:1/-1;grid-row:2;z-index:28;background:var(--bg);display:grid;grid-template-rows:auto 1fr}
+.dm-top{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
+.dm-title{flex:1;margin:0;font:700 20px var(--display);text-transform:uppercase;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dk-modes{display:flex;gap:3px;padding:3px;border-radius:9px;border:1px solid var(--line);background:var(--surface2)}
+.dk-modes button{height:30px;padding:0 13px;border:0;border-radius:7px;background:none;color:var(--muted);font:700 14px var(--display);text-transform:uppercase;letter-spacing:.05em}
+.dk-modes button.on{background:var(--signal);color:var(--signal-ink)}
+#dmCad.on{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+.dm-wrap{position:relative;min-height:0}
+#dmMap{position:absolute;inset:0;background:#2a2e33}
+.dm-read{position:absolute;z-index:1100;left:50%;top:10px;transform:translateX(-50%);margin:0;width:max-content;max-width:calc(100% - 420px);padding:8px 14px;border-radius:9px;background:rgba(19,21,24,.88);color:#ecebe6;font:600 14px/1.35 var(--body);text-align:center}
+.dm-tools{position:absolute;z-index:1100;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:8px}
+.dm-tools .btn{box-shadow:0 4px 16px rgba(0,0,0,.45);height:40px}
+.dm-list{position:absolute;z-index:1100;right:10px;top:10px;width:330px;max-height:calc(100% - 90px);overflow:auto;border-radius:11px;background:var(--surface);border:1px solid var(--line);color:var(--text);box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.dm-lhead{display:flex;justify-content:space-between;align-items:center;width:100%;height:38px;padding:0 12px;border:0;background:none;font:700 13px var(--body);text-transform:uppercase;letter-spacing:.08em}
+.dm-lhead[aria-expanded="true"] .ic{transform:rotate(90deg)}
+.dm-li{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:4px 8px;align-items:center;padding:8px 12px;border-top:1px solid var(--line)}
+.dm-li.on{background:var(--signal-soft)}
+.dm-li input{height:32px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);padding:0 8px;color:var(--text);min-width:0}
+.dm-li .dm-v{grid-column:2;border:0;background:none;color:var(--text);text-align:left;font:600 13px var(--mono);padding:2px 0}
+.dm-li .dm-v small{display:block;font:11px var(--mono);color:var(--muted)}
+.dm-li .btn{grid-column:3;grid-row:1 / span 2}
+.dm-dot{width:12px;height:12px;border-radius:3px}
+.dm-loc{display:none!important}
+.dm-vx{border-radius:50%;background:#fff;border:3px solid #f2c230;box-shadow:0 1px 5px rgba(0,0,0,.55);cursor:move}
+.dm-vx.first{background:#f2c230;border-color:#fff}
+.dm-lbl{width:0!important;height:0!important;background:none;border:0}
+.dm-lbl span{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;border-radius:6px}
+.dm-lbl.edge span{padding:1px 5px;background:rgba(19,21,24,.82);color:#fff;font:600 11.5px/1.4 "IBM Plex Mono",monospace}
+.dm-lbl.name span{display:grid;justify-items:center;padding:3px 8px;background:rgba(242,194,48,.94);color:#1b1600;font:600 12.5px/1.25 "IBM Plex Mono",monospace}
+.dm-lbl.name.line span{transform:translate(-50%,-150%)}
+.dm-lbl.name b{font:700 14px/1.1 "Barlow Condensed",sans-serif;text-transform:uppercase}
+#dmMap.drawing{cursor:crosshair}
+.syncbtn.on{background:var(--signal-soft);border-color:var(--signal)}
 </style>
 </head>
 <body>
@@ -222,7 +369,10 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
     <div class="brand">Bau<b>Gest</b><small>PC</small></div>
     <button id="btnBack" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Explorateur</button>
     <button id="btnViewerShow" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Visionneuse</button>
+    <div class="navtabs" id="navtabs"><button data-nav="files" class="on">Explorateur</button><button data-nav="photos">Photos</button><button data-nav="devis">Devis</button></div>
+    <div class="gsearch"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="gSearch" placeholder="Rechercher dans tous les chantiers" title="Nom, date (2026-09), indice (ind C)… puis Entrée"></div>
     <div class="grow"></div>
+    <button id="btnSync" class="btn syncbtn" hidden title="Zoom et défilement liés entre les deux volets"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Lier les vues</button>
     <button id="btnSplit" class="btn" title="Afficher deux fichiers côte à côte"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg>Double vue</button>
     <button id="btnTheme" class="ibtn" title="Thème clair / sombre"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     <span id="acct" class="acct"></span>
@@ -242,9 +392,10 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
       <span class="sep"></span>
       <button id="tbOpen" class="btn" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Ouvrir</button>
       <button id="tbPrint" class="btn" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>Imprimer</button>
+      <button id="tbReport" class="btn" disabled title="Rapport photo PDF avec date, étiquettes et commentaire"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><rect x="8" y="12" width="8" height="6" rx="1"/></svg>Rapport photo</button>
       <button id="tbSave" class="btn" disabled title="Enregistrer les fichiers choisis dans un dossier de ton PC"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Enregistrer sur le PC</button>
       <span class="sep"></span>
-      <label class="btn" title="Envoyer des fichiers du PC dans ce dossier"><svg class="ic" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Importer<input type="file" id="tbUpload" multiple hidden></label>
+      <label class="btn" id="tbUploadLbl" title="Envoyer des fichiers du PC dans ce dossier"><svg class="ic" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>Importer<input type="file" id="tbUpload" multiple hidden></label>
       <button id="tbNewFolder" class="ibtn" title="Nouveau dossier"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM12 10v6M9 13h6"/></svg></button>
       <button id="tbRename" class="ibtn" title="Renommer (F2)" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
       <button id="tbDelete" class="ibtn" title="Mettre à la corbeille (Suppr)" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></button>
@@ -255,12 +406,47 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
       <input type="range" id="tbTile" min="110" max="300" step="10" title="Taille des vignettes" style="width:70px">
     </div>
     <div id="pickbar" class="pickbar" hidden><b id="pickText"></b><div style="flex:1"></div><button id="pickCancel" class="btn">Annuler</button></div>
+    <div id="phbar" class="phbar" hidden>
+      <label>Chantier <select id="phSite" style="min-width:220px"></select></label>
+      <label>Période <select id="phRange"><option value="all">Toutes dates</option><option value="today">Aujourd’hui</option><option value="7">7 jours</option><option value="30">30 jours</option><option value="custom">Période…</option></select></label>
+      <span id="phCustom" hidden><label>du <input type="date" id="phFrom"></label> <label>au <input type="date" id="phTo"></label></span>
+      <input type="search" id="phQ" placeholder="Commentaire, étiquette, nom…" style="width:230px">
+      <div class="seg" id="phView"><button data-pv="grid" class="on">Photos</button><button data-pv="map">Carte</button></div>
+      <div class="phtags" id="phTags"></div>
+    </div>
     <nav class="crumbs" id="crumbs"></nav>
     <div class="files grid" id="files" tabindex="0"></div>
+    <div class="phmap" id="phMap" hidden><div id="phMapEl"></div><div class="mapinfo" id="phMapInfo"></div></div>
     <div class="status"><span id="stCount"></span><span id="stSel"></span><div class="grow"></div><span id="stHint">Double-clic : ouvrir · Ctrl/Maj + clic : sélection multiple · glisse des fichiers depuis Windows pour les envoyer</span></div>
     <div id="dropzone" class="dropzone" hidden><span id="dropText">Dépose ici pour envoyer dans ce dossier</span></div>
   </section>
 
+  <section id="devis" hidden>
+    <aside class="dz-side">
+      <button class="btn primary" id="dzNew" style="justify-content:center">+ Nouvelle fiche devis</button>
+      <input type="search" id="dzQ" placeholder="Chercher un client, une localité…">
+      <div class="dz-count" id="dzCount"></div>
+      <div id="dzList" style="display:grid;gap:6px"></div>
+      <div class="dz-selbar"><button class="btn" id="dzSelBtn">Effacer des fiches…</button></div>
+      <div class="dz-selbar" id="dzSelBar" hidden><button class="btn" id="dzSelAll">Tout</button><button class="btn danger" id="dzSelDel" disabled>Effacer</button><button class="btn" id="dzSelCancel">Annuler</button></div>
+    </aside>
+    <div class="dz-main" id="dzMain"></div>
+  </section>
+  <section id="dzMapP" hidden>
+    <header class="dm-top">
+      <button id="dmBack" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Retour à la fiche</button>
+      <h1 id="dmTitle" class="dm-title">Mesure</h1>
+      <div id="dmLayers" class="dk-modes"><button data-ml="ortho">Orthophoto</button><button data-ml="plan">Plan</button></div>
+      <button id="dmCad" class="btn">Parcelles</button>
+    </header>
+    <div class="dm-wrap">
+      <div id="dmMap"></div>
+      <button id="dmLocate" class="dm-loc"></button>
+      <p id="dmRead" class="dm-read" role="status"></p>
+      <div id="dmList" class="dm-list" hidden></div>
+      <div id="dmTools" class="dm-tools"></div>
+    </div>
+  </section>
   <section id="viewer" hidden></section>
 </div>
 
@@ -547,16 +733,14 @@ $('#jobsClose').addEventListener('click', () => { $('#jobs').hidden = true; for 
 
 /* ---------- chantiers et mises en page (fichier de réglages partagé avec la tablette) ---------- */
 const SYNC_NAME = 'Réglages PhotoChantier (ne pas supprimer).json';
-let S = {sites:[], docLay:null, docTitles:{}, devis:[]};
+let S = {sites:[], docLay:null, docTitles:{}, devis:[], ddel:{}, companies:[], syncId:''};
 async function loadSettings(){
   try {
     const r = await api(DRV + '?' + new URLSearchParams({q:`'${qEsc(P.rootId)}' in parents and name='${qEsc(SYNC_NAME)}' and trashed=false`, orderBy:'modifiedTime desc', pageSize:'1', fields:'files(id)'}));
     const f = r.files && r.files[0]; if (!f) return;
+    S.syncId = f.id;
     const j = await (await api(`${DRV}/${encodeURIComponent(f.id)}?alt=media`, {}, true)).json();
-    S.sites = Array.isArray(j.sites) ? j.sites : [];
-    const fl = j.fields || {};
-    S.docLay = fl.docLay || null; S.docTitles = fl.docTitles || {};
-    S.devis = Array.isArray(j.devis) ? j.devis : [];
+    applyRemote(j);
     for (const s of S.sites) if (s.logo) logoEl(s.logo);
   } catch (e) { console.warn('réglages', e); }
 }
@@ -726,7 +910,7 @@ function drawPageOf(g, k, doc, i, sel){
    ===================================================================== */
 const FOLD = 'application/vnd.google-apps.folder';
 const FN = new Map();               /* dossiers connus : id → {id, name, parent, kids:null|[ids], open} */
-const E = {cur:'', items:[], shown:[], sel:new Set(), anchor:null, focus:null, filter:'', type:'', loadTok:0, pick:null};
+const E = {cur:'', mode:'folder', items:[], shown:[], sel:new Set(), anchor:null, focus:null, filter:'', type:'', loadTok:0, pick:null};
 
 function kindOf(f){
   const m = f.mimeType || '', n = f.name || '', x = extOf(n);
@@ -806,6 +990,7 @@ $('#tree').addEventListener('dblclick', async e => {
 
 /* ---------- dossier courant ---------- */
 async function navigate(id, keepSel){
+  if (E.mode !== 'folder') { leaveMode(); keepSel = false; }
   if (E.cur !== id) { E.filter = ''; $('#tbFilter').value = ''; }
   E.cur = id; P.lastFolder = id; saveP();
   if (!keepSel) { E.sel.clear(); E.anchor = null; E.focus = null; }
@@ -836,6 +1021,7 @@ async function navigate(id, keepSel){
   }
 }
 function renderCrumbs(){
+  if (E.mode !== 'folder') { $('#crumbs').innerHTML = modeCrumbs(); $('#tbUp').disabled = true; return; }
   const ids = chainIds(E.cur);
   $('#crumbs').innerHTML = ids.map((x, i) => `${i ? `<span class="cs">${IC.chev}</span>` : ''}<button data-fid="${esc(x)}">${esc(FN.get(x).name)}</button>`).join('');
   $('#tbUp').disabled = E.cur === P.rootId;
@@ -858,31 +1044,55 @@ function typeOk(f){
   const t = E.type; if (!t || f._k === 'folder') return true;
   return t === 'img' ? f._k === 'img' || f._k === 'img2' : f._k === t;
 }
+const DAYS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+const dFmt = d => pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear();
+const tFmt = d => pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+function tileName(f){
+  if (E.mode === 'photos') {
+    const parts = [tFmt(f._taken)];
+    if (f._tags.length) parts.push(f._tags.join(', '));
+    if (PHO.site === '__all' && f._siteLabel) parts.push(f._siteLabel);
+    return parts.join(' · ');
+  }
+  return displayName(f);
+}
 function renderFiles(){
   const q = E.filter.toLowerCase();
-  E.shown = sortItems(E.items.filter(f => typeOk(f) && (!q || displayName(f).toLowerCase().includes(q) || f.name.toLowerCase().includes(q))));
+  if (E.mode === 'photos') E.shown = phFiltered();
+  else E.shown = sortItems(E.items.filter(f => typeOk(f) && (!q || displayName(f).toLowerCase().includes(q) || f.name.toLowerCase().includes(q))));
   const box = $('#files');
   box.className = 'files ' + P.view;
   box.style.setProperty('--tile', P.tile + 'px');
-  if (!E.shown.length) { box.innerHTML = `<div class="empty">${E.items.length ? 'Aucun fichier ne correspond au filtre.' : 'Dossier vide.<br>Glisse des fichiers depuis Windows pour les envoyer ici.'}</div>`; updateStatus(); return; }
+  if (!E.shown.length) {
+    box.innerHTML = `<div class="empty">${E.mode === 'photos' ? (PHO.loading ? 'Chargement des photos…' : 'Aucune photo ne correspond aux filtres.') : E.mode === 'search' ? (SR.busy ? 'Recherche…' : 'Aucun fichier trouvé.') : E.items.length ? 'Aucun fichier ne correspond au filtre.' : 'Dossier vide.<br>Glisse des fichiers depuis Windows pour les envoyer ici.'}</div>`;
+    updateStatus(); return;
+  }
+  const dayOf = f => E.mode === 'photos' ? DAYS[f._taken.getDay()] + ' ' + dFmt(f._taken) : '';
+  const counts = {}; if (E.mode === 'photos') for (const f of E.shown) { const k = dayOf(f); counts[k] = (counts[k] || 0) + 1; }
+  let day = '';
+  const head = f => { if (E.mode !== 'photos') return ''; const d = dayOf(f); if (d === day) return ''; day = d; return `<div class="gday">${esc(d)}<small>${counts[d]} photo${counts[d] > 1 ? 's' : ''}</small></div>`; };
   if (P.view === 'grid') {
     box.innerHTML = E.shown.map(f => {
       const th = f._k === 'folder' ? '' : thumbOf(f, Math.round(P.tile * 2.2));
-      const badge = f._k === 'doc' ? `<span class="badge ${f._tx ? 'tx' : ''}">${f._tx ? 'TEXTE TAPÉ' : 'MANUSCRIT'}</span>` : f._k === 'pdf' ? '<span class="badge">PDF</span>' : f._k === 'office' ? `<span class="badge">${esc((extOf(f.name) || 'GOOGLE').toUpperCase())}</span>` : '';
-      return `<div class="tile ${E.sel.has(f.id) ? 'sel' : ''}" data-id="${esc(f.id)}" draggable="true" title="${esc(f.name)}">
+      const badge = f._k === 'doc' ? `<span class="badge ${f._tx ? 'tx' : ''}">${f._tx ? 'TEXTE TAPÉ' : 'MANUSCRIT'}</span>` : f._k === 'pdf' ? '<span class="badge">PDF</span>' : f._k === 'office' ? `<span class="badge">${esc((extOf(f.name) || 'GOOGLE').toUpperCase())}</span>` : (E.mode === 'photos' && f._note ? '<span class="badge">COMMENTAIRE</span>' : '');
+      const sub = E.mode === 'search' ? `<div class="pth">${esc(f._path || '')}</div>` : '';
+      return head(f) + `<div class="tile ${E.sel.has(f.id) ? 'sel' : ''}" data-id="${esc(f.id)}" draggable="true" title="${esc(f.name + (f._note ? '\n' + f._note : ''))}">
         <div class="th ${f._k === 'doc' ? 'doc' : ''}">${iconOf(f._k)}${th ? `<img src="${esc(th)}" alt="" loading="lazy" draggable="false" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</div>
         ${badge}<span class="ck">${IC.check}</span>
-        <div class="nm">${esc(displayName(f))}</div></div>`;
+        <div class="nm">${esc(tileName(f))}</div>${sub}</div>`;
     }).join('');
   } else {
-    const h = (k, l) => `<button data-sort="${k}" class="${P.sort === k ? 'on' : ''}">${l}${P.sort === k ? (P.dir > 0 ? ' ▲' : ' ▼') : ''}</button>`;
-    box.innerHTML = `<div class="lhead"><span></span>${h('name', 'Nom')}${h('type', 'Type')}<span style="text-align:right">${h('size', 'Taille')}</span>${h('date', 'Modifié')}</div>` +
+    const h = (k, l) => E.mode === 'folder' ? `<button data-sort="${k}" class="${P.sort === k ? 'on' : ''}">${l}${P.sort === k ? (P.dir > 0 ? ' ▲' : ' ▼') : ''}</button>` : `<span>${l}</span>`;
+    const c2 = E.mode === 'photos' ? 'Chantier' : E.mode === 'search' ? 'Dossier' : 'Type', c4 = E.mode === 'photos' ? 'Prise le' : 'Modifié';
+    box.innerHTML = `<div class="lhead"><span></span>${h('name', 'Nom')}${h('type', c2)}<span style="text-align:right">${h('size', 'Taille')}</span>${h('date', c4)}</div>` +
       E.shown.map(f => {
         const th = f._k === 'img' || f._k === 'img2' || f._k === 'doc' ? thumbOf(f, 64) : '';
-        return `<div class="row ${E.sel.has(f.id) ? 'sel' : ''}" data-id="${esc(f.id)}" draggable="true" title="${esc(f.name)}">
+        const col2 = E.mode === 'photos' ? (f._siteLabel || '') : E.mode === 'search' ? (f._path || '') : TYPE_LABEL[f._k];
+        const nm = E.mode === 'photos' ? [f._tags.join(', '), f._note].filter(Boolean).join(' · ') || f.name : displayName(f);
+        return head(f) + `<div class="row ${E.sel.has(f.id) ? 'sel' : ''}" data-id="${esc(f.id)}" draggable="true" title="${esc(f.name)}">
           <span class="ri">${iconOf(f._k)}${th ? `<img src="${esc(th)}" alt="" loading="lazy" draggable="false" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span>
-          <span class="rn">${esc(displayName(f))}${f._k === 'doc' && f._tx ? ' <small class="muted">· texte tapé</small>' : ''}</span>
-          <span class="rt">${esc(TYPE_LABEL[f._k])}</span><span class="rs">${esc(fmtSize(f.size))}</span><span class="rd">${esc(fmtDate(f.modifiedTime))}</span></div>`;
+          <span class="rn">${esc(nm)}${f._k === 'doc' && f._tx ? ' <small class="muted">· texte tapé</small>' : ''}</span>
+          <span class="rt">${esc(col2)}</span><span class="rs">${esc(fmtSize(f.size))}</span><span class="rd">${esc(E.mode === 'photos' ? dFmt(f._taken) + ' ' + tFmt(f._taken) : fmtDate(f.modifiedTime))}</span></div>`;
       }).join('');
   }
   updateStatus();
@@ -902,6 +1112,10 @@ function updateStatus(){
   $('#tbSave').disabled = !files.length;
   $('#tbRename').disabled = s.length !== 1;
   $('#tbDelete').disabled = !s.length;
+  $('#tbReport').disabled = !files.some(f => f._k === 'img');
+  const fm = E.mode === 'folder';
+  $('#tbFilter').hidden = E.mode === 'photos'; $('#tbType').hidden = E.mode === 'photos';
+  $('#tbNewFolder').disabled = !fm; $('#tbUploadLbl').classList.toggle('dis', !fm);
   scheduleDragPrep();
 }
 
@@ -981,9 +1195,9 @@ filesEl.addEventListener('keydown', e => {
 });
 
 /* ---------- actions de la barre d'outils ---------- */
-function goUp(){ const n = FN.get(E.cur); if (n && n.parent && E.cur !== P.rootId) navigate(n.parent); }
+function goUp(){ if (E.mode !== 'folder') return; const n = FN.get(E.cur); if (n && n.parent && E.cur !== P.rootId) navigate(n.parent); }
 $('#tbUp').addEventListener('click', goUp);
-$('#tbRefresh').addEventListener('click', () => navigate(E.cur, true));
+$('#tbRefresh').addEventListener('click', () => refreshMode());
 $('#tbOpen').addEventListener('click', () => { const s = selItems(); if (s.length === 1) openItem(s[0]); else if (s.length) openMany(s); });
 $('#tbPrint').addEventListener('click', () => printSel());
 $('#tbSave').addEventListener('click', () => saveToPc(selItems().filter(f => f._k !== 'folder')));
@@ -994,7 +1208,7 @@ $('#tbNewFolder').addEventListener('click', async () => {
   try { const f = await createFolder(clean(n), E.cur); toast('Dossier « ' + f.name + ' » créé', 'ok'); await navigate(E.cur, true); E.sel = new Set([f.id]); paintSel(); }
   catch (e) { toast('Création impossible : ' + e.message, 'err'); }
 });
-$('#tbUpload').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) uploadFiles(fs.map(f => ({file:f, path:[]})), E.cur); });
+$('#tbUpload').addEventListener('change', e => { if (E.mode !== 'folder') { e.target.value = ''; return; } const fs = [...e.target.files]; e.target.value = ''; if (fs.length) uploadFiles(fs.map(f => ({file:f, path:[]})), E.cur); });
 $('#tbFilter').addEventListener('input', e => { E.filter = e.target.value; renderFiles(); });
 $('#tbType').addEventListener('change', e => { E.type = e.target.value; renderFiles(); });
 $('#tbView').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; P.view = b.dataset.v; saveP(); syncViewBtns(); renderFiles(); });
@@ -1064,6 +1278,10 @@ filesEl.addEventListener('contextmenu', e => {
     en.push({label:files.length > 1 ? `Imprimer les ${files.length} fichiers` : 'Imprimer', icon:IC.print, fn:() => printItems(files), kbd:'Ctrl+P'});
     en.push({label:'Enregistrer sur le PC…', icon:IC.down, fn:() => saveToPc(files)});
   }
+  if (E.mode !== 'folder' && one) en.push({label:'Afficher dans son dossier', icon:IC.folder, fn:() => revealItem(one)});
+  const cmp = files.filter(f => ['pdf', 'img', 'office'].includes(f._k));
+  if (cmp.length === 2) en.push({label:'Comparer côte à côte (vues liées)', icon:IC.swap, fn:() => compareFiles(cmp[0], cmp[1])});
+  if (files.some(f => f._k === 'img')) en.push({label:'Rapport photo…', icon:IC.file, fn:() => photoReport(files)});
   en.push('-');
   if (one) en.push({label:'Renommer', icon:IC.rename, fn:renameSel, kbd:'F2'});
   if (one) en.push({label:'Ouvrir dans Google Drive', icon:IC.drive, fn:() => window.open(one.webViewLink || `https://drive.google.com/drive/folders/${one.id}`, '_blank', 'noopener')});
@@ -1211,6 +1429,12 @@ document.addEventListener('dragover', e => {
   const internal = hasType(e, 'application/x-baugest'), ext = hasType(e, 'Files');
   if (!internal && !ext) return;
   if (!$('#viewer').hidden) { if (ext) { e.preventDefault(); e.dataTransfer.dropEffect = 'none'; } return; }
+  if (!$('#devis').hidden) {
+    if (!ext) return;
+    e.preventDefault(); const zone = e.target.closest && e.target.closest('#dzPhotos');
+    e.dataTransfer.dropEffect = zone ? 'copy' : 'none'; setDropHL(zone || null); return;
+  }
+  if (E.mode !== 'folder' && ext) { e.preventDefault(); e.dataTransfer.dropEffect = 'none'; return; }
   const t = dropTarget(e);
   if (internal) {
     if (t && !E.sel.has(t.id) && t.id !== E.cur) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDropHL(t.el); } else setDropHL(null);
@@ -1231,6 +1455,8 @@ document.addEventListener('drop', async e => {
   e.preventDefault();
   $('#dropzone').hidden = true; const t = dropTarget(e); setDropHL(null);
   if (!$('#viewer').hidden) return;
+  if (!$('#devis').hidden) { if (ext && e.target.closest && e.target.closest('#dzPhotos')) dzImport(e.dataTransfer.files); return; }
+  if (E.mode !== 'folder' && ext) return;
   if (internal) {
     if (!t) return;
     let ids = []; try { ids = JSON.parse(e.dataTransfer.getData('application/x-baugest')); } catch (err) {}
@@ -1327,6 +1553,7 @@ function mkPane(i){
     <button class="ibtn" data-a="fitw" title="Largeur de l'écran (W)">${IC.fitw}</button>
     <button class="ibtn" data-a="fitp" title="Page entière (0)">${IC.fitp}</button>
     <span class="sep"></span>
+    <button class="btn" data-a="mes" hidden title="Afficher ou masquer les métrés faits sur la tablette">${IC.rect}<span>Métrés</span></button>
     <button class="btn" data-a="edit" title="Annoter (E)">${IC.edit}<span>Annoter</span></button>
     <button class="ibtn" data-a="print" title="Imprimer (Ctrl+P)">${IC.print}</button>
     <button class="ibtn" data-a="dl" title="Télécharger sur le PC">${IC.down}</button>
@@ -1404,6 +1631,7 @@ function syncTopBtns(){
   $('#btnSplit').classList.toggle('on', P.split);
   V.panes[1].el.hidden = !P.split;
   V.panes.forEach(p => { p.el.querySelector('[data-a="pick"]').hidden = !P.split; });
+  syncLinkBtn();
   setActive(P.split ? V.active : 0);
 }
 
@@ -1452,6 +1680,7 @@ async function openIn(pi, f, list){
       try { blob = await blobOf(f); }
       catch (e) { if (f._k === 'office') { if (tok === p.tok) showFrame(p, f); return; } throw e; }
       await loadPdf(p, blob, tok);
+      if (f._k === 'pdf' && tok === p.tok) loadPlanMeasures(p, f, tok);
     } else if (f._k === 'img') await loadImg(p, await blobOf(f), tok);
     else if (f._k === 'img2') await loadThumb(p, f, tok);
     else if (f._k === 'text') { const t = await (await blobOf(f)).text(); if (tok !== p.tok) return; p.pagesEl.innerHTML = `<pre class="txtview">${esc(t.slice(0, 2e6))}</pre>`; p.src = {type:'text', text:t}; }
@@ -1466,6 +1695,7 @@ function resetPane(p){
   if (p.src && p.src.bmp) p.src.bmp.close?.();
   p.src = null; p.pages = []; p.undo = []; p.redo = []; p.dirty = false; p.cur = null; p.docJson = p.docJson && p.item && p.item._k === 'doc' ? p.docJson : null;
   p.pagesEl.innerHTML = ''; p.r('mode').hidden = true;
+  p.mes = null; p.showMes = false; { const mb = p.el.querySelector('[data-a="mes"]'); if (mb) mb.hidden = true; }
   setEditing(p, false);
 }
 function setMsg(p, html, big){
@@ -1641,8 +1871,9 @@ function drawOverlay(p, pg){
   const W = Math.max(1, Math.round(cw * k)), H = Math.max(1, Math.round(ch * k));
   if (ov.width !== W || ov.height !== H) { ov.width = W; ov.height = H; }
   const g = ov.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
-  if (!pg.anns.length && !(p.cur && p.cur.pg === pg)) return;
   g.setTransform(k, 0, 0, k, 0, 0);
+  drawMeasures(p, pg, g);
+  if (!pg.anns.length && !(p.cur && p.cur.pg === pg)) return;
   const map = q => toView(pg, q);
   for (const a of pg.anns) drawAnn(g, a, map, pg.s);
   if (p.cur && p.cur.pg === pg) { const a = buildAnn(p, pg, p.cur); if (a) drawAnn(g, a, map, pg.s); }
@@ -2144,11 +2375,1397 @@ function printBlob(blob){
   setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
 }
 
+/* les deux volets de la visionneuse */
+V.panes = [mkPane(0), mkPane(1)];
+V.panes.forEach(p => { $('#viewer').appendChild(p.el); syncAtb(p); syncPaneBtns(p); });
+
+/* =====================================================================
+   Photos : filtres par chantier, période, étiquette, texte ; vue carte
+   ===================================================================== */
+const PHO = {site:'', range:'all', from:'', to:'', q:'', tag:'', view:'grid', all:[], tok:0, loading:false, map:null, layer:null};
+const SR = {q:'', busy:false, folders:null, foldersAt:0, tok:0};
+function leaveMode(){
+  E.mode = 'folder'; $('#phbar').hidden = true; $('#phMap').hidden = true; filesEl.hidden = false;
+  E.items = []; E.sel.clear(); syncNav();
+}
+function modeCrumbs(){
+  if (E.mode === 'photos') {
+    const lbl = PHO.site === '__all' ? 'Tous les chantiers' : PHO.site === '__none' ? 'À classer' : phSiteLabel(PHO.site);
+    return `<button disabled>Photos</button><span class="cs">${IC.chev}</span><button disabled>${esc(lbl)}</button>`;
+  }
+  return `<button disabled>Recherche</button><span class="cs">${IC.chev}</span><button disabled>« ${esc(SR.q)} »</button>`;
+}
+function refreshMode(){ if (E.mode === 'photos') loadPhotos(); else if (E.mode === 'search') runSearch(SR.q, true); else navigate(E.cur, true); }
+function syncNav(){
+  const cur = !$('#devis').hidden ? 'devis' : E.mode === 'photos' ? 'photos' : 'files';
+  $$('#navtabs [data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === cur));
+}
+$('#navtabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-nav]'); if (!b) return;
+  const n = b.dataset.nav;
+  if (!$('#viewer').hidden) hideViewer();
+  if (n === 'devis') { openDevis(); return; }
+  closeDevis();
+  if (n === 'photos') openPhotos();
+  else { if (E.mode !== 'folder') navigate(E.cur || P.rootId); else syncNav(); }
+});
+
+const phSiteLabel = id => {
+  if (String(id).startsWith('devis:')) { const d = (S.devis || []).find(x => 'devis:' + x.id === id); return d ? 'Devis · ' + devName(d) + (devCity(d) ? ' – ' + devCity(d) : '') : 'Devis'; }
+  const s = S.sites.find(x => x.id === id); return s ? siteLabel(s) : 'Chantier';
+};
+function phSiteOptions(){
+  const sites = S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}));
+  const dv = (S.devis || []).slice().sort((a, b) => (b.mod || 0) - (a.mod || 0));
+  $('#phSite').innerHTML = `<option value="__all">Tous les chantiers</option>` +
+    `<optgroup label="Chantiers">${sites.map(s => `<option value="${esc(s.id)}">${esc(siteLabel(s))}</option>`).join('')}<option value="__none">À classer</option></optgroup>` +
+    (dv.length ? `<optgroup label="Devis particuliers">${dv.map(d => `<option value="devis:${esc(d.id)}">${esc(devName(d) + (devCity(d) ? ' – ' + devCity(d) : ''))}</option>`).join('')}</optgroup>` : '');
+  $('#phSite').value = PHO.site;
+}
+function openPhotos(site){
+  closeDevis();
+  if (site) PHO.site = site;
+  else {
+    const names = E.mode === 'folder' ? chainNames(E.cur) : [];
+    const s = siteByFolder(names[0] || '');
+    if (s) PHO.site = s.id;
+    else if (names[0] === DZ_ROOT && names[1]) { const d = (S.devis || []).find(x => clean(x.folder || '') === names[1]); PHO.site = d ? 'devis:' + d.id : (PHO.site || '__all'); }
+    else if (!PHO.site) PHO.site = '__all';
+  }
+  E.mode = 'photos'; E.sel.clear(); E.anchor = null; E.items = [];
+  $('#phbar').hidden = false; phSiteOptions();
+  $('#phRange').value = PHO.range; $('#phCustom').hidden = PHO.range !== 'custom'; $('#phFrom').value = PHO.from; $('#phTo').value = PHO.to; $('#phQ').value = PHO.q;
+  syncPhView(); renderCrumbs(); syncNav(); renderTree();
+  loadPhotos();
+}
+function rangeBounds(){
+  const now = new Date(), sod = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  switch (PHO.range) {
+    case 'today': return {from:sod(now), to:null};
+    case '7': return {from:new Date(sod(now).getTime() - 6 * 864e5), to:null};
+    case '30': return {from:new Date(sod(now).getTime() - 29 * 864e5), to:null};
+    case 'custom': {
+      const f = PHO.from ? new Date(PHO.from + 'T00:00:00') : null, t = PHO.to ? new Date(PHO.to + 'T23:59:59.999') : null;
+      return {from:f && !isNaN(f) ? f : null, to:t && !isNaN(t) ? t : null};
+    }
+  }
+  return {from:null, to:null};
+}
+const inRange = t => { const r = rangeBounds(); return (!r.from || t >= r.from) && (!r.to || t <= r.to); };
+function parseGps(d){ const m = /GPS : (-?\d+(?:\.\d+)?), (-?\d+(?:\.\d+)?)/.exec(d || ''); return m ? {lat:+m[1], lon:+m[2]} : null; }
+function photoInfo(f){
+  const ap = f.appProperties || {};
+  f._k = 'img';
+  f._taken = new Date(ap.taken || f.createdTime || f.modifiedTime);
+  if (isNaN(f._taken)) f._taken = new Date(f.createdTime || Date.now());
+  f._tags = ap.tags ? ap.tags.split('|').filter(Boolean) : [];
+  const cm = /Commentaire : (.*)/.exec(f.description || ''); f._note = cm ? cm[1].trim() : '';
+  f._pos = ap.lat && ap.lon ? {lat:+ap.lat, lon:+ap.lon} : parseGps(f.description);
+  f._siteLabel = ap.site && ap.site !== 'none' ? phSiteLabel(ap.site) : 'À classer';
+  return f;
+}
+async function loadPhotos(){
+  const tok = ++PHO.tok; PHO.loading = true; E.items = []; renderFiles(); renderPhTags();
+  let q = "trashed=false and mimeType='image/jpeg' and appProperties has { key='pc' and value='1' }";
+  if (PHO.site !== '__all') q += ` and appProperties has { key='site' and value='${qEsc(PHO.site === '__none' ? 'none' : PHO.site)}' }`;
+  const r = rangeBounds(); if (r.from) q += ` and createdTime >= '${r.from.toISOString()}'`;
+  try {
+    const fs = await listAll(q, FIELDS + ',description', 'createdTime desc');
+    if (tok !== PHO.tok || E.mode !== 'photos') return;
+    PHO.all = fs.map(photoInfo);
+    E.items = PHO.all;
+  } catch (e) { if (tok === PHO.tok) toast('Photos illisibles : ' + e.message, 'err'); }
+  finally { if (tok === PHO.tok) PHO.loading = false; }
+  if (tok !== PHO.tok || E.mode !== 'photos') return;
+  renderPhTags(); renderFiles(); if (PHO.view === 'map') drawPhMap();
+}
+function phFiltered(){
+  const q = PHO.q.trim().toLowerCase();
+  const words = q ? q.split(/\s+/) : [];
+  return PHO.all.filter(f => inRange(f._taken) && (!PHO.tag || f._tags.includes(PHO.tag)) &&
+    (!words.length || words.every(w => (f.name + ' ' + f._tags.join(' ') + ' ' + f._note + ' ' + (f.description || '')).toLowerCase().includes(w))))
+    .sort((a, b) => b._taken - a._taken);
+}
+function renderPhTags(){
+  const tags = [...new Set(PHO.all.filter(f => inRange(f._taken)).flatMap(f => f._tags))].sort((a, b) => a.localeCompare(b, 'fr'));
+  if (PHO.tag && !tags.includes(PHO.tag)) PHO.tag = '';
+  $('#phTags').innerHTML = tags.length ? `<span class="muted" style="font-size:13px;align-self:center">Étiquettes :</span>` + tags.map(t => `<button class="ptag ${PHO.tag === t ? 'on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('') : '';
+}
+function phChanged(reload){
+  if (reload) { loadPhotos(); return; }
+  E.sel.clear(); renderPhTags(); renderFiles(); if (PHO.view === 'map') drawPhMap();
+}
+$('#phSite').addEventListener('change', e => { PHO.site = e.target.value; renderCrumbs(); phChanged(true); });
+$('#phRange').addEventListener('change', e => {
+  const wasWide = !rangeBounds().from;
+  PHO.range = e.target.value; $('#phCustom').hidden = PHO.range !== 'custom';
+  if (PHO.range === 'custom' && !PHO.from) { const d = new Date(Date.now() - 6 * 864e5); PHO.from = d.toISOString().slice(0, 10); PHO.to = new Date().toISOString().slice(0, 10); $('#phFrom').value = PHO.from; $('#phTo').value = PHO.to; }
+  /* plus large qu'avant : il faut relire le Drive ; plus étroit : filtre sur place */
+  phChanged(!wasWide);
+});
+$('#phFrom').addEventListener('change', e => { PHO.from = e.target.value; phChanged(true); });
+$('#phTo').addEventListener('change', e => { PHO.to = e.target.value; phChanged(false); });
+let phqT = 0;
+$('#phQ').addEventListener('input', e => { clearTimeout(phqT); phqT = setTimeout(() => { PHO.q = e.target.value; phChanged(false); }, 200); });
+$('#phTags').addEventListener('click', e => { const b = e.target.closest('[data-tag]'); if (!b) return; PHO.tag = PHO.tag === b.dataset.tag ? '' : b.dataset.tag; phChanged(false); });
+$('#phView').addEventListener('click', e => { const b = e.target.closest('[data-pv]'); if (!b) return; PHO.view = b.dataset.pv; syncPhView(); });
+function syncPhView(){
+  $$('#phView [data-pv]').forEach(b => b.classList.toggle('on', b.dataset.pv === PHO.view));
+  const map = E.mode === 'photos' && PHO.view === 'map';
+  $('#phMap').hidden = !map; filesEl.hidden = map;
+  if (map) drawPhMap();
+}
+
+/* ---------- carte des photos ---------- */
+const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/';
+function loadLeaflet(){ return window.L && window.L.map ? Promise.resolve() : loadScript(LEAFLET + 'leaflet.min.js'); }
+async function drawPhMap(){
+  try { await loadLeaflet(); } catch (e) { $('#phMapInfo').textContent = 'Carte indisponible : ' + e.message; return; }
+  if (!PHO.map) {
+    const m = PHO.map = L.map('phMapEl', {zoomControl:true}).setView([46.2, 7.3], 10);
+    m.attributionControl.setPrefix(false);
+    const bases = {
+      'Plan CH':L.tileLayer('https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg', {maxNativeZoom:18, maxZoom:20, attribution:'© swisstopo'}),
+      'Aérien CH':L.tileLayer('https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg', {maxNativeZoom:19, maxZoom:20, attribution:'© swisstopo'}),
+      'OpenStreetMap':L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxNativeZoom:19, maxZoom:20, attribution:'© OpenStreetMap'})
+    };
+    (bases[P.mapLayer] || bases['Plan CH']).addTo(m);
+    L.control.layers(bases, null, {position:'topright'}).addTo(m);
+    m.on('baselayerchange', e => { P.mapLayer = e.name; saveP(); });
+    PHO.layer = L.layerGroup().addTo(m);
+    m.on('zoomend', () => phMarkers(false));
+  }
+  setTimeout(() => PHO.map.invalidateSize(), 30);
+  phMarkers(true);
+}
+function phMarkers(fit){
+  if (!PHO.map) return;
+  const list = phFiltered(), withPos = list.filter(f => f._pos);
+  PHO.layer.clearLayers();
+  $('#phMapInfo').textContent = `${withPos.length} photo${withPos.length > 1 ? 's' : ''} sur la carte` + (list.length > withPos.length ? ` · ${list.length - withPos.length} sans position GPS` : '');
+  if (!withPos.length) return;
+  /* regroupe les photos proches selon le zoom */
+  const z = PHO.map.getZoom(), cell = 360 / Math.pow(2, z) / 6;
+  const groups = new Map();
+  for (const f of withPos) { const k = Math.round(f._pos.lat / cell) + ':' + Math.round(f._pos.lon / cell); (groups.get(k) || groups.set(k, []).get(k)).push(f); }
+  for (const g of groups.values()) {
+    const lat = g.reduce((s, f) => s + f._pos.lat, 0) / g.length, lon = g.reduce((s, f) => s + f._pos.lon, 0) / g.length;
+    const th = thumbOf(g[0], 120);
+    const icon = L.divIcon({className:'pm-wrap', iconSize:[48, 48], iconAnchor:[24, 24], html:`<span class="pm">${th ? `<img src="${esc(th)}" referrerpolicy="no-referrer" alt="">` : ''}${g.length > 1 ? `<span class="pmc">${g.length}</span>` : ''}</span>`});
+    const mk = L.marker([lat, lon], {icon}).addTo(PHO.layer);
+    mk.on('click', () => {
+      if (g.length === 1) { openIn(P.split ? V.active : 0, g[0], list); return; }
+      const div = document.createElement('div');
+      div.innerHTML = `<b style="display:block;margin-bottom:6px">${g.length} photos</b><div class="pmpop">${g.slice(0, 60).map(f => `<button data-pid="${esc(f.id)}" title="${esc(dFmt(f._taken) + ' ' + tFmt(f._taken) + (f._tags.length ? ' · ' + f._tags.join(', ') : ''))}"><img src="${esc(thumbOf(f, 160))}" referrerpolicy="no-referrer" alt=""></button>`).join('')}</div>`;
+      div.addEventListener('click', ev => { const b = ev.target.closest('[data-pid]'); if (b) openIn(P.split ? V.active : 0, g.find(f => f.id === b.dataset.pid), g); });
+      L.popup({maxWidth:320}).setLatLng([lat, lon]).setContent(div).openOn(PHO.map);
+    });
+  }
+  if (fit) { const b = L.latLngBounds(withPos.map(f => [f._pos.lat, f._pos.lon])); PHO.map.fitBounds(b.pad(.15), {maxZoom:18}); }
+}
+
+/* =====================================================================
+   Recherche globale : nom, date, indice… dans tous les dossiers BauGest
+   ===================================================================== */
+async function allFolders(){
+  if (SR.folders && Date.now() - SR.foldersAt < 5 * 60e3) return SR.folders;
+  const map = new Map([[P.rootId, {id:P.rootId, name:P.rootName || 'BauGest', parent:null}]]);
+  let level = [P.rootId];
+  for (let d = 0; d < 10 && level.length; d++) {
+    const next = [];
+    for (let i = 0; i < level.length; i += 30) {
+      const ch = level.slice(i, i + 30);
+      const q = `(${ch.map(id => `'${qEsc(id)}' in parents`).join(' or ')}) and mimeType='${FOLD}' and trashed=false`;
+      for (const f of await listAll(q, 'id,name,parents', 'name')) {
+        const par = (f.parents || []).find(x => map.has(x)); if (!par || map.has(f.id)) continue;
+        map.set(f.id, {id:f.id, name:f.name, parent:par}); next.push(f.id);
+        noteFolder(f, par);
+      }
+    }
+    level = next;
+  }
+  SR.folders = map; SR.foldersAt = Date.now();
+  return map;
+}
+function folderPath(map, id){ const out = []; let n = map.get(id), g = 0; while (n && n.parent && g++ < 20) { out.unshift(n.name); n = map.get(n.parent); } return out.join(' › '); }
+async function runSearch(q, keep){
+  q = String(q || '').trim(); if (!q) return;
+  closeDevis(); if (!$('#viewer').hidden) hideViewer();
+  if (E.mode === 'photos') { $('#phbar').hidden = true; $('#phMap').hidden = true; filesEl.hidden = false; }
+  E.mode = 'search'; SR.q = q; SR.busy = true; E.items = []; if (!keep) E.sel.clear();
+  renderCrumbs(); syncNav(); renderFiles();
+  const tok = ++SR.tok;
+  try {
+    const map = await allFolders();
+    const words = q.split(/\s+/).filter(Boolean);
+    const qq = words.map(w => `name contains '${qEsc(w)}'`).join(' and ') + ' and trashed=false';
+    const fs = await listAll(qq, FIELDS, 'modifiedTime desc');
+    if (tok !== SR.tok || E.mode !== 'search') return;
+    const items = [];
+    for (const f of fs) {
+      const par = (f.parents || []).find(x => map.has(x)); if (!par) continue;
+      if (f.mimeType === 'application/vnd.google-apps.shortcut' || f.name === SYNC_NAME || (f.appProperties && (f.appProperties.pc === 'tmp' || f.appProperties.kind === 'mesures' || f.appProperties.kind === 'settings'))) continue;
+      f._k = kindOf(f); if (f._k === 'folder') noteFolder(f, par);
+      f._path = folderPath(map, par) || (P.rootName || 'BauGest');
+      items.push(f);
+    }
+    E.items = items;
+  } catch (e) { toast('Recherche impossible : ' + e.message, 'err'); }
+  finally { if (tok === SR.tok) SR.busy = false; }
+  if (tok === SR.tok && E.mode === 'search') renderFiles();
+}
+$('#gSearch').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); runSearch(e.target.value); }
+  else if (e.key === 'Escape') { e.target.value = ''; if (E.mode === 'search') navigate(E.cur || P.rootId); }
+});
+/* depuis la recherche ou les photos : afficher le fichier dans son dossier */
+async function revealItem(f){
+  const par = (f.parents || [])[0]; if (!par) return;
+  try { if (!(await ensureChain(par))) { toast('Ce fichier est en dehors du dossier BauGest', 'err'); return; } } catch (e) { return; }
+  await navigate(par);
+  E.sel = new Set([f.id]); E.anchor = f.id; paintSel();
+  $(`#files [data-id="${CSS.escape(f.id)}"]`)?.scrollIntoView({block:'center'});
+}
+/* ---------- Devis : fonctions reprises de la version tablette (calculs, métré, mémo, carte) ---------- */
+function fmtN(v, d = 2, sep = '’'){
+  const neg = v < 0; let [i, f] = Math.abs(v).toFixed(d).split('.');
+  i = i.replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+  return (neg ? '−' : '') + i + (f ? '.' + f : '');
+}
+function pdfHexStr(t){ let h = 'FEFF'; for (const ch of String(t)) { const c = ch.codePointAt(0); if (c > 0xffff) { const v = c - 0x10000; h += ((0xd800 + (v >> 10)).toString(16) + (0xdc00 + (v & 0x3ff)).toString(16)).toUpperCase().padStart(8, '0'); } else h += c.toString(16).toUpperCase().padStart(4, '0'); } return '<' + h + '>'; }
+async function makePdf(canvases, title){
+  const enc = new TextEncoder(), parts = [], offs = [];
+  let len = 0;
+  const push = x => { const b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; };
+  const jpgs = [];
+  for (const c of canvases) {
+    const b = await new Promise((res, rej) => c.toBlob(x => x ? res(x) : rej(new Error('encodage JPEG')), 'image/jpeg', .86));
+    jpgs.push({bytes:new Uint8Array(await b.arrayBuffer()), w:c.width, h:c.height});
+  }
+  const n = jpgs.length, info = 3 + n * 3, total = info + 1;
+  push('%PDF-1.4\n%âãÏÓ\n');
+  const obj = (id, body) => { offs[id] = len; push(`${id} 0 obj\n${body}\nendobj\n`); };
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, `<< /Type /Pages /Kids [${jpgs.map((_, i) => (3 + i * 3) + ' 0 R').join(' ')}] /Count ${n} >>`);
+  jpgs.forEach((j, i) => {
+    const pg = 3 + i * 3, ct = pg + 1, im = pg + 2;
+    obj(pg, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im${i} ${im} 0 R >> >> /Contents ${ct} 0 R >>`);
+    const cs = `q 595.28 0 0 841.89 0 0 cm /Im${i} Do Q`;
+    obj(ct, `<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+    offs[im] = len;
+    push(`${im} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${j.w} /Height ${j.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${j.bytes.length} >>\nstream\n`);
+    push(j.bytes); push('\nendstream\nendobj\n');
+  });
+  obj(info, `<< /Title ${pdfHexStr(title || 'Document')} >>`);
+  const xref = len;
+  let x = `xref\n0 ${total}\n0000000000 65535 f \n`;
+  for (let i = 1; i < total; i++) x += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+  push(x + `trailer\n<< /Size ${total} /Root 1 0 R /Info ${info} 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(parts, {type:'application/pdf'});
+}
+const devList = () => Array.isArray(S.devis) ? S.devis : (S.devis = []);
+const compList = () => Array.isArray(S.companies) ? S.companies : (S.companies = []);
+const devById = id => devList().find(d => d.id === id) || null;
+const compById = id => compList().find(c => c.id === id) || null;
+const devName = d => (d.client && d.client.name || '').trim() || 'Sans nom';
+const devCity = d => (d.addr && d.addr.city || '').trim();
+const devLabel = d => 'Devis · ' + devName(d) + (devCity(d) ? ' – ' + devCity(d) : '');
+const devSid = d => 'devis:' + d.id;
+const dzSorted = () => devList().slice().sort((a, b) => (b.mod || 0) - (a.mod || 0));
+function setPath(o, path, v){ const k = path.split('.'); let x = o; while (k.length > 1) { const p = k.shift(); x = x[p] = x[p] || {}; } x[k[0]] = v; }
+function getPath(o, path){ return path.split('.').reduce((x, k) => x == null ? x : x[k], o); }
+function dzFmtVisit(v){ try { const d = new Date(v); if (isNaN(d)) return ''; return dFmt(d) + (v.length > 10 ? ' ' + tFmt(d) : ''); } catch (e) { return ''; } }
+function dzLinks(d){
+  const tel = (d.client?.tel || '').replace(/[^\d+]/g, '');
+  let wa = tel.replace(/^\+/, '').replace(/^00/, ''); if (/^0\d/.test(tel)) wa = '41' + tel.slice(1);
+  const addr = [d.addr?.street, [d.addr?.npa, d.addr?.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  const dest = addr || (d.pos ? d.pos.lat + ',' + d.pos.lon : '');
+  return {
+    tel: tel ? 'tel:' + tel : '', wa: wa.length >= 9 ? 'https://wa.me/' + wa : '',
+    mail: (d.client?.email || '').includes('@') ? 'mailto:' + d.client.email.trim() : '',
+    map: dest ? 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest) : ''
+  };
+}
+function dzItemRow(it, i){
+  const d = devById(dz.cur); it.id = it.id || newUid();
+  const open = dz.metOpen.has(it.id), calc = !!(it.lines && it.lines.length);
+  return `<div class="dz-item"><div class="dz-row" data-it="${i}">
+    <input type="text" data-k="d" value="${esc(it.d || '')}" placeholder="Description du poste" aria-label="Description du poste ${i + 1}">
+    <input type="text" data-k="q" value="${esc(it.q ?? '')}" inputmode="decimal" placeholder="Qté" aria-label="Quantité"${calc ? ' readonly class="calc" title="Calculée depuis le métré détaillé"' : ''}>
+    <select data-k="u" aria-label="Unité">${DZ_UNITS.map(u => `<option ${u === (it.u || 'm²') ? 'selected' : ''}>${u}</option>`).join('')}</select>
+    <button class="icon-btn${open ? ' on' : ''}${calc ? ' has' : ''}" data-itmet="${i}" aria-expanded="${open}" aria-label="Métré détaillé du poste ${i + 1}" title="Métré détaillé (dimensions)">${ICON_RULER}</button>
+    <button class="icon-btn" data-itdel="${i}" aria-label="Supprimer le poste ${i + 1}">${ICON_X}</button></div>${open ? dzMetHTML(it, i, d) : ''}</div>`;
+}
+const MW = 794, MH = 1123, MK = 1240 / 794, MX = 56, MBOT = MH - 58;
+function wrapText(g, t, w){
+  const out = [];
+  for (const para of String(t || '').split(/\n/)) {
+    let line = '';
+    for (const word of para.split(/\s+/).filter(Boolean)) {
+      const tryL = line ? line + ' ' + word : word;
+      if (g.measureText(tryL).width <= w || !line) line = tryL; else { out.push(line); line = word; }
+    }
+    out.push(line);
+  }
+  while (out.length && !out[out.length - 1]) out.pop();
+  return out;
+}
+function dzMemoPages(d, photos, logo){
+  const c = compById(d.comp), pages = [];
+  let g, y;
+  const font = (w, s, disp) => { g.font = `${w} ${s}px ${disp ? '"Barlow Condensed","Arial Narrow"' : 'Barlow,Arial'}, sans-serif`; };
+  const t = (s, x, yy, o = {}) => { font(o.w || 400, o.s || 13, o.disp); g.fillStyle = o.c || '#1c1f23'; g.textAlign = o.a || 'left'; g.textBaseline = 'alphabetic'; g.fillText(s, x, yy); g.textAlign = 'left'; };
+  const rule = (yy, c = '#e2dfd6', w = 1) => { g.fillStyle = c; g.fillRect(MX, yy, MW - 2 * MX, w); };
+  const newPage = () => {
+    const cv = document.createElement('canvas'); cv.width = Math.round(MW * MK); cv.height = Math.round(MH * MK);
+    g = cv.getContext('2d'); g.scale(MK, MK); g.fillStyle = '#ffffff'; g.fillRect(0, 0, MW, MH);
+    pages.push(cv);
+    if (pages.length > 1) { t('MÉMO TRAVAUX · ' + devName(d).toUpperCase() + ' (SUITE)', MX, 58, {w:700, s:16, disp:true, c:'#5a5f66'}); rule(68, '#1c1f23', 2); y = 96; }
+  };
+  const ensure = h => { if (y + h > MBOT) newPage(); };
+  const h2 = s => { ensure(40); t(s.toUpperCase(), MX, y, {w:700, s:15, disp:true, c:'#5a5f66'}); y += 18; };
+  newPage();
+  /* en-tête */
+  let ly = 48;
+  if (logo) { const k = Math.min(170 / logo.naturalWidth, 60 / logo.naturalHeight); const w = logo.naturalWidth * k, h = logo.naturalHeight * k; g.drawImage(logo, MX, ly, w, h); ly += h + 14; }
+  if (c) {
+    t(c.name, MX, ly + 12, {w:600, s:14}); ly += 18;
+    for (const l of [c.addr, [c.tel, c.email].filter(Boolean).join(' · ')].filter(Boolean)) { t(l, MX, ly + 12, {s:11.5, c:'#5a5f66'}); ly += 16; }
+  }
+  const visit = d.visit ? dzFmtVisit(d.visit) : '';
+  t('MÉMO TRAVAUX', MW - MX, 70, {w:700, s:32, disp:true, a:'right'});
+  let ry = 94;
+  for (const l of [visit ? 'Visite du ' + visit : '', 'Établi le ' + dFmt(new Date()), 'Réf. ' + d.folder]) { if (!l) continue; t(l, MW - MX, ry, {s:11.5, c:'#5a5f66', a:'right'}); ry += 16; }
+  y = Math.max(ly, ry) + 10; rule(y, '#1c1f23', 3); y += 34;
+  /* client et adresse */
+  const col2 = MX + (MW - 2 * MX) / 2 + 12, top = y;
+  t('CLIENT', MX, y, {w:700, s:15, disp:true, c:'#5a5f66'}); t('ADRESSE DES TRAVAUX', col2, y, {w:700, s:15, disp:true, c:'#5a5f66'});
+  let a = y + 22, b = y + 22;
+  for (const l of [devName(d), d.client?.tel, d.client?.email].filter(Boolean)) { t(l, MX, a, {s:13.5}); a += 19; }
+  for (const l of [d.addr?.street, [d.addr?.npa, d.addr?.city].filter(Boolean).join(' ')].filter(Boolean)) { t(l, col2, b, {s:13.5}); b += 19; }
+  if (d.pos) { t(`GPS ${d.pos.lat.toFixed(5)} N  ${d.pos.lon.toFixed(5)} E`, col2, b, {s:11, c:'#5a5f66'}); b += 17; }
+  if (a === top + 22 && b === top + 22) a += 19;
+  y = Math.max(a, b) + 16;
+  /* accès */
+  const acc = (d.access || []).slice(); if ((d.accessNote || '').trim()) acc.push(d.accessNote.trim());
+  if (acc.length) {
+    h2('Accès & contraintes'); font(400, 13.5);
+    for (const l of wrapText(g, acc.join(' · '), MW - 2 * MX)) { ensure(20); t(l, MX, y + 4, {s:13.5}); y += 19; }
+    y += 18;
+  }
+  /* travaux */
+  const items = (d.items || []).filter(i => (i.d || '').trim() || i.q);
+  h2('Travaux à faire');
+  if (items.length) {
+    const qx = MW - MX, dw = MW - 2 * MX - 40 - 100;
+    ensure(30); t('N°', MX, y + 4, {w:600, s:12.5}); t('Description', MX + 40, y + 4, {w:600, s:12.5}); t('Quantité', qx, y + 4, {w:600, s:12.5, a:'right'});
+    y += 12; rule(y, '#1c1f23', 1.2); y += 8;
+    items.forEach((it, i) => {
+      font(400, 13.5); const lines = wrapText(g, it.d || '—', dw), h = lines.length * 18 + 8;
+      ensure(h + 8);
+      t(String(i + 1), MX, y + 14, {s:13.5}); lines.forEach((l, k) => t(l, MX + 40, y + 14 + k * 18, {s:13.5}));
+      const qn = dzNum(it.q), qd = it.u === 'm³' || it.u === 't' ? 3 : 2;
+      const qv = qn != null ? fmtN(qn, Number.isInteger(qn) ? 0 : qd) + ' ' + (it.u || '') : (it.u === 'forfait' ? 'forfait' : '');
+      t(qv, qx, y + 14, {s:13.5, a:'right'});
+      y += h;
+      for (const ln of it.lines || []) {
+        font(400, 11.5); const tl = wrapText(g, '– ' + dzLineText(ln, it), dw - 14);
+        ensure(tl.length * 15 + 4); tl.forEach((l, k) => t(l, MX + 54, y + 10 + k * 15, {s:11.5, c:'#5a5f66'})); y += tl.length * 15;
+      }
+      y += 10; rule(y - 4);
+    });
+  } else { ensure(22); t('Aucun poste saisi.', MX, y + 4, {s:13, c:'#5a5f66'}); y += 10; }
+  y += 22;
+  /* mesures sur orthophoto + croquis à l'échelle */
+  const ms = (d.meas || []).filter(m => m.pts && m.pts.length >= 2);
+  if (ms.length) {
+    h2('Mesures sur orthophoto swisstopo');
+    for (const m of ms) {
+      const gm = dmGeom(m.pts, m.k === 'a'); ensure(20);
+      t(m.name, MX, y + 4, {w:600, s:13.5});
+      t(m.k === 'a' ? `${fmtN(gm.area, 2)} m²  ·  périmètre ${fmtN(gm.perim, 2)} m` : `${fmtN(gm.len, 2)} m`, MX + 190, y + 4, {s:13.5});
+      y += 19;
+    }
+    y += 8;
+    const bh = 300, bw = MW - 2 * MX; ensure(bh + 30);
+    const all = ms.flatMap(m => m.pts), G = dmGeom(all, false).xy;
+    let k0 = 0; const shapes = ms.map(m => { const xy = G.slice(k0, k0 + m.pts.length); k0 += m.pts.length; return {m, xy}; });
+    const xs = G.map(p => p[0]), ys = G.map(p => p[1]), minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    const sc = Math.min((bw - 80) / Math.max(maxX - minX, .5), (bh - 70) / Math.max(maxY - minY, .5));
+    const ox = MX + (bw - (maxX - minX) * sc) / 2, oy = y + 20 + (bh - 40 + (maxY - minY) * sc) / 2;
+    const P = p => [ox + (p[0] - minX) * sc, oy - (p[1] - minY) * sc];
+    g.fillStyle = '#fbfaf6'; g.fillRect(MX, y, bw, bh); g.strokeStyle = '#d6d2c8'; g.lineWidth = 1; g.strokeRect(MX + .5, y + .5, bw - 1, bh - 1);
+    for (const {m, xy} of shapes) {
+      g.beginPath(); xy.forEach((p, i) => { const q = P(p); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); });
+      if (m.k === 'a') { g.closePath(); g.fillStyle = 'rgba(242,194,48,.28)'; g.fill(); g.strokeStyle = '#b8860b'; g.lineWidth = 2; } else { g.strokeStyle = '#d9822b'; g.lineWidth = 3; }
+      g.stroke();
+      const n = m.k === 'a' ? xy.length : xy.length - 1;
+      for (let i = 0; i < n; i++) {
+        const a = xy[i], b = xy[(i + 1) % xy.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L * sc < 34) continue;
+        const q = P([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]); font(500, 10);
+        const txt = fmtN(L, 2) + ' m', w = g.measureText(txt).width + 6;
+        g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(q[0] - w / 2, q[1] - 7, w, 13); t(txt, q[0], q[1] + 4, {s:10, c:'#3b4048', a:'center'});
+      }
+      const c = xy.reduce((s, p) => [s[0] + p[0] / xy.length, s[1] + p[1] / xy.length], [0, 0]), cq = P(c);
+      t(m.name.toUpperCase(), cq[0], cq[1] + (m.k === 'a' ? 5 : -10), {w:700, s:14, disp:true, a:'center', c:'#1c1f23'});
+    }
+    const span = (bw - 80) / sc / 5, nice = [1, 2, 5, 10, 20, 50, 100, 200, 500].find(v => v >= span) || 500, sl = nice * sc;
+    g.fillStyle = '#1c1f23'; g.fillRect(MX + 14, y + bh - 18, sl, 3); t(nice + ' m', MX + 14 + sl + 6, y + bh - 13, {s:10, c:'#3b4048'});
+    t('N ↑', MW - MX - 14, y + 22, {w:700, s:13, a:'right'});
+    t('Croquis à l’échelle, mesuré sur l’orthophoto SWISSIMAGE © swisstopo', MX + 14, y + 18, {s:9.5, c:'#8a8f96'});
+    y += bh + 26;
+  }
+  /* remarques */
+  if ((d.notes || '').trim()) {
+    h2('Remarques'); font(400, 13.5);
+    for (const l of wrapText(g, d.notes, MW - 2 * MX)) { ensure(20); t(l, MX, y + 4, {s:13.5}); y += 19; }
+    y += 18;
+  }
+  /* photos : 2 par ligne */
+  if (photos.length) {
+    h2('Photos'); y -= 4;
+    const gap = 16, cw = (MW - 2 * MX - gap) / 2, ch = 232, rowH = ch + 30;
+    photos.forEach((p, i) => {
+      const col = i % 2;
+      if (col === 0) ensure(rowH);
+      const x = MX + col * (cw + gap), bm = p.bmp;
+      const k = Math.min(cw / bm.width, ch / bm.height), dw = bm.width * k, dh = bm.height * k;
+      g.fillStyle = '#f2f0eb'; g.fillRect(x, y, cw, ch);
+      g.drawImage(bm, x + (cw - dw) / 2, y + (ch - dh) / 2, dw, dh);
+      g.strokeStyle = '#d6d2c8'; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, cw - 1, ch - 1);
+      t(`${i + 1} · ${p.cap}`, x, y + ch + 17, {s:11, c:'#5a5f66'});
+      if (col === 1 || i === photos.length - 1) y += rowH;
+    });
+  }
+  /* pieds de page */
+  pages.forEach((cv, i) => {
+    g = cv.getContext('2d');
+    g.fillStyle = '#d6d2c8'; g.fillRect(MX, MH - 42, MW - 2 * MX, 1);
+    t('Mémo établi avec BauGest · ' + dFmt(new Date()), MX, MH - 24, {s:10, c:'#8a8f96'});
+    t(`${i + 1} / ${pages.length}`, MW - MX, MH - 24, {s:10, c:'#8a8f96', a:'right'});
+  });
+  return pages;
+}
+function dzMemoName(d){ return `Memo-travaux_${slug(devName(d))}${devCity(d) ? '_' + slug(devCity(d)) : ''}_${todayISO()}.pdf`; }
+const DZ_N_ONLY = ['pce', 'h', 'forfait'];
+const dzNum = v => { if (v == null || v === '') return null; const x = parseFloat(String(v).replace(/[’'\s]/g, '').replace(',', '.')); return isFinite(x) ? x : null; };
+const dzFmt = (v, d = 2) => v == null ? '—' : fmtN(v, d);
+const ICON_RULER = '<svg class="ic" viewBox="0 0 24 24"><path d="M3 17 17 3l4 4L7 21z"/><path d="m7 13 2 2M10 10l2 2M13 7l2 2"/></svg>';
+const ICON_MAP = '<svg class="ic" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>';
+function dzMeasById(d, id){ return (d.meas || []).find(m => m.id === id) || null; }
+function dzMeasVal(m, pk){ const g = dmGeom(m.pts, m.k === 'a'); return pk === 'p' ? g.perim : pk === 'a' ? g.area : g.len; }
+/* les lignes « depuis la carte » suivent la mesure si elle est modifiée */
+function dzSyncMapLines(d){
+  for (const it of d.items || []) for (const ln of it.lines || []) {
+    if (ln.f !== 'map') continue;
+    const m = dzMeasById(d, ln.mid);
+    if (m) { ln.a = +dzMeasVal(m, ln.pk).toFixed(2); ln.mn = m.name; }
+  }
+  for (const it of d.items || []) dzApplyCalc(it);
+}
+function dzLineVal(ln, it){
+  const u = it.u || 'm²', n = dzNum(ln.n) ?? 1;
+  if (DZ_N_ONLY.includes(u)) return dzNum(ln.n);
+  if (u === 'ml') { const L = ln.f === 'map' ? dzNum(ln.a) : dzNum(ln.L); return L == null ? null : n * L; }
+  let A = null;
+  if (ln.f === 'map') A = dzNum(ln.a);
+  else {
+    const L = dzNum(ln.L), l = dzNum(ln.l);
+    if (ln.f === 'circ') A = L == null ? null : Math.PI * L * L / 4;
+    else if (L != null && l != null) A = ln.f === 'tri' ? L * l / 2 : L * l;
+  }
+  if (A == null) return null;
+  if (u === 'm²') return n * A;
+  const h = dzNum(ln.h); if (h == null) return null;
+  if (u === 'm³') return n * A * h;
+  const dens = dzNum(it.dens); return dens == null ? null : n * A * h * dens;
+}
+function dzItemCalc(it){
+  if (!it.lines || !it.lines.length) return null;
+  let s = 0, any = false;
+  for (const ln of it.lines) { const v = dzLineVal(ln, it); if (v != null) { s += v; any = true; } }
+  return any ? s : null;
+}
+function dzApplyCalc(it){
+  if (!it.lines || !it.lines.length) return;
+  const v = dzItemCalc(it);
+  it.q = v == null ? '' : String(+v.toFixed(DZ_N_ONLY.includes(it.u) ? 2 : (it.u === 'm³' || it.u === 't') ? 3 : 2));
+}
+/* texte d'une ligne pour le mémo : « Zone A : 12.50 × 3.60 = 45.00 m² » */
+function dzLineText(ln, it){
+  const u = it.u || 'm²', n = dzNum(ln.n), v = dzLineVal(ln, it), parts = [];
+  if (n != null && n !== 1 && !DZ_N_ONLY.includes(u)) parts.push(fmtN(n, Number.isInteger(n) ? 0 : 2));
+  if (!DZ_N_ONLY.includes(u)) {
+    if (ln.f === 'map') parts.push(`${fmtN(dzNum(ln.a) ?? 0, 2)} ${u === 'ml' ? 'm' : 'm²'} (carte)`);
+    else if (u === 'ml') parts.push(dzFmt(dzNum(ln.L)));
+    else if (ln.f === 'circ') parts.push('π × ' + dzFmt(dzNum(ln.L)) + '² / 4');
+    else parts.push(dzFmt(dzNum(ln.L)) + ' × ' + dzFmt(dzNum(ln.l)) + (ln.f === 'tri' ? ' / 2' : ''));
+    if (u === 'm³' || u === 't') parts.push(dzFmt(dzNum(ln.h), 3));
+    if (u === 't') parts.push(dzFmt(dzNum(it.dens)) + ' t/m³');
+  } else parts.push(dzFmt(n, Number.isInteger(n) ? 0 : 2));
+  const name = (ln.t || (ln.f === 'map' ? ln.mn : '') || '').trim();
+  return (name ? name + ' : ' : '') + parts.join(' × ') + ' = ' + dzFmt(v, u === 'm³' || u === 't' ? 3 : 2) + ' ' + u;
+}
+function dzMetHint(u){
+  return u === 'ml' ? 'Longueur = Nb × L' : u === 'm²' ? 'Surface = Nb × L × l (triangle : ÷ 2 ; cercle : Ø)' : u === 'm³' ? 'Volume = Nb × surface × épaisseur' : u === 't' ? 'Tonnes = Nb × surface × épaisseur × densité' : 'Quantité = somme des Nb';
+}
+function dzMetLine(ln, j, it, d){
+  const u = it.u || 'm²', area = ['m²', 'm³', 't'].includes(u), nOnly = DZ_N_ONLY.includes(u);
+  const inp = (k, ph, v, w = '') => `<input type="text" inputmode="decimal" data-lk="${k}" value="${esc(v ?? '')}" placeholder="${ph}" aria-label="${ph}" class="${w}">`;
+  let mid = '';
+  if (nOnly) mid = '';
+  else if (ln.f === 'map') {
+    const m = dzMeasById(d, ln.mid);
+    mid = `<span class="dz-mapv">${ICON_MAP}${esc(m ? m.name : ln.mn || 'mesure supprimée')} · ${fmtN(dzNum(ln.a) ?? 0, 2)} ${u === 'ml' ? 'm' : 'm²'}</span>`;
+  } else {
+    if (area) mid += `<select data-lk="f" aria-label="Forme"><option value="rect" ${!ln.f || ln.f === 'rect' ? 'selected' : ''}>▭ Rect.</option><option value="tri" ${ln.f === 'tri' ? 'selected' : ''}>◺ Triangle</option><option value="circ" ${ln.f === 'circ' ? 'selected' : ''}>○ Cercle</option></select>`;
+    mid += inp('L', ln.f === 'circ' ? 'Ø m' : u === 'ml' ? 'Long. m' : 'L m', ln.L);
+    if (area && ln.f !== 'circ') mid += inp('l', ln.f === 'tri' ? 'Haut. m' : 'l m', ln.l);
+  }
+  if (u === 'm³' || u === 't') mid += inp('h', 'Ép. m', ln.h);
+  return `<div class="dz-ml ${nOnly ? 'nonly' : ''}" data-ln="${j}">
+    <input type="text" data-lk="t" value="${esc(ln.t || '')}" placeholder="${ln.f === 'map' ? esc(ln.mn || 'Désignation') : 'Désignation (ex. zone A)'}" aria-label="Désignation" class="dz-mlt">
+    ${inp('n', nOnly ? 'Nb' : 'Nb', ln.n, 'dz-mln')}
+    <span class="dz-mlv">${mid}</span>
+    <b class="dz-mlr" data-lres>= ${dzFmt(dzLineVal(ln, it), u === 'm³' || u === 't' ? 3 : 2)}</b>
+    <button class="icon-btn" data-lndel="${j}" aria-label="Supprimer la ligne">${ICON_X}</button></div>`;
+}
+function dzMetHTML(it, i, d){
+  const u = it.u || 'm²', lines = it.lines || [];
+  const meas = (d.meas || []), forLen = u === 'ml';
+  const opts = DZ_N_ONLY.includes(u) ? [] : meas.flatMap(m => m.k === 'a'
+    ? (forLen ? [[m.id, 'p', `${m.name} – périmètre ${fmtN(dzMeasVal(m, 'p'), 2)} m`]] : [[m.id, 'a', `${m.name} – ${fmtN(dzMeasVal(m, 'a'), 2)} m²`]])
+    : (forLen ? [[m.id, 'l', `${m.name} – ${fmtN(dzMeasVal(m, 'l'), 2)} m`]] : []));
+  const tot = dzItemCalc(it);
+  return `<div class="dz-met" data-met="${i}">
+    <p class="hint">${dzMetHint(u)}. Nb négatif pour déduire (ex. –1 pour un regard).</p>
+    ${u === 't' ? `<label class="field dz-dens"><span>Densité t/m³ (enrobé compacté ≈ 2.4 à 2.5, à vérifier)</span><input type="text" inputmode="decimal" data-mk="dens" value="${esc(it.dens ?? '')}" placeholder="ex. 2.45"></label>` : ''}
+    ${lines.map((ln, j) => dzMetLine(ln, j, it, d)).join('')}
+    <div class="dz-metfoot">
+      <button class="btn" data-lnadd="${i}">${ICON_PLUS}Ligne</button>
+      ${opts.length ? `<select data-lnmap="${i}" aria-label="Ajouter une mesure de la carte"><option value="">+ Mesure de la carte…</option>${opts.map(o => `<option value="${o[0]}|${o[1]}">${esc(o[2])}</option>`).join('')}</select>` : ''}
+      <button class="btn" data-openmap="1">${ICON_MAP}Carte</button>
+      <b class="dz-mtot" data-mtot>${lines.length ? 'Total ' + dzFmt(tot, u === 'm³' || u === 't' ? 3 : 2) + ' ' + u : ''}</b>
+    </div></div>`;
+}
+function dzRefreshCalc(i){
+  const d = devById(dz.cur), it = d && d.items[i]; if (!it) return;
+  dzApplyCalc(it);
+  const row = $(`#dzItems .dz-row[data-it="${i}"]`), met = $(`#dzItems [data-met="${i}"]`);
+  if (row) { const q = row.querySelector('[data-k="q"]'); if (q && document.activeElement !== q) q.value = it.q ?? ''; }
+  if (met) {
+    (it.lines || []).forEach((ln, j) => { const r = met.querySelector(`[data-ln="${j}"] [data-lres]`); if (r) r.textContent = '= ' + dzFmt(dzLineVal(ln, it), it.u === 'm³' || it.u === 't' ? 3 : 2); });
+    const t = met.querySelector('[data-mtot]'); if (t) t.textContent = it.lines.length ? 'Total ' + dzFmt(dzItemCalc(it), it.u === 'm³' || it.u === 't' ? 3 : 2) + ' ' + it.u : '';
+  }
+}
+function dzMeasSummary(d){
+  const m = d.meas || [], a = m.filter(x => x.k === 'a').length, l = m.length - a;
+  return m.length ? [a ? a + ' surface' + (a > 1 ? 's' : '') : '', l ? l + ' longueur' + (l > 1 ? 's' : '') : ''].filter(Boolean).join(' · ') : 'Aucune mesure';
+}
+/* ---------- Devis : mesure sur orthophoto swisstopo (v1.8) ---------- */
+/* Surfaces et longueurs calculées sur l'ellipsoïde WGS84 (projection locale), précises au centimètre près pour une parcelle.
+   Fond : SWISSIMAGE (orthophoto officielle swisstopo) ; au-delà du zoom 19, image servie en WMS depuis les données d'origine. */
+const dm = {map:null, base:null, layers:{}, cad:null, layer:'ortho', mode:null, pts:[], sel:null, gAll:null, gEdit:null, listOpen:true};
+function dmGeom(pts, closed){
+  if (!pts || pts.length < 2) return {area:0, perim:0, len:0};
+  const a = 6378137, e2 = 0.00669437999014, lat0 = pts.reduce((s, p) => s + p[0], 0) / pts.length * Math.PI / 180, lon0 = pts[0][1];
+  const w = 1 - e2 * Math.sin(lat0) ** 2, M = a * (1 - e2) / w ** 1.5, N = a / Math.sqrt(w), r = Math.PI / 180;
+  const xy = pts.map(p => [N * Math.cos(lat0) * (p[1] - lon0) * r, M * (p[0] * r - lat0)]);
+  let len = 0; for (let i = 1; i < xy.length; i++) len += Math.hypot(xy[i][0] - xy[i - 1][0], xy[i][1] - xy[i - 1][1]);
+  if (!closed || xy.length < 3) return {area:0, perim:len, len, xy};
+  const perim = len + Math.hypot(xy[0][0] - xy[xy.length - 1][0], xy[0][1] - xy[xy.length - 1][1]);
+  let s = 0; for (let i = 0; i < xy.length; i++) { const p = xy[i], q = xy[(i + 1) % xy.length]; s += p[0] * q[1] - q[0] * p[1]; }
+  return {area:Math.abs(s) / 2, perim, len, xy};
+}
+function dmSegLens(pts, closed){
+  const g = dmGeom(pts, false), out = [];
+  if (!g.xy) return out;
+  const xy = g.xy, n = closed ? xy.length : xy.length - 1;
+  for (let i = 0; i < n; i++) { const p = xy[i], q = xy[(i + 1) % xy.length]; out.push({i, len:Math.hypot(q[0] - p[0], q[1] - p[1]), mid:[(pts[i][0] + pts[(i + 1) % pts.length][0]) / 2, (pts[i][1] + pts[(i + 1) % pts.length][1]) / 2]}); }
+  return out;
+}
+async function dzCenter(d){
+  if (d.meas && d.meas.length) return null;
+  if (d.pos) return [d.pos.lat, d.pos.lon];
+  const addr = [d.addr?.street, [d.addr?.npa, d.addr?.city].filter(Boolean).join(' ')].filter(Boolean).join(' ');
+  if (addr && navigator.onLine) {
+    try {
+      const r = await fetch('https://api3.geo.admin.ch/rest/services/api/SearchServer?' + new URLSearchParams({searchText:addr, type:'locations', origins:'address', sr:'4326', limit:'1'}));
+      const j = await r.json(), a = j.results?.[0]?.attrs;
+      if (a && a.lat && a.lon) return [+a.lat, +a.lon];
+    } catch (e) {}
+  }
+  if (pos) return [pos.lat, pos.lon];
+  return [46.2, 7.36];
+}
+async function openDzMap(){
+  const d = devById(dz.cur); if (!d) return;
+  dzFlush();
+  $('#dzMapP').hidden = false; $('#dmTitle').textContent = 'Mesure · ' + devName(d);
+  dm.mode = null; dm.pts = []; dm.sel = null;
+  try { await loadLeaflet(); } catch (e) { $('#dmRead').textContent = 'Carte indisponible : vérifiez la connexion internet.'; return; }
+  if (!dm.map) { dm.listOpen = !matchMedia('(max-width:700px)').matches; dmInit(); }
+  setTimeout(() => dm.map.invalidateSize(), 60);
+  const c = await dzCenter(d);
+  if (c) dm.map.setView(c, 19);
+  else { const b = L.latLngBounds(d.meas.flatMap(m => m.pts)); dm.map.fitBounds(b.pad(.25), {maxZoom:20}); }
+  dmRender();
+}
+function closeDzMap(){
+  dm.mode = null; dm.pts = []; dm.sel = null;
+  $('#dzMapP').hidden = true;
+  const d = devById(dz.cur); if (d) { dzSyncMapLines(d); devSave(d); }
+  if (!$('#devis').hidden) renderDzItems();
+}
+function dmInit(){
+  const m = dm.map = L.map('dmMap', {zoomControl:true, maxZoom:22, attributionControl:true, doubleClickZoom:false});
+  const wmts = (lyr, ext, nz) => L.tileLayer(`https://wmts.geo.admin.ch/1.0.0/${lyr}/default/current/3857/{z}/{x}/{y}.${ext}`, {maxNativeZoom:nz, maxZoom:22, attribution:'© swisstopo'});
+  dm.layers.ortho = L.layerGroup([
+    L.tileLayer('https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg', {maxNativeZoom:19, maxZoom:19, attribution:'© swisstopo SWISSIMAGE'}),
+    L.tileLayer.wms('https://wms.geo.admin.ch/', {layers:'ch.swisstopo.swissimage', format:'image/jpeg', version:'1.3.0', minZoom:20, maxZoom:22, attribution:'© swisstopo SWISSIMAGE'})
+  ]);
+  dm.layers.plan = wmts('ch.swisstopo.pixelkarte-farbe', 'jpeg', 18);
+  dm.cad = L.tileLayer.wms('https://wms.geo.admin.ch/', {layers:'ch.kantone.cadastralwebmap-farbe', format:'image/png', transparent:true, version:'1.3.0', minZoom:15, maxZoom:22, attribution:'© cantons'});
+  try { dm.layer = localStorage.getItem('baugest.dmLayer') || 'ortho'; dm.cadOn = localStorage.getItem('baugest.dmCad') === '1'; } catch (e) {}
+  dm.layers[dm.layer]?.addTo(m) || dm.layers.ortho.addTo(m);
+  if (dm.cadOn) dm.cad.addTo(m);
+  dmLayerUI();
+  dm.gAll = L.layerGroup().addTo(m); dm.gEdit = L.layerGroup().addTo(m);
+  m.on('click', e => {
+    if (!dm.mode) { if (dm.sel) { dm.sel = null; dmRender(); } return; }
+    dm.pts.push([+e.latlng.lat.toFixed(7), +e.latlng.lng.toFixed(7)]); dmRender();
+  });
+}
+function dmLayerUI(){
+  $$('#dmLayers [data-ml]').forEach(b => { const on = b.dataset.ml === dm.layer; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  $('#dmCad').classList.toggle('on', !!dm.cadOn); $('#dmCad').setAttribute('aria-pressed', String(!!dm.cadOn));
+}
+function dmSetLayer(k){
+  if (!dm.map || k === dm.layer) return;
+  dm.map.removeLayer(dm.layers[dm.layer]); dm.layer = k; dm.layers[k].addTo(dm.map);
+  dm.layers[k].bringToBack?.();
+  try { localStorage.setItem('baugest.dmLayer', k); } catch (e) {}
+  dmLayerUI();
+}
+function dmToggleCad(){
+  if (!dm.map) return;
+  dm.cadOn = !dm.cadOn; dm.cadOn ? dm.cad.addTo(dm.map) : dm.map.removeLayer(dm.cad);
+  try { localStorage.setItem('baugest.dmCad', dm.cadOn ? '1' : '0'); } catch (e) {}
+  dmLayerUI();
+}
+const dmColor = m => m.k === 'a' ? '#f2c230' : '#f0a04b';
+function dmLabel(latlng, html, cls = ''){ return L.marker(latlng, {interactive:false, keyboard:false, icon:L.divIcon({className:'dm-lbl ' + cls, html:'<span>' + html + '</span>', iconSize:null})}); }
+function dmVertex(latlng, onDrag, onClick, first){
+  const mk = L.marker(latlng, {draggable:true, keyboard:false, icon:L.divIcon({className:'dm-vx' + (first ? ' first' : ''), iconSize:[22, 22]})});
+  mk.on('drag', e => onDrag(e.target.getLatLng()));
+  mk.on('dragend', () => { clearTimeout(dmLightT); const d = devById(dz.cur); if (d) { dzSyncMapLines(d); devSave(d); } dmRender(); });
+  if (onClick) mk.on('click', onClick);
+  return mk;
+}
+function dmEdges(group, pts, closed){
+  for (const s of dmSegLens(pts, closed)) if (s.len >= .3) dmLabel(s.mid, fmtN(s.len, 2) + ' m', 'edge').addTo(group);
+}
+function dmRender(){
+  const d = devById(dz.cur); if (!d || !dm.map) return;
+  d.meas = d.meas || [];
+  dm.gAll.clearLayers(); dm.gEdit.clearLayers();
+  for (const m of d.meas) {
+    const c = dmColor(m), sel = dm.sel === m.id;
+    const shp = m.k === 'a' ? L.polygon(m.pts, {color:c, weight:sel ? 3.5 : 2.5, fillColor:c, fillOpacity:sel ? .28 : .18})
+      : L.polyline(m.pts, {color:c, weight:sel ? 5 : 4});
+    shp.on('click', e => { if (dm.mode) return; L.DomEvent.stopPropagation(e); dm.sel = m.id; dmRender(); });
+    shp.addTo(dm.gAll);
+    const g = dmGeom(m.pts, m.k === 'a');
+    const si = Math.max(0, Math.floor((m.pts.length - 2) / 2)), ctr = m.k === 'a' ? shp.getBounds().getCenter() : [(m.pts[si][0] + m.pts[si + 1][0]) / 2, (m.pts[si][1] + m.pts[si + 1][1]) / 2];
+    dmLabel(ctr, `<b>${esc(m.name)}</b>${m.k === 'a' ? fmtN(g.area, 2) + ' m²' : fmtN(g.len, 2) + ' m'}`, m.k === 'a' ? 'name' : 'name line').addTo(dm.gAll);
+    if (sel) {
+      dmEdges(dm.gEdit, m.pts, m.k === 'a');
+      m.pts.forEach((p, i) => dmVertex(p, ll => { m.pts[i] = [+ll.lat.toFixed(7), +ll.lng.toFixed(7)]; dmRenderLight(m, shp); }, null).addTo(dm.gEdit));
+    }
+  }
+  if (dm.mode && dm.pts.length) {
+    const c = dm.mode === 'a' ? '#f2c230' : '#f0a04b';
+    const draft = (dm.mode === 'a' && dm.pts.length >= 3 ? L.polygon(dm.pts, {color:c, weight:3, dashArray:'6 6', fillColor:c, fillOpacity:.15}) : L.polyline(dm.pts, {color:c, weight:3, dashArray:'6 6'})).addTo(dm.gEdit);
+    dmEdges(dm.gEdit, dm.pts, false);
+    dm.pts.forEach((p, i) => dmVertex(p, ll => { dm.pts[i] = [+ll.lat.toFixed(7), +ll.lng.toFixed(7)]; draft.setLatLngs(dm.pts); dmReadout(); },
+      i === 0 && dm.mode === 'a' ? () => { if (dm.pts.length >= 3) dmFinish(); } : null, i === 0).addTo(dm.gEdit));
+  }
+  dmReadout(); dmTools(); dmList();
+}
+/* pendant un glissement : mise à jour sans tout redessiner */
+let dmLightT = 0;
+function dmRenderLight(m, shp){ shp.setLatLngs(m.pts); dmReadout(); }
+function dmReadout(){
+  const d = devById(dz.cur), el = $('#dmRead'); if (!el || !d) return;
+  let t;
+  if (dm.mode) {
+    const g = dmGeom(dm.pts, dm.mode === 'a');
+    t = dm.mode === 'a'
+      ? (dm.pts.length < 3 ? `Surface : touchez les angles de la zone (${dm.pts.length} point${dm.pts.length > 1 ? 's' : ''})` : `Surface ${fmtN(g.area, 2)} m² · périmètre ${fmtN(g.perim, 2)} m · ${dm.pts.length} points`)
+      : (dm.pts.length < 2 ? 'Longueur : touchez le début puis chaque point du tracé' : `Longueur ${fmtN(g.len, 2)} m · ${dm.pts.length} points`);
+  } else if (dm.sel) {
+    const m = dzMeasById(d, dm.sel); if (!m) { dm.sel = null; return dmReadout(); }
+    const g = dmGeom(m.pts, m.k === 'a');
+    t = `${m.name} : ` + (m.k === 'a' ? `${fmtN(g.area, 2)} m² · périmètre ${fmtN(g.perim, 2)} m` : `${fmtN(g.len, 2)} m`) + ' · glissez les points pour ajuster';
+  } else t = (d.meas || []).length ? 'Touchez une mesure pour l’ajuster, ou choisissez un outil' : 'Choisissez « Surface » (enrobé, pavés…) ou « Longueur » (bordures, conduites…)';
+  el.textContent = t;
+}
+function dmTools(){
+  const el = $('#dmTools');
+  if (dm.mode) el.innerHTML = `<button class="btn" data-dm="undo" ${dm.pts.length ? '' : 'disabled'}>Annuler le point</button><button class="btn" data-dm="cancel">Abandonner</button><button class="btn primary" data-dm="finish" ${dm.pts.length >= (dm.mode === 'a' ? 3 : 2) ? '' : 'disabled'}>Terminer</button>`;
+  else el.innerHTML = `<button class="btn primary" data-dm="a">${ICON_RULER}Surface</button><button class="btn primary" data-dm="l">${ICON_RULER}Longueur</button>${dm.sel ? `<button class="btn danger" data-dm="del">${ICON_TRASH}Supprimer</button>` : ''}`;
+}
+function dmList(){
+  const d = devById(dz.cur), el = $('#dmList'); if (!d || !el) return;
+  const ms = d.meas || [];
+  el.hidden = !ms.length || !!dm.mode;
+  el.innerHTML = `<button class="dm-lhead" data-dm="list" aria-expanded="${dm.listOpen}"><b>Mesures · ${ms.length}</b>${ICON_CHEV}</button>` + (dm.listOpen ? ms.map(m => {
+    const g = dmGeom(m.pts, m.k === 'a');
+    return `<div class="dm-li ${dm.sel === m.id ? 'on' : ''}" data-mid="${esc(m.id)}"><span class="dm-dot" style="background:${dmColor(m)}"></span>
+      <input type="text" value="${esc(m.name)}" data-mname aria-label="Nom de la mesure">
+      <button class="dm-v" data-dm="sel">${m.k === 'a' ? fmtN(g.area, 2) + ' m²<small>périm. ' + fmtN(g.perim, 2) + ' m</small>' : fmtN(g.len, 2) + ' m'}</button>
+      <button class="btn" data-dm="poste" title="Créer un poste de travaux avec cette mesure">+ Poste</button></div>`;
+  }).join('') : '');
+}
+function dmStart(k){ dm.mode = k; dm.pts = []; dm.sel = null; dmRender(); }
+function dmFinish(){
+  const d = devById(dz.cur); if (!d) return;
+  const need = dm.mode === 'a' ? 3 : 2; if (dm.pts.length < need) return;
+  d.meas = d.meas || [];
+  const k = dm.mode, n = d.meas.filter(x => x.k === k).length;
+  const name = k === 'a' ? 'Zone ' + String.fromCharCode(65 + n % 26) + (n >= 26 ? Math.floor(n / 26) : '') : 'Ligne ' + (n + 1);
+  const m = {id:'m' + newUid(), k, name, pts:dm.pts.slice()};
+  d.meas.push(m); dm.mode = null; dm.pts = []; dm.sel = m.id;
+  devSave(d); dmRender();
+}
+function dmPoste(mid){
+  const d = devById(dz.cur), m = d && dzMeasById(d, mid); if (!m) return;
+  d.items = d.items || [];
+  const it = {id:newUid(), d:(m.k === 'a' ? 'Enrobé – ' : 'Bordure – ') + m.name, q:'', u:m.k === 'a' ? 'm²' : 'ml',
+    lines:[{f:'map', mid:m.id, pk:m.k === 'a' ? 'a' : 'l', a:+dzMeasVal(m, m.k === 'a' ? 'a' : 'l').toFixed(2), mn:m.name, n:'', t:''}]};
+  dzApplyCalc(it); d.items.push(it); dz.metOpen.add(it.id); devSave(d);
+  note(`Poste ajouté : ${it.d} (${fmtN(+it.q, 2)} ${it.u}). Modifiez le texte, l’unité (m³, t) et l’épaisseur dans la fiche.`, 4500);
+}
+function bindDzMap(){
+  $('#dmBack').addEventListener('click', closeDzMap);
+  $('#dmLayers').addEventListener('click', e => { const b = e.target.closest('[data-ml]'); if (b) dmSetLayer(b.dataset.ml); });
+  $('#dmCad').addEventListener('click', dmToggleCad);
+  $('#dmLocate').addEventListener('click', () => { if (!pos) { note('Position GPS pas encore disponible.'); return; } dm.map?.setView([pos.lat, pos.lon], Math.max(dm.map.getZoom(), 19)); });
+  const wrap = $('#dzMapP');
+  wrap.addEventListener('click', e => {
+    const b = e.target.closest('[data-dm]'); if (!b) return;
+    const a = b.dataset.dm, d = devById(dz.cur); if (!d) return;
+    if (a === 'a' || a === 'l') dmStart(a);
+    else if (a === 'undo') { dm.pts.pop(); dmRender(); }
+    else if (a === 'cancel') { dm.mode = null; dm.pts = []; dmRender(); }
+    else if (a === 'finish') dmFinish();
+    else if (a === 'list') { dm.listOpen = !dm.listOpen; dmList(); }
+    else if (a === 'del' && dm.sel) {
+      const m = dzMeasById(d, dm.sel), used = (d.items || []).some(it => (it.lines || []).some(l => l.mid === dm.sel));
+      confirmBox('Supprimer cette mesure ?', `« ${esc(m.name)} ».${used ? '<small>Elle est utilisée dans un poste : la ligne garde la dernière valeur.</small>' : ''}`, 'Supprimer', () => {
+        d.meas = d.meas.filter(x => x.id !== m.id); dm.sel = null; devSave(d); dmRender();
+      });
+    } else {
+      const li = b.closest('[data-mid]'); if (!li) return;
+      if (a === 'sel') { dm.sel = li.dataset.mid; const m = dzMeasById(d, dm.sel); if (m) dm.map.fitBounds(L.latLngBounds(m.pts).pad(.4), {maxZoom:21}); dmRender(); }
+      if (a === 'poste') dmPoste(li.dataset.mid);
+    }
+  });
+  wrap.addEventListener('input', e => {
+    if (!e.target.matches('[data-mname]')) return;
+    const d = devById(dz.cur), m = d && dzMeasById(d, e.target.closest('[data-mid]').dataset.mid); if (!m) return;
+    m.name = e.target.value; devSave(d);
+    clearTimeout(dmLightT); dmLightT = setTimeout(() => { if (document.activeElement !== e.target) dmRender(); else { dm.gAll && dmRenderNamesOnly(); } }, 500);
+  });
+}
+function dmRenderNamesOnly(){ const a = document.activeElement, v = a && a.value, s = a && a.selectionStart; const mid = a?.closest?.('[data-mid]')?.dataset.mid; dmRender(); if (mid) { const i = $(`#dmList [data-mid="${mid}"] [data-mname]`); if (i) { i.focus(); i.value = v; try { i.setSelectionRange(s, s); } catch (e) {} } } }
+
+/* =====================================================================
+   Devis particuliers sur PC — mêmes fiches que la tablette (synchronisées par le Drive)
+   ===================================================================== */
+const DZ_ROOT = 'Devis particuliers';
+const DZ_ACCESS = ['Accès camion OK', 'Place pour benne', 'Conduites à repérer', 'Voisins à prévenir', 'Accès difficile'];
+const DZ_UNITS = ['m²', 'ml', 'm³', 'pce', 't', 'h', 'forfait'];
+const ICON_PLUS = IC.plus, ICON_X = IC.x, ICON_TRASH = IC.trash, ICON_CHEV = IC.chev, ICON_DOC = IC.file, ICON_IMG = IC.img;
+const ICON_PIN = ic('<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>');
+const ICON_PHONE = ic('<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>');
+const ICON_WA = ic('<path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.5 8.5 0 1 1 21 11.5z"/>');
+const ICON_MAIL = ic('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>');
+let pos = null;                       /* pas de GPS sur le PC : la position vient de l'adresse */
+const DV = {cur:null, q:'', sel:new Set(), selMode:false, photos:[], memos:[], metOpen:new Set(), pushT:0, pushing:null, pending:false, busy:false, ptok:0, mtok:0};
+const dz = DV;
+const note = (t, ms) => toast(t, '', ms || 3800);
+function confirmBox(title, html, yes, cb){ dialog({title, body:`<div>${html}</div>`, buttons:[{label:'Annuler', value:false}, {label:yes || 'Confirmer', value:true, danger:true}]}).then(ok => { if (ok) cb(); }); }
+const initials = n => String(n || '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || 'D';
+const compLogoHTML = c => c && c.logo ? `<span class="slogo"><img src="${c.logo}" alt=""></span>` : `<span class="slogo none">${esc(initials(c ? c.name : 'D'))}</span>`;
+const slug = s => clean(s).replace(/\s+/g, '-');
+
+/* ---------- synchronisation avec le fichier de réglages de la tablette ---------- */
+async function settingsFileId(){
+  if (S.syncId) return S.syncId;
+  const r = await api(DRV + '?' + new URLSearchParams({q:`'${qEsc(P.rootId)}' in parents and name='${qEsc(SYNC_NAME)}' and trashed=false`, orderBy:'modifiedTime desc', pageSize:'1', fields:'files(id)'}));
+  S.syncId = r.files && r.files[0] ? r.files[0].id : ''; return S.syncId;
+}
+async function readSettings(){ const id = await settingsFileId(); if (!id) return null; return (await api(`${DRV}/${encodeURIComponent(id)}?alt=media`, {}, true)).json(); }
+/* la fiche la plus récente gagne, fiche par fiche (même règle que la tablette) */
+function mergeDevis(R){
+  const rD = Array.isArray(R.devis) ? R.devis : [], ddel = {...(S.ddel || {})};
+  for (const k in (R.ddel || {})) ddel[k] = Math.max(ddel[k] || 0, R.ddel[k] || 0);
+  const Lm = new Map((S.devis || []).map(d => [d.id, d])), Rm = new Map(rD.map(d => [d.id, d])), out = [];
+  for (const id of new Set([...Lm.keys(), ...Rm.keys()])) {
+    const a = Lm.get(id), b = Rm.get(id), best = !a ? b : !b ? a : ((b.mod || 0) > (a.mod || 0) ? b : a);
+    if (ddel[id] && ddel[id] >= (best.mod || 0)) continue;
+    out.push(best === a ? a : JSON.parse(JSON.stringify(best)));
+  }
+  return {out, ddel};
+}
+function applyRemote(R){
+  if (Array.isArray(R.sites)) S.sites = R.sites;
+  const fl = R.fields || {};
+  S.docLay = fl.docLay || S.docLay; S.docTitles = fl.docTitles || S.docTitles || {}; S.companies = Array.isArray(fl.companies) ? fl.companies : (S.companies || []);
+  const m = mergeDevis(R); S.devis = m.out; S.ddel = m.ddel;
+  for (const c of S.companies) if (c.logo) logoEl(c.logo);
+}
+async function pullDevis(){
+  if (DV.pending || DV.pushing) return;
+  try { const R = await readSettings(); if (R) applyRemote(R); } catch (e) { dzStatus('Lecture des fiches impossible : ' + e.message, true); }
+}
+function devSave(d){
+  d.mod = Date.now(); DV.pending = true; dzStatus('Modifications en cours…');
+  clearTimeout(DV.pushT); DV.pushT = setTimeout(pushDevis, 1200);
+}
+async function pushDevis(){
+  clearTimeout(DV.pushT); DV.pushT = 0;
+  if (DV.pushing) { DV.again = true; return DV.pushing; }
+  DV.pending = false;
+  DV.pushing = (async () => {
+    try {
+      const id = await settingsFileId();
+      if (!id) { dzStatus('Fichier de réglages BauGest introuvable : ouvre une fois BauGest sur la tablette connectée au Drive.', true); return; }
+      const R = await readSettings();
+      const m = mergeDevis(R || {});
+      S.devis = m.out; S.ddel = m.ddel;
+      R.devis = m.out; R.ddel = m.ddel;
+      await api(`${UPL}/${encodeURIComponent(id)}?uploadType=media&fields=id,modifiedTime`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(R)});
+      dzStatus('Enregistré · visible sur la tablette à la prochaine synchronisation');
+    } catch (e) { DV.pending = true; dzStatus('Enregistrement impossible : ' + e.message, true); }
+  })();
+  try { await DV.pushing; } finally { DV.pushing = null; if (DV.again) { DV.again = false; pushDevis(); } }
+}
+async function dzFlush(){ if (DV.pushT || DV.pending) await pushDevis(); else if (DV.pushing) await DV.pushing; }
+function dzStatus(t, err){ const el = $('#dzSync'); if (el) { el.textContent = t; el.style.color = err ? 'var(--bad)' : ''; } }
+
+/* ---------- ouverture ---------- */
+async function openDevis(id){
+  if (!$('#viewer').hidden) hideViewer();
+  $('#devis').hidden = false; syncNav();
+  $('#dzMain').innerHTML = '<p class="dz-empty">Lecture des fiches…</p>';
+  await pullDevis();
+  if (id) DV.cur = id;
+  if (!DV.cur || !devById(DV.cur)) DV.cur = dzSorted()[0]?.id || null;
+  renderDzList(); renderDzFiche();
+}
+function closeDevis(){ if ($('#devis').hidden) return; dzFlush(); $('#devis').hidden = true; $('#dzMapP').hidden = true; syncNav(); }
+function renderDzList(){
+  const q = DV.q.trim().toLowerCase();
+  const list = dzSorted().filter(d => !q || [devName(d), devCity(d), d.client?.tel, d.addr?.street, compById(d.comp)?.name].join(' ').toLowerCase().includes(q));
+  $('#dzCount').textContent = `Fiches · ${list.length}`;
+  $('#dzList').innerHTML = list.length ? list.map(d => {
+    const n = d.items ? d.items.filter(i => (i.d || '').trim()).length : 0;
+    const info = [d.visit ? 'Visite ' + dzFmtVisit(d.visit) : 'Visite à fixer', n ? n + ' poste' + (n > 1 ? 's' : '') : ''].filter(Boolean).join(' · ');
+    if (DV.selMode) { const on = DV.sel.has(d.id); return `<button class="dz-pick ${on ? 'cur' : ''}" data-dz="${esc(d.id)}"><span class="dz-chk">${on ? '✓' : ''}</span><span class="t"><b>${esc(devName(d))}</b><small>${esc(devCity(d) || 'Localité à préciser')}</small><small>${esc(info)}</small></span></button>`; }
+    return `<button class="dz-pick ${d.id === DV.cur ? 'cur' : ''}" data-dz="${esc(d.id)}">${compLogoHTML(compById(d.comp))}<span class="t"><b>${esc(devName(d))}</b><small>${esc(devCity(d) || 'Localité à préciser')}</small><small>${esc(info)}</small></span></button>`;
+  }).join('') : `<p class="dz-empty">${q ? 'Aucune fiche trouvée.' : 'Aucune fiche devis.'}</p>`;
+  $('#dzSelBar').hidden = !DV.selMode; $('#dzSelBtn').parentElement.hidden = DV.selMode; $('#dzNew').hidden = DV.selMode;
+  $('#dzSelDel').disabled = !DV.sel.size; $('#dzSelDel').textContent = `Effacer (${DV.sel.size})`;
+}
+function renderDzActs(d){
+  const L = dzLinks(d), a = (href, icon, t) => href ? `<a class="btn" href="${esc(href)}"${href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${icon}${t}</a>` : `<button class="btn" disabled>${icon}${t}</button>`;
+  $('#dzActs').innerHTML = a(L.tel, ICON_PHONE, 'Appeler') + a(L.wa, ICON_WA, 'WhatsApp') + a(L.mail, ICON_MAIL, 'E-mail') + a(L.map, ICON_PIN, 'Itinéraire');
+}
+function renderDzHead(d){
+  const c = compById(d.comp);
+  $('#dzHeadLogo').innerHTML = compLogoHTML(c);
+  $('#dzName').textContent = devName(d);
+  $('#dzSub').textContent = `${c ? c.name : 'Sans entreprise'} · fiche du ${dFmt(new Date(d.created || Date.now()))}`;
+}
+function renderDzGps(){
+  const d = devById(DV.cur), el = $('#dzGps'); if (!d || !el) return;
+  el.innerHTML = d.pos ? `<span class="ok">● Position enregistrée</span><a href="https://maps.google.com/?q=${d.pos.lat},${d.pos.lon}" target="_blank" rel="noopener">${d.pos.lat.toFixed(5)}, ${d.pos.lon.toFixed(5)}${d.pos.acc ? ' ±' + d.pos.acc + ' m' : ''}</a>` : '<span>Pas de position : « Position depuis l’adresse » la calcule.</span>';
+}
+function renderDzItems(){
+  const d = devById(DV.cur); if (!d || !$('#dzItems')) return;
+  d.items = d.items || [];
+  dzSyncMapLines(d);
+  $('#dzItems').innerHTML = d.items.length ? d.items.map(dzItemRow).join('') : '<p class="hint">Aucun poste. Ajoute les travaux, ou mesure une zone sur l’orthophoto puis « + Poste ».</p>';
+  const ms = $('#dzMeasSum'); if (ms) ms.textContent = dzMeasSummary(d);
+}
+function renderDzFiche(){
+  const d = DV.cur ? devById(DV.cur) : null, m = $('#dzMain');
+  if (!d) { m.innerHTML = `<p class="dz-empty">${devList().length ? 'Choisis une fiche dans la liste.' : 'Crée ta première fiche avec « Nouvelle fiche devis ».'}</p>`; return; }
+  const f = (path, label, o = {}) => `<label class="field"><span>${label}</span><input type="${o.type || 'text'}" data-f="${path}" value="${esc(getPath(d, path) || '')}"${o.ph ? ` placeholder="${esc(o.ph)}"` : ''} autocomplete="off"></label>`;
+  const comps = compList();
+  m.innerHTML = `
+  <div class="dz-head">
+    <span id="dzHeadLogo"></span>
+    <div class="t"><h2 id="dzName"></h2><small id="dzSub"></small></div>
+    <div class="dz-acts" id="dzActs"></div>
+  </div>
+  <div class="dz-grid">
+    <section class="dz-card">
+      <h3>Client</h3>
+      ${f('client.name', 'Nom', {ph:'ex. M. et Mme Dupont'})}
+      <div class="dz-2">${f('client.tel', 'Téléphone', {type:'tel', ph:'079 000 00 00'})}${f('client.email', 'E-mail', {type:'email'})}</div>
+      <label class="field"><span>Entreprise (en-tête du mémo)</span><select data-f="comp"><option value="">Sans entreprise</option>${comps.map(c => `<option value="${esc(c.id)}" ${c.id === d.comp ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
+      <h3 style="margin-top:6px">Adresse des travaux</h3>
+      ${f('addr.street', 'Rue et n°')}
+      <div class="dz-2 npa">${f('addr.npa', 'NPA')}${f('addr.city', 'Localité')}</div>
+      <div class="dz-gps" id="dzGps"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="dzGeo">${ICON_PIN}Position depuis l’adresse</button></div>
+      <label class="field"><span>Date de la visite</span><input type="datetime-local" data-f="visit" value="${esc(d.visit || '')}"></label>
+    </section>
+    <section class="dz-card">
+      <div class="dz-ch"><h3>Photos de la visite</h3><small id="dzPhotoInfo"></small></div>
+      <div class="dz-photos" id="dzPhotos"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn">${ICON_IMG}Ajouter des photos du PC<input type="file" id="dzFile" accept="image/*" multiple hidden></label><span class="hint" style="align-self:center">ou glisse-les ici depuis Windows</span></div>
+      <h3 style="margin-top:6px">Notes de visite</h3>
+      <textarea class="dz-notes" data-f="notes" placeholder="Constats, souhaits du client, variantes à chiffrer…">${esc(d.notes || '')}</textarea>
+    </section>
+    <section class="dz-card dz-work">
+      <h3>Travaux à faire</h3>
+      <div class="dz-measrow"><span>${ICON_MAP}<span id="dzMeasSum">${dzMeasSummary(d)}</span></span><button class="btn" id="dzMapBtn">${ICON_MAP}Mesurer sur orthophoto</button></div>
+      <div id="dzItems" class="dz-items"></div>
+      <div><button class="btn" id="dzItemAdd">${ICON_PLUS}Ajouter un poste</button></div>
+      <h3 style="margin-top:6px">Accès &amp; contraintes</h3>
+      <div class="chips" id="dzAccess">${DZ_ACCESS.map(a => `<button class="chip ${(d.access || []).includes(a) ? 'on' : ''}" data-acc="${esc(a)}">${esc(a)}</button>`).join('')}</div>
+      ${f('accessNote', 'Autre contrainte', {ph:'ex. portail 2.50 m, pas d’eau sur place'})}
+    </section>
+  </div>
+  <div class="dz-foot">
+    <small>Drive › ${esc(DZ_ROOT)} › ${esc(d.folder)}<br><span id="dzSync"></span></small>
+    <button class="btn danger" id="dzDel">${ICON_TRASH}Supprimer</button>
+    <button class="btn" id="dzFolder">${IC.folder}Dossier Drive</button>
+    <button class="btn primary" id="dzMemo">${ICON_DOC}Créer le mémo PDF</button>
+  </div>
+  <div class="dz-memos" id="dzMemos" hidden></div>`;
+  renderDzHead(d); renderDzActs(d); renderDzGps(); renderDzItems();
+  DV.photos = []; DV.memos = []; renderDzPhotos(); dzLoadPhotos(d);
+}
+
+/* ---------- photos et mémos de la fiche (sur le Drive) ---------- */
+async function dzLoadPhotos(d){
+  const tok = ++DV.ptok, sid = devSid(d);
+  try {
+    const fs = await listAll(`trashed=false and appProperties has { key='site' and value='${qEsc(sid)}' } and (mimeType='image/jpeg' or mimeType='application/pdf')`, FIELDS + ',description', 'createdTime');
+    if (tok !== DV.ptok || DV.cur !== d.id) return;
+    DV.photos = fs.filter(f => f.mimeType === 'image/jpeg').map(photoInfo).sort((a, b) => a._taken - b._taken);
+    DV.memos = fs.filter(f => f.mimeType === 'application/pdf').map(f => { f._k = 'pdf'; return f; }).sort((a, b) => String(b.createdTime).localeCompare(String(a.createdTime)));
+  } catch (e) { if (tok === DV.ptok) $('#dzPhotoInfo').textContent = 'Lecture du Drive impossible'; }
+  if (tok !== DV.ptok) return;
+  renderDzPhotos(); renderDzMemos();
+}
+function renderDzPhotos(){
+  const el = $('#dzPhotos'); if (!el) return;
+  const n = DV.photos.length;
+  $('#dzPhotoInfo').textContent = n ? n + ' photo' + (n > 1 ? 's' : '') : '';
+  el.innerHTML = n ? DV.photos.map(f => `<button data-dzp="${esc(f.id)}" title="${esc(dFmt(f._taken) + ' ' + tFmt(f._taken))}"><img alt="" loading="lazy" src="${esc(thumbOf(f, 240))}" referrerpolicy="no-referrer"></button>`).join('')
+    : '<p class="hint" style="grid-column:1/-1">Aucune photo. Glisse des photos ici ou utilise le bouton.</p>';
+}
+function renderDzMemos(){
+  const el = $('#dzMemos'); if (!el) return;
+  el.hidden = !DV.memos.length;
+  el.innerHTML = DV.memos.length ? `<h3>Mémos enregistrés · ${DV.memos.length}</h3>` + DV.memos.map(m => `<button class="dz-memo" data-memo="${esc(m.id)}">${ICON_DOC}<span class="t"><b>Mémo du ${dFmt(new Date(m.appProperties?.taken || m.createdTime))} · ${tFmt(new Date(m.appProperties?.taken || m.createdTime))}</b><small>${esc(m.name)}</small></span>${ICON_CHEV}</button>`).join('') : '';
+}
+async function dzPath(d, sub){
+  let id = await ensureChild(P.rootId, DZ_ROOT);
+  id = await ensureChild(id, clean(d.folder) || 'Devis');
+  if (sub) id = await ensureChild(id, sub);
+  return id;
+}
+async function dzImport(files){
+  const d = devById(DV.cur); if (!d) return;
+  files = [...files].filter(f => /^image\//.test(f.type) || IMG_EXT.test(extOf(f.name)));
+  if (!files.length) { toast('Aucune photo dans les fichiers déposés', 'err'); return; }
+  let parent; try { parent = await dzPath(d, 'Photos'); } catch (e) { toast('Dossier du devis inaccessible : ' + e.message, 'err'); return; }
+  let ok = 0;
+  for (const file of files) {
+    const j = job(file.name);
+    try {
+      const bmp = await createImageBitmap(file, {imageOrientation:'from-image'});
+      const k = Math.min(1, 2560 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); bmp.close?.();
+      const blob = await canvasJpeg(c, .85), t = new Date(file.lastModified || Date.now());
+      const name = `${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}_${pad2(t.getHours())}h${pad2(t.getMinutes())}_${slug('Devis-' + devName(d))}_${newUid().slice(-4)}.jpg`;
+      await putFile({md:{name, parents:[parent], mimeType:'image/jpeg', description:[`Fiche : Devis · ${devName(d)}${devCity(d) ? ' – ' + devCity(d) : ''}`, 'Date : ' + dFmt(t) + ' ' + tFmt(t), 'Importée depuis BauGest PC'].join('\n'),
+        appProperties:{pc:'1', site:devSid(d), taken:t.toISOString(), tags:'', imp:'1'}}, blob, onProg:x => j.set(x)});
+      j.done(name + ' · ajoutée'); ok++;
+    } catch (e) { j.done(file.name + ' : ' + e.message, true); }
+  }
+  if (ok) toast(`${ok} photo${ok > 1 ? 's' : ''} ajoutée${ok > 1 ? 's' : ''} à la fiche`, 'ok');
+  if (DV.cur === d.id) dzLoadPhotos(d);
+}
+async function dzMemo(){
+  const d = devById(DV.cur); if (!d || DV.busy) return;
+  DV.busy = true; $('#dzMemo').disabled = true;
+  const j = job('Création du mémo…');
+  const bmps = [];
+  try {
+    await dzFlush();
+    let k = 0;
+    for (const p of DV.photos) {
+      j.set(++k / (DV.photos.length + 2), `Photos du mémo… ${k}/${DV.photos.length}`);
+      try { bmps.push({bmp:await createImageBitmap(await blobOf(p), {imageOrientation:'from-image'}), cap:dFmt(p._taken) + ' ' + tFmt(p._taken) + (p._tags.length ? ' · ' + p._tags.join(', ') : '')}); } catch (e) {}
+    }
+    const c = compById(d.comp);
+    const logo = c && c.logo ? await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = c.logo; }) : null;
+    if (document.fonts?.load) await Promise.all([document.fonts.load('400 14px Barlow'), document.fonts.load('700 20px "Barlow Condensed"')]).catch(() => {});
+    const pages = dzMemoPages(d, bmps, logo);
+    const blob = await makePdf(pages, 'Mémo travaux – ' + devName(d));
+    j.set(.95, 'Enregistrement du mémo dans le Drive…');
+    const parent = await dzPath(d), now = new Date();
+    const res = await putFile({md:{name:dzMemoName(d), parents:[parent], mimeType:'application/pdf', description:`${devLabel(d)}\nMémo travaux établi avec BauGest PC`,
+      appProperties:{pc:'1', site:devSid(d), taken:now.toISOString(), tags:'', kind:'export'}}, blob});
+    j.done('Mémo enregistré · ' + res.name);
+    const f = await meta(res.id); f._k = 'pdf';
+    BLOBS.set(f.id + '|' + (f.modifiedTime || ''), blob);
+    dzLoadPhotos(d);
+    openIn(0, f, [f]);
+  } catch (e) { j.done('Mémo impossible : ' + e.message, true); }
+  finally { bmps.forEach(b => b.bmp.close?.()); DV.busy = false; const b = $('#dzMemo'); if (b) b.disabled = false; }
+}
+async function dzNew(){
+  const comps = compList();
+  const r = await dialog({title:'Nouvelle fiche devis', body:`
+    <label class="field" style="display:grid;gap:4px"><span class="muted">Nom du client *</span><input type="text" id="dnName" placeholder="ex. M. et Mme Dupont"></label>
+    <label class="field" style="display:grid;gap:4px"><span class="muted">Localité</span><input type="text" id="dnCity" placeholder="ex. Saillon"></label>
+    <label class="field" style="display:grid;gap:4px"><span class="muted">Entreprise (en-tête du mémo)</span><select id="dnComp"><option value="">Sans entreprise</option>${comps.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}</select></label>`,
+    buttons:[{label:'Annuler', value:null}, {label:'Créer la fiche', primary:true}], onOpen:dlg => { const s = dlg.querySelector('#dnComp'); if (comps[0]) s.value = comps[0].id; }});
+  if (!r) return;
+  const name = r.querySelector('#dnName').value.trim(), city = r.querySelector('#dnCity').value.trim(), comp = r.querySelector('#dnComp').value;
+  if (!name) { toast('Indique le nom du client.', 'err'); return; }
+  const now = new Date();
+  let folder = clean(`${now.getFullYear()}-${pad2(now.getMonth() + 1)} ${name}${city ? ' – ' + city : ''}`) || 'Devis';
+  const used = new Set(devList().map(d => d.folder));
+  if (used.has(folder)) { let i = 2; while (used.has(folder + ' (' + i + ')')) i++; folder += ' (' + i + ')'; }
+  const d = {id:newUid(), created:Date.now(), mod:Date.now(), comp, folder, client:{name, tel:'', email:''}, addr:{street:'', npa:'', city}, pos:null, visit:'', access:[], accessNote:'', items:[], notes:''};
+  devList().unshift(d); DV.cur = d.id; devSave(d);
+  renderDzList(); renderDzFiche();
+}
+async function dzDelete(ids){
+  const ds = ids.map(devById).filter(Boolean); if (!ds.length) return;
+  const names = ds.slice(0, 6).map(d => '« ' + esc(devName(d)) + (devCity(d) ? ' – ' + esc(devCity(d)) : '') + ' »').join('<br>') + (ds.length > 6 ? `<br>et ${ds.length - 6} autre(s)` : '');
+  const r = await dialog({title:ds.length > 1 ? `Effacer ${ds.length} fiches devis ?` : 'Effacer cette fiche devis ?', body:`<p>${names}</p><p class="muted">Effacées aussi sur la tablette et le téléphone.</p>
+    <label class="opt"><input type="checkbox" id="dzCfDrive"><span>Mettre aussi leurs photos et mémos du Drive à la corbeille<small>Récupérables 30 jours dans la corbeille Google Drive.</small></span></label>`,
+    buttons:[{label:'Annuler', value:null}, {label:'Effacer', danger:true}]});
+  if (!r) return;
+  const trash = r.querySelector('#dzCfDrive').checked, set = new Set(ds.map(d => d.id)), now = Date.now();
+  S.devis = devList().filter(x => !set.has(x.id)); S.ddel = S.ddel || {}; set.forEach(id => S.ddel[id] = now);
+  if (DV.cur && set.has(DV.cur)) DV.cur = dzSorted()[0]?.id || null;
+  DV.selMode = false; DV.sel.clear(); DV.pending = true;
+  renderDzList(); renderDzFiche();
+  await pushDevis();
+  if (trash) {
+    let n = 0;
+    try {
+      const r1 = await api(DRV + '?' + new URLSearchParams({q:`'${qEsc(P.rootId)}' in parents and name='${qEsc(DZ_ROOT)}' and mimeType='${FOLD}' and trashed=false`, fields:'files(id)', pageSize:'1'}));
+      const root = r1.files?.[0]?.id;
+      if (root) for (const d of ds) {
+        const r2 = await api(DRV + '?' + new URLSearchParams({q:`'${qEsc(root)}' in parents and name='${qEsc(d.folder)}' and mimeType='${FOLD}' and trashed=false`, fields:'files(id)', pageSize:'5'}));
+        for (const f of r2.files || []) { await api(`${DRV}/${encodeURIComponent(f.id)}?fields=id`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})}); n++; }
+      }
+    } catch (e) {}
+    toast(`${ds.length} fiche${ds.length > 1 ? 's' : ''} effacée${ds.length > 1 ? 's' : ''} · ${n} dossier${n > 1 ? 's' : ''} Drive à la corbeille`, 'ok');
+  } else toast(ds.length > 1 ? `${ds.length} fiches effacées` : 'Fiche effacée', 'ok');
+}
+async function dzGeocode(){
+  const d = devById(DV.cur); if (!d) return;
+  const addr = [d.addr?.street, [d.addr?.npa, d.addr?.city].filter(Boolean).join(' ')].filter(Boolean).join(' ');
+  if (!addr) { toast('Indique d’abord l’adresse des travaux', 'err'); return; }
+  try {
+    const r = await fetch('https://api3.geo.admin.ch/rest/services/api/SearchServer?' + new URLSearchParams({searchText:addr, type:'locations', origins:'address', sr:'4326', limit:'1'}));
+    const a = (await r.json()).results?.[0]?.attrs;
+    if (!a || !a.lat) { toast('Adresse introuvable dans le répertoire suisse', 'err'); return; }
+    d.pos = {lat:+(+a.lat).toFixed(6), lon:+(+a.lon).toFixed(6), acc:0}; devSave(d); renderDzGps();
+    toast('Position enregistrée : ' + (a.label || '').replace(/<[^>]+>/g, ''), 'ok');
+  } catch (e) { toast('Recherche d’adresse impossible : ' + e.message, 'err'); }
+}
+
+/* ---------- événements de la fiche ---------- */
+let dzHeadT = 0;
+$('#dzMain').addEventListener('input', e => {
+  const d = devById(DV.cur); if (!d) return;
+  const t = e.target;
+  if (t.dataset.f) {
+    setPath(d, t.dataset.f, t.value); devSave(d);
+    if (/^(client|addr|comp)/.test(t.dataset.f)) { clearTimeout(dzHeadT); dzHeadT = setTimeout(() => { renderDzHead(d); renderDzActs(d); renderDzList(); }, 300); }
+    return;
+  }
+  const row = t.closest('.dz-row');
+  if (row && t.dataset.k) {
+    const it = d.items[+row.dataset.it]; if (!it) return;
+    it[t.dataset.k] = t.value; devSave(d);
+    if (t.dataset.k === 'u') { dzApplyCalc(it); renderDzItems(); }
+    return;
+  }
+  const met = t.closest('[data-met]');
+  if (met) {
+    const i = +met.dataset.met, it = d.items[i]; if (!it) return;
+    if (t.dataset.mk === 'dens') { it.dens = t.value; devSave(d); dzRefreshCalc(i); return; }
+    const ln = t.closest('[data-ln]');
+    if (ln && t.dataset.lk) {
+      const L = it.lines[+ln.dataset.ln]; L[t.dataset.lk] = t.value; devSave(d);
+      if (t.dataset.lk === 'f') renderDzItems(); else dzRefreshCalc(i);
+    }
+  }
+});
+$('#dzMain').addEventListener('change', e => {
+  const t = e.target, d = devById(DV.cur); if (!d) return;
+  if (t.id === 'dzFile') { dzImport(t.files); t.value = ''; return; }
+  if (t.dataset.f === 'comp') { renderDzHead(d); renderDzList(); }
+  const sel = t.closest('[data-lnmap]');
+  if (sel && t.value) {
+    const it = d.items[+sel.dataset.lnmap], [mid, pk] = t.value.split('|'), m = dzMeasById(d, mid);
+    if (it && m) { it.lines = it.lines || []; it.lines.push({f:'map', mid, pk, a:+dzMeasVal(m, pk).toFixed(2), mn:m.name, n:'', t:''}); dzApplyCalc(it); devSave(d); renderDzItems(); }
+  }
+});
+$('#dzMain').addEventListener('click', async e => {
+  const d = devById(DV.cur); if (!d) return;
+  const b = e.target.closest('button, [data-dzp], [data-memo]'); if (!b) return;
+  if (b.dataset.dzp) { const f = DV.photos.find(x => x.id === b.dataset.dzp); if (f) openIn(0, f, DV.photos); return; }
+  if (b.dataset.memo) { const f = DV.memos.find(x => x.id === b.dataset.memo); if (f) openIn(0, f, DV.memos); return; }
+  if (b.dataset.acc) { const a = b.dataset.acc; d.access = d.access || []; d.access = d.access.includes(a) ? d.access.filter(x => x !== a) : d.access.concat(a); b.classList.toggle('on'); devSave(d); return; }
+  if (b.dataset.itmet != null) { const it = d.items[+b.dataset.itmet]; if (!it) return; DV.metOpen.has(it.id) ? DV.metOpen.delete(it.id) : DV.metOpen.add(it.id); renderDzItems(); return; }
+  if (b.dataset.itdel != null) {
+    const i = +b.dataset.itdel, it = d.items[i];
+    if (it && ((it.d || '').trim() || (it.lines || []).length) && !(await confirmDlg('Supprimer le poste', `« ${esc(it.d || 'sans description')} »`, 'Supprimer', true))) return;
+    d.items.splice(i, 1); devSave(d); renderDzItems(); return;
+  }
+  if (b.dataset.lnadd != null) { const it = d.items[+b.dataset.lnadd]; if (!it) return; it.lines = it.lines || []; it.lines.push({f:'rect', n:'', L:'', l:'', h:'', t:''}); devSave(d); renderDzItems(); return; }
+  if (b.dataset.lndel != null) { const met = b.closest('[data-met]'), it = d.items[+met.dataset.met]; it.lines.splice(+b.dataset.lndel, 1); dzApplyCalc(it); devSave(d); renderDzItems(); return; }
+  if (b.dataset.openmap) { openDzMap(); return; }
+  switch (b.id) {
+    case 'dzItemAdd': d.items = d.items || []; d.items.push({id:newUid(), d:'', q:'', u:'m²'}); devSave(d); renderDzItems(); { const ins = $$('#dzItems [data-k="d"]'); ins[ins.length - 1]?.focus(); } break;
+    case 'dzMapBtn': openDzMap(); break;
+    case 'dzGeo': dzGeocode(); break;
+    case 'dzDel': dzDelete([d.id]); break;
+    case 'dzMemo': dzMemo(); break;
+    case 'dzFolder': try { const id = await dzPath(d); closeDevis(); navigate(id); } catch (err) { toast(err.message, 'err'); } break;
+  }
+});
+$('#dzList').addEventListener('click', async e => {
+  const b = e.target.closest('[data-dz]'); if (!b) return;
+  if (DV.selMode) { const id = b.dataset.dz; DV.sel.has(id) ? DV.sel.delete(id) : DV.sel.add(id); renderDzList(); return; }
+  await dzFlush(); DV.cur = b.dataset.dz; renderDzList(); renderDzFiche(); $('#dzMain').scrollTop = 0;
+});
+$('#dzQ').addEventListener('input', e => { DV.q = e.target.value; renderDzList(); });
+$('#dzNew').addEventListener('click', dzNew);
+$('#dzSelBtn').addEventListener('click', () => { DV.selMode = true; DV.sel.clear(); renderDzList(); });
+$('#dzSelCancel').addEventListener('click', () => { DV.selMode = false; DV.sel.clear(); renderDzList(); });
+$('#dzSelAll').addEventListener('click', () => { const vis = $$('#dzList [data-dz]').map(b => b.dataset.dz); const all = vis.every(id => DV.sel.has(id)); vis.forEach(id => all ? DV.sel.delete(id) : DV.sel.add(id)); renderDzList(); });
+$('#dzSelDel').addEventListener('click', () => dzDelete([...DV.sel]));
+
+/* ---------- orthophoto du devis : réglages propres au PC ---------- */
+bindDzMap();
+{
+  const _dmRender = dmRender;
+  dmRender = function(){ _dmRender(); const el = $('#dmMap'); if (el) el.classList.toggle('drawing', !!dm.mode); };
+}
+document.addEventListener('keydown', e => {
+  if ($('#dzMapP').hidden || e.target.closest('input, textarea, select')) return;
+  if (e.key === 'Enter' && dm.mode) { e.preventDefault(); dmFinish(); }
+  else if (e.key === 'Escape') { e.preventDefault(); if (dm.mode) { dm.mode = null; dm.pts = []; dmRender(); } else closeDzMap(); }
+  else if ((e.key === 'Backspace' || (e.key.toLowerCase() === 'z' && (e.ctrlKey || e.metaKey))) && dm.mode && dm.pts.length) { e.preventDefault(); dm.pts.pop(); dmRender(); }
+});
+
+/* =====================================================================
+   Métrés de la tablette affichés sur les plans
+   ===================================================================== */
+const PT_M = 25.4 / 72 / 1000;
+async function loadPlanMeasures(p, f, tok){
+  const key = (f.appProperties && f.appProperties.uid) || f.id;
+  try {
+    const r = await api(DRV + '?' + new URLSearchParams({q:`trashed=false and appProperties has { key='kind' and value='mesures' } and appProperties has { key='plan' and value='${qEsc(key)}' }`, orderBy:'modifiedTime desc', pageSize:'1', fields:'files(id,modifiedTime)'}));
+    const mf = r.files && r.files[0]; if (!mf) return;
+    const d = await (await api(`${DRV}/${encodeURIComponent(mf.id)}?alt=media`, {}, true)).json();
+    if (tok !== p.tok) return;
+    const ms = (d.measures || []).filter(m => m && Array.isArray(m.pts) && m.pts.length >= 4);
+    if (!ms.length) return;
+    p.mes = {measures:ms, scales:d.scales || {}}; p.showMes = true;
+    const b = p.el.querySelector('[data-a="mes"]'); b.hidden = false; b.querySelector('span').textContent = `Métrés (${ms.length})`; b.classList.add('on');
+    p.pages.forEach(pg => drawOverlay(p, pg));
+  } catch (e) {}
+}
+function mesValue(m, scales){
+  const f = (scales[m.page] || 100) * PT_M, p = m.pts;
+  let L = 0; for (let i = 2; i < p.length; i += 2) L += Math.hypot(p[i] - p[i - 2], p[i + 1] - p[i - 1]);
+  if (m.type === 'surface') {
+    let a = 0; const n = p.length / 2; for (let i = 0; i < n; i++) { const j = (i + 1) % n; a += p[2 * i] * p[2 * j + 1] - p[2 * j] * p[2 * i + 1]; }
+    return {v:Math.abs(a) / 2 * f * f, unit:'m²'};
+  }
+  return {v:L * f, unit:'ml'};
+}
+function drawMeasures(p, pg, g){
+  if (!p.showMes || !p.mes || !pg.page) return;
+  const s = pg.s;
+  for (const m of p.mes.measures) {
+    if (m.page !== pg.i + 1) continue;
+    const c = m.color || '#e2550a', pts = m.pts;
+    g.save(); g.beginPath();
+    for (let i = 0; i < pts.length; i += 2) { const x = pts[i] * s, y = pts[i + 1] * s; i ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = c; g.lineWidth = m.type === 'surface' ? 2.4 : 2.9;
+    if (m.deduct) g.setLineDash([6, 4]);
+    if (m.type === 'surface') { g.closePath(); g.globalAlpha = .18; g.fillStyle = c; g.fill(); g.globalAlpha = 1; }
+    g.stroke(); g.setLineDash([]);
+    /* étiquette : nom et valeur */
+    let lx = 0, ly = 0; const n = pts.length / 2;
+    if (m.type === 'surface') { for (let i = 0; i < n; i++) { lx += pts[2 * i]; ly += pts[2 * i + 1]; } lx /= n; ly /= n; }
+    else { const i = Math.max(0, Math.floor((n - 1) / 2)) * 2; lx = (pts[i] + pts[i + 2]) / 2; ly = (pts[i + 1] + pts[i + 3]) / 2; }
+    const r = mesValue(m, p.mes.scales), t = `${m.name || ''} · ${m.deduct ? '−' : ''}${fmtN(r.v)} ${r.unit}`;
+    g.font = '600 12px Barlow, system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.lineWidth = 3.2; g.strokeStyle = '#fff'; g.strokeText(t, lx * s, ly * s); g.fillStyle = '#14181b'; g.fillText(t, lx * s, ly * s);
+    g.restore();
+  }
+}
+
+/* =====================================================================
+   Double vue liée : même zoom et même défilement pour comparer deux indices
+   ===================================================================== */
+P.syncViews = !!P.syncViews;
+const otherPane = p => V.panes[p.i ? 0 : 1];
+const linked = p => P.split && P.syncViews && p.pages.length && otherPane(p).pages.length;
+function syncZoomFrom(p){
+  if (!linked(p)) return;
+  const q = otherPane(p);
+  q.fit = p.fit; q.zoom = p.zoom; layout(q); syncPaneBtns(q);
+  syncScrollFrom(p);
+}
+function syncScrollFrom(p){
+  if (!linked(p)) return;
+  const q = otherPane(p), a = p.stage, b = q.stage;
+  const rx = a.scrollLeft / Math.max(1, a.scrollWidth - a.clientWidth), ry = a.scrollTop / Math.max(1, a.scrollHeight - a.clientHeight);
+  q.syncing = true;
+  b.scrollLeft = rx * (b.scrollWidth - b.clientWidth); b.scrollTop = ry * (b.scrollHeight - b.clientHeight);
+  requestAnimationFrame(() => { q.syncing = false; });
+}
+V.panes.forEach(p => p.stage.addEventListener('scroll', () => { if (!p.syncing) syncScrollFrom(p); }));
+{
+  const _zoomAt = zoomAt;
+  zoomAt = function(p, z, cx, cy){ _zoomAt(p, z, cx, cy); syncZoomFrom(p); };
+  const _pa = paneAction;
+  paneAction = async function(p, a){ await _pa(p, a); if (a === 'fitw' || a === 'fitp') syncZoomFrom(p); if (a === 'mes') { p.showMes = !p.showMes; p.el.querySelector('[data-a="mes"]').classList.toggle('on', p.showMes); p.pages.forEach(pg => drawOverlay(p, pg)); } };
+}
+function syncLinkBtn(){ $('#btnSync').hidden = !P.split; $('#btnSync').classList.toggle('on', P.syncViews); }
+$('#btnSync').addEventListener('click', () => {
+  P.syncViews = !P.syncViews; saveP(); syncLinkBtn();
+  if (P.syncViews) { const p = V.panes[V.active] || V.panes[0]; syncZoomFrom(p); }
+  toast(P.syncViews ? 'Vues liées : zoom et défilement identiques dans les deux volets' : 'Vues indépendantes');
+});
+function compareFiles(a, b){
+  P.split = true; P.syncViews = true; saveP(); syncTopBtns(); syncLinkBtn();
+  openIn(0, a, [a, b]); openIn(1, b, [a, b]);
+}
+
+/* =====================================================================
+   Rapport photo PDF : photos choisies avec date, étiquettes et commentaire
+   ===================================================================== */
+function wrapPdf(font, size, text, w, maxLines){
+  const out = []; let line = '';
+  for (const word of String(text).split(/\s+/).filter(Boolean)) {
+    const t = line ? line + ' ' + word : word;
+    if (font.widthOfTextAtSize(t, size) <= w || !line) line = t; else { out.push(line); line = word; if (out.length >= maxLines) break; }
+  }
+  if (line && out.length < maxLines) out.push(line);
+  if (out.length === maxLines && font.widthOfTextAtSize(out[maxLines - 1], size) > w) out[maxLines - 1] = out[maxLines - 1].slice(0, 60) + '…';
+  return out;
+}
+async function photoReport(files){
+  const photos = files.filter(f => f._k === 'img').map(f => f._taken ? f : photoInfo(f)).sort((a, b) => a._taken - b._taken);
+  if (!photos.length) return;
+  const siteIds = [...new Set(photos.map(f => (f.appProperties || {}).site).filter(Boolean))];
+  const siteName = siteIds.length === 1 ? phSiteLabel(siteIds[0]) : (E.mode === 'folder' ? chainNames(E.cur)[0] || '' : '');
+  const first = photos[0]._taken, last = photos[photos.length - 1]._taken;
+  const per = P.repPer || 2;
+  const r = await dialog({title:`Rapport photo · ${photos.length} photo${photos.length > 1 ? 's' : ''}`, width:600, body:`
+    <label style="display:grid;gap:4px"><span class="muted">Titre</span><input type="text" id="rpTitle" value="${esc('Rapport photo' + (siteName ? ' – ' + siteName : ''))}"></label>
+    <div style="display:grid;gap:6px"><span class="muted">Photos par page</span><div class="seg" id="rpPer">${[1, 2, 4, 6].map(n => `<button data-n="${n}" class="${per === n ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+    <div style="display:grid;gap:6px"><span class="muted">Sous chaque photo</span>
+      <label><input type="checkbox" id="rpDate" ${P.repDate !== false ? 'checked' : ''}> Date et heure</label>
+      <label><input type="checkbox" id="rpTags" ${P.repTags !== false ? 'checked' : ''}> Étiquettes</label>
+      <label><input type="checkbox" id="rpNote" ${P.repNote !== false ? 'checked' : ''}> Commentaire</label></div>
+    <p class="muted">Ordre chronologique · ${esc(dFmt(first))}${dFmt(first) !== dFmt(last) ? ' au ' + esc(dFmt(last)) : ''}</p>`,
+    buttons:[{label:'Annuler', value:null}, {label:'Enregistrer dans le Drive', value:'drive'}, {label:'Télécharger', value:'dl'}, {label:'Imprimer', value:'print', primary:true}],
+    onOpen:dlg => {
+      const seg = dlg.querySelector('#rpPer');
+      const upd = () => { P.repPer = +(seg.querySelector('.on')?.dataset.n || 2); P.repDate = dlg.querySelector('#rpDate').checked; P.repTags = dlg.querySelector('#rpTags').checked; P.repNote = dlg.querySelector('#rpNote').checked; P.repTitle = dlg.querySelector('#rpTitle').value; saveP(); };
+      seg.addEventListener('click', e => { const b = e.target.closest('[data-n]'); if (!b) return; seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); upd(); });
+      dlg.addEventListener('input', upd); dlg.addEventListener('change', upd); upd();
+    }});
+  if (!r) return;
+  await buildReport(photos, r, siteName, siteIds);
+}
+async function buildReport(photos, action, siteName, siteIds){
+  const j = job('Rapport photo…');
+  try {
+    const lib = await needPdfLib();
+    const out = await lib.PDFDocument.create();
+    const font = await out.embedFont(lib.StandardFonts.Helvetica), bold = await out.embedFont(lib.StandardFonts.HelveticaBold);
+    const title = safeText(bold, P.repTitle || 'Rapport photo');
+    const site = siteIds.length === 1 ? S.sites.find(s => s.id === siteIds[0]) : null;
+    let logo = null;
+    if (site && site.logo) { try { const bytes = Uint8Array.from(atob(site.logo.split(',')[1]), c => c.charCodeAt(0)); logo = /png/.test(site.logo.slice(0, 30)) ? await out.embedPng(bytes) : await out.embedJpg(bytes); } catch (e) {} }
+    const per = P.repPer || 2, PW_ = 595.28, PH_ = 841.89, M = 36, top = 78, foot = 34;
+    const cols = per === 1 ? 1 : per === 2 ? 1 : 2, rows = Math.ceil(per / cols);
+    const capLines = (P.repDate !== false ? 1 : 0) + (P.repTags !== false ? 1 : 0) + (P.repNote !== false ? 2 : 0);
+    const capH = capLines ? capLines * 11 + 6 : 0;
+    const cw = (PW_ - 2 * M - (cols - 1) * 14) / cols, ch = (PH_ - top - foot - M / 2 - (rows - 1) * 16) / rows, ih = ch - capH;
+    const first = photos[0]._taken, last = photos[photos.length - 1]._taken;
+    const sub = safeText(font, [siteName, dFmt(first) + (dFmt(first) !== dFmt(last) ? ' au ' + dFmt(last) : ''), photos.length + ' photo' + (photos.length > 1 ? 's' : '')].filter(Boolean).join('  ·  '));
+    const pages = [];
+    for (let i = 0; i < photos.length; i++) {
+      j.set(i / photos.length, `Rapport photo… ${i + 1}/${photos.length}`);
+      if (i % per === 0) {
+        const pg = out.addPage([PW_, PH_]); pages.push(pg);
+        let tx = M;
+        if (logo) { const k = Math.min(110 / logo.width, 38 / logo.height); pg.drawImage(logo, {x:PW_ - M - logo.width * k, y:PH_ - 30 - logo.height * k, width:logo.width * k, height:logo.height * k}); }
+        pg.drawText(title, {x:tx, y:PH_ - 44, size:16, font:bold, color:lib.rgb(.11, .12, .14)});
+        pg.drawText(sub, {x:tx, y:PH_ - 60, size:9.5, font, color:lib.rgb(.36, .38, .41)});
+        pg.drawRectangle({x:M, y:PH_ - 68, width:PW_ - 2 * M, height:1.5, color:lib.rgb(.11, .12, .14)});
+      }
+      const f = photos[i], k = i % per, cx = M + (k % cols) * (cw + 14), cyTop = PH_ - top - Math.floor(k / cols) * (ch + 16);
+      const pg = pages[pages.length - 1];
+      try {
+        const ph = await photoJpeg(await blobOf(f)), img = await out.embedJpg(ph.bytes);
+        const sc = Math.min(cw / ph.w, ih / ph.h), w = ph.w * sc, h = ph.h * sc;
+        pg.drawRectangle({x:cx, y:cyTop - ih, width:cw, height:ih, color:lib.rgb(.95, .94, .92)});
+        pg.drawImage(img, {x:cx + (cw - w) / 2, y:cyTop - ih + (ih - h) / 2, width:w, height:h});
+      } catch (e) { pg.drawText('Photo illisible', {x:cx + 8, y:cyTop - 20, size:9, font}); }
+      let y = cyTop - ih - 12;
+      if (P.repDate !== false) { pg.drawText(safeText(bold, `${i + 1}  ·  ${DAYS[f._taken.getDay()]} ${dFmt(f._taken)} ${tFmt(f._taken)}`), {x:cx, y, size:9, font:bold, color:lib.rgb(.15, .16, .18)}); y -= 11; }
+      if (P.repTags !== false) { if (f._tags.length) pg.drawText(safeText(font, 'Étiquettes : ' + f._tags.join(', ')).slice(0, 140), {x:cx, y, size:8.5, font, color:lib.rgb(.3, .32, .35)}); y -= 11; }
+      if (P.repNote !== false && f._note) for (const l of wrapPdf(font, 8.5, safeText(font, f._note), cw, 2)) { pg.drawText(l, {x:cx, y, size:8.5, font, color:lib.rgb(.3, .32, .35)}); y -= 11; }
+    }
+    pages.forEach((pg, i) => {
+      pg.drawText(safeText(font, `Établi avec BauGest · ${dFmt(new Date())}`), {x:M, y:20, size:8, font, color:lib.rgb(.55, .56, .58)});
+      const t = `${i + 1} / ${pages.length}`; pg.drawText(t, {x:PW_ - M - font.widthOfTextAtSize(t, 8), y:20, size:8, font, color:lib.rgb(.55, .56, .58)});
+    });
+    const blob = new Blob([await out.save()], {type:'application/pdf'});
+    const name = `${slug(P.repTitle || 'Rapport photo')}_${todayISO()}.pdf`;
+    if (action === 'dl') { downloadBlob(blob, name); j.done(name + ' · téléchargé'); return; }
+    if (action === 'print') { j.done('Rapport prêt'); printBlob(blob); return; }
+    /* Drive : dans le dossier ouvert, sinon dans le dossier de la première photo */
+    const parent = E.mode === 'folder' ? E.cur : (photos[0].parents || [])[0];
+    const res = await putFile({md:{name, parents:[parent], mimeType:'application/pdf', description:'Rapport photo établi avec BauGest PC'}, blob, onProg:x => j.set(x, 'Envoi du rapport…')});
+    j.done(res.name + ' · enregistré');
+    toast(`Rapport enregistré dans « ${FN.get(parent)?.name || 'le dossier'} »`, 'ok', 5000);
+    if (E.mode === 'folder' && parent === E.cur) navigate(E.cur, true);
+    const f = await meta(res.id); f._k = 'pdf'; BLOBS.set(f.id + '|' + (f.modifiedTime || ''), blob); openIn(0, f, [f]);
+  } catch (e) { j.done('Rapport impossible : ' + e.message, true); }
+}
+$('#tbReport').addEventListener('click', () => photoReport(selItems()));
+
 /* =====================================================================
    Démarrage, thème, double vue, raccourcis clavier
    ===================================================================== */
-V.panes = [mkPane(0), mkPane(1)];
-V.panes.forEach(p => { $('#viewer').appendChild(p.el); syncAtb(p); syncPaneBtns(p); });
 
 function applyTheme(){
   const t = P.theme || ((sharedTablet() || {}).theme === 'light' ? 'light' : 'dark');
@@ -2187,6 +3804,7 @@ $('#resizer').addEventListener('pointerdown', e => {
 const typing = e => e.target.closest && e.target.closest('input, textarea, select, [contenteditable]');
 document.addEventListener('keydown', e => {
   if (document.querySelector('.scrim')) return;
+  if ((!$('#devis').hidden || !$('#dzMapP').hidden) && $('#viewer').hidden) return;
   if (e.key === ' ' && !typing(e)) { if (!$('#viewer').hidden) { spaceHeld = true; V.panes.forEach(p => p.stage.classList.add('pan')); e.preventDefault(); } }
   if (e.key === 'F5') { e.preventDefault(); if ($('#viewer').hidden) navigate(E.cur, true); return; }
   if ($('#viewer').hidden) {
@@ -2218,7 +3836,7 @@ document.addEventListener('keydown', e => {
   }
 });
 document.addEventListener('keyup', e => { if (e.key === ' ' && spaceHeld) { spaceHeld = false; V.panes.forEach(p => applyToolCursor(p)); } });
-window.addEventListener('beforeunload', e => { if (V.panes.some(p => p.dirty) || JOBS.some(j => j.state === 'run')) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', e => { if (V.panes.some(p => p.dirty) || JOBS.some(j => j.state === 'run') || DV.pending || DV.pushing) { e.preventDefault(); e.returnValue = ''; } });
 
 /* choix du dossier BauGest si le fichier de réglages de la tablette est introuvable */
 async function pickRoot(){
@@ -2289,7 +3907,7 @@ window.addEventListener('hashchange', () => {
   meta(decodeURIComponent(hf)).then(m => { m._k = kindOf(m); openIn(0, m, [m]); }).catch(() => {});
 });
 
-window.BauGestPC = {V, E, P};
+window.BauGestPC = {V, E, P, PHO, DV, S: () => S};
 applyTheme(); syncViewBtns(); syncTopBtns();
 adoptShared();
 if (tokenValid()) start();
