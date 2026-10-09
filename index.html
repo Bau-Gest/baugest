@@ -764,6 +764,20 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .pdv-save.ok{color:var(--ok)}
 .pdv-save.err{color:var(--bad)}
 .pi-kind{margin-bottom:4px}
+.pd-notes{display:inline-flex}
+.pd-notes #pdNotes{border-top-right-radius:0;border-bottom-right-radius:0;max-width:260px}
+.pd-notes #pdNotes span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-notes #pdNotes.on{border-color:var(--signal)}
+.pd-notes-pick{border-top-left-radius:0;border-bottom-left-radius:0;border-left:0;padding:0 10px}
+.de-topv{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+.pdn-list{display:grid;gap:6px;max-height:46vh;overflow:auto}
+.pdn-doc{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;text-align:left;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--text)}
+.pdn-doc.on{border-color:var(--signal)}
+.pdn-doc img,.pdn-doc .ph{width:44px;height:58px;object-fit:cover;border-radius:4px;background:#fbfaf6}
+.pdn-doc b{display:block;font-size:15px}
+.pdn-doc small{color:var(--muted);font-size:12.5px}
+.pdn-kinds{display:flex;flex-wrap:wrap;gap:6px}
+.pdn-kinds .btn{min-height:40px}
 @media (max-width:720px){.pdv-side{position:absolute;inset:auto 0 0 0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line)}}
 
 /* ---------- Devis particuliers (v1.7) ---------- */
@@ -1438,6 +1452,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <button id="pdZout" class="icon-btn" aria-label="Zoom arrière"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6"/></svg></button>
     <button id="pdZin" class="icon-btn" aria-label="Zoom avant"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6M11 8v6"/></svg></button>
     <button id="pdPtsBtn" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Points <span id="pdPtsN" class="pdv-n"></span></button>
+    <span class="pd-notes"><button id="pdNotes" class="btn" title="Basculer vers mon document de notes relié à ce PV"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span id="pdNotesT">Notes</span></button><button id="pdNotesPick" class="btn pd-notes-pick" aria-label="Choisir un autre document de notes" title="Choisir un autre document"><svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button></span>
     <button id="pdShare" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>
   </header>
   <div class="pdv-body">
@@ -1475,6 +1490,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
 <!-- Éditeur manuscrit -->
 <section id="docEditor" class="de" hidden aria-label="Document manuscrit">
   <div class="de-top">
+    <button id="deToPv" class="btn de-topv" hidden title="Revenir au PV (le document reste ouvert)"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 13h6M9 17h4"/></svg>PV DT</button>
     <button id="deClose" class="icon-btn" aria-label="Fermer (le brouillon est gardé)"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="de-fields">
       <select id="deKind" aria-label="Modèle"></select>
@@ -4443,11 +4459,12 @@ function drawEdPage(i, target, scale){
 }
 const redrawEd = () => ed.canvases.forEach((_, i) => drawEdPage(i));
 function docFromRec(rec){ return {pages:rec.doc.pages.map(p => (p.s || []).slice()), imgs:rec.doc.pages.map(p => (p.i || []).map(x => ({...x})))}; }
-async function openEditor(kind, siteId, rec){
+async function openEditor(kind, siteId, rec, fresh){
+  $('#deToPv').hidden = $('#pdView').hidden;
   $('#deSite').innerHTML = S.sites.map(s => `<option value="${esc(s.id)}">${esc(siteLabel(s))}</option>`).join('') + '<option value="none">À classer</option>';
   $('#deKind').innerHTML = DOC_ORDER.map(t => `<option value="${t}">${esc(DOCS[t].name)}</option>`).join('');
   const draft = await DOCSTORE.get('__draft');
-  const draftFor = draft && draft.doc && (rec ? draft.doc.uid === rec.uid : !draft.existing && (!kind || draft.doc.kind === kind));
+  const draftFor = !fresh && draft && draft.doc && (rec ? draft.doc.uid === rec.uid : !draft.existing && (!kind || draft.doc.kind === kind));
   const src = draftFor ? draft : rec;
   if (src) {
     const p = docFromRec(src); ed.pages = p.pages; ed.imgs = p.imgs;
@@ -6494,7 +6511,7 @@ async function pdAnnLoad(it){
         const at = Date.parse(f.modifiedTime) || 0;
         if (!loc.dirty && (loc.syncedAt || 0) < at - 1000) {
           const d = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(f.id)}?alt=media`);
-          loc = {strokes:d.strokes || [], done:d.done || {}, mod:d.mod || at, fileId:f.id, syncedAt:at, dirty:false};
+          loc = {strokes:d.strokes || [], done:d.done || {}, link:d.link || null, mod:d.mod || at, fileId:f.id, syncedAt:at, dirty:false};
         }
       }
       pdAnnSaveLocal(it.key, loc);
@@ -6506,7 +6523,7 @@ async function pdAnnPush(){
   clearTimeout(PDV.pushT); PDV.pushT = 0;
   const it = PDV.it, a = PDV.ann; if (!it || !a || !a.dirty) return;
   if (!it.driveId || queueReason() || DEMO) { pdSaveState('Enregistré sur cet appareil · envoi au Drive plus tard'); return; }
-  const body = JSON.stringify({v:1, pv:it.driveId, name:it.name, strokes:a.strokes, done:a.done, mod:a.mod});
+  const body = JSON.stringify({v:1, pv:it.driveId, name:it.name, strokes:a.strokes, done:a.done, link:a.link || null, mod:a.mod});
   try {
     if (!a.fileId) { const f = await pdAnnFind(it.driveId); if (f) a.fileId = f.id; }
     let res;
@@ -6547,7 +6564,7 @@ async function openPvdt(key){
   $('#pdTitle').textContent = plBase(it.name);
   $('#pdSub').textContent = [it.num ? 'PV n° ' + it.num : '', pdDay(it) ? 'Séance du ' + fmtISO(pdDay(it)) : '', s ? siteLabel(s) : 'À classer', it.old ? 'ANNULÉ' : ''].filter(Boolean).join(' · ');
   $('#pdPages').innerHTML = '<p class="hint pd-wait">Ouverture du PV…</p>'; $('#pdPtsList').innerHTML = ''; $('#pdPtsN').textContent = '';
-  pdSaveState(''); pdSetTool('read'); $('#pdUndo').disabled = true;
+  pdSaveState(''); pdSetTool('read'); $('#pdUndo').disabled = true; pdRenderNotesBtn();
   $('#pdView').hidden = false;
   try {
     let blob = null, rec = await PDCACHE.get(it.key);
@@ -6567,11 +6584,13 @@ async function openPvdt(key){
     PDV.doc = doc; PDV.bytes = bytes;
     PDV.ann = await pdAnnLoad(it);
     if (PDV.it !== it) return;
+    pdRenderNotesBtn();
     await pdLayout();
     pdLoadPoints(it);
   } catch (e) { $('#pdPages').innerHTML = `<p class="hint pd-wait">Ouverture impossible : ${esc(e.message || e)}</p>`; }
 }
 function closePvdt(){
+  $('#deToPv').hidden = true;
   if (PDV.pushT) pdAnnPush();
   $('#pdView').hidden = true; PDV.rtok++;
   if (PDV.doc) { try { PDV.doc.destroy(); } catch (e) {} PDV.doc = null; }
@@ -6756,6 +6775,9 @@ function bindPvdtViewer(){
     if (c) { const p = PDV.points.find(x => x.id === c.dataset.pdpt), o = p && PDV.ovs[p.page]; if (o) o.parentElement.scrollIntoView({behavior:'smooth', block:'start'}); }
   });
   $('#pdShare').addEventListener('click', pdShareDlg);
+  $('#pdNotes').addEventListener('click', pdOpenNotes);
+  $('#pdNotesPick').addEventListener('click', pdPickNotes);
+  $('#deToPv').addEventListener('click', pdBackToPv);
   let rz = 0; window.addEventListener('resize', () => { if ($('#pdView').hidden || !PDV.doc) return; clearTimeout(rz); rz = setTimeout(pdLayout, 300); });
 }
 
@@ -6816,6 +6838,89 @@ async function pdShare(withAnn){
     if (navigator.canShare && navigator.canShare({files:[file]})) { try { await navigator.share({files:[file], title:name}); return; } catch (e) { if (e.name === 'AbortError') return; } }
     const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   } catch (e) { pdSaveState('Partage impossible : ' + (e.message || e), 'err'); }
+}
+
+/* ---------- document de notes relié au PV (bascule 1 bouton) (v2.1) ---------- */
+const pdRef = it => 'Réf. PV DT' + (it.num ? ' n° ' + it.num : '') + (pdDay(it) ? ' du ' + fmtISO(pdDay(it)) : '');
+function pdLink(){ return PDV.ann && PDV.ann.link && PDV.ann.link.uid ? PDV.ann.link : null; }
+function pdRenderNotesBtn(){
+  const l = pdLink();
+  $('#pdNotesT').textContent = 'Notes';
+  $('#pdNotes').title = l ? 'Ouvrir mes notes : ' + (l.title || 'document') : 'Choisir le document de notes de ce PV';
+  $('#pdNotes').classList.toggle('on', !!l);
+}
+function pdSetLink(l){
+  if (!PDV.ann) return;
+  PDV.ann.link = l ? {uid:l.uid, driveId:l.driveId || '', title:String(l.title || '').slice(0, 80), kind:l.kind || ''} : null;
+  pdChanged(); pdRenderNotesBtn();
+}
+function pdWithRef(title){ const r = pdRef(PDV.it); return String(title || '').includes('Réf. PV DT') ? title : (title ? title + ' · ' : '') + r; }
+async function pdShowEditor(){
+  $('#deToPv').hidden = false;
+  if (!PDV.it) return;
+  const t = $('#deTitle').value, nt = pdWithRef(t);
+  if (nt !== t) { $('#deTitle').value = nt; ed.doc.title = nt; saveDraft(); }
+}
+async function pdOpenNotes(){
+  const l = pdLink(); if (!l) { pdPickNotes(); return; }
+  /* document déjà ouvert en mémoire : bascule instantanée, même page, même position */
+  if (ed.uid === l.uid && ed.doc && ed.pages) {
+    $('#docEditor').hidden = false; resizeEdPages(); pdShowEditor(); return;
+  }
+  try {
+    const draft = await DOCSTORE.get('__draft');
+    let rec = await DOCSTORE.get(l.uid);
+    if (!rec && l.driveId) rec = await getDocRec({uid:l.uid, driveId:l.driveId});
+    if (!rec && l.driveId === '' && navigator.onLine && !queueReason()) {
+      const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q:`trashed=false and appProperties has { key='uid' and value='${qEsc(l.uid)}' }`, pageSize:'1', fields:'files(id)'}));
+      const f = (r.files || [])[0]; if (f) { rec = await getDocRec({uid:l.uid, driveId:f.id}); PDV.ann.link.driveId = f.id; pdChanged(); }
+    }
+    if (rec) { await openEditor(null, null, rec); if (l.uid !== rec.uid) { PDV.ann.link.uid = rec.uid; pdChanged(); } pdShowEditor(); return; }
+    if (draft && draft.doc && draft.doc.uid === l.uid) { await openEditor(draft.doc.kind, draft.doc.siteId); pdShowEditor(); return; }
+    note('Document de notes introuvable : choisis-en un autre', 3500); pdPickNotes();
+  } catch (e) { note('Ouverture impossible : ' + (e.message || e), 4000); }
+}
+async function pdNewNotes(kind){
+  closeSheet($('#sheetPlDlg'));
+  await openEditor(kind, PDV.siteId === 'none' ? '__none' : PDV.siteId, null, true);
+  pdSetLink({uid:ed.uid, title:docTitle(kind), kind});
+  pdShowEditor();
+}
+async function pdPickNotes(){
+  const sid = PDV.siteId || 'none', cur = pdLink();
+  const el = plDialog('Document de notes pour ce PV', `<p class="hint">Le document choisi reste relié à ce PV : le bouton « Notes » l’ouvre d’un coup, « PV DT » revient au PV. ${esc(pdRef(PDV.it))} est ajouté à son titre.</p>
+    <p class="imp-label">Nouveau document</p><div class="pdn-kinds">${DOC_ORDER.map(k => `<button class="btn" data-pdnk="${k}">${esc(DOCS[k].name)}</button>`).join('')}</div>
+    <p class="imp-label">Documents du chantier</p><div class="pdn-list" id="pdnList"><p class="hint">Chargement…</p></div>`,
+    [...(cur ? [{label:'Délier', run:() => { pdSetLink(null); closeSheet($('#sheetPlDlg')); note('Document délié du PV', 2200); }}] : []), {label:'Fermer'}]);
+  const recs = (await DOCSTORE.all()).filter(r => r.doc && r.uid !== '__draft' && (r.doc.siteId || 'none') === sid);
+  const items = recs.map(recItem);
+  if (!queueReason() && navigator.onLine && !DEMO) {
+    try {
+      const q = `trashed=false and mimeType='application/json' and appProperties has { key='kind' and value='doc' } and ${siteClause(sid)}`;
+      const res = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, orderBy:'modifiedTime desc', pageSize:'200', fields:'files(id,name,thumbnailLink,modifiedTime,createdTime,appProperties)'}));
+      const known = new Set(items.map(i => i.uid));
+      for (const f of res.files || []) { const it = driveDocItem(f); if (!known.has(it.uid)) items.push(it); else { const li = items.find(x => x.uid === it.uid); if (li && !li.driveId) li.driveId = f.id; } }
+    } catch (e) {}
+  }
+  items.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  if (el.hidden || !$('#pdnList')) return;
+  $('#pdnList').innerHTML = items.length ? items.map((it, i) => `<button class="pdn-doc ${cur && cur.uid === it.uid ? 'on' : ''}" data-pdnd="${i}">${it.thumb ? `<img alt="" src="${esc(it.thumb)}">` : '<span class="ph"></span>'}<span><b>${esc(it.title)}</b><small>${esc(DOCS[it.dtype] ? DOCS[it.dtype].name : 'Document')} · ${fmtISO(it.date || todayISO())}</small></span>${cur && cur.uid === it.uid ? '<span class="dk-st ok">Relié</span>' : ''}</button>`).join('')
+    : '<p class="hint">Aucun document pour ce chantier. Crée-en un nouveau ci-dessus.</p>';
+  el.querySelector('.pdn-kinds').onclick = e => { const b = e.target.closest('[data-pdnk]'); if (b) pdNewNotes(b.dataset.pdnk); };
+  $('#pdnList').onclick = async e => {
+    const b = e.target.closest('[data-pdnd]'); if (!b) return;
+    const it = items[+b.dataset.pdnd];
+    pdSetLink({uid:it.uid || 'd:' + it.driveId, driveId:it.driveId, title:it.title, kind:it.dtype});
+    closeSheet($('#sheetPlDlg')); pdOpenNotes();
+  };
+}
+function pdBackToPv(){
+  if (!$('#docEditor').hidden) {
+    ed.doc.title = $('#deTitle').value.trim() || ed.doc.title;
+    if (ed.dirty) saveDraft(true);
+    $('#docEditor').hidden = true;
+  }
+  if (PDV.it && PDV.ann && pdLink() && pdLink().uid === ed.uid) { const l = pdLink(); const t = ed.doc.title; if (t && t !== l.title) { l.title = t; pdChanged(); } pdRenderNotesBtn(); }
 }
 
 /* ---------- liaison ---------- */
