@@ -744,7 +744,9 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .pdv-n:empty{display:none}
 #pdPtsBtn.on{border-color:var(--signal)}
 .pdv-body{flex:1;min-height:0;display:flex;position:relative}
-.pdv-scroll{flex:1;min-width:0;overflow:auto;background:#3a3f46;touch-action:pan-x pan-y pinch-zoom}
+.pdv-scroll{flex:1;min-width:0;overflow:auto;background:#3a3f46;touch-action:none;overscroll-behavior:contain}
+.pdv-top{flex:none;touch-action:manipulation}
+.pdv-pages.pinch{transition:none;will-change:transform}
 .pdv-pages{display:grid;justify-items:center;gap:14px;padding:14px 14px calc(40px + var(--sb));width:max-content;min-width:100%}
 .pd-page{position:relative;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.35)}
 .pd-page canvas{position:absolute;inset:0;width:100%;height:100%}
@@ -6576,29 +6578,99 @@ function closePvdt(){
   PDV.it = null; PDV.ann = null;
   if (!$('#desk').hidden && desk.mode === 'pvdt') renderPvdt();
 }
-async function pdLayout(){
+async function pdLayout(focal){
   const tok = ++PDV.rtok, doc = PDV.doc, sc = $('#pdScroll'), host = $('#pdPages');
-  const ratio = sc.scrollHeight > sc.clientHeight ? sc.scrollTop / sc.scrollHeight : 0;
+  /* point du document sous le doigt (ou centre de l'écran) : il reste au même endroit après le zoom */
+  const r = sc.getBoundingClientRect(), fx = focal ? focal.x - r.left : sc.clientWidth / 2, fy = focal ? focal.y - r.top : sc.clientHeight / 2;
+  const oldW = sc.scrollWidth || 1, oldH = sc.scrollHeight || 1;
+  const relX = (sc.scrollLeft + fx) / oldW, relY = (sc.scrollTop + fy) / oldH;
   const W = Math.round(Math.max(280, Math.min(sc.clientWidth - 28, 1500)) * PDV.zoom);
-  host.innerHTML = ''; PDV.ovs = [];
   const pgs = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const pg = await doc.getPage(i); if (tok !== PDV.rtok) return;
-    const v1 = pg.getViewport({scale:1}), H = Math.round(W * v1.height / v1.width);
+  for (let i = 1; i <= doc.numPages; i++) { const pg = await doc.getPage(i); if (tok !== PDV.rtok) return; pgs.push({pg, v1:pg.getViewport({scale:1}), i}); }
+  host.style.transform = ''; host.classList.remove('pinch');
+  host.innerHTML = ''; PDV.ovs = [];
+  for (const o of pgs) {
+    const H = Math.round(W * o.v1.height / o.v1.width);
     const wrap = document.createElement('div'); wrap.className = 'pd-page'; wrap.style.width = W + 'px'; wrap.style.height = H + 'px';
-    const c = document.createElement('canvas'), o = document.createElement('canvas');
+    const c = document.createElement('canvas'), ov = document.createElement('canvas');
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5, 4000 / W);
-    c.width = o.width = Math.round(W * dpr); c.height = o.height = Math.round(H * dpr);
-    o.className = 'pd-ov'; o.dataset.pg = i;
-    wrap.append(c, o); host.appendChild(wrap); PDV.ovs[i] = o; pgs.push({pg, c, v1});
-    pdDraw(i);
+    c.width = ov.width = Math.round(W * dpr); c.height = ov.height = Math.round(H * dpr);
+    ov.className = 'pd-ov'; ov.dataset.pg = o.i;
+    wrap.append(c, ov); host.appendChild(wrap); PDV.ovs[o.i] = ov; o.c = c;
+    pdDraw(o.i);
   }
   pdApplyTool();
-  if (ratio) sc.scrollTop = ratio * sc.scrollHeight;
+  if (oldH > sc.clientHeight / 2) { sc.scrollLeft = relX * sc.scrollWidth - fx; sc.scrollTop = relY * sc.scrollHeight - fy; }
   for (const {pg, c, v1} of pgs) {
     if (tok !== PDV.rtok) return;
     await pg.render({canvasContext:c.getContext('2d'), viewport:pg.getViewport({scale:c.width / v1.width})}).promise.catch(() => {});
   }
+}
+/* zoom du document seul (boutons, pincement 2 doigts, Ctrl + molette) : la barre d'outils ne change jamais de taille */
+const PD_ZMIN = 1, PD_ZMAX = 5;
+function pdZoomTo(z, focal){
+  if (!PDV.doc) return;
+  z = pvClamp(z, PD_ZMIN, PD_ZMAX);
+  if (Math.abs(z - PDV.zoom) < .01) { $('#pdPages').style.transform = ''; return; }
+  PDV.zoom = z; pdLayout(focal);
+}
+function bindPdPinch(){
+  /* tout le tactile de la visionneuse est géré ici : 1 doigt = défiler, 2 doigts = zoom du PV ; le stylet reste pour dessiner */
+  const sc = $('#pdScroll'), host = $('#pdPages'), T = new Map();
+  let pin = null, pan = null;
+  const two = () => [...T.values()].slice(0, 2);
+  const dist = () => { const [a, b] = two(); return Math.hypot(a.x - b.x, a.y - b.y); };
+  const mid = () => { const [a, b] = two(); return {x:(a.x + b.x) / 2, y:(a.y + b.y) / 2}; };
+  sc.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    e.stopPropagation();
+    try { sc.setPointerCapture(e.pointerId); } catch (err) {}
+    T.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if (T.size === 1) { pan = {x:e.clientX, y:e.clientY, l:sc.scrollLeft, t:sc.scrollTop}; return; }
+    if (T.size === 2 && PDV.doc) {
+      pan = null;
+      const m = mid(), r = host.getBoundingClientRect();
+      pin = {d0:dist() || 1, z0:PDV.zoom, m, m0x:m.x, m0y:m.y, k:1};
+      host.classList.add('pinch'); host.style.transformOrigin = (m.x - r.left) + 'px ' + (m.y - r.top) + 'px';
+    }
+  }, true);
+  sc.addEventListener('pointermove', e => {
+    if (!T.has(e.pointerId)) return;
+    e.stopPropagation(); e.preventDefault();
+    T.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if (pin && T.size >= 2) {
+      pin.k = pvClamp(dist() / pin.d0, PD_ZMIN / pin.z0, PD_ZMAX / pin.z0); pin.m = mid();
+      host.style.transform = `translate(${pin.m.x - pin.m0x}px, ${pin.m.y - pin.m0y}px) scale(${pin.k})`;
+    } else if (pan) { sc.scrollLeft = pan.l - (e.clientX - pan.x); sc.scrollTop = pan.t - (e.clientY - pan.y); }
+  }, true);
+  const up = e => {
+    if (!T.has(e.pointerId)) return;
+    e.stopPropagation();
+    T.delete(e.pointerId);
+    if (pin && T.size < 2) {
+      const p = pin; pin = null;
+      const z = pvClamp(p.z0 * p.k, PD_ZMIN, PD_ZMAX);
+      /* point à garder fixe = milieu des doigts au départ, déplacé du glissement fait pendant le pincement */
+      if (Math.abs(z - PDV.zoom) < .01) { host.style.transform = ''; host.classList.remove('pinch'); sc.scrollLeft -= p.m.x - p.m0x; sc.scrollTop -= p.m.y - p.m0y; }
+      else { sc.scrollLeft -= (p.m.x - p.m0x) / p.k; sc.scrollTop -= (p.m.y - p.m0y) / p.k; host.style.transform = `scale(${p.k})`; pdZoomTo(z, {x:p.m0x, y:p.m0y}); }
+      const rest = [...T.entries()][0];
+      pan = rest ? {x:rest[1].x, y:rest[1].y, l:sc.scrollLeft, t:sc.scrollTop} : null;
+    } else if (!T.size) pan = null;
+  };
+  sc.addEventListener('pointerup', up, true); sc.addEventListener('pointercancel', up, true);
+  /* Ctrl + molette ou pincement du pavé tactile (PC) */
+  let wz = 0, wf = null, wt = 0;
+  sc.addEventListener('wheel', e => {
+    if (!e.ctrlKey || !PDV.doc) return;
+    e.preventDefault();
+    wz = (wz || PDV.zoom) * Math.exp(-e.deltaY * .01); wz = pvClamp(wz, PD_ZMIN, PD_ZMAX); wf = {x:e.clientX, y:e.clientY};
+    const r = host.getBoundingClientRect(); host.classList.add('pinch');
+    host.style.transformOrigin = (wf.x - r.left) + 'px ' + (wf.y - r.top) + 'px'; host.style.transform = `scale(${wz / PDV.zoom})`;
+    clearTimeout(wt); wt = setTimeout(() => { const z = wz; wz = 0; pdZoomTo(z, wf); if (Math.abs(z - PDV.zoom) < .01) { host.style.transform = ''; host.classList.remove('pinch'); } }, 180);
+  }, {passive:false});
+  /* sécurité : jamais de zoom du navigateur sur la visionneuse (Safari / anciens Android) */
+  ['gesturestart', 'gesturechange'].forEach(t => $('#pdView').addEventListener(t, e => e.preventDefault(), {passive:false}));
+  $('#pdView').addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, {passive:false});
 }
 function pdDrawStroke(g, s, W, H){
   const p = s.pts; if (p.length < 2) return;
@@ -6674,8 +6746,9 @@ function bindPvdtViewer(){
     if (u.op === 'add') { const i = st.lastIndexOf(u.s); if (i >= 0) st.splice(i, 1); } else st.splice(Math.min(u.i, st.length), 0, u.s);
     pdDraw(u.s.pg); pdChanged();
   });
-  $('#pdZin').addEventListener('click', () => { if (PDV.doc && PDV.zoom < 4) { PDV.zoom = Math.min(4, PDV.zoom * 1.4); pdLayout(); } });
-  $('#pdZout').addEventListener('click', () => { if (PDV.doc && PDV.zoom > 1) { PDV.zoom = Math.max(1, PDV.zoom / 1.4); pdLayout(); } });
+  $('#pdZin').addEventListener('click', () => pdZoomTo(PDV.zoom * 1.4));
+  $('#pdZout').addEventListener('click', () => pdZoomTo(PDV.zoom / 1.4));
+  bindPdPinch();
   $('#pdPtsBtn').addEventListener('click', () => { $('#pdSide').hidden = !$('#pdSide').hidden; $('#pdPtsBtn').classList.toggle('on', !$('#pdSide').hidden); if (PDV.doc) pdLayout(); });
   $('#pdPtsList').addEventListener('click', e => {
     const c = e.target.closest('[data-pdpt]');
