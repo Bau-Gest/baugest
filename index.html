@@ -6979,16 +6979,17 @@ function addrSuggest(inp, onPick){
   if (!inp || inp._addrSug) return;
   const box = document.createElement('div'); box.className = 'addr-sug'; box.hidden = true; box.setAttribute('role', 'listbox');
   inp.insertAdjacentElement('afterend', box); inp._addrSug = box;
-  let list = [], cur = -1, seq = 0, t = 0;
+  let list = [], cur = -1, seq = 0, t = 0, done = null;
   const hide = () => { box.hidden = true; list = []; cur = -1; };
   const show = () => {
     box.innerHTML = list.map((x, i) => `<button type="button" role="option" class="${i === cur ? 'cur' : ''}" data-i="${i}"><b>${esc(x.street)}</b><small>${esc([x.npa, x.city].filter(Boolean).join(' '))}</small></button>`).join('');
     box.hidden = !list.length;
   };
-  const pick = i => { const x = list[i]; if (!x) return; hide(); onPick(x); };
+  const pick = i => { const x = list[i]; if (!x) return; clearTimeout(t); seq++; hide(); done = true; onPick(x); done = inp.value; };
   inp.addEventListener('input', () => {
     clearTimeout(t); const q = inp.value.trim(), my = ++seq;
-    if (q.length < 3 || !navigator.onLine) { hide(); return; }
+    if (q.length < 3 || !navigator.onLine || done === true || inp.value === done) { hide(); return; }
+    done = null;
     t = setTimeout(async () => {
       try {
         const r = await fetch('https://api3.geo.admin.ch/rest/services/api/SearchServer?' + new URLSearchParams({searchText:q, type:'locations', origins:'address', sr:'4326', limit:'6'}));
