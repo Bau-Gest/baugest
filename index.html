@@ -2058,7 +2058,7 @@ async function syncSettings(force){
       if (changed) refreshAfterSync();
       if (first && received) note(`Chantiers synchronisés : ${received} reçu${received > 1 ? 's' : ''} du Drive`, 3500);
     }
-    SYNC.last = Date.now();
+    SYNC.last = Date.now(); calSoon(1000);
   } catch (e) { SYNC.err = e.message || 'erreur'; }
   finally {
     SYNC.busy = false; renderSyncStatus();
@@ -2518,7 +2518,7 @@ function describe(info){
 }
 
 /* ---------- Google Drive ---------- */
-const SCOPE = 'https://www.googleapis.com/auth/drive';
+const SCOPE = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/calendar.events';
 const redirectUri = () => location.origin + location.pathname;
 const tokenValid = () => !!S.drive.token && Date.now() < S.drive.exp - 60000;
 const driveReady = () => tokenValid() && !!S.drive.rootId;
@@ -2542,7 +2542,7 @@ function readAuthHash(){
   history.replaceState(null, '', location.pathname + location.search);
   let expected = null; try { expected = sessionStorage.getItem('pc_state'); } catch (e) {}
   if (expected && h.get('state') !== expected) return null;
-  if (h.get('access_token')) { S.drive.token = h.get('access_token'); S.drive.exp = Date.now() + (+h.get('expires_in') || 3600) * 1000; save(); try { sessionStorage.removeItem('pc_silent'); } catch (e) {} return 'ok'; }
+  if (h.get('access_token')) { S.drive.token = h.get('access_token'); S.drive.scope = h.get('scope') || ''; S.drive.exp = Date.now() + (+h.get('expires_in') || 3600) * 1000; save(); try { sessionStorage.removeItem('pc_silent'); } catch (e) {} return 'ok'; }
   return 'error';
 }
 async function api(url, opt = {}){
@@ -7017,6 +7017,74 @@ function addrFillFiche(root, x){
   });
 }
 
+const calAuth = () => tokenValid() && /calendar/.test(S.drive.scope || '') ? S.drive.token : '';
+const calScopeOk = () => /calendar/.test(S.drive.scope || '');
+const calCur = () => dz.cur;
+/* ---------- Devis : visite dans Google Agenda (création, déplacement, suppression automatiques) ---------- */
+/* Un événement par fiche dans l'agenda principal du compte connecté, avec un id fixe tiré de l'id de la fiche :
+   tablette, téléphone et PC peuvent l'écrire sans créer de doublon.
+   localStorage 'baugest.cal' = {idFiche: contenu déjà envoyé} ; '?' = à envoyer, '' = événement supprimé. */
+const CAL_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+const CAL_MIN = 60, CAL_TZ = (Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Zurich');
+const CAL = {busy:false, again:false, t:0, err:''};
+const calEvId = id => 'bgdv' + [...String(id)].map(c => c.charCodeAt(0).toString(16)).join('');
+const calMap = () => { try { return JSON.parse(localStorage.getItem('baugest.cal') || '{}') || {}; } catch (e) { return {}; } };
+const calMapSet = m => { try { localStorage.setItem('baugest.cal', JSON.stringify(m)); } catch (e) {} };
+const calLocal = t => `${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}T${pad2(t.getHours())}:${pad2(t.getMinutes())}:00`;
+function calBody(d){
+  const t = new Date(d.visit || ''); if (!d.visit || isNaN(t)) return null;
+  const c = compById(d.comp), city = devCity(d), tel = (d.client?.tel || '').trim();
+  const loc = [d.addr?.street, [d.addr?.npa, d.addr?.city].filter(Boolean).join(' ')].map(x => (x || '').trim()).filter(Boolean).join(', ');
+  return {summary:'Visite devis – ' + devName(d) + (city ? ' – ' + city : ''), location:loc,
+    description:[tel && 'Tél. client : ' + tel, c && 'Entreprise : ' + c.name, 'Fiche BauGest : Devis particuliers › ' + (d.folder || devName(d))].filter(Boolean).join('\n'),
+    start:{dateTime:calLocal(t), timeZone:CAL_TZ}, end:{dateTime:calLocal(new Date(t.getTime() + CAL_MIN * 60000)), timeZone:CAL_TZ},
+    colorId:'5', reminders:{useDefault:false, overrides:[{method:'popup', minutes:60}]}, status:'confirmed',
+    extendedProperties:{private:{baugest:'devis', devis:String(d.id)}}};
+}
+async function calReq(method, url, body){
+  const tok = calAuth(); if (!tok) throw Object.assign(new Error('connexion Google'), {status:0});
+  const r = await fetch(url, {method, headers:{Authorization:'Bearer ' + tok, ...(body ? {'Content-Type':'application/json'} : {})}, body:body ? JSON.stringify(body) : undefined});
+  if (!r.ok) { let m = 'Erreur ' + r.status; try { const j = await r.json(); m = j.error?.message || m; } catch (e) {} throw Object.assign(new Error(m), {status:r.status}); }
+  return null;
+}
+async function calPut(id, body, known){
+  const put = () => calReq('PUT', CAL_URL + '/' + calEvId(id), body), post = () => calReq('POST', CAL_URL, {...body, id:calEvId(id)});
+  if (known) { try { await put(); } catch (e) { if (e.status !== 404) throw e; await post(); } return; }
+  try { await post(); } catch (e) { if (e.status !== 409) throw e; await put(); }
+}
+async function calDel(id){ try { await calReq('DELETE', CAL_URL + '/' + calEvId(id)); } catch (e) { if (e.status !== 404 && e.status !== 410) throw e; } }
+function calTouch(id){ const m = calMap(); if (m[id] === undefined || m[id] === '') { m[id] = '?'; calMapSet(m); } calSoon(); }
+function calSoon(ms = 2000){ clearTimeout(CAL.t); CAL.t = setTimeout(calSyncAll, ms); }
+async function calSyncAll(){
+  if (CAL.busy) { CAL.again = true; return; }
+  if (!calAuth() || !navigator.onLine) { renderDzCal(); return; }
+  CAL.busy = true; CAL.err = '';
+  try {
+    const m = calMap(), old = Date.now() - 864e5;
+    for (const id of new Set([...devList().map(d => d.id), ...Object.keys(m)])) {
+      const d = devById(id), body = d ? calBody(d) : null, sig = body ? JSON.stringify(body) : '';
+      if (m[id] === sig) continue;
+      if (m[id] === undefined && (!body || new Date(d.visit).getTime() < old)) continue;
+      if (body) await calPut(id, body, !!m[id] && m[id] !== '?'); else await calDel(id);
+      if (body || d) m[id] = sig; else delete m[id];
+      calMapSet(m); renderDzCal();
+    }
+  } catch (e) {
+    CAL.err = /has not been used|is disabled/i.test(e.message) ? 'activer l’API Google Calendar dans Google Cloud'
+      : e.status === 403 || e.status === 401 ? 'reconnecte-toi à Google pour autoriser l’agenda' : e.message;
+  } finally { CAL.busy = false; renderDzCal(); if (CAL.again) { CAL.again = false; calSoon(500); } }
+}
+function renderDzCal(){
+  const el = document.getElementById('dzCal'), d = calCur() ? devById(calCur()) : null; if (!el) return;
+  const body = d ? calBody(d) : null;
+  if (!body) { el.innerHTML = ''; return; }
+  const sent = calMap()[d.id] === JSON.stringify(body);
+  el.innerHTML = sent ? '<span class="ok">● Dans Google Agenda · rappel 1 h avant</span>'
+    : `<span>${esc(CAL.err ? 'Agenda : ' + CAL.err
+      : !calScopeOk() ? 'Agenda : reconnecte-toi à Google pour autoriser l’agenda'
+      : !calAuth() || !navigator.onLine ? 'Agenda : envoi à la prochaine connexion' : 'Agenda : envoi…')}</span>`;
+}
+
 /* ---------- Devis particuliers (v1.7) ---------- */
 /* Une fiche par demande de particulier : client, adresse, visite (photos, notes), travaux à faire.
    Les photos vont dans Drive › Devis particuliers › <fiche> › Photos, jamais dans un chantier, même dans le rayon d'un chantier.
@@ -7071,7 +7139,7 @@ function dzGrabPos(d){
   if (!$('#devis').hidden && dz.cur === d.id) renderDzGps();
 }
 function devSave(d){
-  d.mod = Date.now();
+  d.mod = Date.now(); calTouch(d.id);
   clearTimeout(dz.saveT); dz.saveT = setTimeout(save, 400);
 }
 function setPath(o, path, v){ const k = path.split('.'); let x = o; while (k.length > 1) { const p = k.shift(); x = x[p] = x[p] || {}; } x[k[0]] = v; }
@@ -7186,6 +7254,7 @@ function renderDzFiche(){
       <div class="dz-gps" id="dzGps"></div>
       <button class="btn" id="dzPosHere">${ICON_PIN}<span>Enregistrer la position ici</span></button>
       <label class="field"><span>Date de la visite</span><input type="datetime-local" data-f="visit" value="${esc(d.visit || '')}"></label>
+      <div class="dz-gps" id="dzCal"></div>
     </section>
     <section class="dz-card">
       <div class="dz-ch"><h3>Photos de la visite</h3><small id="dzPhotoInfo"></small></div>
@@ -7211,7 +7280,7 @@ function renderDzFiche(){
     <button class="btn primary" id="dzMemo">${ICON_DOC}Créer le mémo PDF</button>
   </div>
   <div class="dz-memos" id="dzMemos" hidden></div>`;
-  renderDzHead(d); renderDzActs(d); renderDzGps(); renderDzItems();
+  renderDzHead(d); renderDzActs(d); renderDzGps(); renderDzItems(); renderDzCal();
   addrSuggest(m.querySelector('input[data-f="addr.street"]'), x => addrFillFiche(m, x));
   dz.photos = []; dz.memos = []; renderDzPhotos(); dzLoadPhotos();
 }
@@ -8131,7 +8200,7 @@ function askDeleteMany(ids){
       const trash = !!$('#dzCfDrive')?.checked;
       const set = new Set(ds.map(d => d.id));
       S.devis = devList().filter(x => !set.has(x.id));
-      S.ddel = S.ddel || {}; const now = Date.now(); set.forEach(id => S.ddel[id] = now);
+      S.ddel = S.ddel || {}; const now = Date.now(); set.forEach(id => S.ddel[id] = now); set.forEach(calTouch);
       if (activeDevis && set.has(activeDevis)) setActiveDevis(null);
       for (const it of await DB.all()) if (it.meta && set.has(String(it.meta.siteId || '').replace(/^devis:/, '')) && String(it.meta.siteId).startsWith('devis:')) await DB.del(it.id);
       refreshQueue();

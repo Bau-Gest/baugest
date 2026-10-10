@@ -679,13 +679,13 @@ window.addEventListener('storage', e => {
 
 /* ---------- connexion Google (même compte et même client que la tablette) ---------- */
 const BUILTIN_CLIENT_ID = '691997779377-8p5c7u6o2m49fj6iqm4c988o2ib4a0ac.apps.googleusercontent.com';
-const SCOPE = 'https://www.googleapis.com/auth/drive';
+const SCOPE = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/calendar.events';
 function sharedTablet(){ try { return JSON.parse(localStorage.getItem('photochantier.v1') || 'null'); } catch (e) { return null; } }
 const clientId = () => { const s = sharedTablet(); return (s && s.drive && s.drive.clientId && s.drive.clientId.trim()) || BUILTIN_CLIENT_ID; };
 const tokenValid = () => !!P.token && Date.now() < P.exp - 60000;
 function adoptShared(){
   const s = sharedTablet(); if (!s || !s.drive) return;
-  if (!tokenValid() && s.drive.token && Date.now() < s.drive.exp - 60000) { P.token = s.drive.token; P.exp = s.drive.exp; }
+  if (!tokenValid() && s.drive.token && Date.now() < s.drive.exp - 60000) { P.token = s.drive.token; P.exp = s.drive.exp; P.scope = s.drive.scope || ''; }
   if (!P.rootId && s.drive.rootId) { P.rootId = s.drive.rootId; P.rootName = s.drive.rootName || ''; }
   if (!P.email && s.drive.email) P.email = s.drive.email;
   saveP();
@@ -697,7 +697,7 @@ async function getToken(selectAccount){
       client_id:clientId(), scope:SCOPE, prompt:selectAccount ? 'select_account' : '', hint:P.email || undefined,
       callback:r => {
         if (r.error) { rej(new Error(r.error_description || r.error)); return; }
-        P.token = r.access_token; P.exp = Date.now() + (+r.expires_in || 3600) * 1000; saveP(); res(P.token);
+        P.token = r.access_token; P.exp = Date.now() + (+r.expires_in || 3600) * 1000; P.scope = r.scope || ''; saveP(); res(P.token);
       },
       error_callback:e => rej(new Error(e.type === 'popup_closed' ? 'fenêtre Google fermée' : e.type === 'popup_failed_to_open' ? 'fenêtre Google bloquée : autorise les fenêtres pop-up pour ce site' : (e.message || e.type || 'erreur Google')))
     });
@@ -3046,6 +3046,74 @@ function addrFillFiche(root, x){
   });
 }
 
+const calAuth = () => tokenValid() && /calendar/.test(P.scope || '') ? P.token : '';
+const calScopeOk = () => /calendar/.test(P.scope || '');
+const calCur = () => DV.cur;
+/* ---------- Devis : visite dans Google Agenda (création, déplacement, suppression automatiques) ---------- */
+/* Un événement par fiche dans l'agenda principal du compte connecté, avec un id fixe tiré de l'id de la fiche :
+   tablette, téléphone et PC peuvent l'écrire sans créer de doublon.
+   localStorage 'baugest.cal' = {idFiche: contenu déjà envoyé} ; '?' = à envoyer, '' = événement supprimé. */
+const CAL_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+const CAL_MIN = 60, CAL_TZ = (Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Zurich');
+const CAL = {busy:false, again:false, t:0, err:''};
+const calEvId = id => 'bgdv' + [...String(id)].map(c => c.charCodeAt(0).toString(16)).join('');
+const calMap = () => { try { return JSON.parse(localStorage.getItem('baugest.cal') || '{}') || {}; } catch (e) { return {}; } };
+const calMapSet = m => { try { localStorage.setItem('baugest.cal', JSON.stringify(m)); } catch (e) {} };
+const calLocal = t => `${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}T${pad2(t.getHours())}:${pad2(t.getMinutes())}:00`;
+function calBody(d){
+  const t = new Date(d.visit || ''); if (!d.visit || isNaN(t)) return null;
+  const c = compById(d.comp), city = devCity(d), tel = (d.client?.tel || '').trim();
+  const loc = [d.addr?.street, [d.addr?.npa, d.addr?.city].filter(Boolean).join(' ')].map(x => (x || '').trim()).filter(Boolean).join(', ');
+  return {summary:'Visite devis – ' + devName(d) + (city ? ' – ' + city : ''), location:loc,
+    description:[tel && 'Tél. client : ' + tel, c && 'Entreprise : ' + c.name, 'Fiche BauGest : Devis particuliers › ' + (d.folder || devName(d))].filter(Boolean).join('\n'),
+    start:{dateTime:calLocal(t), timeZone:CAL_TZ}, end:{dateTime:calLocal(new Date(t.getTime() + CAL_MIN * 60000)), timeZone:CAL_TZ},
+    colorId:'5', reminders:{useDefault:false, overrides:[{method:'popup', minutes:60}]}, status:'confirmed',
+    extendedProperties:{private:{baugest:'devis', devis:String(d.id)}}};
+}
+async function calReq(method, url, body){
+  const tok = calAuth(); if (!tok) throw Object.assign(new Error('connexion Google'), {status:0});
+  const r = await fetch(url, {method, headers:{Authorization:'Bearer ' + tok, ...(body ? {'Content-Type':'application/json'} : {})}, body:body ? JSON.stringify(body) : undefined});
+  if (!r.ok) { let m = 'Erreur ' + r.status; try { const j = await r.json(); m = j.error?.message || m; } catch (e) {} throw Object.assign(new Error(m), {status:r.status}); }
+  return null;
+}
+async function calPut(id, body, known){
+  const put = () => calReq('PUT', CAL_URL + '/' + calEvId(id), body), post = () => calReq('POST', CAL_URL, {...body, id:calEvId(id)});
+  if (known) { try { await put(); } catch (e) { if (e.status !== 404) throw e; await post(); } return; }
+  try { await post(); } catch (e) { if (e.status !== 409) throw e; await put(); }
+}
+async function calDel(id){ try { await calReq('DELETE', CAL_URL + '/' + calEvId(id)); } catch (e) { if (e.status !== 404 && e.status !== 410) throw e; } }
+function calTouch(id){ const m = calMap(); if (m[id] === undefined || m[id] === '') { m[id] = '?'; calMapSet(m); } calSoon(); }
+function calSoon(ms = 2000){ clearTimeout(CAL.t); CAL.t = setTimeout(calSyncAll, ms); }
+async function calSyncAll(){
+  if (CAL.busy) { CAL.again = true; return; }
+  if (!calAuth() || !navigator.onLine) { renderDzCal(); return; }
+  CAL.busy = true; CAL.err = '';
+  try {
+    const m = calMap(), old = Date.now() - 864e5;
+    for (const id of new Set([...devList().map(d => d.id), ...Object.keys(m)])) {
+      const d = devById(id), body = d ? calBody(d) : null, sig = body ? JSON.stringify(body) : '';
+      if (m[id] === sig) continue;
+      if (m[id] === undefined && (!body || new Date(d.visit).getTime() < old)) continue;
+      if (body) await calPut(id, body, !!m[id] && m[id] !== '?'); else await calDel(id);
+      if (body || d) m[id] = sig; else delete m[id];
+      calMapSet(m); renderDzCal();
+    }
+  } catch (e) {
+    CAL.err = /has not been used|is disabled/i.test(e.message) ? 'activer l’API Google Calendar dans Google Cloud'
+      : e.status === 403 || e.status === 401 ? 'reconnecte-toi à Google pour autoriser l’agenda' : e.message;
+  } finally { CAL.busy = false; renderDzCal(); if (CAL.again) { CAL.again = false; calSoon(500); } }
+}
+function renderDzCal(){
+  const el = document.getElementById('dzCal'), d = calCur() ? devById(calCur()) : null; if (!el) return;
+  const body = d ? calBody(d) : null;
+  if (!body) { el.innerHTML = ''; return; }
+  const sent = calMap()[d.id] === JSON.stringify(body);
+  el.innerHTML = sent ? '<span class="ok">● Dans Google Agenda · rappel 1 h avant</span>'
+    : `<span>${esc(CAL.err ? 'Agenda : ' + CAL.err
+      : !calScopeOk() ? 'Agenda : reconnecte-toi à Google pour autoriser l’agenda'
+      : !calAuth() || !navigator.onLine ? 'Agenda : envoi à la prochaine connexion' : 'Agenda : envoi…')}</span>`;
+}
+
 /* ---------- Devis : fonctions reprises de la version tablette (calculs, métré, mémo, carte) ---------- */
 function fmtN(v, d = 2, sep = '’'){
   const neg = v < 0; let [i, f] = Math.abs(v).toFixed(d).split('.');
@@ -3648,10 +3716,10 @@ function applyRemote(R){
 }
 async function pullDevis(){
   if (DV.pending || DV.pushing) return;
-  try { const R = await readSettings(); if (R) applyRemote(R); } catch (e) { dzStatus('Lecture des fiches impossible : ' + e.message, true); }
+  try { const R = await readSettings(); if (R) { applyRemote(R); calSoon(); } } catch (e) { dzStatus('Lecture des fiches impossible : ' + e.message, true); }
 }
 function devSave(d){
-  d.mod = Date.now(); DV.pending = true; dzStatus('Modifications en cours…');
+  d.mod = Date.now(); DV.pending = true; calTouch(d.id); dzStatus('Modifications en cours…');
   clearTimeout(DV.pushT); DV.pushT = setTimeout(pushDevis, 1200);
 }
 async function pushDevis(){
@@ -3667,7 +3735,7 @@ async function pushDevis(){
       S.devis = m.out; S.ddel = m.ddel;
       R.devis = m.out; R.ddel = m.ddel;
       await api(`${UPL}/${encodeURIComponent(id)}?uploadType=media&fields=id,modifiedTime`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(R)});
-      dzStatus('Enregistré · visible sur la tablette à la prochaine synchronisation');
+      dzStatus('Enregistré · visible sur la tablette à la prochaine synchronisation'); calSoon(500);
     } catch (e) { DV.pending = true; dzStatus('Enregistrement impossible : ' + e.message, true); }
   })();
   try { await DV.pushing; } finally { DV.pushing = null; if (DV.again) { DV.again = false; pushDevis(); } }
@@ -3744,6 +3812,7 @@ function renderDzFiche(){
       <div class="dz-gps" id="dzGps"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="dzGeo">${ICON_PIN}Position depuis l’adresse</button></div>
       <label class="field"><span>Date de la visite</span><input type="datetime-local" data-f="visit" value="${esc(d.visit || '')}"></label>
+      <div class="dz-gps" id="dzCal"></div>
     </section>
     <section class="dz-card">
       <div class="dz-ch"><h3>Photos de la visite</h3><small id="dzPhotoInfo"></small></div>
@@ -3769,7 +3838,7 @@ function renderDzFiche(){
     <button class="btn primary" id="dzMemo">${ICON_DOC}Créer le mémo PDF</button>
   </div>
   <div class="dz-memos" id="dzMemos" hidden></div>`;
-  renderDzHead(d); renderDzActs(d); renderDzGps(); renderDzItems();
+  renderDzHead(d); renderDzActs(d); renderDzGps(); renderDzItems(); renderDzCal();
   addrSuggest(m.querySelector('input[data-f="addr.street"]'), x => addrFillFiche(m, x));
   DV.photos = []; DV.memos = []; renderDzPhotos(); dzLoadPhotos(d);
 }
@@ -3882,7 +3951,7 @@ async function dzDelete(ids){
     buttons:[{label:'Annuler', value:null}, {label:'Effacer', danger:true}]});
   if (!r) return;
   const trash = r.querySelector('#dzCfDrive').checked, set = new Set(ds.map(d => d.id)), now = Date.now();
-  S.devis = devList().filter(x => !set.has(x.id)); S.ddel = S.ddel || {}; set.forEach(id => S.ddel[id] = now);
+  S.devis = devList().filter(x => !set.has(x.id)); S.ddel = S.ddel || {}; set.forEach(id => S.ddel[id] = now); set.forEach(calTouch);
   if (DV.cur && set.has(DV.cur)) DV.cur = dzSorted()[0]?.id || null;
   DV.selMode = false; DV.sel.clear(); DV.pending = true;
   renderDzList(); renderDzFiche();

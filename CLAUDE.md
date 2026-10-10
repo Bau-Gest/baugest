@@ -42,14 +42,15 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 - Les PDF de documents manuscrits sont générés sans bibliothèque (fonctionne hors ligne).
 
 ### Services externes
-- Google Drive API v3 (`drive` scope complet) + GIS OAuth. Client ID intégré `691997779377-8p5c7u6o…` (`BUILTIN_CLIENT_ID`, même client tablette et PC). Origine/redirection autorisées : `https://bau-gest.github.io` / `…/baugest/`.
+- Google Drive API v3 (`drive` scope complet) + GIS OAuth.
+- Google Calendar API v3 (scope `calendar.events`, ajouté le 10.10.2026) : la date de visite d'une fiche devis crée / déplace / supprime un événement dans l'agenda principal du compte connecté (`joel.magano.job@gmail.com`). Titre « Visite devis – Client – Localité », lieu = adresse, description = tél. client + entreprise, 1 h, rappel 1 h avant, couleur jaune (colorId 5). Id d'événement fixe `bgdv<hex de l'id fiche>` → pas de doublon entre appareils. Bloc `calSyncAll` dans les deux fichiers. Les visites passées de plus de 24 h ne sont pas créées rétroactivement. Client ID intégré `691997779377-8p5c7u6o…` (`BUILTIN_CLIENT_ID`, même client tablette et PC). Origine/redirection autorisées : `https://bau-gest.github.io` / `…/baugest/`.
 - swisstopo : WMTS `wmts.geo.admin.ch` (SWISSIMAGE), WMS `wms.geo.admin.ch` (parcelles), `api3.geo.admin.ch` (recherche ; suggestions d'adresses pendant la saisie dans les devis, fonction `addrSuggest`, dans les deux fichiers).
 - OpenStreetMap (tuiles + Nominatim) pour la carte des photos.
 
 ### Stockage local (noms hérités de PhotoChantier — NE PAS RENOMMER)
 - `localStorage['photochantier.v1']` : état/réglages principal (`S`).
 - IndexedDB : `photochantier` (file d'envoi photos), `photochantier-inbox` (fichiers reçus par partage, écrit par `sw.js`), `photochantier-docs` v2 (documents manuscrits), `baugest-plans` (cache des PDF de plans), `baugest-pvdt` (cache PV).
-- Clés `baugest.*` : `plPaths`, `plView`, `pltree.<site>`, `pvPanel`, `pvann.<id>`, `pvdt.seen`, `pvdt.last`, `pvpts.<id>`, `activeDevis`, `dmLayer`, `dmCad`, `pc.pqSite`.
+- Clés `baugest.*` : `plPaths`, `plView`, `pltree.<site>`, `pvPanel`, `pvann.<id>`, `pvdt.seen`, `pvdt.last`, `pvpts.<id>`, `activeDevis`, `dmLayer`, `dmCad`, `pc.pqSite`, `cal` (événements agenda déjà envoyés par cet appareil : `{idFiche: contenu}`).
 
 ### Organisation du Google Drive
 ```
@@ -121,7 +122,7 @@ Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_0
 ## 4b. Déploiement et comptes
 
 - GitHub Pages : Settings → Pages → `main` / root. Publication 1–2 min après le push ; l'app se met à jour à la prochaine ouverture avec réseau (si `sw.js` a changé de version).
-- Google Cloud : client OAuth `691997779377-8p5c7u6o…` (compte Google perso de Joel). Origine JS `https://bau-gest.github.io`, redirection `https://bau-gest.github.io/baugest/`. Toute nouvelle URL d'app doit y être ajoutée.
+- Google Cloud : client OAuth `691997779377-8p5c7u6o…` (compte Google perso de Joel). Origine JS `https://bau-gest.github.io`, redirection `https://bau-gest.github.io/baugest/`. Toute nouvelle URL d'app doit y être ajoutée. **API Google Calendar à activer** dans ce projet (sinon la fiche affiche « Agenda : activer l'API Google Calendar »).
 - Installation Android : Chrome → ⋮ → Installer l'application (pas « raccourci », sinon pas de partage vers BauGest).
 - Anciennes apps encore en ligne : `joelmagano82-design.github.io/photochantier` et `/planschantier` (remplacées, ne plus modifier).
 - Le dépôt est **public** : n'y mettre aucun jeton, mot de passe ni donnée client.
