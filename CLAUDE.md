@@ -43,7 +43,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 
 ### Services externes
 - Google Drive API v3 (`drive` scope complet) + GIS OAuth. Client ID intégré `691997779377-8p5c7u6o…` (`BUILTIN_CLIENT_ID`, même client tablette et PC). Origine/redirection autorisées : `https://bau-gest.github.io` / `…/baugest/`.
-- swisstopo : WMTS `wmts.geo.admin.ch` (SWISSIMAGE), WMS `wms.geo.admin.ch` (parcelles), `api3.geo.admin.ch` (recherche).
+- swisstopo : WMTS `wmts.geo.admin.ch` (SWISSIMAGE), WMS `wms.geo.admin.ch` (parcelles), `api3.geo.admin.ch` (recherche ; suggestions d'adresses pendant la saisie dans les devis, fonction `addrSuggest`, dans les deux fichiers).
 - OpenStreetMap (tuiles + Nominatim) pour la carte des photos.
 
 ### Stockage local (noms hérités de PhotoChantier — NE PAS RENOMMER)

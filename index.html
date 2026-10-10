@@ -781,6 +781,11 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 @media (max-width:720px){.pdv-side{position:absolute;inset:auto 0 0 0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line)}}
 
 /* ---------- Devis particuliers (v1.7) ---------- */
+.addr-sug{display:grid;margin-top:4px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);overflow:hidden}
+.addr-sug button{display:grid;gap:2px;text-align:left;padding:10px 12px;min-height:46px;border:0;border-top:1px solid var(--line);background:none;color:var(--text);font:inherit;cursor:pointer}
+.addr-sug button:first-child{border-top:0}
+.addr-sug button.cur,.addr-sug button:hover{background:var(--signal-soft)}
+.addr-sug small{color:var(--muted);font-size:13px}
 input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{width:100%;min-height:46px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:16px var(--body)}
 .dot.devis{background:var(--warn)}
 .dz-body{flex:1;min-height:0;display:grid;grid-template-columns:330px minmax(0,1fr)}
@@ -1621,7 +1626,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <div class="sheet-body">
     <div class="field"><span>Entreprise (en-tête du mémo PDF)</span><div id="dnComp" class="list"></div><button id="dnCompAdd" class="btn ghost" style="justify-self:start">Ajouter une entreprise</button></div>
     <label class="field"><span>Nom du client</span><input type="text" id="dnName" placeholder="ex. M. et Mme Dupont" autocomplete="off"></label>
-    <label class="field"><span>Localité des travaux</span><input type="text" id="dnCity" placeholder="ex. Fully" autocomplete="off"></label>
+    <label class="field"><span>Adresse des travaux</span><input type="text" id="dnCity" placeholder="ex. Rue du Rhône 12 Fully, ou seulement Fully" autocomplete="off"></label>
     <p class="hint">Les photos de cette fiche vont dans Drive › Devis particuliers, jamais dans un chantier, même si vous êtes dans le rayon d’un chantier.</p>
   </div>
   <div class="sheet-foot"><button id="dnCancel" class="btn">Annuler</button><button id="dnGo" class="btn primary">Créer la fiche</button></div>
@@ -6961,6 +6966,56 @@ function bindPvdt(){
   navigator.serviceWorker?.addEventListener('message', e => { const d = e.data || {}; if (d.pvdt) pdOpenFromParam(d.pvdt, d.site); });
 }
 
+/* ---------- Adresses : suggestions swisstopo pendant la saisie (devis) ---------- */
+/* Adresses officielles suisses (bâtiments), sans clé ; hors ligne : pas de suggestion, la saisie libre reste possible. */
+function addrParse(r){
+  const a = r.attrs || {}, raw = String(a.label || '');
+  const txt = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  const m = raw.match(/^(.*?)\s*<b>\s*(\d{4})\s+(.*?)\s*<\/b>/);
+  return m ? {street:m[1].replace(/<[^>]*>/g, '').trim(), npa:m[2], city:m[3].trim(), label:txt, lat:+a.lat, lon:+a.lon}
+    : {street:txt, npa:'', city:'', label:txt, lat:+a.lat, lon:+a.lon};
+}
+function addrSuggest(inp, onPick){
+  if (!inp || inp._addrSug) return;
+  const box = document.createElement('div'); box.className = 'addr-sug'; box.hidden = true; box.setAttribute('role', 'listbox');
+  inp.insertAdjacentElement('afterend', box); inp._addrSug = box;
+  let list = [], cur = -1, seq = 0, t = 0;
+  const hide = () => { box.hidden = true; list = []; cur = -1; };
+  const show = () => {
+    box.innerHTML = list.map((x, i) => `<button type="button" role="option" class="${i === cur ? 'cur' : ''}" data-i="${i}"><b>${esc(x.street)}</b><small>${esc([x.npa, x.city].filter(Boolean).join(' '))}</small></button>`).join('');
+    box.hidden = !list.length;
+  };
+  const pick = i => { const x = list[i]; if (!x) return; hide(); onPick(x); };
+  inp.addEventListener('input', () => {
+    clearTimeout(t); const q = inp.value.trim(), my = ++seq;
+    if (q.length < 3 || !navigator.onLine) { hide(); return; }
+    t = setTimeout(async () => {
+      try {
+        const r = await fetch('https://api3.geo.admin.ch/rest/services/api/SearchServer?' + new URLSearchParams({searchText:q, type:'locations', origins:'address', sr:'4326', limit:'6'}));
+        const j = await r.json(); if (my !== seq || document.activeElement !== inp) return;
+        list = (j.results || []).map(addrParse).filter(x => x.street); cur = -1; show();
+      } catch (e) { if (my === seq) hide(); }
+    }, 250);
+  });
+  box.addEventListener('pointerdown', e => { const b = e.target.closest('[data-i]'); if (!b) return; e.preventDefault(); pick(+b.dataset.i); });
+  box.addEventListener('click', e => e.preventDefault());
+  inp.addEventListener('blur', () => setTimeout(hide, 150));
+  window.addEventListener('keydown', e => {
+    if (e.target !== inp || box.hidden) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { cur = (cur + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length; show(); }
+    else if (e.key === 'Enter' && cur >= 0) pick(cur);
+    else if (e.key === 'Escape') hide();
+    else return;
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+}
+function addrFillFiche(root, x){
+  [['addr.street', x.street], ['addr.npa', x.npa], ['addr.city', x.city]].forEach(([k, v]) => {
+    const el = root.querySelector(`input[data-f="${k}"]`); if (!el || v == null) return;
+    el.value = v; el.dispatchEvent(new Event('input', {bubbles:true}));
+  });
+}
+
 /* ---------- Devis particuliers (v1.7) ---------- */
 /* Une fiche par demande de particulier : client, adresse, visite (photos, notes), travaux à faire.
    Les photos vont dans Drive › Devis particuliers › <fiche> › Photos, jamais dans un chantier, même dans le rayon d'un chantier.
@@ -7156,6 +7211,7 @@ function renderDzFiche(){
   </div>
   <div class="dz-memos" id="dzMemos" hidden></div>`;
   renderDzHead(d); renderDzActs(d); renderDzGps(); renderDzItems();
+  addrSuggest(m.querySelector('input[data-f="addr.street"]'), x => addrFillFiche(m, x));
   dz.photos = []; dz.memos = []; renderDzPhotos(); dzLoadPhotos();
 }
 
@@ -7231,18 +7287,19 @@ function openDevNew(){
     ? comps.map(c => `<button class="pick ${c.id === dz.newComp ? 'cur' : ''}" data-dncomp="${esc(c.id)}" aria-pressed="${c.id === dz.newComp}">${compLogoHTML(c)}<span class="t"><b>${esc(c.name)}</b><small>${esc(c.addr || 'En-tête du mémo')}</small></span></button>`).join('')
     : '<p class="hint">Aucune entreprise enregistrée : le mémo aura un en-tête neutre.</p>';
   $('#dnCompAdd').textContent = comps.length ? 'Gérer les entreprises' : 'Ajouter une entreprise';
-  $('#dnName').value = ''; $('#dnCity').value = '';
+  $('#dnName').value = ''; $('#dnCity').value = ''; dz.newAddr = null;
   openSheet('#sheetDevNew'); setTimeout(() => $('#dnName').focus(), 250);
 }
 function createDevis(){
-  const name = $('#dnName').value.trim(), city = $('#dnCity').value.trim();
+  const name = $('#dnName').value.trim(), typed = $('#dnCity').value.trim(), pa = dz.newAddr && dz.newAddr.label === typed ? dz.newAddr : null;
+  const city = pa ? pa.city : typed;
   if (!name) { note('Indiquez le nom du client.'); $('#dnName').focus(); return; }
   const now = new Date();
   let folder = clean(`${now.getFullYear()}-${pad2(now.getMonth() + 1)} ${name}${city ? ' – ' + city : ''}`) || 'Devis';
   const used = new Set(devList().map(d => d.folder));
   if (used.has(folder)) { let i = 2; while (used.has(folder + ' (' + i + ')')) i++; folder += ' (' + i + ')'; }
   const d = {id:newUid(), created:Date.now(), mod:Date.now(), comp:compById(dz.newComp) ? dz.newComp : '', folder,
-    client:{name, tel:'', email:''}, addr:{street:'', npa:'', city}, pos:null, visit:'', access:[], accessNote:'', items:[], notes:''};
+    client:{name, tel:'', email:''}, addr:{street:pa ? pa.street : '', npa:pa ? pa.npa : '', city}, pos:null, visit:'', access:[], accessNote:'', items:[], notes:''};
   devList().unshift(d); save();
   closeSheet($('#sheetDevNew'));
   dzGrabPos(d);
@@ -7698,6 +7755,7 @@ function bindDevis(){
   $('#dnGo').addEventListener('click', createDevis);
   $('#dnCancel').addEventListener('click', () => closeSheet($('#sheetDevNew')));
   $('#dnCity').addEventListener('keydown', e => { if (e.key === 'Enter') createDevis(); });
+  addrSuggest($('#dnCity'), x => { dz.newAddr = x; $('#dnCity').value = x.label; });
   $('#dnCompAdd').addEventListener('click', () => { closeSheet($('#sheetDevNew')); openSettings('g-comp'); });
   /* entreprises */
   $('#compAdd').addEventListener('click', () => openComp(null));
