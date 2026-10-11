@@ -116,7 +116,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .btn .ic{width:19px;height:19px}
 .field{display:grid;gap:6px}
 .field>span{font-size:13px;color:var(--muted);font-weight:500}
-input[type=text],input[type=number],input[type=url],select{width:100%;min-height:46px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+input[type=text],input[type=number],input[type=url],input[type=time],select{width:100%;min-height:46px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
   background:var(--surface2);color:var(--text);font:16px var(--body)}
 input.mono{font:14px var(--mono)}
 input:focus,select:focus{outline:2px solid var(--signal);outline-offset:0;border-color:transparent}
@@ -1239,6 +1239,23 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <label class="field"><span>Rayon de détection</span>
       <select id="seRadius"><option value="100">100 m</option><option value="200">200 m</option><option value="300">300 m</option><option value="500">500 m</option><option value="1000">1 km</option><option value="3000">3 km (tracé routier)</option></select>
     </label>
+    <div class="field"><span>Séances de chantier</span>
+      <div class="two">
+        <label class="field"><span>Première séance</span><input type="date" id="seMeetFrom"></label>
+        <label class="field"><span>Heure</span><input type="time" id="seMeetTime" step="900"></label>
+      </div>
+      <div class="two">
+        <label class="field"><span>Rythme</span><select id="seMeetEvery"><option value="1">Chaque semaine</option><option value="2">Toutes les 2 semaines</option><option value="3">Toutes les 3 semaines</option><option value="4">Toutes les 4 semaines</option></select></label>
+        <label class="field"><span>Durée</span><select id="seMeetDur"><option value="60">1 h</option><option value="90">1 h 30</option><option value="120">2 h</option><option value="180">3 h</option></select></label>
+      </div>
+      <label class="field"><span>Lieu de la séance</span><input type="text" id="seMeetPlace" placeholder="Baraque de chantier, bureau de la DT…" autocomplete="off"></label>
+      <p class="hint" id="seMeetHint"></p>
+    </div>
+    <div class="field"><span>Notre entreprise sur ce chantier</span>
+      <select id="seComp"></select>
+      <input type="text" id="seAbbr" placeholder="Abréviations dans les PV : DUP, Ent. Dupont" autocomplete="off" aria-label="Abréviations de l'entreprise dans les PV">
+      <p class="hint">Sert au récap des PV DT avant chaque séance : les points qui concernent cette entreprise sont mis en avant.</p>
+    </div>
     <div class="field"><span>Mise en page des photos de ce chantier</span>
       <canvas id="seLayPreview" width="720" height="540" aria-label="Aperçu de la mise en page"></canvas>
       <div class="row"><div class="lbl"><b>Mise en page propre à ce chantier</b><small id="seCustomHint">Sinon : mise en page par défaut (Paramètres › Photos)</small></div><label class="switch"><input type="checkbox" id="seCustom"><span></span></label></div>
@@ -2831,6 +2848,13 @@ function openSiteEdit(id, useHere){
   $('#seNumber').value = s?.number || ''; $('#seName').value = s ? s.name : '';
   $('#seLat').value = s ? s.lat.toFixed(6) : ''; $('#seLon').value = s ? s.lon.toFixed(6) : '';
   $('#seRadius').value = String(s?.radius || 300);
+  const mt = s?.meet || {};
+  $('#seMeetFrom').value = mt.from || ''; $('#seMeetTime').value = mt.time || '08:00';
+  $('#seMeetEvery').value = String(mt.every || 1); $('#seMeetDur').value = String(mt.dur || 90); $('#seMeetPlace').value = mt.place || '';
+  $('#seComp').innerHTML = '<option value="">' + (compList().length ? '— Aucune —' : 'Aucune entreprise (à créer dans Devis › Entreprises)') + '</option>'
+    + compList().map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  $('#seComp').value = s?.comp && compById(s.comp) ? s.comp : ''; $('#seAbbr').value = s?.abbr || '';
+  renderSeMeet();
   seLogo = s?.logo || null; renderSeLogo();
   seCustomOn = !!s?.layout; seLay = clone(layoutFor(s)); renderSeLayout();
   seDocOn = !!s?.docLayout; seDocLay = {...docLayBase(), ...(s?.docLayout || {})}; renderSeDoc();
@@ -2839,6 +2863,20 @@ function openSiteEdit(id, useHere){
   if (useHere) fillHere();
   updateMapLink();
   openSheet('#sheetSiteEdit');
+}
+const SE_DAYN = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const SE_EVERY = {1:'chaque semaine', 2:'toutes les 2 semaines', 3:'toutes les 3 semaines', 4:'toutes les 4 semaines'};
+function seMeetDraft(){
+  const from = $('#seMeetFrom').value; if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return undefined;
+  const place = $('#seMeetPlace').value.trim();
+  return {from, time:$('#seMeetTime').value || '08:00', every:+$('#seMeetEvery').value || 1, dur:+$('#seMeetDur').value || 90, ...(place ? {place} : {})};
+}
+function renderSeMeet(){
+  const m = seMeetDraft(), h = $('#seMeetHint'); if (!h) return;
+  if (!m) { h.textContent = 'Sans date : pas de séance, pas de récap PV ni d’événement dans Google Agenda.'; return; }
+  const sent = editId && calMap()['se:' + editId] === JSON.stringify(calSiteBody({...siteById(editId), meet:m}));
+  h.textContent = `Le ${SE_DAYN[new Date(m.from + 'T12:00:00').getDay()]} à ${m.time.replace(':', 'h')}, ${SE_EVERY[m.every]}. `
+    + (sent ? 'Déjà dans Google Agenda.' : 'Ajouté à Google Agenda à l’enregistrement.') + ' Récap des PV DT la veille (le vendredi pour une séance du lundi).';
 }
 function seMsg(t, ok){ const m = $('#seMsg'); m.textContent = t; m.className = 'msg' + (ok ? ' ok' : ''); m.hidden = false; }
 function fillHere(){
@@ -2870,7 +2908,12 @@ function saveSite(){
   const layout = seCustomOn ? clone(seLay) : undefined;
   if (s) { Object.assign(s, {name, number, lat, lon, radius, logo:seLogo, example:false}); if (layout) s.layout = layout; else delete s.layout; }
   else S.sites.push({id:'s' + Date.now().toString(36), name, number, lat, lon, radius, logo:seLogo, ...(layout ? {layout} : {})});
-  { const tgt = s || S.sites[S.sites.length - 1]; if (seDocOn) tgt.docLayout = clone(seDocLay); else delete tgt.docLayout; }
+  { const tgt = s || S.sites[S.sites.length - 1]; if (seDocOn) tgt.docLayout = clone(seDocLay); else delete tgt.docLayout;
+    const meet = seMeetDraft(), comp = $('#seComp').value, abbr = $('#seAbbr').value.trim();
+    if (meet) tgt.meet = meet; else delete tgt.meet;
+    if (comp) tgt.comp = comp; else delete tgt.comp;
+    if (abbr) tgt.abbr = abbr; else delete tgt.abbr;
+    if (meet || calMap()['se:' + tgt.id]) calTouch('se:' + tgt.id); }
   if (seLogo && !S.logoLib.includes(seLogo)) { S.logoLib.unshift(seLogo); S.logoLib = S.logoLib.slice(0, 30); }
   save(); closeSheet($('#sheetSiteEdit')); renderSites(); renderSiteChip(); renderDpLayout(); note('Chantier enregistré');
   if (!$('#desk').hidden) { renderDeskSites(); renderDesk(); }
@@ -4961,6 +5004,7 @@ function bind(){
   $('#seAddr').addEventListener('keydown', e => { if (e.key === 'Enter') searchAddr(); });
   $('#seLat').addEventListener('input', updateMapLink); $('#seLon').addEventListener('input', updateMapLink);
   $('#seSave').addEventListener('click', saveSite);
+  ['#seMeetFrom', '#seMeetTime', '#seMeetEvery', '#seMeetPlace'].forEach(k => $(k).addEventListener('input', renderSeMeet));
   $('#seCustom').addEventListener('change', e => { seCustomOn = e.target.checked; if (seCustomOn) seLay = clone(layoutFor(null)); renderSeLayout(); });
   $('#seLayLogo').addEventListener('change', e => { seLay.logo = e.target.checked; renderSeLayout(); });
   $('#seLayPos').addEventListener('change', e => { if (e.target.name === 'seLayPos') { seLay.logoPos = e.target.value; drawSeLayout(); } });
@@ -6269,7 +6313,7 @@ function bindPlans(){
 
 
 /* ---------- PV de chantier de la DT : lecture du PDF (n°, date, chantier, points) ---------- */
-const PVDT_DIR = 'PV de chantier', PVDT_OLD = 'PV annulés', PVDT_ANN = 'Annotations';
+const PVDT_DIR = 'PV de chantier', PVDT_OLD = 'PV annulés', PVDT_ANN = 'Annotations', PVDT_RECAP = 'Récaps séances';
 const pdNorm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const pdReEsc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const PD_MOIS = {janvier:1, fevrier:2, mars:3, avril:4, mai:5, juin:6, juillet:7, aout:8, septembre:9, octobre:10, novembre:11, decembre:12};
@@ -6362,6 +6406,7 @@ function pdKeys(){
   const k = new Set();
   for (const c of S.companies || []) { const n = String(c.name || '').trim(); if (n) { k.add(n); const f = n.split(/\s+/)[0]; if (f.length >= 4) k.add(f); } }
   for (const x of S.pvKeys || []) if (String(x).trim()) k.add(String(x).trim());
+  for (const s of S.sites || []) for (const a of String(s.abbr || '').split(/[,;]/)) if (a.trim().length >= 2) k.add(a.trim());
   return [...k];
 }
 const pdDir = site => ensurePath([siteFolder(site), PVDT_DIR]);
@@ -7041,6 +7086,23 @@ function calBody(d){
     colorId:'5', reminders:{useDefault:false, overrides:[{method:'popup', minutes:60}]}, status:'confirmed',
     extendedProperties:{private:{baugest:'devis', devis:String(d.id)}}};
 }
+/* Séances de chantier : un événement récurrent par chantier (clé 'se:<id chantier>' dans 'baugest.cal'). */
+const SE_RR = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+function calSiteBody(s){
+  const m = s && !s.example && s.meet; if (!m || !/^\d{4}-\d{2}-\d{2}$/.test(m.from || '')) return null;
+  const [h, mi] = String(m.time || '08:00').split(':').map(Number), t = new Date(m.from + 'T00:00:00');
+  t.setHours(h || 0, mi || 0, 0, 0); if (isNaN(t)) return null;
+  const c = compById(s.comp), every = +m.every || 1, geo = isFinite(s.lat) && isFinite(s.lon);
+  return {summary:'Séance de chantier – ' + siteLabel(s), location:m.place || (geo ? s.lat.toFixed(6) + ', ' + s.lon.toFixed(6) : ''),
+    description:['Chantier : ' + siteLabel(s), c && 'Entreprise : ' + c.name + (s.abbr ? ' (' + s.abbr + ')' : ''),
+      'Rythme : le ' + SE_DAYN[t.getDay()] + ', ' + (SE_EVERY[every] || 'toutes les ' + every + ' semaines'), m.place && 'Lieu : ' + m.place,
+      geo && 'Position : https://www.openstreetmap.org/?mlat=' + s.lat.toFixed(6) + '&mlon=' + s.lon.toFixed(6) + '#map=17/' + s.lat.toFixed(6) + '/' + s.lon.toFixed(6),
+      'Récap des PV DT : la veille vers 17h40, Drive › ' + siteFolder(s) + ' › ' + PVDT_DIR + ' › ' + PVDT_RECAP].filter(Boolean).join('\n'),
+    start:{dateTime:calLocal(t), timeZone:CAL_TZ}, end:{dateTime:calLocal(new Date(t.getTime() + (+m.dur || 90) * 60000)), timeZone:CAL_TZ},
+    recurrence:['RRULE:FREQ=WEEKLY;INTERVAL=' + every + ';BYDAY=' + SE_RR[t.getDay()]],
+    colorId:'9', reminders:{useDefault:false, overrides:[{method:'popup', minutes:60}]}, status:'confirmed',
+    extendedProperties:{private:{baugest:'seance', site:String(s.id)}}};
+}
 async function calReq(method, url, body){
   const tok = calAuth(); if (!tok) throw Object.assign(new Error('connexion Google'), {status:0});
   const r = await fetch(url, {method, headers:{Authorization:'Bearer ' + tok, ...(body ? {'Content-Type':'application/json'} : {})}, body:body ? JSON.stringify(body) : undefined});
@@ -7061,12 +7123,13 @@ async function calSyncAll(){
   CAL.busy = true; CAL.err = '';
   try {
     const m = calMap(), old = Date.now() - 864e5;
-    for (const id of new Set([...devList().map(d => d.id), ...Object.keys(m)])) {
-      const d = devById(id), body = d ? calBody(d) : null, sig = body ? JSON.stringify(body) : '';
+    for (const id of new Set([...devList().map(d => d.id), ...S.sites.filter(s => !s.example).map(s => 'se:' + s.id), ...Object.keys(m)])) {
+      const se = id.startsWith('se:'), d = se ? null : devById(id), s = se ? siteById(id.slice(3)) : null;
+      const body = se ? calSiteBody(s) : d ? calBody(d) : null, sig = body ? JSON.stringify(body) : '';
       if (m[id] === sig) continue;
-      if (m[id] === undefined && (!body || new Date(d.visit).getTime() < old)) continue;
+      if (m[id] === undefined && (!body || (!se && new Date(d.visit).getTime() < old))) continue;
       if (body) await calPut(id, body, !!m[id] && m[id] !== '?'); else await calDel(id);
-      if (body || d) m[id] = sig; else delete m[id];
+      if (body || d || s) m[id] = sig; else delete m[id];
       calMapSet(m); renderDzCal();
     }
   } catch (e) {

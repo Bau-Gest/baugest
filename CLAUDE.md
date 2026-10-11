@@ -24,6 +24,7 @@
 | `tools/transcription/prepare.py` | — | Rendu des traits JSON → PNG, découpe en segments, extraction des cases signature |
 | `tools/transcription/make_pdf.py` | — | PDF « texte tapé » avec la mise en page BauGest (reportlab) |
 | `tools/transcription/README.md` | — | Mode d'emploi du pipeline |
+| `tools/recap/make_recap.py` | — | PDF « Récap PV DT » avant séance (reportlab), utilisé par la tâche Récap PV |
 
 Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être en retard sur GitHub → GitHub fait foi). `claude/transcription/make_docx.js` et `render_baugest_doc.py` = anciennes versions (sortie .docx abandonnée). `claude/pwa/*` et `claude/planschantier_v1.html` = anciens PlansChantier.
 
@@ -43,7 +44,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 
 ### Services externes
 - Google Drive API v3 (`drive` scope complet) + GIS OAuth.
-- Google Calendar API v3 (scope `calendar.events`, ajouté le 10.10.2026) : la date de visite d'une fiche devis crée / déplace / supprime un événement dans l'agenda principal du compte connecté (`joel.magano.job@gmail.com`). Titre « Visite devis – Client – Localité », lieu = adresse, description = tél. client + entreprise, 1 h, rappel 1 h avant, couleur jaune (colorId 5). Id d'événement fixe `bgdv<hex de l'id fiche>` → pas de doublon entre appareils. Bloc `calSyncAll` dans les deux fichiers. Les visites passées de plus de 24 h ne sont pas créées rétroactivement. Client ID intégré `691997779377-8p5c7u6o…` (`BUILTIN_CLIENT_ID`, même client tablette et PC). Origine/redirection autorisées : `https://bau-gest.github.io` / `…/baugest/`.
+- Google Calendar API v3 (scope `calendar.events`, ajouté le 10.10.2026) : la date de visite d'une fiche devis crée / déplace / supprime un événement dans l'agenda principal du compte connecté (`joel.magano.job@gmail.com`). Titre « Visite devis – Client – Localité », lieu = adresse, description = tél. client + entreprise, 1 h, rappel 1 h avant, couleur jaune (colorId 5). Id d'événement fixe `bgdv<hex de l'id fiche>` → pas de doublon entre appareils. Bloc `calSyncAll` dans les deux fichiers. **Séances de chantier** (index.html seulement, 11.10.2026) : un événement récurrent par chantier (`calSiteBody`, clé `se:<id chantier>` dans `baugest.cal`), titre « Séance de chantier – N° Nom », RRULE hebdo (intervalle 1–4), couleur bleue (colorId 9), rappel 1 h avant ; supprimé si la date de 1re séance est vidée ou le chantier supprimé. Les visites passées de plus de 24 h ne sont pas créées rétroactivement. Client ID intégré `691997779377-8p5c7u6o…` (`BUILTIN_CLIENT_ID`, même client tablette et PC). Origine/redirection autorisées : `https://bau-gest.github.io` / `…/baugest/`.
 - swisstopo : WMTS `wmts.geo.admin.ch` (SWISSIMAGE), WMS `wms.geo.admin.ch` (parcelles), `api3.geo.admin.ch` (recherche ; suggestions d'adresses pendant la saisie dans les devis, fonction `addrSuggest`, dans les deux fichiers).
 - OpenStreetMap (tuiles + Nominatim) pour la carte des photos.
 
@@ -69,7 +70,8 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 │   │   └── Plans annulés/
 │   └── PV de chantier/
 │       ├── PV annulés/
-│       └── Annotations/
+│       ├── Annotations/
+│       └── Récaps séances/   (« AAAA-MM-JJ_Récap PV_<chantier>.pdf », tâche Récap PV)
 ├── À classer/                  (photos sans chantier)
 └── Devis particuliers/<fiche>/Photos/ (+ mémos PDF)
 ```
@@ -85,7 +87,8 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 
 **Réglages synchronisés** (`Réglages PhotoChantier (ne pas supprimer).json`, `appProperties.kind='settings'`) : champs `SYNC_FIELDS` = companies, tags, logoLib, docLay, docTitles, stamp, logoOn, logoPos, logoSize, logoBg, stampLines, quality, tagPrompt, tagDelay, structure, pvKeys + chantiers `S.sites` + devis `S.devis`/`S.ddel`. Fusion par horodatage par champ/chantier (`S.fmod`, `S.smod`, `S.sdel`, `S.remap`). Valeurs par défaut : objet `DEF` (index.html ~l.1870).
 
-**Chantier** : `{id, number, name, lat, lon, radius (m, défaut 300), …mise en page propre}` ; détection GPS = position dans le rayon.
+**Chantier** : `{id, number, name, lat, lon, radius (m, défaut 300), meet?, comp?, abbr?, …mise en page propre}` ; détection GPS = position dans le rayon.
+`meet` = séances `{from:'AAAA-MM-JJ' (1re séance → jour de semaine), time:'HH:MM', every:1–4 semaines, dur:min, place?}` ; `comp` = id de notre entreprise (`S.companies`) ; `abbr` = abréviations DT séparées par virgules (aussi ajoutées à `pdKeys`).
 
 **Document manuscrit** (`DOCS`, `DOC_ORDER = pv, journal, regie, constat, libre`) : page logique 1000 × 1414 unités (`PW`, `PH`), traits stylet en JSON. Cases signature : journal, regie, constat (`sign:true`).
 
@@ -115,9 +118,10 @@ Réglages & synchro (~1868–2130) · GPS/caméra/prise de vue (~2164–2515) ·
 |---|---|---|
 | Transcription BauGest | lu–ve 11:53 et 17:53 | JSON manuscrit → PDF texte tapé à côté du JSON ; signatures recopiées, jamais transcrites ; notification si ≥ 1 document |
 | Plans BauGest | lu–ve 11:17 et 17:17 | Renomme les plans d'après le cartouche (« Sujet ind C AAAA-MM-JJ.pdf »), doublons/anciens indices → Plans annulés ; notification si changement |
+| Récap PV BauGest | lu–ve 17:35 | Veille de séance (vendredi pour le lundi) : compare les 2 derniers PV DT du chantier, PDF dans `PV de chantier/Récaps séances/` + notification ; « PV manquant » si aucun nouveau PV |
 
 Les deux tournent sans l'ordinateur de Joel, mais dépendent des connexions Google Drive/GitHub du compte Claude. Dernier passage réussi : 09.10.2026.
-Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_01E3uKkt6Bjw7r1Hpt64bKau` transcription, `trig_01NewhU8swozvP54yXMooPRn` plans). Si un format de fichier ou un nom de dossier change dans l'app, **mettre à jour le prompt de la tâche concernée** (`update_trigger`). La tâche Transcription clone le dépôt et exécute `tools/transcription/*.py` : ne pas casser leur interface.
+Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_01XjUE62rMyRVSSEq1JPZk37` transcription, `trig_01CwbzZRPB1U3bZNXRm3VBE8` plans, récap PV : voir `list_triggers`). Si un format de fichier ou un nom de dossier change dans l'app, **mettre à jour le prompt de la tâche concernée** (`update_trigger`). La tâche Transcription clone le dépôt et exécute `tools/transcription/*.py` : ne pas casser leur interface.
 
 ## 4b. Déploiement et comptes
 
