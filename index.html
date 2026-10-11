@@ -781,6 +781,45 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .pdn-kinds{display:flex;flex-wrap:wrap;gap:6px}
 .pdn-kinds .btn{min-height:40px}
 @media (max-width:720px){.pdv-side{position:absolute;inset:auto 0 0 0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line)}}
+/* ---------- Soumission du chantier (v2.2) ---------- */
+.so-files{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.so-file{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 12px;border-radius:19px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:14px;text-decoration:none}
+.so-file small{color:var(--muted);font-size:12px}
+.so-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px 16px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+.so-head b{display:block;font:700 26px/1.1 var(--display)}
+.so-head small{color:var(--muted);font-size:13px}
+.so-head>small{text-align:right;max-width:460px}
+.so-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:12px 0 10px}
+.so-in{display:grid;gap:4px;flex:1;min-width:200px}
+.so-inp{flex:0 1 170px;min-width:140px}
+.so-in span{font-size:12.5px;color:var(--muted);font-weight:600}
+.so-in input{box-sizing:border-box;width:100%;min-width:0;min-height:46px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:500 16px var(--body)}
+.so-filters .btn{min-height:46px}
+.so-cans{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:thin}
+.so-chip{flex:none;display:grid;grid-template-columns:auto;justify-items:start;gap:1px;min-height:46px;max-width:190px;padding:6px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);text-align:left;font:600 14px var(--body)}
+.so-chip b{font:700 17px/1.1 var(--display)}
+.so-chip span{font-size:11.5px;color:var(--muted);max-width:166px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.so-chip small{font-size:11.5px;color:var(--muted)}
+.so-chip.on{border-color:var(--signal);background:var(--signal-soft);box-shadow:inset 0 0 0 1px var(--signal)}
+.so-sum{margin:2px 0 8px;font-size:14px;color:var(--muted)}
+.so-sum b{color:var(--text)}
+.so-tab{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);margin-bottom:90px}
+.so-r{display:grid;grid-template-columns:76px minmax(0,1fr) 44px 92px 86px 104px;gap:8px;align-items:start;padding:8px 10px;border-top:1px solid var(--line);font-size:14px;cursor:pointer}
+.so-th{position:sticky;top:0;z-index:1;background:var(--surface2);border-top:0;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;cursor:default}
+.so-p{font:600 13.5px/1.35 var(--mono, monospace);white-space:nowrap}
+.so-t{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35}
+.so-r.open .so-t{display:block;-webkit-line-clamp:unset}
+.so-u{color:var(--muted)}
+.so-n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.so-m{font-weight:700}
+.so-h{grid-template-columns:76px minmax(0,1fr);background:var(--surface2);color:var(--muted);font-size:13px}
+.so-h .so-p{color:var(--muted)}
+.so-can{display:flex;align-items:baseline;gap:10px;padding:10px;border-top:2px solid var(--line);background:var(--signal-soft)}
+.so-tab>.so-can:nth-child(2){border-top:0}
+.so-can b{font:700 17px/1 var(--display);white-space:nowrap}
+.so-can span{flex:1;min-width:0;font-size:14px;font-weight:600}
+.so-can em{font-style:normal;font-weight:700;white-space:nowrap}
+@media (max-width:760px){.so-r{grid-template-columns:64px minmax(0,1fr) 84px}.so-r>.so-u,.so-r>.so-n:not(.so-m){display:none}.so-h{grid-template-columns:64px minmax(0,1fr)}}
 
 /* ---------- Devis particuliers (v1.7) ---------- */
 .addr-sug{display:grid;margin-top:4px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);overflow:hidden}
@@ -1153,6 +1192,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
       <button data-mn="plans" data-tab hidden><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg><span>Plans</span></button>
       <button data-mn="docs"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5"/></svg><span>Documents</span></button>
       <button data-mn="pvdt" data-tab hidden><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/></svg><span>PV DT</span></button>
+      <button data-mn="soum" data-tab hidden><svg class="ic" viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5M15 15h1M15 18h1M8 18h5"/></svg><span>Soumission</span></button>
       <button data-mn="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg><span>Devis</span></button>
       <button data-mn="queue"><svg class="ic" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.9-9.9A6 6 0 0 1 17.7 9 4.5 4.5 0 0 1 17 18M12 12v8M9 15l3-3 3 3"/></svg><span>Envoi Drive</span><span id="mnQueue" class="badge" hidden>0</span></button>
       <button data-mn="contrast" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg><span>Fort contraste</span></button>
@@ -1169,6 +1209,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <button data-rail="plans"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg>Plans</button>
   <button data-rail="docs"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5"/></svg>Documents</button>
   <button data-rail="pvdt"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/></svg>PV DT</button>
+  <button data-rail="soum"><svg class="ic" viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5M15 15h1M15 18h1M8 18h5"/></svg>Soumission</button>
   <button data-rail="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button>
   <span class="rail-grow"></span>
   <button data-rail="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Réglages</button>
@@ -1393,7 +1434,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <h1 id="dkTitle" class="sr">Documents</h1>
     <button id="dkGps" class="dk-gps" aria-label="Aller au chantier détecté"><span id="dkGpsDot" class="dot"></span><span class="t"><b id="dkGpsName">À classer</b><small id="dkGpsSub">Recherche GPS…</small></span></button>
     <button id="dkSiteBtn" class="dk-gps dk-sitebtn" aria-haspopup="true" aria-expanded="false"><span class="t"><b id="dkSiteName">Chantier</b><small>Changer de chantier</small></span><svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button><button data-dmode="pvdt">PV DT</button><button data-dmode="devis">Devis</button></div>
+    <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button><button data-dmode="pvdt">PV DT</button><button data-dmode="soum">Soumission</button><button data-dmode="devis">Devis</button></div>
     <span class="spacer"></span>
     <button class="icon-btn hd-contrast contrast-btn" aria-label="Fort contraste" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
     <button id="dkRefresh" class="icon-btn" aria-label="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
@@ -1464,6 +1505,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
 </section>
 <input type="file" id="plFile" accept="application/pdf,.pdf" multiple hidden>
 <input type="file" id="pdFile" accept="application/pdf,.pdf" multiple hidden>
+<input type="file" id="soFile" accept=".crbx,.e1s,.01s,.docx,.doc,.pdf,.xlsx,.xls" multiple hidden>
 
 <!-- PV de chantier de la DT : visionneuse avec annotation au stylo (tablette) -->
 <section id="pdView" class="panel pdv" hidden aria-label="PV de chantier">
@@ -1586,7 +1628,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <header class="panel-head">
     <button id="dzBack" class="icon-btn" aria-label="Retour"><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <h1 id="dzTitle">Devis</h1>
-    <div id="dzModes" class="dk-modes" hidden><button data-zmode="plans">Plans</button><button data-zmode="docs">Documents</button><button data-zmode="pvdt">PV DT</button><button data-zmode="devis" class="on" aria-pressed="true">Devis</button></div>
+    <div id="dzModes" class="dk-modes" hidden><button data-zmode="plans">Plans</button><button data-zmode="docs">Documents</button><button data-zmode="pvdt">PV DT</button><button data-zmode="soum">Soumission</button><button data-zmode="devis" class="on" aria-pressed="true">Devis</button></div>
     <span class="spacer"></span>
     <button class="icon-btn hd-contrast contrast-btn" aria-label="Fort contraste" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
     <button id="dzCam" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg>Caméra</button>
@@ -2608,7 +2650,7 @@ async function uploadFile(blob, meta, parent){
   const mime = meta.mime || 'image/jpeg';
   const md = {name:meta.name, parents:[parent], description:meta.description, mimeType:mime,
     appProperties:{pc:'1', site:meta.siteId || 'none', taken:meta.taken || '', tags:(meta.tags || []).join('|').slice(0, 60), ...(meta.imported ? {imp:'1'} : {}), ...(meta.lat != null ? {lat:(+meta.lat).toFixed(6), lon:(+meta.lon).toFixed(6)} : {}),
-      ...(meta.kind === 'plan' ? {kind:'plan', uid:meta.uid} : {}), ...(meta.kind === 'export' ? {kind:'export'} : {}), ...(meta.kind === 'pvdt' ? {kind:'pvdt', pvn:meta.pvn || '', pvdate:meta.pvdate || ''} : {}),
+      ...(meta.kind === 'plan' ? {kind:'plan', uid:meta.uid} : {}), ...(meta.kind === 'export' ? {kind:'export'} : {}), ...(meta.kind === 'soum' ? {kind:'soum'} : {}), ...(meta.kind === 'pvdt' ? {kind:'pvdt', pvn:meta.pvn || '', pvdate:meta.pvdate || ''} : {}),
       ...(meta.kind === 'doc' ? {kind:'doc', dtype:meta.dtype || 'libre', title:String(meta.title || '').slice(0, 50)} : {})}};
   const auth = {Authorization:'Bearer ' + S.drive.token};
   if (blob.size < 4.5e6) {
@@ -2923,10 +2965,10 @@ function saveSite(){
 }
 
 /* ---------- Dossiers créés avec chaque chantier ---------- */
-const SITE_FOLDERS_KEY = 'baugest.siteFolders.v2';
+const SITE_FOLDERS_KEY = 'baugest.siteFolders.v3';
 function siteFolderPaths(site){
   const sf = siteFolder(site);
-  return [[sf, 'Photos'], ...DOC_ORDER.map(k => [sf, 'Documents', DOCS[k].folder]), [sf, 'Plans', 'Mesures'], [sf, 'Plans', 'Exports'], [sf, PVDT_DIR, PVDT_OLD]];
+  return [[sf, 'Photos'], ...DOC_ORDER.map(k => [sf, 'Documents', DOCS[k].folder]), [sf, 'Plans', 'Mesures'], [sf, 'Plans', 'Exports'], [sf, PVDT_DIR, PVDT_OLD], [sf, SOUM_DIR, SOUM_OLD]];
 }
 let siteFoldersBusy = false;
 async function ensureSiteFolders(){
@@ -4138,7 +4180,7 @@ function goSection(k){
     openGallery(); return;
   }
   if (k === 'devis') { if (galOpen) closeGallery(); if (!dzOpen) openDevis(); return; }
-  // plans, docs, pvdt : bureau des documents
+  // plans, docs, pvdt, soum : bureau des documents
   if (galOpen) closeGallery();
   if (dzOpen) closeDevis(true);
   const mode = isTabletScreen() ? k : 'docs';
@@ -4247,7 +4289,7 @@ async function seedDemo(){
     hw(g, 'Maçon', 80, 486, 26); hw(g, 'CFC', 480, 486, 26); hw(g, '3.5', 780, 486, 26); hw(g, 'Mini-pelle 3 t', 80, 756, 26); hw(g, '2', 780, 756, 26);
     hw(g, 'Béton C25/30', 80, 940, 26); hw(g, '0.4', 600, 940, 26); hw(g, 'm³', 780, 940, 26); });
 }
-function loadDocs(){ return desk.mode === 'plans' ? loadPlans() : desk.mode === 'pvdt' ? loadPvdt() : loadDocsRaw(); }
+function loadDocs(){ return desk.mode === 'plans' ? loadPlans() : desk.mode === 'pvdt' ? loadPvdt() : desk.mode === 'soum' ? loadSoum() : loadDocsRaw(); }
 async function loadDocsRaw(){
   const tok = ++desk.token, sid = desk.site === '__none' ? 'none' : desk.site;
   desk.loading = true; desk.err = null;
@@ -4281,6 +4323,7 @@ async function loadDocsRaw(){
 function renderDesk(){
   if (desk.mode === 'plans') return renderPlans();
   if (desk.mode === 'pvdt') return renderPvdt();
+  if (desk.mode === 'soum') return renderSoum();
   const s = desk.site === '__none' ? null : siteById(desk.site);
   $('#dkHead').innerHTML = `${s ? logoHTML(s) : ''}<div class="t"><small>${s ? esc(s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(s ? s.name : 'À classer')}</h2></div>
     <div class="dk-acts"><button class="btn" id="dkGalSite"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Photos</button><button class="btn primary" id="dkNew"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Nouveau document</button></div>`;
@@ -5611,7 +5654,7 @@ function renderDeskModes(){
   const show = isTabletScreen();
   $('#dkModes').hidden = !show;
   $$('#dkModes [data-dmode]').forEach(b => { const on = b.dataset.dmode === desk.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
-  $('#dkTitle').textContent = desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV DT' : 'Documents';
+  $('#dkTitle').textContent = desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV DT' : desk.mode === 'soum' ? 'Soumission' : 'Documents';
   syncRail();
 }
 async function planUploaded(uid, f){
@@ -7043,6 +7086,267 @@ function bindPvdt(){
   navigator.serviceWorker?.addEventListener('message', e => { const d = e.data || {}; if (d.pvdt) pdOpenFromParam(d.pvdt, d.site); });
 }
 
+/* ---------- Soumission du chantier (tablette) : tableau des positions, filtre CAN / position / texte (v2.2) ----------
+   Drive : « <Chantier>/Soumission/ » = la soumission rentrée (une seule ; l'ancienne va dans « Anciennes versions »).
+   .crbx (BauBit, SIA 451) : lu directement sur la tablette. Word / PDF : la tâche « Soumission BauGest » (vendredi soir)
+   dépose « <nom> – positions.json » à côté (tools/soumission/soumission.py) ; préféré au .crbx car les textes sont complets. */
+const SOUM_DIR = 'Soumission', SOUM_OLD = 'Anciennes versions';
+const SOUM_SRC = /\.(crbx|e1s|01s|docx?|pdf|xlsx?)$/i, SOUM_451 = /\.(crbx|e1s|01s)$/i, SOUM_POS = /^(.*?)\s+[–-]\s+positions\.json$/i;
+const SOUMX = {data:null, files:[], src:null, err:null, loading:false, cans:new Set(), q:'', p:'', open:new Set(), sid:null};
+const SOUMCACHE = {
+  db:null,
+  async open(){
+    if (this.db !== null) return this.db;
+    try { this.db = await new Promise((res, rej) => { const r = indexedDB.open('baugest-soum', 1); r.onupgradeneeded = () => r.result.createObjectStore('soum', {keyPath:'key'}); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+    catch (e) { this.db = false; }
+    return this.db;
+  },
+  async tx(mode, fn){ const db = await this.open(); if (!db) return null; return new Promise((res, rej) => { const t = db.transaction('soum', mode), st = t.objectStore('soum'); const r = fn(st); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }); },
+  get(k){ return this.tx('readonly', s => s.get(k)).catch(() => null); },
+  put(o){ return this.tx('readwrite', s => s.put(o)).catch(() => null); }
+};
+const soumDir = site => ensurePath([siteFolder(site), SOUM_DIR]);
+const soumOldDir = site => ensurePath([siteFolder(site), SOUM_DIR, SOUM_OLD]);
+const soumBase = n => String(n).replace(/\.[a-z0-9]{1,5}$/i, '').trim();
+
+/* ---------- lecture du .crbx (zip + SIA 451, colonnes fixes) — même logique que tools/soumission/soumission.py ---------- */
+const SOUM_CAN = {'102':'Mesures environnementales', '111':'Travaux en régie', '112':'Essais', '113':'Installations de chantier', '116':'Coupes de bois et défrichements',
+  '117':'Démolitions et démontages', '125':'Guidage temporaire du trafic', '151':'Constructions de réseaux enterrés', '161':'Epuisement des eaux', '162':'Enceintes de fouilles',
+  '181':'Aménagements extérieurs', '211':'Fouilles et terrassements', '221':'Couches de fondation pour surfaces de circulation', '222':'Bordures, pavages, dallages et escaliers',
+  '223':'Chaussées et revêtements', '237':'Canalisations et évacuation des eaux', '241':'Constructions en béton coulé sur place', '281':'Dispositifs routiers de retenue',
+  '282':'Signalisation: Signaux routiers', '286':'Marquages', '315':'Construction préfabriquée en béton et en maçonnerie'};
+const SOUM_UNIT = /^\s*(gl|up|fft|m|m1|m2|m3|h|pce|p|kg|t|l|j|sem|mois|%)\s*$/i;
+async function soumUnzip(buf, re){
+  const v = new DataView(buf), u8 = new Uint8Array(buf);
+  let e = -1;
+  for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--) if (v.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) return u8; // pas une archive : fichier SIA 451 seul
+  const n = v.getUint16(e + 10, true), ents = []; let p = v.getUint32(e + 16, true);
+  for (let k = 0; k < n && v.getUint32(p, true) === 0x02014b50; k++) {
+    const nl = v.getUint16(p + 28, true), xl = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true);
+    ents.push({name:new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nl)), meth:v.getUint16(p + 10, true), size:v.getUint32(p + 20, true), off:v.getUint32(p + 42, true)});
+    p += 46 + nl + xl + cl;
+  }
+  const en = ents.find(x => re.test(x.name)) || ents.find(x => !x.name.endsWith('/'));
+  if (!en) throw new Error('archive vide');
+  const start = en.off + 30 + v.getUint16(en.off + 26, true) + v.getUint16(en.off + 28, true), data = u8.subarray(start, start + en.size);
+  if (en.meth === 0) return data;
+  if (en.meth !== 8 || typeof DecompressionStream === 'undefined') throw new Error('compression non prise en charge');
+  return new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+}
+function soumJoin(lines){
+  let o = '';
+  for (let l of lines) { l = String(l).trim(); if (!l) continue; if (!o) o = l; else if (o.endsWith('-') && !o.endsWith(' -') && /^\p{Ll}/u.test(l)) o = o.slice(0, -1) + l; else o += ' ' + l; }
+  return o.replace(/\s+/g, ' ').trim();
+}
+const soumFmtPos = c => /^\d{6}$/.test(c) ? (c.slice(3) === '000' ? c.slice(0, 3) : c.slice(0, 3) + '.' + c.slice(3)) : c;
+function soumFinish(doc){
+  const tot = {};
+  for (const p of doc.pos) if (p.m != null) tot[p.can] = (tot[p.can] || 0) + p.m;
+  for (const c of doc.cans) if (c.total == null) c.total = Math.round((tot[c.can] || 0) * 100) / 100;
+  if (doc.total == null) doc.total = Math.round(doc.cans.reduce((s, c) => s + (c.total || 0), 0) * 100) / 100;
+  return doc;
+}
+function soumParse451(text, name){
+  const doc = {v:1, src:{name, fmt:'crbx'}, projet:'', entreprise:'', total:null, cans:[], pos:[]}, cans = new Map(), pos = new Map();
+  for (const l of text.split(/\r?\n/)) {
+    const k = l[0];
+    if (k === 'A' && l.length > 136) doc.projet = [l.slice(81, 91), l.slice(91, 121), l.slice(136, 166)].map(s => s.trim()).filter(Boolean).join(' ');
+    else if (k === 'Z' && l.length > 136) doc.entreprise = l.slice(136, 166).trim();
+    if (k !== 'G' || l.length < 42) continue;
+    const can = l.slice(1, 4), code = l.slice(7, 13).trim(), sub = l.slice(13, 17).trim(), lvl = l[41], txt = l.length > 92 ? l.slice(92) : '';
+    if (!code) { if (lvl === '1') cans.set(can, {can, titre:SOUM_CAN[can] || (l.slice(92, 122) + l.slice(137)).replace(/\s+/g, ' ').trim(), total:null}); continue; }
+    if (!cans.has(can)) cans.set(can, {can, titre:SOUM_CAN[can] || '', total:null});
+    let p = pos.get(can + '|' + code);
+    if (!p) pos.set(can + '|' + code, p = {can, p:soumFmtPos(code), title:[], text:[], u:'', q:null, pu:null, m:null});
+    if (lvl === '2' && !sub) p.title.push(txt);
+    else if (lvl === '3') p.text.push(txt);
+    else if (lvl === '5') p.u = l.slice(42).trim();
+    else if (lvl === '6') {
+      const m = /([+-]\d{13})\s+[A-Z ]?([+-]\d{12})/.exec(l.slice(42));
+      if (m) { const qi = parseInt(m[1], 10), pi = parseInt(m[2], 10); p.q = (p.q || 0) + qi / 1000; p.pu = pi / 100; p.v = (p.v || 0) + qi * pi; } // montant exact en 1/100 000 CHF
+    }
+  }
+  doc.cans = [...cans.values()];
+  for (const p of pos.values()) {
+    if (p.v != null) p.m = Math.sign(p.v) * Math.floor((Math.abs(p.v) + 2500) / 5000) * 5 / 100; // arrondi à 0.05 CHF par position, comme BauBit
+    const t = soumJoin(p.text.filter(x => x.trim() && x.trim() !== p.u && !SOUM_UNIT.test(x))) || soumJoin(p.title);
+    doc.pos.push(p.u || p.q != null ? {can:p.can, p:p.p, t, u:p.u, q:p.q == null ? null : Math.round(p.q * 1000) / 1000, pu:p.pu, m:p.m == null ? null : Math.round(p.m * 100) / 100} : {can:p.can, p:p.p, t, h:1});
+  }
+  return soumFinish(doc);
+}
+async function soumParseFile(buf, name){
+  const raw = await soumUnzip(buf, /\.(e1s|01s|[a-z]1s)$/i);
+  let text; try { text = new TextDecoder('utf-8', {fatal:true}).decode(raw); } catch (e) { text = new TextDecoder('windows-1252').decode(raw); }
+  const d = soumParse451(text, name);
+  if (!d.pos.length) throw new Error('aucune position trouvée dans le fichier');
+  return d;
+}
+
+/* ---------- liste (Drive + cache de l'appareil) ---------- */
+async function loadSoum(){
+  const tok = ++desk.token, sid = desk.site === '__none' ? 'none' : desk.site, site = pdSiteOf(sid);
+  if (SOUMX.sid !== sid) { SOUMX.sid = sid; SOUMX.cans.clear(); SOUMX.q = ''; SOUMX.p = ''; SOUMX.open.clear(); }
+  SOUMX.loading = true; SOUMX.err = null;
+  const c = await SOUMCACHE.get(sid);
+  SOUMX.data = c ? c.data : null; SOUMX.files = c ? c.files || [] : []; SOUMX.src = c ? c.src || null : null;
+  if (tok === desk.token) renderSoum();
+  const r = queueReason();
+  if (!site) SOUMX.err = null;
+  else if (DEMO && !tokenValid()) SOUMX.err = 'Aperçu : dans l’app, la rubrique lit le dossier « Soumission » du chantier sur ton Drive.';
+  else if (r && r.a !== null) SOUMX.err = r.t + ' · soumission gardée sur cet appareil';
+  else if (!navigator.onLine) SOUMX.err = 'Hors ligne · soumission gardée sur cet appareil';
+  else {
+    try {
+      const dir = await soumDir(site);
+      const fs = await plApiAll(`'${qEsc(dir)}' in parents and trashed=false and mimeType!='application/vnd.google-apps.folder'`, 'files(id,name,size,createdTime,modifiedTime)');
+      if (tok !== desk.token) return;
+      const byNew = (a, b) => String(b.createdTime).localeCompare(String(a.createdTime));
+      const srcs = fs.filter(f => SOUM_SRC.test(f.name)).sort(byNew), jsons = fs.filter(f => SOUM_POS.test(f.name)).sort(byNew);
+      const cr = srcs.find(f => SOUM_451.test(f.name));
+      let js = null, jsSrc = null;
+      for (const j of jsons) { jsSrc = srcs.find(f => soumBase(f.name) === SOUM_POS.exec(j.name)[1].trim()); if (jsSrc) { js = j; break; } }
+      // le Word lu par la tâche est préféré (textes complets), sauf si un .crbx plus récent a été déposé depuis
+      const pick = js && (!cr || Date.parse(cr.createdTime) <= Date.parse(jsSrc.createdTime) + 12 * 3600e3) ? js : cr || null;
+      let data = null;
+      if (pick && c && c.src && c.src.id === pick.id && c.src.mod === pick.modifiedTime) data = c.data;
+      else if (pick) {
+        const res = await api(PL_FILES + encodeURIComponent(pick.id) + '?alt=media'), buf = await res.arrayBuffer();
+        data = pick === js ? JSON.parse(new TextDecoder().decode(buf)) : await soumParseFile(buf, pick.name);
+      }
+      if (tok !== desk.token) return;
+      SOUMX.data = data;
+      SOUMX.src = pick ? {id:pick.id, mod:pick.modifiedTime, name:pick === js ? jsSrc.name : pick.name, by:pick === js ? 'task' : 'crbx'} : null;
+      SOUMX.files = srcs.map(f => ({id:f.id, name:f.name, size:+f.size || 0, created:f.createdTime || ''}));
+      SOUMCACHE.put({key:sid, data:SOUMX.data, src:SOUMX.src, files:SOUMX.files});
+    } catch (e) { SOUMX.err = 'Lecture de la soumission impossible : ' + e.message; }
+  }
+  if (tok !== desk.token) return;
+  SOUMX.loading = false; renderSoum();
+}
+
+/* ---------- affichage ---------- */
+const soumCHF = v => v == null ? '' : (Math.round(v * 100) / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, '’');
+const soumQty = v => v == null ? '' : String(Math.round(v * 1000) / 1000).replace(/\B(?=(\d{3})+(?!\d))/g, '’');
+const soumFold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const soumHeadKey = p => p.replace(/^R/, '').replace(/\./g, '').replace(/0+$/, '');
+function soumFilter(){
+  const d = SOUMX.data; if (!d) return [];
+  const words = soumFold(SOUMX.q).split(/\s+/).filter(Boolean), pq = SOUMX.p.replace(/\s+/g, '').replace(/^R/i, '');
+  const hit = x => (!SOUMX.cans.size || SOUMX.cans.has(x.can))
+    && (!pq || (x.can + '.' + x.p.replace(/^R/, '')).startsWith(pq) || x.p.replace(/^R/, '').startsWith(pq))
+    && (!words.length || words.every(w => soumFold(x.t + ' ' + x.p + ' ' + x.u).includes(w)));
+  const filtered = !!(words.length || pq);
+  const out = [];
+  for (const x of d.pos) {
+    if (x.h) { if (!SOUMX.cans.size || SOUMX.cans.has(x.can)) out.push(x); continue; }
+    if (hit(x)) out.push(x);
+  }
+  if (!filtered) return out;
+  // titres de paragraphes gardés seulement s'ils couvrent une position affichée
+  const keep = out.filter(x => !x.h);
+  return out.filter(x => !x.h || (soumHeadKey(x.p) && keep.some(y => y.can === x.can && soumHeadKey(y.p).startsWith(soumHeadKey(x.p)))));
+}
+function soumTableHTML(){
+  const d = SOUMX.data, list = soumFilter(), cans = new Map(d.cans.map(c => [c.can, c]));
+  const n = list.filter(x => !x.h).length, sum = list.reduce((s, x) => s + (x.h ? 0 : x.m || 0), 0);
+  let html = '', cur = null;
+  for (const x of list) {
+    if (x.can !== cur) {
+      cur = x.can; const c = cans.get(cur) || {can:cur, titre:'', total:null};
+      html += `<div class="so-can"><b>CAN ${esc(cur)}</b><span>${esc(c.titre)}</span><em>${c.total != null ? 'CHF ' + soumCHF(c.total) : ''}</em></div>`;
+    }
+    const k = x.can + '|' + x.p, open = SOUMX.open.has(k);
+    if (x.h) html += `<div class="so-r so-h${open ? ' open' : ''}" data-sorow="${esc(k)}"><span class="so-p">${esc(x.p)}</span><span class="so-t">${esc(x.t)}</span></div>`;
+    else html += `<div class="so-r${open ? ' open' : ''}" data-sorow="${esc(k)}"><span class="so-p">${esc(x.p)}</span><span class="so-t">${esc(x.t)}</span><span class="so-u">${esc(x.u || '')}</span><span class="so-n">${soumQty(x.q)}</span><span class="so-n">${soumCHF(x.pu)}</span><span class="so-n so-m">${soumCHF(x.m)}</span></div>`;
+  }
+  const sel = SOUMX.cans.size || SOUMX.q.trim() || SOUMX.p.trim();
+  return `<p class="so-sum">${sel ? `Sélection : <b>${n}</b> position${n > 1 ? 's' : ''} · <b>CHF ${soumCHF(sum)}</b>` : `<b>${n}</b> positions`}</p>
+    ${list.length ? `<div class="so-tab"><div class="so-r so-th"><span>Pos.</span><span>Texte</span><span class="so-u">Un.</span><span class="so-n">Quantité</span><span class="so-n">PU</span><span class="so-n">Montant</span></div>${html}</div>` : '<p class="dk-empty">Aucune position ne correspond au filtre.</p>'}`;
+}
+function soumCansHTML(){
+  const d = SOUMX.data;
+  return `<button class="so-chip${SOUMX.cans.size ? '' : ' on'}" data-socan="">Tous</button>` + d.cans.filter(c => d.pos.some(x => x.can === c.can && !x.h)).map(c =>
+    `<button class="so-chip${SOUMX.cans.has(c.can) ? ' on' : ''}" data-socan="${esc(c.can)}" title="${esc(c.titre)}"><b>${esc(c.can)}</b><span>${esc(c.titre)}</span><small>${soumCHF(c.total)}</small></button>`).join('');
+}
+function renderSoumTable(){ const t = $('#soTable'); if (t && SOUMX.data) t.innerHTML = soumTableHTML(); const ch = $('#soCans'); if (ch && SOUMX.data) ch.innerHTML = soumCansHTML(); }
+function renderSoum(){
+  const s = desk.site === '__none' ? null : siteById(desk.site), d = SOUMX.data;
+  renderDeskSites();
+  $('#dkHead').innerHTML = `${s ? logoHTML(s) : ''}<div class="t"><small>${s ? esc(s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(s ? s.name : 'À classer')}</h2></div>
+    <div class="dk-acts">${s ? `<button class="btn primary" id="soAdd">${PL_IC.addPlan}${SOUMX.files.length ? 'Remplacer la soumission' : 'Importer la soumission'}</button>` : ''}</div>`;
+  $('#dkInfo').hidden = !SOUMX.err; $('#dkInfo').textContent = SOUMX.err || '';
+  if (!s) { $('#dkList').innerHTML = '<p class="dk-empty">Choisis un chantier pour voir sa soumission.</p>'; renderDeskModes(); return; }
+  const files = SOUMX.files.map(f => `<a class="so-file" href="https://drive.google.com/file/d/${encodeURIComponent(f.id)}/view" target="_blank" rel="noopener">${esc(f.name)}${f.size ? `<small>${fmtSize(f.size)}</small>` : ''}</a>`).join('');
+  const wait = SOUMX.files.length && !d ? '<p class="dk-empty">Le Word / PDF sera lu par la tâche du vendredi soir : le tableau des positions apparaîtra ici ensuite. Avec un fichier .crbx, le tableau est immédiat.</p>' : '';
+  const srcT = SOUMX.src ? (SOUMX.src.by === 'task' ? `Tableau tiré de « ${esc(SOUMX.src.name)} »` : `Tableau lu dans « ${esc(SOUMX.src.name)} »`) : '';
+  $('#dkList').innerHTML = `<p class="pl-path pd-path">Drive : ${esc([siteFolder(s), SOUM_DIR].join(' / '))}</p>
+    ${files ? `<div class="so-files">${files}</div>` : ''}
+    ${d ? `<section class="dk-sec">
+      <div class="so-head"><div><b>CHF ${soumCHF(d.total)}</b><small>Total brut (hors rabais et TVA) · ${d.pos.filter(x => !x.h).length} positions · ${d.cans.length} CAN</small></div>
+        <small>${esc([d.entreprise, d.projet].filter(Boolean).join(' · '))}${srcT ? '<br>' + srcT : ''}</small></div>
+      <div class="so-filters"><label class="so-in so-inp"><span>Position</span><input id="soP" inputmode="decimal" placeholder="ex. 211.3" value="${esc(SOUMX.p)}" autocomplete="off"></label>
+        <label class="so-in"><span>Texte</span><input id="soQ" type="search" placeholder="ex. coffrage, béton C25" value="${esc(SOUMX.q)}" autocomplete="off"></label>
+        <button class="btn" id="soReset">Effacer les filtres</button></div>
+      <div class="so-cans" id="soCans">${soumCansHTML()}</div>
+      <div id="soTable">${soumTableHTML()}</div></section>`
+    : wait || `<p class="dk-empty">${SOUMX.loading ? 'Chargement…' : 'Aucune soumission pour ce chantier. Touche « Importer la soumission » (fichier .crbx de BauBit, Word ou PDF), ou glisse le fichier depuis BauGest PC dans le dossier « Soumission » du chantier.'}</p>`}`;
+  renderDeskModes();
+}
+
+/* ---------- import (une seule soumission par chantier) ---------- */
+async function soumAddFiles(files){
+  files = files.filter(f => f && f.size && SOUM_SRC.test(f.name || ''));
+  if (!files.length) { note('Choisis un fichier .crbx, Word ou PDF', 3000); return; }
+  const sid = desk.site === '__none' ? 'none' : desk.site, site = pdSiteOf(sid);
+  if (!site) return;
+  const go = async () => {
+    if (SOUMX.files.length) {
+      if (queueReason()) { note('Connexion au Drive nécessaire pour remplacer la soumission', 3500); return; }
+      try {
+        const dir = await soumDir(site), old = await soumOldDir(site);
+        const fs = await plApiAll(`'${qEsc(dir)}' in parents and trashed=false and mimeType!='application/vnd.google-apps.folder'`, 'files(id)');
+        for (const f of fs) await plPatch(f.id, {}, {addParents:old, removeParents:dir, fields:'id'});
+      } catch (e) { note('Remplacement impossible : ' + e.message, 4000); return; }
+    }
+    let data = null;
+    const cr = files.find(f => SOUM_451.test(f.name));
+    if (cr) { try { data = await soumParseFile(await cr.arrayBuffer(), cr.name); } catch (e) { note('Fichier .crbx illisible : ' + e.message, 4000); } }
+    for (const f of files) {
+      const uid = pvUid();
+      await DB.put({id:'so-' + uid, blob:f, created:Date.now(), thumb:PDF_THUMB,
+        meta:{kind:'soum', mime:f.type || 'application/octet-stream', uid, name:f.name, path:[siteFolder(site), SOUM_DIR],
+          description:`Chantier : ${siteLabel(site)}\nSoumission`, siteId:sid, taken:new Date().toISOString(), tags:[]}, error:''});
+    }
+    const local = files.map(f => ({id:'', name:f.name, size:f.size, created:new Date().toISOString()}));
+    SOUMX.data = data; SOUMX.files = local; SOUMX.src = data ? {id:'', mod:'', name:cr.name, by:'crbx'} : null; SOUMX.cans.clear(); SOUMX.q = ''; SOUMX.p = ''; SOUMX.open.clear();
+    await SOUMCACHE.put({key:sid, data, src:SOUMX.src, files:local});
+    renderSoum();
+    await refreshQueue(); processQueue();
+    note(`Soumission envoyée → ${siteFolder(site)} / ${SOUM_DIR}`, 3500);
+  };
+  if (SOUMX.files.length) confirmBox('Remplacer la soumission ?', `La soumission actuelle (${SOUMX.files.length} fichier${SOUMX.files.length > 1 ? 's' : ''}) sera rangée dans « ${SOUM_DIR} / ${SOUM_OLD} ».`, 'Remplacer', go);
+  else go();
+}
+function bindSoum(){
+  $('#dkMain').addEventListener('click', e => {
+    if (desk.mode !== 'soum') return;
+    if (e.target.closest('#soAdd')) { $('#soFile').click(); return; }
+    if (e.target.closest('#soReset')) { SOUMX.cans.clear(); SOUMX.q = ''; SOUMX.p = ''; renderSoum(); return; }
+    const c = e.target.closest('[data-socan]');
+    if (c) { const k = c.dataset.socan; if (!k) SOUMX.cans.clear(); else if (SOUMX.cans.has(k)) SOUMX.cans.delete(k); else SOUMX.cans.add(k); renderSoumTable(); return; }
+    const r = e.target.closest('[data-sorow]');
+    if (r && !r.classList.contains('so-th')) { const k = r.dataset.sorow; SOUMX.open.has(k) ? SOUMX.open.delete(k) : SOUMX.open.add(k); r.classList.toggle('open'); }
+  });
+  let t = 0;
+  $('#dkMain').addEventListener('input', e => {
+    if (desk.mode !== 'soum' || !e.target.matches('#soQ,#soP')) return;
+    if (e.target.id === 'soQ') SOUMX.q = e.target.value; else SOUMX.p = e.target.value;
+    clearTimeout(t); t = setTimeout(renderSoumTable, 120);
+  });
+  $('#soFile').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; soumAddFiles(f); });
+}
+
 /* ---------- Adresses : suggestions swisstopo pendant la saisie (devis) ---------- */
 /* Adresses officielles suisses (bâtiments), sans clé ; hors ligne : pas de suggestion, la saisie libre reste possible. */
 function addrParse(r){
@@ -8396,7 +8700,7 @@ async function init(){
   const pvParam = new URLSearchParams(location.search).get('pvdt'), pvSite = new URLSearchParams(location.search).get('site');
   if (shareParam !== null || pvParam) history.replaceState(null, '', location.pathname + location.hash);
   await DB.open();
-  bind(); bindDocs(); bindPlans(); bindPvdt(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); applyBrand(); renderSiteChip(); renderActiveTag();
+  bind(); bindDocs(); bindPlans(); bindPvdt(); bindSoum(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); applyBrand(); renderSiteChip(); renderActiveTag();
   startGeo();
   if (auth === 'cid') note('Client ID enregistré. Ouvre Paramètres › Google Drive › Connecter.', 4500);
   if (auth === 'ok') { try { await fetchAbout(); note('Google Drive connecté : ' + S.drive.email, 3500); } catch (e) {} }

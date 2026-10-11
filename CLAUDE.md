@@ -25,6 +25,7 @@
 | `tools/transcription/make_pdf.py` | — | PDF « texte tapé » avec la mise en page BauGest (reportlab) |
 | `tools/transcription/README.md` | — | Mode d'emploi du pipeline |
 | `tools/recap/make_recap.py` | — | PDF « Récap PV DT » avant séance (reportlab), utilisé par la tâche Récap PV |
+| `tools/soumission/soumission.py` | — | Soumission `.crbx` (SIA 451) ou Word BauBit → « <nom> – positions.json » ; utilisé par la tâche Soumission |
 
 Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être en retard sur GitHub → GitHub fait foi). `claude/transcription/make_docx.js` et `render_baugest_doc.py` = anciennes versions (sortie .docx abandonnée). `claude/pwa/*` et `claude/planschantier_v1.html` = anciens PlansChantier.
 
@@ -32,7 +33,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 
 ### Plateformes
 - **Téléphone** : `isTabletScreen()` = petit côté d'écran < 600 px. Démarre toujours sur la caméra. Pas de plans (un PDF partagé est rangé dans Plans ou PV du chantier).
-- **Tablette** (Lenovo Idea Tab Pro Gen 2, stylet) : bureau avec barre de rubriques à gauche (Photos, Plans, Documents, PV DT, Devis). Écran de démarrage réglable (`S.home`).
+- **Tablette** (Lenovo Idea Tab Pro Gen 2, stylet) : bureau avec barre de rubriques à gauche (Photos, Plans, Documents, PV DT, Soumission, Devis). Écran de démarrage réglable (`S.home`).
 - **PC** (`pc.html`) : infos du chantier et séances (`editSiteDlg` : onglet PV DT › bouton agenda, ou clic droit sur un dossier chantier ; réécrit le chantier dans le fichier de réglages avec `smod` = maintenant et renomme le dossier Drive si N°/nom changent), explorateur Drive, double vue optionnelle, annotation, impression, glisser-déposer Windows ↔ BauGest, filtres photos, devis, métrés, comparaison d'indices, recherche globale, rapport photo PDF, dépôt PV DT.
 
 ### Bibliothèques (CDN, mises en cache par `sw.js`)
@@ -50,7 +51,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 
 ### Stockage local (noms hérités de PhotoChantier — NE PAS RENOMMER)
 - `localStorage['photochantier.v1']` : état/réglages principal (`S`).
-- IndexedDB : `photochantier` (file d'envoi photos), `photochantier-inbox` (fichiers reçus par partage, écrit par `sw.js`), `photochantier-docs` v2 (documents manuscrits), `baugest-plans` (cache des PDF de plans), `baugest-pvdt` (cache PV).
+- IndexedDB : `photochantier` (file d'envoi photos), `photochantier-inbox` (fichiers reçus par partage, écrit par `sw.js`), `photochantier-docs` v2 (documents manuscrits), `baugest-plans` (cache des PDF de plans), `baugest-pvdt` (cache PV), `baugest-soum` (tableau de la soumission par chantier).
 - Clés `baugest.*` : `plPaths`, `plView`, `pltree.<site>`, `pvPanel`, `pvann.<id>`, `pvdt.seen`, `pvdt.last`, `pvpts.<id>`, `activeDevis`, `dmLayer`, `dmCad`, `pc.pqSite`, `cal` (événements agenda déjà envoyés par cet appareil : `{idFiche: contenu}`).
 
 ### Organisation du Google Drive
@@ -68,6 +69,8 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 │   │   ├── Mesures/            (« <plan> – mesures.json », un fichier par plan)
 │   │   ├── Exports/            (PDF annotés, PNG, CSV, Excel ; aussi annotations PC)
 │   │   └── Plans annulés/
+│   ├── Soumission/           (soumission rentrée .crbx / Word / PDF + « <nom> – positions.json » de la tâche Soumission)
+│   │   └── Anciennes versions/
 │   └── PV de chantier/         (PV DT + « <nom du PV> – récap[ AAAA-MM-JJ].pdf » à côté de chaque PV, tâche Récap PV)
 │       ├── PV annulés/
 │       └── Annotations/        (« <PV> - annotations BauGest.json » : traits + points cochés `done` {id: texte du point})
@@ -81,7 +84,7 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 **Identification des fichiers BauGest** : chaque fichier écrit porte des `appProperties` Drive (les tâches et la galerie filtrent dessus) :
 - commun : `pc:'1'`, `site:<siteId|none>`
 - photo : `taken`, `tags` (séparés par `|`, 60 car. max), `lat`, `lon`, `imp:'1'` si importée ; texte lisible dans `description`
-- `kind` : `plan` (+ `uid`), `export`, `mesures` (+ `plan`, `n`), `pvdt` (+ `pvn`, `pvdate`), `doc` (+ `dtype`, `title`), `settings`
+- `kind` : `plan` (+ `uid`), `export`, `soum` (soumission importée par la tablette), `mesures` (+ `plan`, `n`), `pvdt` (+ `pvn`, `pvdate`), `doc` (+ `dtype`, `title`), `settings`
 - ⚠ Une **copie** Drive perd les `appProperties` → toujours déplacer/renommer.
 
 **Réglages synchronisés** (`Réglages PhotoChantier (ne pas supprimer).json`, `appProperties.kind='settings'`) : champs `SYNC_FIELDS` = companies, tags, logoLib, docLay, docTitles, stamp, logoOn, logoPos, logoSize, logoBg, stampLines, quality, tagPrompt, tagDelay, structure, pvKeys + chantiers `S.sites` + devis `S.devis`/`S.ddel`. Fusion par horodatage par champ/chantier (`S.fmod`, `S.smod`, `S.sdel`, `S.remap`). Valeurs par défaut : objet `DEF` (index.html ~l.1870).
@@ -101,13 +104,14 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 - Documents transcrits : affichés d'abord en texte tapé (PDF), bascule vers le manuscrit ; non transcrits = manuscrit seul. Signatures jamais transcrites.
 - Devis : GPS actif mais **ne relie jamais** la fiche à un chantier ; en-tête du mémo = entreprise choisie à la création ; notes tapées ou dictées (pas manuscrites).
 - PV DT : récap avant séance stocké à côté du PV (jamais listé comme PV, bouton « Récap séance ») ; nom de fichier d'origine conservé ; PV corrigé → PV annulés ; détection chantier avec confirmation sur PC ; dossier présent dans tous les chantiers.
+- Soumission : rubrique tablette seulement (PC = dépôt du fichier dans « Soumission » par l'explorateur, pas de consultation) ; une seule soumission par chantier, l'ancienne → « Anciennes versions » ; `.crbx` lu tout de suite par la tablette, Word / PDF par la tâche du vendredi ; montant = quantité × PU arrondi à 0.05 CHF (comme BauBit).
 - Plans : nom « Sujet ind C AAAA-MM-JJ.pdf » ; un seul dossier Plans annulés par chantier ; jamais de suppression de plan.
 - Tablette : droitier au stylet → outils à gauche ; thème sombre + bouton fort contraste.
 - PC = complément : ne jamais modifier le comportement tablette pour le PC.
 - Communication : français, simple et concis ; questions sous forme de choix cliquables ; proposer des idées concrètes, pas seulement des questions.
 
 ### Repères dans `index.html` (marqueurs `/* ---------- … ---------- */`)
-Réglages & synchro (~1868–2130) · GPS/caméra/prise de vue (~2164–2515) · Drive + file d'envoi (~2515–2684) · Galerie/carte/visionneuse photo (~3144–3685) · Documents manuscrits + éditeur (~3771–4711) · Ergonomie v2 (~4059) · Plans : explorateur, glisser-déposer stylet, visionneuse, métrés (~5006–6266) · PV DT : lecture, liste, annotation, points à notre charge, notes reliées (~6266–6964) · Devis : fiches, mémo PDF, entreprises, métré 2D/3D, orthophoto, effacement (~6964–8105) · Retour Android (~8105) · Démarrage (~8169).
+Réglages & synchro (~1868–2130) · GPS/caméra/prise de vue (~2164–2515) · Drive + file d'envoi (~2515–2684) · Galerie/carte/visionneuse photo (~3144–3685) · Documents manuscrits + éditeur (~3771–4711) · Ergonomie v2 (~4059) · Plans : explorateur, glisser-déposer stylet, visionneuse, métrés (~5006–6266) · PV DT : lecture, liste, annotation, points à notre charge, notes reliées (~6266–6964) · Soumission : lecture .crbx, tableau filtrable, import (marqueur « Soumission du chantier ») · Devis : fiches, mémo PDF, entreprises, métré 2D/3D, orthophoto, effacement (~6964–8105) · Retour Android (~8105) · Démarrage (~8169).
 
 `pc.html` reprend des blocs de la tablette « tels quels » (rendu des documents, calculs devis, orthophoto, lecture PV) → toute correction dans ces blocs doit être faite **dans les deux fichiers**.
 
@@ -118,10 +122,11 @@ Réglages & synchro (~1868–2130) · GPS/caméra/prise de vue (~2164–2515) ·
 | Transcription BauGest | lu–ve 11:53 et 17:53 | JSON manuscrit → PDF texte tapé à côté du JSON ; signatures recopiées, jamais transcrites ; notification si ≥ 1 document |
 | Plans BauGest | lu–ve 11:17 et 17:17 | Renomme les plans d'après le cartouche (« Sujet ind C AAAA-MM-JJ.pdf »), doublons/anciens indices → Plans annulés ; notification si changement |
 | Récap PV BauGest | lu–ve 17:35 | Veille de séance (vendredi pour le lundi) : compare les 2 derniers PV DT du chantier + points cochés, PDF « <PV> – récap.pdf » à côté du PV + notification ; « PV manquant » si aucun nouveau PV |
+| Soumission BauGest | vendredi 17:44 | Word / PDF du dossier « Soumission » → « <nom> – positions.json » à côté (tools/soumission), contrôle des totaux par CAN ; notification si ≥ 1 soumission |
 | Rappel séance BauGest | tous les jours 06:52 | Jour de séance : notification avec le résumé et les liens directs vers le récap (Drive + BauGest tablette `?pvdt=<id>&site=<id>`) |
 
 Les deux tournent sans l'ordinateur de Joel, mais dépendent des connexions Google Drive/GitHub du compte Claude. Dernier passage réussi : 09.10.2026.
-Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_01XjUE62rMyRVSSEq1JPZk37` transcription, `trig_01CwbzZRPB1U3bZNXRm3VBE8` plans, `trig_01XDouvMa1Gg46UiyyEWy9kU` récap PV, `trig_01VTEvcsYX7xHzW3Ayy1Hd1C` rappel séance). Si un format de fichier ou un nom de dossier change dans l'app, **mettre à jour le prompt de la tâche concernée** (`update_trigger`). La tâche Transcription clone le dépôt et exécute `tools/transcription/*.py` : ne pas casser leur interface.
+Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_01XjUE62rMyRVSSEq1JPZk37` transcription, `trig_01CwbzZRPB1U3bZNXRm3VBE8` plans, `trig_01XDouvMa1Gg46UiyyEWy9kU` récap PV, `trig_01VTEvcsYX7xHzW3Ayy1Hd1C` rappel séance, `trig_01SrjGNQAySVobeYiVkVhE2e` soumission — créée sans connecteur Google Drive : à ajouter dans claude.ai › Routines). Si un format de fichier ou un nom de dossier change dans l'app, **mettre à jour le prompt de la tâche concernée** (`update_trigger`). La tâche Transcription clone le dépôt et exécute `tools/transcription/*.py` : ne pas casser leur interface.
 
 ## 4b. Déploiement et comptes
 
