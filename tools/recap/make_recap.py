@@ -15,7 +15,9 @@ recap.json :
   "sections": [
     {"titre": "À notre charge", "points": [
       {"texte": "Fournir les plans d'armature du mur M3", "ref": "12.4", "delai": "2026-10-10",
-       "statut": "nouveau" | "modifie" | "ouvert" | "clos" | "retard" | "info", "avant": "texte du PV précédent (facultatif)"}
+       "statut": "nouveau" | "modifie" | "ouvert" | "clos" | "retard" | "info" | "regle",
+       "avant": "texte du PV précédent (facultatif)"}
+      ("regle" = coché « fait » dans BauGest mais encore ouvert dans le PV de la DT : à faire clore en séance)
     ]}
   ]
 }
@@ -37,6 +39,7 @@ HEAD, LAB, LN, FILL, SIGNAL = "#1d2733", "#5f6f84", "#b9c5d3", "#eef2f6", "#f2c2
 STAT = {
     "nouveau": ("NOUVEAU", "#1f7a3a"), "modifie": ("MODIFIÉ", "#b26a00"), "ouvert": ("OUVERT", "#1f3a8a"),
     "clos": ("CLOS", "#6b7280"), "retard": ("EN RETARD", "#b42318"), "info": ("INFO", "#5f6f84"),
+    "regle": ("RÉGLÉ PAR NOUS", "#0f766e"),
 }
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
@@ -107,7 +110,7 @@ def build(data, out):
         rows = []
         for p in pts:
             lab, col = STAT.get(p.get("statut") or "info", STAT["info"])
-            tag = Table([[P(lab, s_tag)]], colWidths=[19 * mm])
+            tag = Table([[P(lab, s_tag)]], colWidths=[21 * mm])
             tag.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), HexColor(col)), ("TOPPADDING", (0, 0), (-1, -1), 2),
                                      ("BOTTOMPADDING", (0, 0), (-1, -1), 2), ("LEFTPADDING", (0, 0), (-1, -1), 1), ("RIGHTPADDING", (0, 0), (-1, -1), 1)]))
             body = [P(p["texte"], s_b)]
@@ -117,7 +120,7 @@ def build(data, out):
             if p.get("avant"):
                 body.append(P("Avant : " + p["avant"], s_m))
             rows.append([tag, body])
-        t = Table(rows, colWidths=[21 * mm, None])
+        t = Table(rows, colWidths=[23 * mm, None])
         t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LINEBELOW", (0, 0), (-1, -2), 0.4, HexColor(LN)),
                                ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4), ("LEFTPADDING", (0, 0), (0, -1), 0)]))
         story += [KeepTogether([P(sec.get("titre") or "", s_h), t])]

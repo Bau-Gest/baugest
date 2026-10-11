@@ -68,10 +68,9 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 │   │   ├── Mesures/            (« <plan> – mesures.json », un fichier par plan)
 │   │   ├── Exports/            (PDF annotés, PNG, CSV, Excel ; aussi annotations PC)
 │   │   └── Plans annulés/
-│   └── PV de chantier/
+│   └── PV de chantier/         (PV DT + « <nom du PV> – récap[ AAAA-MM-JJ].pdf » à côté de chaque PV, tâche Récap PV)
 │       ├── PV annulés/
-│       ├── Annotations/
-│       └── Récaps séances/   (« AAAA-MM-JJ_Récap PV_<chantier>.pdf », tâche Récap PV)
+│       └── Annotations/        (« <PV> - annotations BauGest.json » : traits + points cochés `done` {id: texte du point})
 ├── À classer/                  (photos sans chantier)
 └── Devis particuliers/<fiche>/Photos/ (+ mémos PDF)
 ```
@@ -101,7 +100,7 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 - Photos jamais dans la galerie du téléphone ; un seul dossier Photos par chantier.
 - Documents transcrits : affichés d'abord en texte tapé (PDF), bascule vers le manuscrit ; non transcrits = manuscrit seul. Signatures jamais transcrites.
 - Devis : GPS actif mais **ne relie jamais** la fiche à un chantier ; en-tête du mémo = entreprise choisie à la création ; notes tapées ou dictées (pas manuscrites).
-- PV DT : nom de fichier d'origine conservé ; PV corrigé → PV annulés ; détection chantier avec confirmation sur PC ; dossier présent dans tous les chantiers.
+- PV DT : récap avant séance stocké à côté du PV (jamais listé comme PV, bouton « Récap séance ») ; nom de fichier d'origine conservé ; PV corrigé → PV annulés ; détection chantier avec confirmation sur PC ; dossier présent dans tous les chantiers.
 - Plans : nom « Sujet ind C AAAA-MM-JJ.pdf » ; un seul dossier Plans annulés par chantier ; jamais de suppression de plan.
 - Tablette : droitier au stylet → outils à gauche ; thème sombre + bouton fort contraste.
 - PC = complément : ne jamais modifier le comportement tablette pour le PC.
@@ -118,7 +117,8 @@ Réglages & synchro (~1868–2130) · GPS/caméra/prise de vue (~2164–2515) ·
 |---|---|---|
 | Transcription BauGest | lu–ve 11:53 et 17:53 | JSON manuscrit → PDF texte tapé à côté du JSON ; signatures recopiées, jamais transcrites ; notification si ≥ 1 document |
 | Plans BauGest | lu–ve 11:17 et 17:17 | Renomme les plans d'après le cartouche (« Sujet ind C AAAA-MM-JJ.pdf »), doublons/anciens indices → Plans annulés ; notification si changement |
-| Récap PV BauGest | lu–ve 17:35 | Veille de séance (vendredi pour le lundi) : compare les 2 derniers PV DT du chantier, PDF dans `PV de chantier/Récaps séances/` + notification ; « PV manquant » si aucun nouveau PV |
+| Récap PV BauGest | lu–ve 17:35 | Veille de séance (vendredi pour le lundi) : compare les 2 derniers PV DT du chantier + points cochés, PDF « <PV> – récap.pdf » à côté du PV + notification ; « PV manquant » si aucun nouveau PV |
+| Rappel séance BauGest | tous les jours 06:52 | Jour de séance : notification avec le résumé et les liens directs vers le récap (Drive + BauGest tablette `?pvdt=<id>&site=<id>`) |
 
 Les deux tournent sans l'ordinateur de Joel, mais dépendent des connexions Google Drive/GitHub du compte Claude. Dernier passage réussi : 09.10.2026.
 Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_01XjUE62rMyRVSSEq1JPZk37` transcription, `trig_01CwbzZRPB1U3bZNXRm3VBE8` plans, `trig_01XDouvMa1Gg46UiyyEWy9kU` récap PV). Si un format de fichier ou un nom de dossier change dans l'app, **mettre à jour le prompt de la tâche concernée** (`update_trigger`). La tâche Transcription clone le dépôt et exécute `tools/transcription/*.py` : ne pas casser leur interface.

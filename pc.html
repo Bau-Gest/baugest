@@ -318,6 +318,7 @@ input[type=text],input[type=search],input[type=date],input[type=time],select{hei
 #pqList{overflow:auto;padding:6px}
 .pq-pv{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:8px;border:0;border-radius:8px;background:none;color:var(--text)}
 .pq-pv:hover{background:var(--surface2)}
+.pq-row{display:flex;align-items:center;gap:6px}.pq-row .pq-pv{flex:1;min-width:0}.pq-rc{flex:none;border-color:var(--signal);color:var(--signal)}
 .pq-pv .t{display:grid;min-width:0}
 .pq-pv .t b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pq-pv .t small{color:var(--muted);font-size:12px}
@@ -2532,7 +2533,7 @@ V.panes = [mkPane(0), mkPane(1)];
 V.panes.forEach(p => { $('#viewer').appendChild(p.el); syncAtb(p); syncPaneBtns(p); });
 
 /* ---------- PV de chantier de la DT : lecture du PDF (n°, date, chantier, points) ---------- */
-const PVDT_DIR = 'PV de chantier', PVDT_OLD = 'PV annulés', PVDT_ANN = 'Annotations', PVDT_RECAP = 'Récaps séances';
+const PVDT_DIR = 'PV de chantier', PVDT_OLD = 'PV annulés', PVDT_ANN = 'Annotations';
 const pdNorm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const pdReEsc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const PD_MOIS = {janvier:1, fevrier:2, mars:3, avril:4, mai:5, juin:6, juillet:7, aout:8, septembre:9, octobre:10, novembre:11, decembre:12};
@@ -2709,12 +2710,21 @@ async function pqLoadList(){
     if (tok !== PQ.tok) return;
     const day = f => (f.appProperties && f.appProperties.pvdate) || (f.createdTime || '').slice(0, 10);
     const srt = (a, b) => day(b).localeCompare(day(a)) || (+(b.appProperties || {}).pvn || 0) - (+(a.appProperties || {}).pvn || 0);
-    PQ.list = all.filter(f => f.mimeType !== FOLD).sort(srt); PQ.old = old.sort(srt);
-    for (const f of PQ.list.concat(PQ.old)) f._k = kindOf(f);
+    const pdfs = all.filter(f => f.mimeType !== FOLD);
+    PQ.recaps = new Map();
+    for (const f of pdfs) { const m = PQ_RECAP.exec(f.name); if (!m) continue; const k = m[1].toLowerCase().trim(), o = PQ.recaps.get(k); if (!o || f.createdTime > o.createdTime) PQ.recaps.set(k, f); }
+    PQ.list = pdfs.filter(f => !PQ_RECAP.test(f.name)).sort(srt); PQ.old = old.sort(srt);
+    for (const f of PQ.list.concat(PQ.old, [...PQ.recaps.values()])) f._k = kindOf(f);
   } catch (e) { if (tok === PQ.tok) { $('#pqList').innerHTML = `<p class="hint" style="padding:12px;color:var(--bad)">Lecture impossible : ${esc(e.message)}</p>`; return; } }
   if (tok === PQ.tok) renderPqList();
 }
+/* Récap avant séance : « <nom du PV> – récap[ AAAA-MM-JJ].pdf » à côté du PV (tâche « Récap PV BauGest »), même règle que la tablette. */
+const PQ_RECAP = /^(.*?)\s+[–-]\s+r[ée]cap(?:\s+\d{4}-\d{2}-\d{2})?\.pdf$/i;
 function pqItem(f){
+  const rc = PQ.recaps && PQ.recaps.get(f.name.replace(/\.pdf$/i, '').toLowerCase().trim());
+  return `<div class="pq-row">${pqBtn(f)}${rc ? `<button class="btn pq-rc" data-pqf="${esc(rc.id)}" title="Comparatif avec le PV précédent">Récap séance</button>` : ''}</div>`;
+}
+function pqBtn(f){
   const a = f.appProperties || {}, d = a.pvdate || (f.createdTime || '').slice(0, 10);
   return `<button class="pq-pv" data-pqf="${esc(f.id)}" title="Ouvrir"><span class="pq-num">PV${a.pvn ? `<b>${esc(a.pvn)}</b>` : ''}</span><span class="t"><b>${esc(f.name.replace(/\.pdf$/i, ''))}</b><small>${esc([a.pvn ? 'n° ' + a.pvn : '', d ? 'séance du ' + fmtISO(d) : '', fmtSize(f.size)].filter(Boolean).join(' · '))}</small></span></button>`;
 }
@@ -2744,7 +2754,7 @@ function bindPq(){
   $('#pqList').addEventListener('click', e => {
     if (e.target.closest('#pqOldTog')) { PQ.showOld = !PQ.showOld; renderPqList(); return; }
     const b = e.target.closest('[data-pqf]'); if (!b) return;
-    const f = PQ.list.concat(PQ.old).find(x => x.id === b.dataset.pqf); if (!f) return;
+    const f = PQ.list.concat(PQ.old, [...(PQ.recaps || new Map()).values()]).find(x => x.id === b.dataset.pqf); if (!f) return;
     const list = PQ.old.includes(f) ? PQ.old : PQ.list;
     endPick(); openIn(P.split ? V.active : 0, f, list);
   });
@@ -3087,7 +3097,7 @@ function calSiteBody(s){
     description:['Chantier : ' + siteLabel(s), c && 'Entreprise : ' + c.name + (s.abbr ? ' (' + s.abbr + ')' : ''),
       'Rythme : le ' + SE_DAYN[t.getDay()] + ', ' + (SE_EVERY[every] || 'toutes les ' + every + ' semaines'), m.place && 'Lieu : ' + m.place,
       geo && 'Position : https://www.openstreetmap.org/?mlat=' + s.lat.toFixed(6) + '&mlon=' + s.lon.toFixed(6) + '#map=17/' + s.lat.toFixed(6) + '/' + s.lon.toFixed(6),
-      'Récap des PV DT : la veille vers 17h40, Drive › ' + siteFolder(s) + ' › ' + PVDT_DIR + ' › ' + PVDT_RECAP].filter(Boolean).join('\n'),
+      'Récap des PV DT : prêt la veille vers 17h40, à côté du dernier PV (Drive › ' + siteFolder(s) + ' › ' + PVDT_DIR + ', bouton « Récap séance » dans BauGest) · rappel le matin vers 7h'].filter(Boolean).join('\n'),
     start:{dateTime:calLocal(t), timeZone:CAL_TZ}, end:{dateTime:calLocal(new Date(t.getTime() + (+m.dur || 90) * 60000)), timeZone:CAL_TZ},
     recurrence:['RRULE:FREQ=WEEKLY;INTERVAL=' + every + ';BYDAY=' + SE_RR[t.getDay()]],
     colorId:'9', reminders:{useDefault:false, overrides:[{method:'popup', minutes:60}]}, status:'confirmed',
