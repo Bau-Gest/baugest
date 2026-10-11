@@ -60,7 +60,7 @@ a.btn{text-decoration:none;color:inherit}
 .ibtn:disabled{opacity:.4;cursor:default}
 .sep{width:1px;height:22px;background:var(--line);margin:0 4px;flex:none}
 .muted{color:var(--muted)}
-input[type=text],input[type=search],select{height:32px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);padding:0 10px;min-width:0}
+input[type=text],input[type=search],input[type=date],input[type=time],select{height:32px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);padding:0 10px;min-width:0}
 
 
 /* ---------- Ergonomie v2 : barre de sélection, cases à cocher, aperçu ---------- */
@@ -211,6 +211,7 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
 .dlg{width:min(560px,94vw);max-height:88vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.5);display:grid}
 .dlg h3{margin:0;padding:16px 18px 6px;font:700 20px var(--display);letter-spacing:.02em}
 .dlg .db{padding:8px 18px;display:grid;gap:12px}
+.se-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.se-f{display:grid;gap:5px}.se-f>span{color:var(--muted);font-size:13px}.dlg h4{margin:6px 0 0;font:700 13px var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .dlg .df{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px 16px}
 .dlg p{margin:0}
 .dlg label.opt{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer}
@@ -519,7 +520,7 @@ input[type=text],input[type=search],select{height:32px;border-radius:7px;border:
       <div id="pqQueue"></div>
     </div>
     <aside class="pq-side">
-      <div class="pq-sh"><b>PV déjà rangés</b><div class="r"><select id="pqSite"></select><button class="ibtn" id="pqRefresh" title="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button></div><small id="pqPath"></small></div>
+      <div class="pq-sh"><b>PV déjà rangés</b><div class="r"><select id="pqSite"></select><button class="ibtn" id="pqSiteInfo" title="Infos du chantier et séances"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button><button class="ibtn" id="pqRefresh" title="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button></div><small id="pqPath"></small></div>
       <div id="pqList"></div>
     </aside>
   </section>
@@ -1411,6 +1412,7 @@ filesEl.addEventListener('contextmenu', e => {
   const s = selItems(), files = s.filter(f => f._k !== 'folder'), one = s.length === 1 ? s[0] : null;
   const en = [];
   if (one && one._k === 'folder') en.push({label:'Ouvrir le dossier', icon:IC.folder, fn:() => navigate(one.id)});
+  if (one && one._k === 'folder' && E.cur === P.rootId && siteByFolder(one.name)) en.push({label:'Infos du chantier et séances…', icon:IC.folder, fn:() => editSiteDlg(siteByFolder(one.name).id)});
   else if (one) {
     en.push({label:'Ouvrir', icon:IC.open, fn:() => openItem(one), kbd:'Entrée'});
     if (P.split) en.push({label:'Ouvrir dans le volet droit', icon:IC.swap, fn:() => openItem(one, 1), kbd:'Maj+Entrée'});
@@ -2530,7 +2532,7 @@ V.panes = [mkPane(0), mkPane(1)];
 V.panes.forEach(p => { $('#viewer').appendChild(p.el); syncAtb(p); syncPaneBtns(p); });
 
 /* ---------- PV de chantier de la DT : lecture du PDF (n°, date, chantier, points) ---------- */
-const PVDT_DIR = 'PV de chantier', PVDT_OLD = 'PV annulés', PVDT_ANN = 'Annotations';
+const PVDT_DIR = 'PV de chantier', PVDT_OLD = 'PV annulés', PVDT_ANN = 'Annotations', PVDT_RECAP = 'Récaps séances';
 const pdNorm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const pdReEsc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const PD_MOIS = {janvier:1, fevrier:2, mars:3, avril:4, mai:5, juin:6, juillet:7, aout:8, septembre:9, octobre:10, novembre:11, decembre:12};
@@ -2727,6 +2729,7 @@ function bindPq(){
   $('#pqFile').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; pqAdd(f); });
   $('#pqSite').addEventListener('change', e => { PQ.site = e.target.value; try { localStorage.setItem('baugest.pc.pqSite', PQ.site); } catch (err) {} pqLoadList(); });
   $('#pqRefresh').addEventListener('click', pqLoadList);
+  $('#pqSiteInfo').addEventListener('click', () => PQ.site && editSiteDlg(PQ.site));
   $('#pqQueue').addEventListener('change', e => {
     const row = e.target.closest('[data-pq]'), f = e.target.dataset.f; if (!row || !f) return;
     const r = PQ.q.find(x => x.id === row.dataset.pq); if (!r) return;
@@ -3070,6 +3073,26 @@ function calBody(d){
     colorId:'5', reminders:{useDefault:false, overrides:[{method:'popup', minutes:60}]}, status:'confirmed',
     extendedProperties:{private:{baugest:'devis', devis:String(d.id)}}};
 }
+const siteFolder = s => s ? siteFolderName(s) : 'À classer';
+const SE_DAYN = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const SE_EVERY = {1:'chaque semaine', 2:'toutes les 2 semaines', 3:'toutes les 3 semaines', 4:'toutes les 4 semaines'};
+/* Séances de chantier : un événement récurrent par chantier (clé 'se:<id chantier>' dans 'baugest.cal'). */
+const SE_RR = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+function calSiteBody(s){
+  const m = s && !s.example && s.meet; if (!m || !/^\d{4}-\d{2}-\d{2}$/.test(m.from || '')) return null;
+  const [h, mi] = String(m.time || '08:00').split(':').map(Number), t = new Date(m.from + 'T00:00:00');
+  t.setHours(h || 0, mi || 0, 0, 0); if (isNaN(t)) return null;
+  const c = compById(s.comp), every = +m.every || 1, geo = isFinite(s.lat) && isFinite(s.lon);
+  return {summary:'Séance de chantier – ' + siteLabel(s), location:m.place || (geo ? s.lat.toFixed(6) + ', ' + s.lon.toFixed(6) : ''),
+    description:['Chantier : ' + siteLabel(s), c && 'Entreprise : ' + c.name + (s.abbr ? ' (' + s.abbr + ')' : ''),
+      'Rythme : le ' + SE_DAYN[t.getDay()] + ', ' + (SE_EVERY[every] || 'toutes les ' + every + ' semaines'), m.place && 'Lieu : ' + m.place,
+      geo && 'Position : https://www.openstreetmap.org/?mlat=' + s.lat.toFixed(6) + '&mlon=' + s.lon.toFixed(6) + '#map=17/' + s.lat.toFixed(6) + '/' + s.lon.toFixed(6),
+      'Récap des PV DT : la veille vers 17h40, Drive › ' + siteFolder(s) + ' › ' + PVDT_DIR + ' › ' + PVDT_RECAP].filter(Boolean).join('\n'),
+    start:{dateTime:calLocal(t), timeZone:CAL_TZ}, end:{dateTime:calLocal(new Date(t.getTime() + (+m.dur || 90) * 60000)), timeZone:CAL_TZ},
+    recurrence:['RRULE:FREQ=WEEKLY;INTERVAL=' + every + ';BYDAY=' + SE_RR[t.getDay()]],
+    colorId:'9', reminders:{useDefault:false, overrides:[{method:'popup', minutes:60}]}, status:'confirmed',
+    extendedProperties:{private:{baugest:'seance', site:String(s.id)}}};
+}
 async function calReq(method, url, body){
   const tok = calAuth(); if (!tok) throw Object.assign(new Error('connexion Google'), {status:0});
   const r = await fetch(url, {method, headers:{Authorization:'Bearer ' + tok, ...(body ? {'Content-Type':'application/json'} : {})}, body:body ? JSON.stringify(body) : undefined});
@@ -3090,12 +3113,13 @@ async function calSyncAll(){
   CAL.busy = true; CAL.err = '';
   try {
     const m = calMap(), old = Date.now() - 864e5;
-    for (const id of new Set([...devList().map(d => d.id), ...Object.keys(m)])) {
-      const d = devById(id), body = d ? calBody(d) : null, sig = body ? JSON.stringify(body) : '';
+    for (const id of new Set([...devList().map(d => d.id), ...S.sites.filter(s => !s.example).map(s => 'se:' + s.id), ...Object.keys(m)])) {
+      const se = id.startsWith('se:'), d = se ? null : devById(id), s = se ? siteById(id.slice(3)) : null;
+      const body = se ? calSiteBody(s) : d ? calBody(d) : null, sig = body ? JSON.stringify(body) : '';
       if (m[id] === sig) continue;
-      if (m[id] === undefined && (!body || new Date(d.visit).getTime() < old)) continue;
+      if (m[id] === undefined && (!body || (!se && new Date(d.visit).getTime() < old))) continue;
       if (body) await calPut(id, body, !!m[id] && m[id] !== '?'); else await calDel(id);
-      if (body || d) m[id] = sig; else delete m[id];
+      if (body || d || s) m[id] = sig; else delete m[id];
       calMapSet(m); renderDzCal();
     }
   } catch (e) {
@@ -3742,6 +3766,72 @@ async function pushDevis(){
 }
 async function dzFlush(){ if (DV.pushT || DV.pending) await pushDevis(); else if (DV.pushing) await DV.pushing; }
 function dzStatus(t, err){ const el = $('#dzSync'); if (el) { el.textContent = t; el.style.color = err ? 'var(--bad)' : ''; } }
+
+/* ---------- Chantiers : infos et séances modifiables sur le PC (même fichier de réglages que la tablette) ---------- */
+/* Le chantier modifié est réécrit dans le fichier de réglages avec smod = maintenant : la tablette reprend cette version
+   à sa prochaine synchronisation. Un changement de N° ou de nom renomme aussi le dossier du chantier dans le Drive. */
+const SE_RADII = [[100, '100 m'], [200, '200 m'], [300, '300 m'], [500, '500 m'], [1000, '1 km'], [3000, '3 km (tracé routier)']];
+function sdMeet(dlg){
+  const v = k => dlg.querySelector(k).value, from = v('#sdFrom'); if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return undefined;
+  const place = v('#sdPlace').trim();
+  return {from, time:v('#sdTime') || '08:00', every:+v('#sdEvery') || 1, dur:+v('#sdDur') || 90, ...(place ? {place} : {})};
+}
+function sdHint(dlg){
+  const m = sdMeet(dlg), h = dlg.querySelector('#sdHint');
+  h.textContent = !m ? 'Sans date : pas de séance, pas de récap PV ni d’événement dans Google Agenda.'
+    : `Le ${SE_DAYN[new Date(m.from + 'T12:00:00').getDay()]} à ${m.time.replace(':', 'h')}, ${SE_EVERY[m.every]}. Événement récurrent dans Google Agenda · récap des PV DT la veille (le vendredi pour une séance du lundi).`;
+}
+async function editSiteDlg(id){
+  const s = siteById(id); if (!s) { toast('Chantier introuvable', 'err'); return; }
+  const m = s.meet || {}, comps = compList(), opt = (v, l, cur) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(l)}</option>`;
+  const r = await dialog({title:'Chantier ' + siteLabel(s), width:580, buttons:[{label:'Annuler', value:null}, {label:'Enregistrer', primary:true}], body:`
+    <div class="se-g2"><label class="se-f"><span>N° de chantier</span><input type="text" id="sdNum" value="${esc(s.number || '')}"></label>
+      <label class="se-f"><span>Nom court</span><input type="text" id="sdName" value="${esc(s.name || '')}"></label></div>
+    <div class="se-g2"><label class="se-f"><span>Latitude</span><input type="text" id="sdLat" value="${isFinite(s.lat) ? (+s.lat).toFixed(6) : ''}"></label>
+      <label class="se-f"><span>Longitude</span><input type="text" id="sdLon" value="${isFinite(s.lon) ? (+s.lon).toFixed(6) : ''}"></label></div>
+    <label class="se-f"><span>Rayon de détection</span><select id="sdRadius">${SE_RADII.map(([v, l]) => opt(v, l, s.radius || 300)).join('')}</select></label>
+    <h4>Séances de chantier</h4>
+    <div class="se-g2"><label class="se-f"><span>Première séance</span><input type="date" id="sdFrom" value="${esc(m.from || '')}"></label>
+      <label class="se-f"><span>Heure</span><input type="time" id="sdTime" step="900" value="${esc(m.time || '08:00')}"></label></div>
+    <div class="se-g2"><label class="se-f"><span>Rythme</span><select id="sdEvery">${[1, 2, 3, 4].map(n => opt(n, SE_EVERY[n].replace(/^./, c => c.toUpperCase()), m.every || 1)).join('')}</select></label>
+      <label class="se-f"><span>Durée</span><select id="sdDur">${[[60, '1 h'], [90, '1 h 30'], [120, '2 h'], [180, '3 h']].map(([v, l]) => opt(v, l, m.dur || 90)).join('')}</select></label></div>
+    <label class="se-f"><span>Lieu de la séance</span><input type="text" id="sdPlace" value="${esc(m.place || '')}" placeholder="Baraque de chantier, bureau de la DT…"></label>
+    <small class="muted" id="sdHint"></small>
+    <h4>Notre entreprise sur ce chantier</h4>
+    <select id="sdComp">${opt('', comps.length ? '— Aucune —' : 'Aucune entreprise (à créer dans Devis › Entreprises)', s.comp || '')}${comps.map(c => opt(c.id, c.name, s.comp || '')).join('')}</select>
+    <input type="text" id="sdAbbr" value="${esc(s.abbr || '')}" placeholder="Abréviations dans les PV : DUP, Ent. Dupont" aria-label="Abréviations de l'entreprise dans les PV">
+    <small class="muted">Sert au récap des PV DT avant chaque séance : les points qui concernent cette entreprise sont mis en avant.</small>`,
+    onOpen:dlg => { sdHint(dlg); ['#sdFrom', '#sdTime', '#sdEvery'].forEach(k => dlg.querySelector(k).addEventListener('input', () => sdHint(dlg))); }});
+  if (!r) return;
+  const v = k => r.querySelector(k).value.trim(), num = k => parseFloat(v(k).replace(',', '.'));
+  const lat = num('#sdLat'), lon = num('#sdLon');
+  const patch = {number:v('#sdNum'), name:v('#sdName') || s.name, radius:+v('#sdRadius') || 300,
+    lat:lat >= -90 && lat <= 90 ? lat : s.lat, lon:lon >= -180 && lon <= 180 ? lon : s.lon,
+    meet:sdMeet(r), comp:v('#sdComp') || undefined, abbr:v('#sdAbbr') || undefined};
+  try { await saveSitePc(id, patch); toast('Chantier enregistré · visible sur la tablette à la prochaine synchronisation', 'ok'); }
+  catch (e) { toast('Enregistrement impossible : ' + e.message, 'err', 6000); }
+}
+async function saveSitePc(id, patch){
+  const fid = await settingsFileId(); if (!fid) throw new Error('fichier de réglages introuvable (ouvre une fois BauGest sur la tablette)');
+  const R = await readSettings(), site = (R && Array.isArray(R.sites) ? R.sites : []).find(x => x.id === id);
+  if (!site) throw new Error('chantier introuvable dans les réglages');
+  const oldName = siteFolderName(site);
+  for (const k in patch) if (patch[k] === undefined) delete site[k]; else site[k] = patch[k];
+  delete site.example;
+  R.smod = R.smod || {}; R.smod[id] = Date.now();
+  await api(`${UPL}/${encodeURIComponent(fid)}?uploadType=media&fields=id,modifiedTime`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(R)});
+  if (Array.isArray(R.sites)) S.sites = R.sites;
+  const newName = siteFolderName(site);
+  if (newName !== oldName) {
+    const q = n => api(DRV + '?' + new URLSearchParams({q:`'${qEsc(P.rootId)}' in parents and name='${qEsc(n)}' and mimeType='application/vnd.google-apps.folder' and trashed=false`, fields:'files(id)', pageSize:'2'}));
+    const [o, n] = await Promise.all([q(oldName), q(newName)]), f = o.files && o.files[0];
+    if (f && !(n.files && n.files.length)) await api(`${DRV}/${encodeURIComponent(f.id)}?fields=id,name`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:newName})});
+    else if (f) toast(`Un dossier « ${newName} » existe déjà : dossier du chantier non renommé`, 'err', 6000);
+    if (E.mode === 'folder' && E.cur === P.rootId) navigate(E.cur, true);
+  }
+  if (site.meet || calMap()['se:' + id]) calTouch('se:' + id);
+  if (!$('#pvdt').hidden) renderPq();
+}
 
 /* ---------- ouverture ---------- */
 async function openDevis(id){
