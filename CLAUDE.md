@@ -108,6 +108,7 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 - Soumission : rubrique tablette seulement (PC = dépôt du fichier dans « Soumission » par l'explorateur, pas de consultation) ; une seule soumission par chantier, l'ancienne → « Anciennes versions » ; `.crbx` lu tout de suite par la tablette, Word / PDF par la tâche du vendredi ; montant = quantité × PU arrondi à 0.05 CHF (comme BauBit).
 - Plans : nom « Sujet ind C AAAA-MM-JJ.pdf » ; un seul dossier Plans annulés par chantier ; jamais de suppression de plan.
 - Tablette : droitier au stylet → outils à gauche ; thème sombre + bouton fort contraste.
+- Bureau Documents (tablette) : seuls les types de documents ayant au moins 1 document dans le chantier sont affichés (pas de ligne vide) ; nouveau type via « Nouveau document ».
 - PC = complément : ne jamais modifier le comportement tablette pour le PC.
 - Communication : français, simple et concis ; questions sous forme de choix cliquables ; proposer des idées concrètes, pas seulement des questions.
 
