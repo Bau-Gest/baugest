@@ -94,6 +94,7 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 
 **Document manuscrit** (`DOCS`, `DOC_ORDER = pv, journal, regie, constat, libre`) : page logique 1000 × 1414 unités (`PW`, `PH`), traits stylet en JSON. Cases signature : journal, regie, constat (`sign:true`).
 **Éditeur manuscrit (13.10.2026)** : outil par défaut à chaque ouverture = stylo fin noir (`ED_SIZE` 1.7). Zoom 2 doigts interne aux pages (`ed.zoom` 1–3, barres non zoomées ; zoom navigateur bloqué par `touch-action`). Défilement au doigt manuel avec élan (`bindEdGestures`). Tablette (`ed.drawer`, classe `de-drawer`) : le doigt n'écrit jamais ; outils cachés, sortis en glissant le doigt depuis le bord gauche (ou geste « retour » Android, qui sort/rentre les outils au lieu de fermer l'éditeur → fermer avec ✕) ; refermés au contact du stylet ou d'un tap ; double tape au doigt = stylo ⇄ gomme. Téléphone : le doigt écrit toujours (pas de stylet).
+**Visionneuse PV DT (13.10.2026)** : même présentation que l'éditeur (barre `de-top`, ligne d'état, tiroir d'outils `de-tools` à gauche : Marqueur, Stylo + 4 couleurs, Gomme, Annuler, Zoom −/+). Mêmes règles : seul le stylet écrit, outils sortis du bord gauche (ou « retour » Android), double tape = outil ⇄ gomme, défilement avec élan. Outil par défaut = marqueur jaune (`hl`), plus de mode « Lire ». Un PV s'ouvre en haut de la 1re page.
 
 **Mesures d'un plan** : `{v:1, plan:{key,name}, siteId, scales, confirmed, measures:[…], updatedAt}` ; lié à l'ID Drive du plan (renommer/déplacer garde le lien).
 
@@ -154,7 +155,7 @@ Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_0
 |---|---|---|---|
 | 1 | Notification « nouveau PV » seulement si l'app est ouverte (pas de push serveur) | PV DT | Limite connue |
 | 2 | Détection auto chantier/n°/date d'un PV impossible sur PDF scanné (pas de texte) → saisie manuelle | PV DT (PC) | Limite connue |
-| 3 | Visionneuse PV : depuis le zoom « PV seul » (09.10), le défilement s'arrête net au relâcher (pas d'élan) | PV DT tablette | Signalé, en attente de décision |
+| 3 | Visionneuse PV : défilement sans élan | PV DT tablette | Corrigé le 13.10.2026 |
 | 4 | `sw.js` ne pré-cache que `index.html` : `pc.html`/`pc.webmanifest` ne sont en cache qu'après une 1re visite en ligne | PWA PC | À corriger si usage hors ligne PC |
 | 5 | Texte d'aide de l'URI de redirection affiche encore `tonnom.github.io/photochantier` (aperçu hors ligne) | Réglages Drive | Cosmétique |
 | 6 | Outils vus dans la maquette ergonomie mais non implémentés : texte (tablette), comptage de points, zoom caméra | Ergonomie v2 | Non fait volontairement |
@@ -166,7 +167,6 @@ Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_0
 
 ## 7. Pistes ouvertes (non commencées, à confirmer avec Joel)
 
-- Élan du défilement dans la visionneuse PV (bug 3).
 - Pré-cache de `pc.html` dans `sw.js` (bug 4).
 - Outils non faits de la maquette : texte sur plan (tablette), comptage de points, zoom caméra.
 - Notifications PV quand l'app est fermée (nécessiterait un serveur push).
