@@ -52,7 +52,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 ### Stockage local (noms hérités de PhotoChantier — NE PAS RENOMMER)
 - `localStorage['photochantier.v1']` : état/réglages principal (`S`).
 - IndexedDB : `photochantier` (file d'envoi photos), `photochantier-inbox` (fichiers reçus par partage, écrit par `sw.js`), `photochantier-docs` v2 (documents manuscrits), `baugest-plans` (cache des PDF de plans), `baugest-pvdt` (cache PV), `baugest-soum` (tableau de la soumission par chantier).
-- Clés `baugest.*` : `plPaths`, `plView`, `pltree.<site>`, `pvPanel`, `pvann.<id>`, `pvdt.seen`, `pvdt.last`, `pvpts.<id>`, `activeDevis`, `dmLayer`, `dmCad`, `pc.pqSite`, `cal` (événements agenda déjà envoyés par cet appareil : `{idFiche: contenu}`).
+- Clés `baugest.*` : `plPaths`, `plView`, `pltree.<site>`, `pvPanel`, `pvann.<id>`, `pvdt.seen`, `pvdt.last`, `pvpts.<id>`, `calcPos`, `activeDevis`, `dmLayer`, `dmCad`, `pc.pqSite`, `cal` (événements agenda déjà envoyés par cet appareil : `{idFiche: contenu}`).
 
 ### Organisation du Google Drive
 ```
@@ -95,6 +95,8 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 **Document manuscrit** (`DOCS`, `DOC_ORDER = pv, journal, regie, constat, libre`) : page logique 1000 × 1414 unités (`PW`, `PH`), traits stylet en JSON. Cases signature : journal, regie, constat (`sign:true`).
 **Éditeur manuscrit (13.10.2026)** : outil par défaut à chaque ouverture = stylo fin noir (`ED_SIZE` 1.7). Zoom 2 doigts interne aux pages (`ed.zoom` 1–3, barres non zoomées ; zoom navigateur bloqué par `touch-action`). Défilement au doigt manuel avec élan (`bindEdGestures`). Tablette (`ed.drawer`, classe `de-drawer`) : le doigt n'écrit jamais ; outils cachés, sortis en glissant le doigt depuis le bord gauche (ou geste « retour » Android, qui sort/rentre les outils au lieu de fermer l'éditeur → fermer avec ✕) ; refermés au contact du stylet ou d'un tap ; double tape au doigt = stylo ⇄ gomme. Téléphone : le doigt écrit toujours (pas de stylet).
 **Visionneuse PV DT (13.10.2026)** : même présentation que l'éditeur (barre `de-top`, ligne d'état, tiroir d'outils `de-tools` à gauche : Marqueur, Stylo + 4 couleurs, Gomme, Annuler, Zoom −/+). Mêmes règles : seul le stylet écrit, outils sortis du bord gauche (ou « retour » Android), double tape = outil ⇄ gomme, défilement avec élan. Outil par défaut = marqueur jaune (`hl`), plus de mode « Lire ». Un PV s'ouvre en haut de la 1re page.
+
+**Calculette flottante (15.10.2026, tablette seulement)** : bouton 🧮 dans la barre du haut + dans le tiroir d'outils de l'éditeur de documents, de la visionneuse PV DT et de la barre d'outils des plans (`[data-calc]`, cachés sur téléphone via `html.calc-ok`). Fenêtre `#calc` (z-index 60) déplaçable par sa barre de titre, position gardée dans `baugest.calcPos`. Touches + − × ÷ % ( ), C, ⌫, = et « Copier » (presse-papiers, sans séparateur). « a + b % » = a + a×b/100 ; « a × b % » = a×b/100. Se ferme toute seule quand on quitte l'éditeur / le plan / le PV. Bloc « Calculette flottante » (`calcEval`, `bindCalc`) ; absente de `pc.html`.
 
 **Mesures d'un plan** : `{v:1, plan:{key,name}, siteId, scales, confirmed, measures:[…], updatedAt}` ; lié à l'ID Drive du plan (renommer/déplacer garde le lien).
 

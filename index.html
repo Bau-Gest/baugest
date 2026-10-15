@@ -641,6 +641,23 @@ html[data-theme="light"] .pl-c.pl-n{color:#8a6200}
 @media (max-width:820px){.pl-row{grid-template-columns:52px minmax(0,1fr) 40px}.pl-row .pl-c{display:none}}
 
 .pv{z-index:34}
+html:not(.calc-ok) .calc-btn{display:none!important}
+.calc-btn.on{border-color:var(--signal)!important;color:var(--signal)}
+.calc{position:fixed;z-index:60;width:272px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.5);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.calc-head{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;background:var(--surface2);cursor:move;font:700 13px/1 var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.calc-head span{flex:1}
+.calc-head button{width:40px;height:36px;border:0;border-radius:10px;background:none;display:grid;place-items:center;color:var(--text)}
+.calc-scr{padding:10px 14px 8px;text-align:right;font-family:var(--mono)}
+.calc-exp{min-height:20px;font-size:15px;color:var(--muted);word-break:break-all}
+.calc-res{min-height:34px;font-size:28px;font-weight:600;color:var(--text);word-break:break-all}
+.calc-res.err{color:#e5534b;font-size:18px}
+.calc-keys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px 10px 10px}
+.calc-keys button{height:50px;border:1px solid var(--line);border-radius:11px;background:var(--surface2);color:var(--text);font:600 21px/1 var(--mono)}
+.calc-keys button:active{background:var(--line)}
+.calc-keys .op{color:var(--signal)}
+.calc-keys .fn{font:700 15px/1 var(--body);color:var(--muted)}
+.calc-keys .eq{grid-column:span 2;background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+.calc-keys .cp{grid-column:span 2;font:700 15px/1 var(--body)}
 .pv-top{gap:10px;flex-wrap:wrap;padding-top:calc(var(--st) + 8px);padding-bottom:8px}
 .pv-title{display:grid;min-width:0;flex:1 1 180px}
 .pv-title b{font:700 19px/1.15 var(--display);text-transform:uppercase;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1472,6 +1489,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <div class="pv-pager" id="pvPager" hidden><button id="pvPrev" class="pv-pgb" aria-label="Page précédente">‹</button><span id="pvPg" class="mono">1 / 1</span><button id="pvNext" class="pv-pgb" aria-label="Page suivante">›</button></div>
     <div class="pv-scale"><label for="pvScale">Échelle</label><select id="pvScale"></select><input id="pvScaleCustom" type="number" min="1" step="1" placeholder="ex. 750" aria-label="Échelle personnalisée 1:" hidden><span id="pvWarn" class="pv-warn" hidden>à confirmer</span></div>
     <span id="pvSave" class="pv-save"></span>
+    <button class="icon-btn calc-btn" data-calc aria-label="Calculette" title="Calculette"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg></button>
     <button id="pvPanelBtn" class="icon-btn" aria-pressed="true" aria-label="Afficher ou masquer les mesures (M)"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
   </header>
   <div class="pv-body">
@@ -1493,6 +1511,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
         <button class="pv-act go" id="pvDone" disabled>Terminer</button>
         <button class="pv-act" id="pvCancel" disabled>Annuler</button>
         <button class="pv-act" id="pvRestore" title="Remettre la dernière mesure supprimée" aria-label="Remettre la dernière mesure supprimée">↶</button>
+        <button class="pv-tool calc-btn" data-calc title="Calculette"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg><span class="lb">Calcul</span></button>
       </nav>
     </div>
     <aside id="pvPanel" class="pv-panel">
@@ -1526,6 +1545,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <div class="pdv-t"><b id="pdTitle">PV de chantier</b><small id="pdSub"></small></div>
     <button id="pdPtsBtn" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Points <span id="pdPtsN" class="pdv-n"></span></button>
     <span class="pd-notes"><button id="pdNotes" class="btn" title="Basculer vers mon document de notes relié à ce PV"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span id="pdNotesT">Notes</span></button><button id="pdNotesPick" class="btn pd-notes-pick" aria-label="Choisir un autre document de notes" title="Choisir un autre document"><svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button></span>
+    <button class="icon-btn calc-btn" data-calc aria-label="Calculette" title="Calculette"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg></button>
     <button id="pdShare" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>
   </header>
   <div class="de-status pen"><i></i><span id="pdStatusT">Seul le stylet écrit · doigt : défiler · 2 doigts : zoom · double tape : outil ⇄ gomme · glisser depuis le bord gauche : outils</span><b id="pdToolT" class="de-cur"></b></div>
@@ -1541,6 +1561,8 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
       <span class="de-sep"></span>
       <button class="de-tool" id="pdZout" title="Zoom arrière"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6"/></svg>Zoom −</button>
       <button class="de-tool" id="pdZin" title="Zoom avant"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6M11 8v6"/></svg>Zoom +</button>
+      <span class="de-sep calc-btn"></span>
+      <button class="de-tool calc-btn" data-calc title="Calculette"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg>Calcul</button>
     </div>
     <span class="de-grip" aria-hidden="true"></span>
     <div id="pdScroll" class="pdv-scroll"><div id="pdPages" class="pdv-pages"></div></div>
@@ -1585,6 +1607,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
       <select id="deSite" aria-label="Chantier"></select>
       <input type="date" id="deDate" aria-label="Date">
     </div>
+    <button class="icon-btn calc-btn" data-calc aria-label="Calculette" title="Calculette"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg></button>
     <button id="deSave" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>Enregistrer</button>
   </div>
   <div id="deStatus" class="de-status"><i></i><span id="deStatusT"></span><b id="deToolT" class="de-cur"></b></div>
@@ -1608,6 +1631,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
       <button class="de-tool" id="deRedo" title="Rétablir" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>Rétablir</button>
       <button class="de-tool" id="deBg" title="Fond de page"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M4 8h16M4 13h16M4 18h16"/></svg><span id="deBgT">Ligné</span></button>
       <button class="de-tool" id="deAddPage" title="Ajouter une page"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M12 11v6M9 14h6"/></svg>Page</button>
+      <button class="de-tool calc-btn" data-calc title="Calculette"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg>Calcul</button>
     </div>
     <div id="dePages" class="de-pages"></div>
     <span class="de-grip" aria-hidden="true"></span>
@@ -1737,6 +1761,18 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <div class="sheet-foot"><button id="cpDel" class="btn danger" hidden>Supprimer</button><button id="cpSave" class="btn primary">Enregistrer</button></div>
 </div>
 
+<div id="calc" class="calc" hidden role="dialog" aria-label="Calculette">
+  <div class="calc-head" id="calcHead"><span>Calculette</span><button id="calcClose" aria-label="Fermer la calculette"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="calc-scr"><div id="calcExp" class="calc-exp"></div><div id="calcRes" class="calc-res">0</div></div>
+  <div class="calc-keys" id="calcKeys">
+    <button data-k="C" class="fn">C</button><button data-k="B" class="fn">⌫</button><button data-k="(" class="op">(</button><button data-k=")" class="op">)</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="/" class="op">÷</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="*" class="op">×</button>
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="-" class="op">−</button>
+    <button data-k="0">0</button><button data-k=".">.</button><button data-k="%" class="op">%</button><button data-k="+" class="op">+</button>
+    <button data-k="cp" class="cp">Copier</button><button data-k="=" class="eq">=</button>
+  </div>
+</div>
 <div id="note" class="note" hidden role="status"></div>
 
 <!-- Paramètres -->
@@ -8888,6 +8924,117 @@ function initBackNav(){
   backSync();
 }
 
+/* ---------- Calculette flottante (tablette : documents, plans, PV DT) ---------- */
+const CALC = {on:false, exp:'', last:null};
+const CALC_HOSTS = ['#docEditor', '#planView', '#pdView'];
+const CALC_SYM = {'*':'×', '/':'÷', '-':'−'};
+function calcEval(src){
+  const t = src.match(/\d*\.?\d+|[-+*/()%]/g) || []; let i = 0;
+  if (t.join('') !== src.replace(/\s/g, '')) throw 0;
+  const peek = () => t[i], take = () => t[i++];
+  function prim(){
+    let k = take(), v;
+    if (k === '-') return {v:-prim().v};
+    if (k === '+') return prim();
+    if (k === '(') { v = add().v; if (take() !== ')') throw 0; }
+    else if (k !== undefined && /\d|\./.test(k)) v = +k;
+    else throw 0;
+    if (peek() === '%') { take(); return {v:v / 100, pct:true}; }
+    return {v};
+  }
+  function mul(){
+    let a = prim();
+    while (peek() === '*' || peek() === '/') { const o = take(), b = prim().v; a = {v:o === '*' ? a.v * b : a.v / b}; }
+    return a;
+  }
+  function add(){
+    let a = mul();
+    while (peek() === '+' || peek() === '-') { const o = take(), b = mul(), d = b.pct ? a.v * b.v : b.v; a = {v:o === '+' ? a.v + d : a.v - d}; }
+    return a;
+  }
+  const r = add().v;
+  if (i < t.length || !isFinite(r)) throw 0;
+  return r;
+}
+function calcClean(v){ return String(+v.toPrecision(12)); }
+function calcFmt(v){ const [a, b] = calcClean(v).split('.'); return a.replace(/\B(?=(\d{3})+(?!\d))/g, '’') + (b ? '.' + b : ''); }
+function calcShowExp(e){ return e.replace(/[*/-]/g, c => CALC_SYM[c]); }
+function calcRender(){
+  const r = $('#calcRes'), e = CALC.exp; let v = null;
+  r.classList.remove('err');
+  if (e) { try { v = calcEval(e); } catch (x) {} }
+  $('#calcExp').textContent = calcShowExp(e);
+  r.textContent = v !== null ? calcFmt(v) : (e ? '…' : (CALC.last !== null ? calcFmt(CALC.last) : '0'));
+}
+function calcKey(k){
+  let e = CALC.exp;
+  if (k === 'C') { CALC.exp = ''; CALC.last = null; calcRender(); return; }
+  if (k === 'B') { CALC.exp = e.slice(0, -1); calcRender(); return; }
+  if (k === 'cp') { calcCopy(); return; }
+  if (k === '=') {
+    if (!e) return;
+    try { const v = calcEval(e); CALC.last = v; CALC.exp = calcClean(v); $('#calcRes').textContent = calcFmt(v); $('#calcExp').textContent = calcShowExp(e) + ' ='; }
+    catch (x) { $('#calcRes').textContent = 'Calcul incomplet'; $('#calcRes').classList.add('err'); }
+    return;
+  }
+  if (!e && CALC.last !== null && /[-+*/%]/.test(k)) e = calcClean(CALC.last);
+  if (/[-+*/]/.test(k) && /[-+*/]$/.test(e) && !(k === '-' && /[*/]$/.test(e))) e = e.slice(0, -1);
+  if (k === '.') { const n = e.match(/[\d.]*$/)[0]; if (n.includes('.')) return; if (!n) k = '0.'; }
+  CALC.exp = e + k; calcRender();
+}
+async function calcCopy(){
+  let v = null;
+  try { v = CALC.exp ? calcEval(CALC.exp) : CALC.last; } catch (x) {}
+  if (v === null) { note('Rien à copier', 1500); return; }
+  const txt = calcClean(v);
+  try { await navigator.clipboard.writeText(txt); }
+  catch (x) { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (y) {} ta.remove(); }
+  note('Copié : ' + txt, 1500);
+}
+function calcPlace(x, y){
+  const el = $('#calc'), w = el.offsetWidth || 272, h = el.offsetHeight || 420;
+  x = Math.max(4, Math.min(innerWidth - w - 4, x)); y = Math.max(4, Math.min(innerHeight - h - 4, y));
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  return {x, y};
+}
+function calcShow(on){
+  CALC.on = !!on && isTabletScreen();
+  $('#calc').hidden = !CALC.on;
+  $$('[data-calc]').forEach(b => { b.classList.toggle('on', CALC.on); b.setAttribute('aria-pressed', String(CALC.on)); });
+  if (!CALC.on) return;
+  let p = null; try { p = JSON.parse(localStorage.getItem('baugest.calcPos') || 'null'); } catch (e) {}
+  calcPlace(p ? p.x : innerWidth - 300, p ? p.y : 90);
+  calcRender();
+}
+function bindCalc(){
+  const sync = () => document.documentElement.classList.toggle('calc-ok', isTabletScreen());
+  sync(); window.addEventListener('resize', () => { sync(); if (CALC.on) { if (!isTabletScreen()) calcShow(false); else calcPlace($('#calc').offsetLeft, $('#calc').offsetTop); } });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('[data-calc]')) return;
+    calcShow(!CALC.on);
+    if (ed.toolsOpen) edTools(false);
+    if (PDV.toolsOpen) pdTools(false);
+  });
+  const el = $('#calc');
+  ['pointerdown', 'touchstart', 'mousedown'].forEach(t => el.addEventListener(t, e => e.stopPropagation()));
+  $('#calcKeys').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) calcKey(b.dataset.k); });
+  $('#calcClose').addEventListener('click', () => calcShow(false));
+  const head = $('#calcHead'); let drag = null;
+  head.addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    drag = {id:e.pointerId, dx:e.clientX - el.offsetLeft, dy:e.clientY - el.offsetTop};
+    head.setPointerCapture(e.pointerId);
+  });
+  head.addEventListener('pointermove', e => { if (drag && e.pointerId === drag.id) calcPlace(e.clientX - drag.dx, e.clientY - drag.dy); });
+  const end = e => {
+    if (!drag || e.pointerId !== drag.id) return; drag = null;
+    try { localStorage.setItem('baugest.calcPos', JSON.stringify({x:el.offsetLeft, y:el.offsetTop})); } catch (x) {}
+  };
+  head.addEventListener('pointerup', end); head.addEventListener('pointercancel', end);
+  const mo = new MutationObserver(() => { if (CALC.on && CALC_HOSTS.every(h => $(h).hidden)) calcShow(false); });
+  CALC_HOSTS.forEach(h => mo.observe($(h), {attributes:true, attributeFilter:['hidden']}));
+}
+
 /* ---------- Démarrage ---------- */
 async function init(){
   const auth = readAuthHash();
@@ -8895,7 +9042,7 @@ async function init(){
   const pvParam = new URLSearchParams(location.search).get('pvdt'), pvSite = new URLSearchParams(location.search).get('site');
   if (shareParam !== null || pvParam) history.replaceState(null, '', location.pathname + location.hash);
   await DB.open();
-  bind(); bindDocs(); bindPlans(); bindPvdt(); bindSoum(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); applyBrand(); renderSiteChip(); renderActiveTag();
+  bind(); bindDocs(); bindPlans(); bindPvdt(); bindSoum(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); bindCalc(); applyBrand(); renderSiteChip(); renderActiveTag();
   startGeo();
   if (auth === 'cid') note('Client ID enregistré. Ouvre Paramètres › Google Drive › Connecter.', 4500);
   if (auth === 'ok') { try { await fetchAbout(); note('Google Drive connecté : ' + S.drive.email, 3500); } catch (e) {} }
