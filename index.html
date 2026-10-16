@@ -2388,14 +2388,22 @@ async function startCamera(){
       ? "Dans cette page d'aperçu, la caméra intégrée et le GPS sont bloqués. Le déclencheur ouvre l'appareil photo du téléphone (ou le choix d'un fichier sur ordinateur) pour tester le rendu, les étiquettes et la file d'envoi."
       : "Autorise la caméra pour BauGest dans Chrome (icône à gauche de l'adresse). En attendant, le déclencheur ouvre l'appareil photo du téléphone.";
   }
-  try { wakeLock = await navigator.wakeLock?.request('screen'); } catch (e) {}
+  keepAwake();
+}
+/* Écran toujours allumé (tablette en permanence, téléphone pendant la caméra) : verrou repris au retour dans l'app */
+async function keepAwake(){
+  if (!navigator.wakeLock || document.hidden || (wakeLock && !wakeLock.released)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch (e) { wakeLock = null; }
 }
 function stopCamera(){
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null; track = null; imageCapture = null; torchOn = false; $('#btnTorch').classList.remove('on');
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { stopCamera(); } else { if ($('#desk').hidden) startCamera(); processQueue(); refreshInboxBadge(); syncSettings(); }
+  if (document.hidden) { stopCamera(); } else { if (isTabletScreen()) keepAwake(); if ($('#desk').hidden) startCamera(); processQueue(); refreshInboxBadge(); syncSettings(); }
 });
 
 async function grabFrame(){
@@ -9044,6 +9052,7 @@ async function init(){
   await DB.open();
   bind(); bindDocs(); bindPlans(); bindPvdt(); bindSoum(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); bindCalc(); applyBrand(); renderSiteChip(); renderActiveTag();
   startGeo();
+  if (isTabletScreen()) { keepAwake(); document.addEventListener('pointerdown', keepAwake, {passive:true}); }
   if (auth === 'cid') note('Client ID enregistré. Ouvre Paramètres › Google Drive › Connecter.', 4500);
   if (auth === 'ok') { try { await fetchAbout(); note('Google Drive connecté : ' + S.drive.email, 3500); } catch (e) {} }
   else if (!auth && !IN_FRAME && S.drive.clientId && S.drive.email && !tokenValid() && navigator.onLine) {
