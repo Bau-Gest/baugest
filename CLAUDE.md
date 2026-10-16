@@ -33,7 +33,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 
 ### Plateformes
 - **Téléphone** : `isTabletScreen()` = petit côté d'écran < 600 px. Démarre toujours sur la caméra. Pas de plans (un PDF partagé est rangé dans Plans ou PV du chantier).
-- **Tablette** (Lenovo Idea Tab Pro Gen 2, stylet) : bureau avec barre de rubriques à gauche (Photos, Plans, Documents, PV DT, Soumission, Devis). Écran de démarrage réglable (`S.home`).
+- **Tablette** (Lenovo Idea Tab Pro Gen 2, stylet) : bureau avec barre de rubriques à gauche (Photos, Plans, Documents, PV DT, Soumission, Devis). Écran de démarrage réglable (`S.home`). Écran toujours allumé tant que BauGest est au premier plan (Wake Lock `keepAwake`, 16.10.2026) ; s'éteint seulement par le bouton ou la coque, verrou repris au retour dans l'app ou au 1er toucher.
 - **PC** (`pc.html`) : infos du chantier et séances (`editSiteDlg` : onglet PV DT › bouton agenda, ou clic droit sur un dossier chantier ; réécrit le chantier dans le fichier de réglages avec `smod` = maintenant et renomme le dossier Drive si N°/nom changent), explorateur Drive, double vue optionnelle, annotation, impression, glisser-déposer Windows ↔ BauGest, filtres photos, devis, métrés, comparaison d'indices, recherche globale, rapport photo PDF, dépôt PV DT.
 
 ### Bibliothèques (CDN, mises en cache par `sw.js`)
