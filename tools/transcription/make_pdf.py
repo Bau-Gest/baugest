@@ -31,6 +31,8 @@ Pas de ligne vide : dans les zones de texte libre (page libre, « Points traité
 sur cette ligne, et le premier texte de chaque ligne (x < 400) est aligné sur la marge gauche (60) ;
 un texte écrit à droite d'un autre sur la même ligne garde son x.
 "keep": true garde la position d'origine.
+Les pages manuscrites suivantes continuent à la suite du texte tant qu'il reste des lignes libres
+(nouvelle page seulement si la page est pleine ; "keep_pages": true garde une page PDF par page manuscrite).
 """
 import json
 import sys
@@ -60,6 +62,7 @@ class Page:
         self.used = []
         self.zones = []
         self.flow = {}
+        self.new_page = None
 
     def X(self, x):
         return x * K
@@ -296,10 +299,15 @@ def free_y(p, x1, x2, y, pitch):
     return y
 
 
-def items(p, its, bg="plain", snap=True):
+def first_line(bg):
+    return 257 if bg == "lined" else 262
+
+
+def items(p, its, bg="plain", snap=True, cont=False):
+    """cont=True : suite d'une page manuscrite suivante, écrite à la suite du texte de la page en cours."""
     pitch = 56 if bg == "lined" else 40
     for it in its:
-        if snap and not it.get("check"):
+        if snap and not it.get("check") and not cont:
             it = {**it}
             it["x"], it["y"] = fit(p, it, bg)
         if it.get("check"):
@@ -311,9 +319,18 @@ def items(p, its, bg="plain", snap=True):
             p.line(x + 19, y + 5, x + 5, y + 19, INK, 2.6)
             continue
         t, x, y, sz = it.get("text", ""), it["x"], it["y"], it.get("size", 22)
-        z = next((i for i, (a, b) in enumerate(p.zones) if a <= y < b), None)
-        if z is not None and not it.get("keep") and x < 400 and not (
-                z in p.flow and abs(y - p.flow[z][0]) < pitch * 0.6):
+        y0 = y
+        if cont:
+            z = len(p.zones) - 1
+            last = p.flow.get(z)
+            if last and last[0] is not None and abs(y0 - last[0]) < pitch * 0.6:
+                y = last[1]
+            else:
+                y = last[2] + pitch if last else first_line(bg)
+        else:
+            z = next((i for i, (a, b) in enumerate(p.zones) if a <= y < b), None)
+        side = z is not None and z in p.flow and p.flow[z][0] is not None and abs(y0 - p.flow[z][0]) < pitch * 0.6
+        if z is not None and not it.get("keep") and x < 400 and not side:
             x = 60
         mark, tx = "", x
         if t[:3] in ("[x]", "[X]", "[ ]"):
@@ -322,14 +339,17 @@ def items(p, its, bg="plain", snap=True):
             mark, t, tx = "→", t[1:].lstrip(), x + sz * 1.6
         lines = [t] if it.get("nowrap") else wrap(p, t, tx, it.get("x2") or 940, sz)
         width = lambda s: p.c.stringWidth(s, "Helvetica", sz * K) / K
-        y0 = y
-        if z is not None and z in p.flow and not it.get("keep"):
+        if z is not None and z in p.flow and not it.get("keep") and not cont:
             last_y0, last_first, last_y = p.flow[z]
-            if abs(y0 - last_y0) < pitch * 0.6:
+            if side:
                 y = last_first
             elif y > last_y + pitch * 0.6:
                 y = min(y, last_y + pitch)
         y = free_y(p, x, tx + width(lines[0]), y, pitch)
+        last_zone = z is not None and z == len(p.zones) - 1
+        if last_zone and y > p.zones[z][1] and p.new_page:
+            p.new_page()
+            z, y, side = 0, first_line(bg), False
         if mark in ("x", "X"):
             items(p, [{"x": x, "y": y - 20, "check": True, "box": True}], bg, False)
         elif mark == " ":
@@ -344,36 +364,68 @@ def items(p, its, bg="plain", snap=True):
             w = width(ln)
             if i:
                 y = free_y(p, tx, tx + w, y + pitch, pitch)
+                if last_zone and y > p.zones[z][1] and p.new_page:
+                    p.new_page()
+                    z, y = 0, first_line(bg)
             p.text(ln, tx, y, size=sz, bold=False, color=INK)
             p.used.append((x if i == 0 else tx, tx + w, y))
         if z is not None:
             p.flow[z] = (y0, first, max(y, p.flow[z][2]) if z in p.flow else y)
 
 
-def main(src, out):
-    T = json.load(open(src, encoding="utf-8"))
+def render(c, T, total):
+    """Dessine le document ; renvoie le nombre de pages produites.
+    Une page manuscrite suivante (sans photo ni signature) continue à la suite du texte
+    de la page en cours tant qu'il reste des lignes libres ; sinon nouvelle page."""
     kind = T.get("kind", "libre")
     base = DOCS.get(kind, DOCS["libre"])
     bg = T.get("bg") or base["bg"]
     show_form = T.get("form", True) and base["form"]
     sign = T.get("sign", True) and base["sign"]
+    pages = T.get("pages") or [{"items": []}]
+    p = Page(c)
+    st = {"n": 0}
+
+    def start(n):
+        p.labels, p.used, p.flow = [], [], {}
+        paper(p, bg)
+        header(p, T, n, total)
+        if n == 0 and show_form:
+            form(p, kind, sign)
+        p.zones = zones(kind, show_form, sign, n)
+
+    def new_page():
+        c.showPage()
+        st["n"] += 1
+        start(st["n"])
+
+    p.new_page = new_page
+    start(0)
+    for pi, pg in enumerate(pages):
+        pics = pg.get("images", []) + pg.get("signatures", [])
+        cont = pi > 0 and not pics and bool(p.zones) and (len(p.zones) - 1) in p.flow and not T.get("keep_pages")
+        if pi > 0 and not cont:
+            new_page()
+        if cont:
+            z = len(p.zones) - 1
+            p.flow[z] = (None,) + tuple(p.flow[z][1:])
+        for im in pics:
+            c.drawImage(ImageReader(im["src"]), p.X(im["x"]), p.Y(im["y"] + im["h"]), im["w"] * K, im["h"] * K, mask="auto")
+        items(p, pg.get("items", []), bg, T.get("snap", True), cont)
+    c.showPage()
+    return st["n"] + 1
+
+
+def main(src, out):
+    import io
+    T = json.load(open(src, encoding="utf-8"))
+    total = render(canvas.Canvas(io.BytesIO(), pagesize=A4), T, 1)
     c = canvas.Canvas(out, pagesize=A4)
     c.setTitle(T["title"])
     c.setAuthor("BauGest")
-    pages = T.get("pages") or [{"items": []}]
-    for pi, pg in enumerate(pages):
-        p = Page(c)
-        paper(p, bg)
-        header(p, T, pi, len(pages))
-        if pi == 0 and show_form:
-            form(p, kind, sign)
-        p.zones = zones(kind, show_form, sign, pi)
-        for im in pg.get("images", []) + pg.get("signatures", []):
-            c.drawImage(ImageReader(im["src"]), p.X(im["x"]), p.Y(im["y"] + im["h"]), im["w"] * K, im["h"] * K, mask="auto")
-        items(p, pg.get("items", []), bg, T.get("snap", True))
-        c.showPage()
+    render(c, T, total)
     c.save()
-    print("OK", out)
+    print("OK", out, total, "page(s)")
 
 
 if __name__ == "__main__":
