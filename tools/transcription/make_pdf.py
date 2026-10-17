@@ -22,6 +22,10 @@ Un texte qui commence par "[x] " ou "[ ] " dessine une case cochée ou vide deva
 un texte qui commence par "→ " dessine une flèche.
 Par défaut ("snap": true), chaque texte est calé sur la ligne d'écriture la plus proche
 et placé à droite des libellés du formulaire (Lieu :, Heure :…).
+Retour à la ligne automatique : un texte trop long pour la largeur de la page (marge droite 940,
+ou "x2" de l'item) continue sur la ligne suivante, au même x. Un item = un paragraphe : on ne
+change de ligne qu'à un nouveau paragraphe (nouvel item). "nowrap": true désactive le retour.
+Si une ligne tombe sur un texte déjà écrit, elle descend d'une ligne.
 """
 import json
 import sys
@@ -48,6 +52,7 @@ class Page:
     def __init__(self, c):
         self.c = c
         self.labels = []
+        self.used = []
 
     def X(self, x):
         return x * K
@@ -238,18 +243,45 @@ def fit(p, it, bg):
     return x, y
 
 
+def wrap(p, t, x, x2, sz):
+    """Coupe le texte en lignes qui tiennent entre x et x2 (unités BauGest)."""
+    fs = sz * K
+    width = lambda s: p.c.stringWidth(s, "Helvetica", fs) / K
+    avail = max(60, x2 - x)
+    out, cur = [], ""
+    for w in t.split():
+        nxt = (cur + " " + w) if cur else w
+        if cur and width(nxt) > avail:
+            out.append(cur)
+            cur = w
+        else:
+            cur = nxt
+        while width(cur) > avail and len(cur) > 1:
+            n = len(cur)
+            while n > 1 and width(cur[:n]) > avail:
+                n -= 1
+            out.append(cur[:n])
+            cur = cur[n:]
+    if cur or not out:
+        out.append(cur)
+    return out
+
+
+def free_y(p, x1, x2, y, pitch):
+    """Descend d'une ligne tant que la place est déjà occupée par un texte écrit."""
+    for _ in range(60):
+        if not any(abs(uy - y) < pitch * 0.6 and ux1 < x2 and x1 < ux2 for ux1, ux2, uy in p.used):
+            return y
+        y += pitch
+    return y
+
+
 def items(p, its, bg="plain", snap=True):
+    pitch = 56 if bg == "lined" else 40
     for it in its:
         if snap and not it.get("check"):
             it = {**it}
             it["x"], it["y"] = fit(p, it, bg)
-        t0 = it.get("text", "")
-        if t0[:3] in ("[x]", "[X]", "[ ]"):
-            x, y, sz = it["x"], it["y"], it.get("size", 22)
-            items(p, [{"x": x, "y": y - 20, "check": True, "box": True}] if t0[1] != " " else [], bg, False)
-            if t0[1] == " ":
-                p.box(x, y - 20, 24, 24, color=INK)
-            it = {**it, "text": t0[3:].lstrip(), "x": x + 36}
         if it.get("check"):
             x, y = it["x"], it["y"]
             if it.get("box", True):
@@ -258,14 +290,30 @@ def items(p, its, bg="plain", snap=True):
             p.line(x + 5, y + 5, x + 19, y + 19, INK, 2.6)
             p.line(x + 19, y + 5, x + 5, y + 19, INK, 2.6)
             continue
-        t, x, y, sz = it["text"], it["x"], it["y"], it.get("size", 22)
-        if t.startswith("→"):
+        t, x, y, sz = it.get("text", ""), it["x"], it["y"], it.get("size", 22)
+        mark, tx = "", x
+        if t[:3] in ("[x]", "[X]", "[ ]"):
+            mark, t, tx = t[1], t[3:].lstrip(), x + 36
+        elif t.startswith("→"):
+            mark, t, tx = "→", t[1:].lstrip(), x + sz * 1.6
+        lines = [t] if it.get("nowrap") else wrap(p, t, tx, it.get("x2") or 940, sz)
+        width = lambda s: p.c.stringWidth(s, "Helvetica", sz * K) / K
+        y = free_y(p, x, tx + width(lines[0]), y, pitch)
+        if mark in ("x", "X"):
+            items(p, [{"x": x, "y": y - 20, "check": True, "box": True}], bg, False)
+        elif mark == " ":
+            p.box(x, y - 20, 24, 24, color=INK)
+        elif mark == "→":
             m = y - sz * 0.32
             p.line(x, m, x + sz * 1.1, m, INK, 2)
             p.line(x + sz * 0.75, m - sz * 0.3, x + sz * 1.1, m, INK, 2)
             p.line(x + sz * 0.75, m + sz * 0.3, x + sz * 1.1, m, INK, 2)
-            t, x = t[1:].lstrip(), x + sz * 1.6
-        p.text(t, x, y, size=sz, bold=False, color=INK)
+        for i, ln in enumerate(lines):
+            w = width(ln)
+            if i:
+                y = free_y(p, tx, tx + w, y + pitch, pitch)
+            p.text(ln, tx, y, size=sz, bold=False, color=INK)
+            p.used.append((x if i == 0 else tx, tx + w, y))
 
 
 def main(src, out):

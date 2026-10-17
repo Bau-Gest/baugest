@@ -7,7 +7,9 @@ Produit dans dossier_sortie :
   seg_N_K.png         un extrait par segment d'écriture (ligne ou morceau de ligne)
   info.json           tout ce qu'il faut pour make_pdf.py :
                       kind, title, date, site, logo, bg, form, sign,
-                      pages[].segments[] = {id, x, y, x2, top, bottom, img}
+                      pages[].segments[] = {id, x, y, x2, top, bottom, img, para}
+                      para = n° de paragraphe proposé : les segments de même n° sont la suite
+                      d'un même paragraphe (ligne écrite jusqu'au bout, puis ligne suivante)
                       pages[].signatures[] = {x, y, w, h, src} : contenu des cases de signature,
                       jamais transcrit, recopié tel quel dans le PDF (clé "images" de make_pdf.py)
                       (x, y = position conseillée du texte tapé, en unités BauGest)
@@ -153,7 +155,25 @@ def segments(page):
         h = hs[len(hs) // 2]
         segs.append({"x": round(x1), "y": round(mid + h * 0.35), "x2": round(x2), "top": round(y1), "bottom": round(y2)})
     segs.sort(key=lambda s: (s["top"] // 25, s["x"]))
+    paragraphs(segs)
     return segs
+
+
+def paragraphs(segs):
+    """Propose un n° de paragraphe : une ligne seule sur sa hauteur, écrite jusque vers la marge droite,
+    continue sur la ligne suivante si celle-ci est juste en dessous et commence au même x."""
+    def alone(s):
+        m = (s["top"] + s["bottom"]) / 2
+        return not any(o is not s and abs((o["top"] + o["bottom"]) / 2 - m) < 25 for o in segs)
+    n, start = 0, None
+    for k, sg in enumerate(segs):
+        prev = segs[k - 1] if k else None
+        cont = (prev is not None and start is not None and alone(prev) and alone(sg)
+                and prev["x2"] >= 760 and abs(sg["x"] - start["x"]) <= 60 and 0 < sg["y"] - prev["y"] <= 95)
+        if not cont:
+            n += 1
+            start = sg
+        sg["para"] = n
 
 
 def main(doc_path, settings_path, out):
