@@ -100,6 +100,7 @@ input[type=text],input[type=search],input[type=date],input[type=time],select{hei
 #loginMsg{color:var(--warn);min-height:1em}
 
 /* ---------- application ---------- */
+body.bp-split #app{left:var(--bp-w,55%)}
 #app{position:fixed;inset:0;display:grid;grid-template-rows:48px 1fr;grid-template-columns:var(--sidew,270px) 1fr}
 .top{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--surface);border-bottom:1px solid var(--line)}
 .top .brand{font-size:22px;margin-right:10px}
@@ -2782,8 +2783,14 @@ function syncNav(){
   const cur = !$('#devis').hidden ? 'devis' : !$('#pvdt').hidden ? 'pvdt' : E.mode === 'photos' ? 'photos' : 'files';
   $$('#navtabs [data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === cur));
 }
-/* ---------- Planning (Gantt, chemin critique, ressources, budget) : module partagé planning.js ---------- */
+/* ---------- Planning (Gantt, chemin critique, ressources, budget) : module partagé planning.js ----------
+   Double vue : planning à gauche, BauGest PC à droite. Fenêtre séparée : pc.html#planning=<chantier>&plan=<uid> */
+const PLAN_WIN = /[#&]planning=/.test(location.hash);
 if (window.BGPlan) BGPlan.init({
+  split:true,
+  onSplit:() => setTimeout(() => dispatchEvent(new Event('resize')), 50),
+  popout:PLAN_WIN ? null : (sid, uid) => { const w = window.open(location.pathname + '#planning=' + encodeURIComponent(sid || '') + (uid ? '&plan=' + encodeURIComponent(uid) : ''), 'bgplanning', 'popup,width=1500,height=950'); if (!w) toast('Fenêtre bloquée : autorise les fenêtres pop-up pour ce site', 'err'); },
+  onClose:() => { if (PLAN_WIN) window.close(); },
   sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), folder:siteFolderName(s)})),
   api:(url, opt) => api(url, opt),
   ensureFolder:async parts => { let id = P.rootId; for (const n of parts) id = await ensureChild(id, n); return id; },
@@ -4487,6 +4494,11 @@ async function start(){
     FN.set(P.rootId, {id:P.rootId, name:P.rootName || 'BauGest', parent:null, kids:null, open:true});
     await Promise.all([loadSettings(), loadKids(P.rootId)]);
     renderTree();
+    if (PLAN_WIN && window.BGPlan) {
+      const hp = k => decodeURIComponent((location.hash.match(new RegExp('[#&]' + k + '=([^&]*)')) || [])[1] || '');
+      document.title = 'Planning · BauGest PC';
+      BGPlan.open(hp('planning') || null, hp('plan') || null).catch(e => toast('Planning : ' + e.message, 'err'));
+    }
     const hf = (location.hash.match(/[#&]f=([^&]+)/) || [])[1];
     let start = P.rootId;
     if (P.lastFolder && P.lastFolder !== P.rootId) { try { if (await ensureChain(P.lastFolder)) start = P.lastFolder; } catch (e) {} }

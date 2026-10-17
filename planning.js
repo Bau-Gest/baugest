@@ -388,7 +388,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = CORE; re
 /* ---------- Interface ---------- */
 let H = null;
 const U = {siteId:null, recs:[], rec:null, plan:null, cal:null, sch:null, tab:'gantt', zoom:'week', sel:null, undo:[], redo:[], saveT:0, pushT:0,
-  resSel:null, statusDn:null, full:true, showBase:true, tap:{id:null, t:0}, drag:null, dlgs:[], listTok:0, pushing:null};
+  resSel:null, statusDn:null, full:null, openTok:0, showBase:true, tap:{id:null, t:0}, drag:null, dlgs:[], listTok:0, pushing:null};
 const PDFLIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
 const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
 const DRV = 'https://www.googleapis.com/drive/v3/files', UPL = 'https://www.googleapis.com/upload/drive/v3/files';
@@ -410,13 +410,18 @@ const I = {
   undo:ic('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'), redo:ic('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
   base:ic('<path d="M4 20h16M6 16h12M8 12h8M10 8h4"/>'), lvl:ic('<path d="M3 20h18M6 16V9M10 16V5M14 16v-6M18 16v-3"/>'),
   exp:ic('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'), today:ic('<path d="M12 2v20M5 7h14"/>'), cal:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
-  imp:ic('<path d="M12 15V3M7 8l5-5 5 5M5 21h14"/>'), tbl:ic('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>'), money:ic('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>')
+  imp:ic('<path d="M12 15V3M7 8l5-5 5 5M5 21h14"/>'), split:ic('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>'),
+  win:ic('<path d="M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>'), tbl:ic('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>'), money:ic('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>')
 };
 const COLORS = ['#3e8ed0', '#e8a33d', '#4caf7a', '#9b6fd6', '#d65f8f', '#3fb0b0', '#c97a46', '#7d8a2e'];
 
 function css(){ return `
 #bgPlan{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;background:var(--asphalt,var(--bg,#131518));color:var(--text,#ecebe6);font:15px/1.35 var(--body,system-ui,sans-serif);-webkit-user-select:none;user-select:none}
 #bgPlan[hidden]{display:none}
+#bgPlan.bp-split{right:auto;width:var(--bp-w,55%);border-right:2px solid var(--line,#353a41)}
+.bp-splitter{display:none;position:absolute;top:0;bottom:0;right:-6px;width:10px;cursor:col-resize;z-index:5}
+#bgPlan.bp-split .bp-splitter{display:block}
+.bp-splitter:hover,.bp-splitter.on{background:var(--signal,#f2c230);opacity:.5}
 #bgPlan *{box-sizing:border-box}
 #bgPlan .bp-ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 #bgPlan button{font:inherit;color:inherit;cursor:pointer}
@@ -523,7 +528,8 @@ function css(){ return `
 .bp-df .l{margin-right:auto}
 .bp-toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;max-width:90vw}
 .bp-toast{background:#111;color:#fff;padding:10px 16px;border-radius:10px;font:14.5px/1.35 var(--body,system-ui,sans-serif);box-shadow:0 6px 20px rgba(0,0,0,.4)}
-@media (max-width:1500px){.bp-ttl{display:none}.bp-top [data-a] span{display:none}.bp-top select{max-width:190px!important}.bp-state{max-width:130px}}
+#bgPlan.bp-n1 .bp-ttl{display:none}#bgPlan.bp-n1 .bp-top [data-a] span{display:none}#bgPlan.bp-n1 .bp-top select{max-width:190px!important}#bgPlan.bp-n1 .bp-state{max-width:130px}
+#bgPlan.bp-n2 .bp-state,#bgPlan.bp-n2 .bp-sum{display:none}#bgPlan.bp-n2 .bp-top select{max-width:150px!important}#bgPlan.bp-n2 .bp-bar .bp-btn span{display:none}
 .bp-hint{font-size:13px;color:var(--muted,#9da2a8)}
 .bp-menu{display:grid;gap:8px}
 .bp-menu .bp-btn{justify-content:flex-start;height:52px}
@@ -701,14 +707,34 @@ function build(){
     <button class="bp-btn" data-a="baseline" title="Figer le planning de référence (dates et budget initiaux)">${I.base}<span>Référence</span></button>
     <button class="bp-btn" data-a="level" title="Surcharges des ressources : proposition de décalage">${I.lvl}<span>Lisser</span></button>
     <button class="bp-btn" data-a="export" title="PDF A3, Excel, MS Project">${I.exp}<span>Exporter</span></button>
+    ${H.split ? `<button class="bp-ib" data-a="split" title="Double vue : planning à gauche, explorateur et fichiers du chantier à droite">${I.split}</button>` : ''}
+    ${H.popout ? `<button class="bp-ib" data-a="popout" title="Ouvrir le planning dans une fenêtre séparée (2e écran)">${I.win}</button>` : ''}
   </header>
   <div class="bp-info" id="bpInfo" hidden></div>
-  <main id="bpMain"></main>`;
+  <main id="bpMain"></main><div class="bp-splitter" title="Glisser pour régler la largeur"></div>`;
   document.body.appendChild(el);
   bind(el);
+  const fit = () => { const w = el.clientWidth; if (!w) return; const n1 = w < 1500, n2 = w < 1000, was = U.narrow;
+    el.classList.toggle('bp-n1', n1); el.classList.toggle('bp-n2', n2); U.narrow = n2; if (was !== undefined && was !== n2 && U.plan && U.tab === 'gantt') render(); };
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(el); else addEventListener('resize', fit);
 }
-async function open(siteId){
+/* double vue (PC) : le planning à gauche, la page hôte à droite (largeur réglable, gardée dans baugest.planSplit) */
+const splitPref = () => { try { return JSON.parse(localStorage.getItem('baugest.planSplit') || '{}'); } catch (e) { return {}; } };
+function setSplit(on, w){
+  const el = document.getElementById('bgPlan'); if (!el || !H.split) return;
+  const pref = splitPref(); w = Math.max(30, Math.min(80, w || pref.w || 55));
+  U.split = !!on;
+  el.classList.toggle('bp-split', U.split);
+  document.documentElement.style.setProperty('--bp-w', w + '%');
+  document.body.classList.toggle('bp-split', U.split && !el.hidden);
+  try { localStorage.setItem('baugest.planSplit', JSON.stringify({on:U.split, w})); } catch (e) {}
+  const b = $b('[data-a="split"]'); if (b) b.classList.toggle('on', U.split);
+  if (H.onSplit) H.onSplit(U.split);
+  if (U.plan) render();
+}
+async function open(siteId, planUid){
   if (!H) throw new Error('BGPlan.init() manquant');
+  U.openTok++;
   build();
   const sites = H.sites() || [];
   U.siteId = siteId && sites.some(s => s.id === siteId) ? siteId : (U.siteId && sites.some(s => s.id === U.siteId) ? U.siteId : (sites[0] && sites[0].id) || null);
@@ -716,14 +742,25 @@ async function open(siteId){
   $b('#bpSite').innerHTML = sites.length ? sites.map(s => `<option value="${esc(s.id)}">${esc(s.label)}</option>`).join('') : '<option value="">Aucun chantier</option>';
   if (U.siteId) $b('#bpSite').value = U.siteId;
   document.getElementById('bgPlan').hidden = false;
+  if (H.split) setSplit(!!splitPref().on);
   if (H.onToggle) H.onToggle(true);
-  await loadSite();
+  await loadSite(planUid);
 }
 async function close(){
+  const tok = U.openTok;
   await flush();
+  if (tok !== U.openTok) return;
   const el = document.getElementById('bgPlan'); if (el) el.hidden = true;
   U.dlgs.slice().forEach(d => d.close());
+  document.body.classList.remove('bp-split');
+  if (H.onSplit && U.split) H.onSplit(false);
   if (H.onToggle) H.onToggle(false);
+  if (H.onClose) H.onClose();
+}
+async function popout(){
+  const sid = U.siteId, uidp = U.rec && U.rec.uid;
+  await close();
+  H.popout(sid, uidp);
 }
 function back(){
   const el = document.getElementById('bgPlan'); if (!el || el.hidden) return false;
@@ -819,7 +856,7 @@ function range(){
   return {d0, d1};
 }
 function renderGantt(){
-  const main = $b('#bpMain'), p = U.plan, s = U.sch, cols = U.full ? COLS_FULL : COLS_SHORT, tw = cols.reduce((a, c) => a + c.w, 0);
+  const main = $b('#bpMain'), p = U.plan, s = U.sch, cols = fullCols() ? COLS_FULL : COLS_SHORT, tw = cols.reduce((a, c) => a + c.w, 0);
   const dw = ZOOM[U.zoom], {d0, d1} = range(), cw = Math.ceil((d1 - d0 + 1) * dw), rows = s.ol;
   const nRows = rows.length + 1, bh = nRows * RH;
   const x = dn => (dn - d0) * dw;
@@ -838,7 +875,7 @@ function renderGantt(){
     <span class="bp-sep"></span>
     <span class="bp-seg">${[['day', 'Jour'], ['week', 'Semaine'], ['month', 'Mois']].map(([k, l]) => `<button data-zoom="${k}" class="${U.zoom === k ? 'on' : ''}">${l}</button>`).join('')}</span>
     <button class="bp-btn" data-g="today" title="Aller à aujourd’hui">${I.today}<span>Auj.</span></button>
-    <button class="bp-ib ${U.full ? 'on' : ''}" data-g="cols" title="Tableau complet / réduit">${I.tbl}</button>
+    <button class="bp-ib ${fullCols() ? 'on' : ''}" data-g="cols" title="Tableau complet / réduit">${I.tbl}</button>
     ${p.baseline ? `<button class="bp-btn ${U.showBase ? 'on' : ''}" data-g="base" title="Afficher le planning de référence (barres grises)">Réf.</button>` : ''}
     <span class="bp-sum">Fin : <b>${chOfDn(s.end)}</b> · ${s.pEnd} j ouvrés${p.baseline ? ` · réf. ${chOfDn(dnOfIso(p.baseline.end) ?? p.baseline.end)} (${deltaTxt(s.end, dnOfIso(p.baseline.end) ?? p.baseline.end)})` : ''} · <span style="color:#ff7b7b">■</span> critique</span>
   </div>`;
@@ -925,10 +962,11 @@ function renderGantt(){
   U.gx = {d0, dw, x};
   if (sl != null && oldZoom === U.zoom) { wrap.scrollLeft = sl; wrap.scrollTop = stp; } else if (sl != null) { wrap.scrollTop = stp; scrollToday(); }
 }
+const fullCols = () => U.full === null ? !U.narrow : U.full;
 function deltaTxt(a, b){ if (a == null || b == null) return ''; const d = U.cal.idx(a) - U.cal.idx(b); return d === 0 ? 'à l’heure' : d > 0 ? '+' + d + ' j' : d + ' j'; }
 function scrollToday(){
   const w = $b('.bp-gwrap'); if (!w || !U.gx) return;
-  const cols = U.full ? COLS_FULL : COLS_SHORT, tw = cols.reduce((a, c) => a + c.w, 0);
+  const cols = fullCols() ? COLS_FULL : COLS_SHORT, tw = cols.reduce((a, c) => a + c.w, 0);
   const sel = U.sel && U.sch.R.get(U.sel), tdn = todayDn();
   const target = sel ? sel.start : (tdn >= U.sch.cal.start - 7 && tdn <= U.sch.end ? tdn - 7 : U.sch.cal.start - 3);
   w.scrollLeft = Math.max(0, U.gx.x(target) - 20);
@@ -1548,6 +1586,8 @@ function bind(el){
     if (a && !a.disabled) {
       const k = a.dataset.a;
       if (k === 'close') close();
+      else if (k === 'split') setSplit(!U.split);
+      else if (k === 'popout') popout();
       else if (k === 'new') newPlanDlg();
       else if (k === 'undo') undo();
       else if (k === 'redo') redo();
@@ -1565,7 +1605,7 @@ function bind(el){
       if (k === 'addT') insertTask('T'); else if (k === 'addM') insertTask('M'); else if (k === 'addL') insertTask('L');
       else if (k === 'ind') indent(1); else if (k === 'out') indent(-1); else if (k === 'up') move(-1); else if (k === 'down') move(1);
       else if (k === 'link') linkPrev(); else if (k === 'del') delTask(); else if (k === 'edit') editTask(U.sel);
-      else if (k === 'today') scrollToday(); else if (k === 'cols') { U.full = !U.full; render(); } else if (k === 'base') { U.showBase = !U.showBase; render(); }
+      else if (k === 'today') scrollToday(); else if (k === 'cols') { U.full = !fullCols(); render(); } else if (k === 'base') { U.showBase = !U.showBase; render(); }
       return;
     }
     const z = e.target.closest('button[data-zoom]'); if (z) { U.zoom = z.dataset.zoom; render(); return; }
@@ -1593,6 +1633,14 @@ function bind(el){
     }
   });
   el.addEventListener('pointerdown', e => { U.lastPt = e.pointerType; if (e.target.closest('#bpChart')) chartDown(e); }, true);
+  document.addEventListener('pointerdown', e => { U.inPlan = !!(e.target.closest && e.target.closest('#bgPlan,.bp-scrim')); }, true);
+  const spl = el.querySelector('.bp-splitter');
+  spl.addEventListener('pointerdown', e => {
+    e.preventDefault(); spl.setPointerCapture(e.pointerId); spl.classList.add('on');
+    const mv = ev => { const w = ev.clientX / innerWidth * 100; document.documentElement.style.setProperty('--bp-w', Math.max(30, Math.min(80, w)) + '%'); };
+    const up = ev => { spl.removeEventListener('pointermove', mv); spl.removeEventListener('pointerup', up); spl.classList.remove('on'); setSplit(true, ev.clientX / innerWidth * 100); };
+    spl.addEventListener('pointermove', mv); spl.addEventListener('pointerup', up);
+  });
   el.addEventListener('pointermove', e => { if (U.drag) chartMove(e); });
   el.addEventListener('pointerup', e => { if (U.drag) chartUp(e); });
   el.addEventListener('pointercancel', () => { if (U.drag) { U.drag = null; render(); } });
@@ -1606,6 +1654,7 @@ function bind(el){
     const root = document.getElementById('bgPlan');
     if (U.dlgs.length) { U.dlgs[U.dlgs.length - 1].key(e); e.stopPropagation(); return; }
     if (!root || root.hidden) return;
+    if (U.split && !U.inPlan) return;
     e.stopPropagation();
     if (e.key === 'Escape') { e.preventDefault(); close(); return; }
     if (!U.plan || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
