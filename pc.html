@@ -965,7 +965,7 @@ function drawHeader(g, doc, pi, pc){
   if (img && L.pos !== 'right') { g.drawImage(img, 60, 44 + (lh - lhh) / 2, lw, lhh); left = 60 + lw + 28; }
   const dt = L.date === 'long' ? longDate(doc.date) : fmtISO(doc.date);
   tx(g, 'DATE', right, 76, {size:17, weight:700, align:'right'});
-  let ds = L.date === 'long' ? 34 : 50;
+  let ds = L.date === 'long' ? 20 : 28;
   g.font = `700 ${ds}px "Barlow Condensed","Arial Narrow", sans-serif`;
   while (g.measureText(dt).width > 420 && ds > 22) { ds -= 2; g.font = `700 ${ds}px "Barlow Condensed","Arial Narrow", sans-serif`; }
   const dw = tx(g, dt, right, 128, {size:ds, disp:true, weight:700, color:HEAD, align:'right'});

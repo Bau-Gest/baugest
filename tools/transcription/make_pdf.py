@@ -166,7 +166,7 @@ def header(p, T, pi, pc):
     d = T["date"]
     dt = f"{d[8:10]}.{d[5:7]}.{d[0:4]}"
     p.text("DATE", right, 76, size=17, align="right")
-    dw = p.text(dt, right, 128, size=50, color=HEAD, align="right", cond=True)
+    dw = p.text(dt, right, 128, size=28, color=HEAD, align="right", cond=True)
     title = T["title"].upper()
     maxw = right - dw - 45 - left
     fs = 54
