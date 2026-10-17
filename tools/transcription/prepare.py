@@ -161,19 +161,25 @@ def segments(page):
 
 def paragraphs(segs):
     """Propose un n° de paragraphe : une ligne seule sur sa hauteur, écrite jusque vers la marge droite,
-    continue sur la ligne suivante si celle-ci est juste en dessous et commence au même x."""
+    continue sur la ligne suivante si celle-ci est juste en dessous et commence au même x.
+    Les petites marques isolées (point, accent, trait) prennent le n° du paragraphe en cours."""
+    tiny = lambda s: s["x2"] - s["x"] < 30 and s["bottom"] - s["top"] < 30
+    real = [s for s in segs if not tiny(s)]
     def alone(s):
         m = (s["top"] + s["bottom"]) / 2
-        return not any(o is not s and abs((o["top"] + o["bottom"]) / 2 - m) < 25 for o in segs)
-    n, start = 0, None
-    for k, sg in enumerate(segs):
-        prev = segs[k - 1] if k else None
-        cont = (prev is not None and start is not None and alone(prev) and alone(sg)
-                and prev["x2"] >= 760 and abs(sg["x"] - start["x"]) <= 60 and 0 < sg["y"] - prev["y"] <= 95)
+        return not any(o is not s and abs((o["top"] + o["bottom"]) / 2 - m) < 25 for o in real)
+    n, start, prev = 0, None, None
+    for sg in segs:
+        if tiny(sg):
+            sg["para"] = max(n, 1)
+            continue
+        cont = (prev is not None and alone(prev) and alone(sg) and prev["x2"] >= 760
+                and abs(sg["x"] - start["x"]) <= 60 and 0 < sg["y"] - prev["y"] <= 95)
         if not cont:
             n += 1
             start = sg
         sg["para"] = n
+        prev = sg
 
 
 def main(doc_path, settings_path, out):

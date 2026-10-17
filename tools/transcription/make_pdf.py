@@ -26,6 +26,11 @@ Retour à la ligne automatique : un texte trop long pour la largeur de la page (
 ou "x2" de l'item) continue sur la ligne suivante, au même x. Un item = un paragraphe : on ne
 change de ligne qu'à un nouveau paragraphe (nouvel item). "nowrap": true désactive le retour.
 Si une ligne tombe sur un texte déjà écrit, elle descend d'une ligne.
+Pas de ligne vide : dans les zones de texte libre (page libre, « Points traités », « Travaux exécutés »,
+« Description »…), un paragraphe qui commence plus bas que la ligne suivant le précédent est remonté
+sur cette ligne, et le premier texte de chaque ligne (x < 400) est aligné sur la marge gauche (60) ;
+un texte écrit à droite d'un autre sur la même ligne garde son x.
+"keep": true garde la position d'origine.
 """
 import json
 import sys
@@ -53,6 +58,8 @@ class Page:
         self.c = c
         self.labels = []
         self.used = []
+        self.zones = []
+        self.flow = {}
 
     def X(self, x):
         return x * K
@@ -227,6 +234,19 @@ def form(p, kind, sign):
             p.signs(1140, ["Constaté par", "Pris connaissance"])
 
 
+def zones(kind, show_form, sign, pi):
+    """Zones de texte libre (y début, y fin) où les paragraphes se suivent sans ligne vide."""
+    if pi or not show_form:
+        return [(200, PH - 40)]
+    return {
+        "pv": [(395, 990)],
+        "journal": [(660, 990 if sign else 1050), (990 if sign else 1050, 1100 if sign else 1190),
+                    (1100 if sign else 1190, 1210 if sign else PH - 40)],
+        "constat": [(350, 625)],
+        "libre": [(200, PH - 40)],
+    }.get(kind, [])
+
+
 def fit(p, it, bg):
     """Place le texte sur la ligne d'écriture la plus proche et à droite des libellés du formulaire."""
     x, y = it["x"], it["y"]
@@ -291,6 +311,10 @@ def items(p, its, bg="plain", snap=True):
             p.line(x + 19, y + 5, x + 5, y + 19, INK, 2.6)
             continue
         t, x, y, sz = it.get("text", ""), it["x"], it["y"], it.get("size", 22)
+        z = next((i for i, (a, b) in enumerate(p.zones) if a <= y < b), None)
+        if z is not None and not it.get("keep") and x < 400 and not (
+                z in p.flow and abs(y - p.flow[z][0]) < pitch * 0.6):
+            x = 60
         mark, tx = "", x
         if t[:3] in ("[x]", "[X]", "[ ]"):
             mark, t, tx = t[1], t[3:].lstrip(), x + 36
@@ -298,6 +322,13 @@ def items(p, its, bg="plain", snap=True):
             mark, t, tx = "→", t[1:].lstrip(), x + sz * 1.6
         lines = [t] if it.get("nowrap") else wrap(p, t, tx, it.get("x2") or 940, sz)
         width = lambda s: p.c.stringWidth(s, "Helvetica", sz * K) / K
+        y0 = y
+        if z is not None and z in p.flow and not it.get("keep"):
+            last_y0, last_first, last_y = p.flow[z]
+            if abs(y0 - last_y0) < pitch * 0.6:
+                y = last_first
+            elif y > last_y + pitch * 0.6:
+                y = min(y, last_y + pitch)
         y = free_y(p, x, tx + width(lines[0]), y, pitch)
         if mark in ("x", "X"):
             items(p, [{"x": x, "y": y - 20, "check": True, "box": True}], bg, False)
@@ -308,12 +339,15 @@ def items(p, its, bg="plain", snap=True):
             p.line(x, m, x + sz * 1.1, m, INK, 2)
             p.line(x + sz * 0.75, m - sz * 0.3, x + sz * 1.1, m, INK, 2)
             p.line(x + sz * 0.75, m + sz * 0.3, x + sz * 1.1, m, INK, 2)
+        first = y
         for i, ln in enumerate(lines):
             w = width(ln)
             if i:
                 y = free_y(p, tx, tx + w, y + pitch, pitch)
             p.text(ln, tx, y, size=sz, bold=False, color=INK)
             p.used.append((x if i == 0 else tx, tx + w, y))
+        if z is not None:
+            p.flow[z] = (y0, first, max(y, p.flow[z][2]) if z in p.flow else y)
 
 
 def main(src, out):
@@ -333,6 +367,7 @@ def main(src, out):
         header(p, T, pi, len(pages))
         if pi == 0 and show_form:
             form(p, kind, sign)
+        p.zones = zones(kind, show_form, sign, pi)
         for im in pg.get("images", []) + pg.get("signatures", []):
             c.drawImage(ImageReader(im["src"]), p.X(im["x"]), p.Y(im["y"] + im["h"]), im["w"] * K, im["h"] * K, mask="auto")
         items(p, pg.get("items", []), bg, T.get("snap", True))
