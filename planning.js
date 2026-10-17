@@ -187,7 +187,9 @@ function schedule(plan, cal, statusDn){
     const r = R.get(t.id), done = (+t.pct || 0) >= 100 || !!t.aEnd;
     r.crit = r.tf <= 0; r.done = done;
     r.late = !done && ((sIdx > r.es && !t.aStart && !t.ms) || (sIdx >= r.ef && r.dur > 0) || (t.ms && sIdx > r.es));
-    r.start = cal.dnOf(r.es); r.finish = r.dur > 0 ? cal.dnOf(r.ef - 1) : r.start;
+    /* jalon (durée 0) : affiché en fin du jour ouvré précédent, comme MS Project ; mx = position sur l'échelle (jour + 1) */
+    if (r.dur === 0 && r.es > 0) { r.start = r.finish = cal.dnOf(r.es - 1); r.mx = r.start + 1; }
+    else { r.start = cal.dnOf(r.es); r.finish = r.dur > 0 ? cal.dnOf(r.ef - 1) : r.start; r.mx = r.start; }
   }
   /* tâches récapitulatives (lots) */
   for (let i = ol.length - 1; i >= 0; i--) {
@@ -242,7 +244,7 @@ function evm(plan, sch){
 }
 function takeBaseline(plan, sch){
   const tasks = {};
-  for (const o of sch.ol) { if (o.sum) continue; const r = sch.R.get(o.t.id); tasks[o.t.id] = {start:r.start, finish:r.finish, dur:r.dur, cost:taskBudget(plan, o.t, r.dur)}; }
+  for (const o of sch.ol) { if (o.sum) continue; const r = sch.R.get(o.t.id); tasks[o.t.id] = {start:r.start, finish:r.finish, mx:r.mx, dur:r.dur, cost:taskBudget(plan, o.t, r.dur)}; }
   return {at:new Date().toISOString(), end:sch.end, tasks};
 }
 
@@ -315,7 +317,7 @@ function toMSPDI(plan, sch){
     const t = o.t, r = sch.R.get(t.id), u = i + 1, ms = !!t.ms && !o.sum;
     const links = o.sum ? '' : t.deps.filter(d => uidOf.has(d.id)).map(d => `<PredecessorLink><PredecessorUID>${uidOf.get(d.id)}</PredecessorUID><Type>${MSP_TYPE[d.type] ?? 1}</Type><CrossProject>0</CrossProject><LinkLag>${Math.round(+d.lag || 0) * 4800}</LinkLag><LagFormat>7</LagFormat></PredecessorLink>`).join('');
     return `<Task><UID>${u}</UID><ID>${u}</ID><Name>${xesc(t.name)}</Name><Type>1</Type><IsNull>0</IsNull><WBS>${o.wbs}</WBS><OutlineNumber>${o.wbs}</OutlineNumber><OutlineLevel>${o.lvl + 1}</OutlineLevel>`
-      + `<Start>${dt(r.start)}</Start><Finish>${dt(r.finish, !ms)}</Finish><Duration>${hrs(r.dur)}</Duration><DurationFormat>7</DurationFormat>`
+      + `<Start>${dt(r.start, ms)}</Start><Finish>${dt(r.finish, !ms)}</Finish><Duration>${hrs(r.dur)}</Duration><DurationFormat>7</DurationFormat>`
       + `<Milestone>${ms ? 1 : 0}</Milestone><Summary>${o.sum ? 1 : 0}</Summary><Critical>${r.crit ? 1 : 0}</Critical><PercentComplete>${Math.round(+t.pct || 0)}</PercentComplete>`
       + (t.snet && !o.sum ? `<ConstraintType>4</ConstraintType><ConstraintDate>${t.snet}T08:00:00</ConstraintDate>` : '<ConstraintType>0</ConstraintType>')
       + (t.lvl && !o.sum ? `<LevelingDelay>${t.lvl * 4800}</LevelingDelay><LevelingDelayFormat>7</LevelingDelayFormat>` : '')
@@ -422,13 +424,13 @@ function css(){ return `
 .bp-splitter{display:none;position:absolute;top:0;bottom:0;right:-6px;width:10px;cursor:col-resize;z-index:5}
 #bgPlan.bp-split .bp-splitter{display:block}
 .bp-splitter:hover,.bp-splitter.on{background:var(--signal,#f2c230);opacity:.5}
-#bgPlan *{box-sizing:border-box}
-#bgPlan .bp-ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-#bgPlan button{font:inherit;color:inherit;cursor:pointer}
-#bgPlan input,#bgPlan select,#bgPlan textarea{font:inherit;color:var(--text,#ecebe6);background:var(--surface2,#262a30);border:1px solid var(--line,#353a41);border-radius:8px;height:38px;padding:0 9px;min-width:0;-webkit-user-select:text;user-select:text}
-#bgPlan textarea{height:auto;padding:8px 9px;resize:vertical}
-#bgPlan input[type=checkbox],#bgPlan input[type=radio]{width:20px;height:20px;accent-color:var(--signal,#f2c230)}
-#bgPlan input[type=range]{height:30px;padding:0;background:none;border:0}
+:is(#bgPlan,.bp-scrim) *{box-sizing:border-box}
+:is(#bgPlan,.bp-scrim) .bp-ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:where(#bgPlan,.bp-scrim) button{font:inherit;color:inherit;cursor:pointer}
+#bgPlan input,#bgPlan select,#bgPlan textarea,.bp-scrim input,.bp-scrim select,.bp-scrim textarea{font:inherit;color:var(--text,#ecebe6);background:var(--surface2,#262a30);border:1px solid var(--line,#353a41);border-radius:8px;height:38px;padding:0 9px;min-width:0;-webkit-user-select:text;user-select:text}
+#bgPlan textarea,.bp-scrim textarea{height:auto;padding:8px 9px;resize:vertical}
+#bgPlan input[type=checkbox],#bgPlan input[type=radio],.bp-scrim input[type=checkbox],.bp-scrim input[type=radio]{width:20px;height:20px;accent-color:var(--signal,#f2c230)}
+#bgPlan input[type=range],.bp-scrim input[type=range]{height:30px;padding:0;background:none;border:0}
 .bp-top{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface,#1c1f23);border-bottom:1px solid var(--line,#353a41);flex-wrap:wrap}
 .bp-ttl{display:flex;flex-direction:column;line-height:1.1;margin-right:4px}
 .bp-ttl b{font:700 20px var(--display,sans-serif);text-transform:uppercase;letter-spacing:.04em}
@@ -518,7 +520,7 @@ function css(){ return `
 .bp-li>input,.bp-li>select{flex:1 1 110px}
 .bp-li>.n{flex:0 0 86px;text-align:right}
 .bp-li>.cost{flex:0 0 100px;text-align:right;font-family:var(--mono,monospace);font-size:13px;color:var(--muted,#9da2a8)}
-.bp-scrim{position:fixed;inset:0;z-index:75;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px}
+.bp-scrim{font:15px/1.35 var(--body,system-ui,sans-serif);color:var(--text,#ecebe6);position:fixed;inset:0;z-index:75;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px}
 .bp-dlg{width:min(720px,100%);max-height:calc(100% - 10px);display:flex;flex-direction:column;background:var(--surface,#1c1f23);color:var(--text,#ecebe6);border:1px solid var(--line,#353a41);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
 .bp-dlg h2{margin:0;padding:13px 16px;font:700 19px var(--display,sans-serif);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line,#353a41)}
 .bp-db{padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:12px}
@@ -707,6 +709,7 @@ function build(){
     <button class="bp-btn" data-a="baseline" title="Figer le planning de référence (dates et budget initiaux)">${I.base}<span>Référence</span></button>
     <button class="bp-btn" data-a="level" title="Surcharges des ressources : proposition de décalage">${I.lvl}<span>Lisser</span></button>
     <button class="bp-btn" data-a="export" title="PDF A3, Excel, MS Project">${I.exp}<span>Exporter</span></button>
+    <button class="bp-ib" data-a="help" title="Manuel du planning" style="font-weight:800;font-size:18px">?</button>
     ${H.split ? `<button class="bp-ib" data-a="split" title="Double vue : planning à gauche, explorateur et fichiers du chantier à droite">${I.split}</button>` : ''}
     ${H.popout ? `<button class="bp-ib" data-a="popout" title="Ouvrir le planning dans une fenêtre séparée (2e écran)">${I.win}</button>` : ''}
   </header>
@@ -756,6 +759,20 @@ async function close(){
   if (H.onSplit && U.split) H.onSplit(false);
   if (H.onToggle) H.onToggle(false);
   if (H.onClose) H.onClose();
+}
+/* manuel : aide-planning.html (même dossier que l'app), PDF à côté */
+function help(){
+  const sc = document.createElement('div'); sc.className = 'bp-scrim'; sc.style.padding = '0';
+  sc.innerHTML = `<div class="bp-dlg" style="width:100%;height:100%;max-width:980px;max-height:none;border-radius:0">
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line,#353a41)">
+      <button class="bp-ib" data-x title="Fermer">${I.x}</button><b style="flex:1;font:700 18px var(--display,sans-serif);text-transform:uppercase">Manuel du planning</b>
+      <a class="bp-btn" href="aide-planning.pdf" download="Manuel Planning BauGest.pdf" style="text-decoration:none;color:inherit">${I.exp}PDF</a></div>
+    <iframe src="aide-planning.html" title="Manuel du planning" style="flex:1;border:0;width:100%;background:#fff"></iframe></div>`;
+  document.body.appendChild(sc);
+  const done = () => { const k = U.dlgs.indexOf(entry); if (k >= 0) U.dlgs.splice(k, 1); sc.remove(); };
+  const entry = {close:done, key:e => { if (e.key === 'Escape') { e.preventDefault(); done(); } }};
+  U.dlgs.push(entry);
+  sc.querySelector('[data-x]').addEventListener('click', done);
 }
 async function popout(){
   const sid = U.siteId, uidp = U.rec && U.rec.uid;
@@ -918,12 +935,12 @@ function renderGantt(){
     const t = o.t, r = s.R.get(t.id), y = i * RH;
     if (U.sel === t.id) bars += `<rect x="0" y="${y}" width="${cw}" height="${RH}" fill="var(--signal-soft,#3b3219)" opacity=".55"/>`;
     const bx = x(r.start), bw = Math.max(dw * .6, x(r.finish + 1) - bx);
-    if (base && base[t.id]) { const b = base[t.id], a = dnOfIso(b.start) ?? b.start, e = dnOfIso(b.finish) ?? b.finish; bars += b.dur > 0 ? `<rect x="${x(a)}" y="${y + RH - 8}" width="${Math.max(2, x(e + 1) - x(a))}" height="4" rx="1" fill="#8a8f96"/>` : `<path d="M${x(a)} ${y + RH - 10} l4 4 -4 4 -4 -4z" fill="#8a8f96"/>`; }
+    if (base && base[t.id]) { const b = base[t.id], a = dnOfIso(b.start) ?? b.start, e = dnOfIso(b.finish) ?? b.finish; bars += b.dur > 0 ? `<rect x="${x(a)}" y="${y + RH - 8}" width="${Math.max(2, x(e + 1) - x(a))}" height="4" rx="1" fill="#8a8f96"/>` : `<path d="M${x(b.mx ?? a)} ${y + RH - 10} l4 4 -4 4 -4 -4z" fill="#8a8f96"/>`; }
     const lbl = (o.sum ? '' : t.asg.map(a => { const re = p.res.find(z => z.id === a.r); return re ? re.name + (a.q && a.q !== 1 ? ' ×' + fmtN(a.q, a.q % 1 ? 1 : 0) : '') : ''; }).filter(Boolean).join(', '));
     if (o.sum) {
       bars += `<g class="bar sum" data-id="${esc(t.id)}"><path class="b" d="M${bx} ${y + 10}h${bw}v10l-5 -5h${-(bw - 10)}l-5 5z" fill="var(--text,#ecebe6)" opacity=".85"/></g>`;
     } else if (t.ms || r.dur === 0) {
-      const cx = bx, cy = y + RH / 2;
+      const cx = x(r.mx), cy = y + RH / 2;
       bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><path class="b" d="M${cx} ${cy - 8} l8 8 -8 8 -8 -8z" fill="${r.crit ? '#e5484d' : r.done ? '#4caf7a' : 'var(--text,#ecebe6)'}"/><circle class="lk" cx="${cx + 15}" cy="${cy}" r="5"/></g>`
         + `<text x="${cx + 24}" y="${cy + 4}">${esc(t.name)} · ${shortOfDn(r.start)}</text>`;
     } else {
@@ -937,7 +954,7 @@ function renderGantt(){
   for (const l of s.links) {
     const ip = rowOf.get(l.p), is = rowOf.get(l.s); if (ip == null || is == null) continue;
     const rp = s.R.get(l.p), rs = s.R.get(l.s);
-    const pStart = x(rp.start), pEnd = rp.dur > 0 ? x(rp.finish + 1) : x(rp.start), sStart = x(rs.start), sEnd = rs.dur > 0 ? x(rs.finish + 1) : x(rs.start);
+    const pStart = rp.dur > 0 ? x(rp.start) : x(rp.mx), pEnd = rp.dur > 0 ? x(rp.finish + 1) : x(rp.mx), sStart = rs.dur > 0 ? x(rs.start) : x(rs.mx), sEnd = rs.dur > 0 ? x(rs.finish + 1) : x(rs.mx);
     const y1 = ip * RH + RH / 2, y2 = is * RH + RH / 2;
     const fromEnd = l.type === 'FS' || l.type === 'FF', toStart = l.type === 'FS' || l.type === 'SS';
     const x1 = fromEnd ? pEnd : pStart, x2 = toStart ? sStart - (rs.dur > 0 ? 0 : 8) : sEnd + (rs.dur > 0 ? 0 : 8);
@@ -1151,7 +1168,7 @@ function chartMove(e){
   if (d.mode === 'move') d.g.setAttribute('transform', `translate(${Math.round(dx / U.gx.dw) * U.gx.dw} 0)`);
   else if (d.mode === 'resize') { const b = d.g.querySelector('rect.b'); if (!d.w0) d.w0 = +b.getAttribute('width'); b.setAttribute('width', Math.max(U.gx.dw, d.w0 + Math.round(dx / U.gx.dw) * U.gx.dw)); }
   else {
-    const svg = $b('#bpChart'), rc = svg.getBoundingClientRect(), r = U.sch.R.get(d.id), x1 = (r.dur > 0 ? U.gx.x(r.finish + 1) : U.gx.x(r.start)), y1 = U.sch.ol.findIndex(o => o.t.id === d.id) * RH + RH / 2;
+    const svg = $b('#bpChart'), rc = svg.getBoundingClientRect(), r = U.sch.R.get(d.id), x1 = (r.dur > 0 ? U.gx.x(r.finish + 1) : U.gx.x(r.mx)), y1 = U.sch.ol.findIndex(o => o.t.id === d.id) * RH + RH / 2;
     let ln = svg.querySelector('#bpLinkLn'); if (!ln) { ln = document.createElementNS('http://www.w3.org/2000/svg', 'line'); ln.id = 'bpLinkLn'; ln.setAttribute('stroke', '#f2c230'); ln.setAttribute('stroke-width', '2'); ln.setAttribute('stroke-dasharray', '4 3'); svg.appendChild(ln); }
     ln.setAttribute('x1', x1); ln.setAttribute('y1', y1); ln.setAttribute('x2', e.clientX - rc.left); ln.setAttribute('y2', e.clientY - rc.top);
   }
@@ -1170,7 +1187,7 @@ function chartUp(e){
   if (!days) { render(); return; }
   if (d.mode === 'move') {
     if (t.aStart) { toast('Tâche commencée : change la date de début réel dans la fiche'); render(); return; }
-    const nd = U.cal.dnOf(U.cal.idx(r.start + days));
+    const nd = U.cal.dnOf(U.cal.idx((r.dur > 0 ? r.start : r.mx) + days));
     mut(() => { t.snet = isoOfDn(nd); t.lvl = 0; });
     const r2 = U.sch.R.get(d.id); if (r2.start > nd) toast('Début limité par les liens : ' + chOfDn(r2.start));
   } else {
@@ -1514,7 +1531,7 @@ async function makePdf(){
       const bx = X(r.start), bw = Math.max(1.5, X(r.finish + 1) - bx);
       if (base && base[t.id]) { const b = base[t.id]; if (b.dur > 0) pg.drawRectangle({x:X(b.start), y:y + 1.2, width:Math.max(1, X(b.finish + 1) - X(b.start)), height:2.2, color:C.base}); }
       if (o.sum) { pg.drawRectangle({x:bx, y:y + 6, width:bw, height:3.5, color:C.txt}); pg.drawSvgPath(`M0 0 L4 0 L0 5 Z`, {x:bx, y:y + 9.5, color:C.txt}); pg.drawSvgPath(`M0 0 L-4 0 L0 5 Z`, {x:bx + bw, y:y + 9.5, color:C.txt}); }
-      else if (t.ms || r.dur === 0) { pg.drawSvgPath('M0 -4.5 L4.5 0 L0 4.5 L-4.5 0 Z', {x:bx, y:y + RHp / 2, color:r.crit ? C.crit : C.txt}); text(pg, shortOfDn(r.start), bx + 7, y + 4, {s:6.5, col:C.mut}); }
+      else if (t.ms || r.dur === 0) { pg.drawSvgPath('M0 -4.5 L4.5 0 L0 4.5 L-4.5 0 Z', {x:X(r.mx), y:y + RHp / 2, color:r.crit ? C.crit : C.txt}); text(pg, shortOfDn(r.start), X(r.mx) + 7, y + 4, {s:6.5, col:C.mut}); }
       else {
         pg.drawRectangle({x:bx, y:y + 3, width:bw, height:RHp - 6, color:r.done ? C.done : r.crit ? C.crit : C.norm, borderColor:r.late ? C.sig : undefined, borderWidth:r.late ? 1 : 0});
         if (t.pct > 0 && t.pct < 100) pg.drawRectangle({x:bx, y:y + RHp / 2 - 1, width:bw * t.pct / 100, height:2, color:rgb(0, 0, 0), opacity:.45});
@@ -1525,7 +1542,7 @@ async function makePdf(){
     for (const l of s.links) {
       const ya = rowY.get(l.p), yz = rowY.get(l.s); if (ya == null || yz == null) continue;
       const rp = s.R.get(l.p), rs = s.R.get(l.s), fromEnd = l.type === 'FS' || l.type === 'FF', toStart = l.type === 'FS' || l.type === 'SS';
-      const x1 = fromEnd ? (rp.dur > 0 ? X(rp.finish + 1) : X(rp.start)) : X(rp.start), x2 = toStart ? X(rs.start) : (rs.dur > 0 ? X(rs.finish + 1) : X(rs.start));
+      const x1 = rp.dur > 0 ? (fromEnd ? X(rp.finish + 1) : X(rp.start)) : X(rp.mx), x2 = rs.dur > 0 ? (toStart ? X(rs.start) : X(rs.finish + 1)) : X(rs.mx);
       const col = rp.crit && rs.crit ? C.crit : C.mut, xm = fromEnd ? x1 + 3 : x1 - 3;
       const seg = (a, b) => pg.drawLine({start:a, end:b, thickness:.5, color:col});
       seg({x:x1, y:ya}, {x:xm, y:ya}); seg({x:xm, y:ya}, {x:xm, y:yz}); seg({x:xm, y:yz}, {x:x2 + (toStart ? -1.5 : 1.5), y:yz});
@@ -1587,6 +1604,7 @@ function bind(el){
       const k = a.dataset.a;
       if (k === 'close') close();
       else if (k === 'split') setSplit(!U.split);
+      else if (k === 'help') help();
       else if (k === 'popout') popout();
       else if (k === 'new') newPlanDlg();
       else if (k === 'undo') undo();

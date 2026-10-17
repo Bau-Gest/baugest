@@ -18,6 +18,7 @@
 | `index.html` | ~718 Ko · 8 200 lignes · ~530 fonctions | App téléphone + tablette (un seul fichier) |
 | `pc.html` | ~306 Ko · 4 300 lignes · ~280 fonctions | Webapp PC (complément, la tablette reste la référence) |
 | `planning.js` | ~1 650 lignes | Module Planning partagé (tablette + PC) : Gantt, chemin critique, ressources, lissage, budget / valeur acquise, exports PDF A3 / Excel / MS Project XML. Chargé par `<script src>` dans les deux HTML |
+| `aide-planning.html` + `aide/*.png` + `aide-planning.pdf` | — | Manuel du Planning (méthode + mode d'emploi), ouvert par le bouton ? du Planning ; PDF A4 généré depuis le HTML (Playwright `page.pdf`). Captures `aide/` faites avec le vrai module et 2 plannings d'exemple : à refaire si l'interface change |
 | `sw.js` | 43 lignes | Service worker : cache `baugest-vNN`, share-target, clic sur notification |
 | `manifest.webmanifest` | — | PWA téléphone/tablette, `share_target` (photos + PDF) |
 | `pc.webmanifest` | — | PWA PC (`start_url ./pc.html`) |

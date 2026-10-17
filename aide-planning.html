@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manuel Planning BauGest</title>
+<style>
+:root{--ink:#1d2023;--mut:#5b6169;--line:#d3cfc6;--bg:#ffffff;--soft:#f5f3ee;--sig:#d9a400;--sigsoft:#fbefc4;--red:#d93b3f;--blue:#3e8ed0;--green:#3f9e66;--grey:#8a8f96}
+*{box-sizing:border-box}
+html{background:#e9e6df}
+body{margin:0 auto;max-width:900px;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;padding:28px 34px 60px}
+h1,h2,h3{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;letter-spacing:.01em;line-height:1.15}
+h1{font-size:40px;margin:0 0 6px}
+h2{font-size:28px;margin:44px 0 10px;padding-top:12px;border-top:4px solid var(--sig)}
+h2 small{display:block;font:600 13px "Segoe UI",system-ui,sans-serif;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+h3{font-size:21px;margin:26px 0 6px}
+p{margin:8px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:3px 0}
+b{font-weight:700}
+a{color:#7a5a00}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14.5px}
+th{text-align:left;background:var(--soft);font-weight:700;border-bottom:2px solid var(--line);padding:6px 8px;vertical-align:bottom}
+td{border-bottom:1px solid var(--line);padding:6px 8px;vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.box{border-left:5px solid var(--sig);background:var(--sigsoft);padding:10px 14px;margin:14px 0;border-radius:0 8px 8px 0}
+.box.red{border-color:var(--red);background:#fbe4e4}
+.box.blue{border-color:var(--blue);background:#e3eef8}
+.box.green{border-color:var(--green);background:#e2f2e8}
+.box b:first-child{display:block;margin-bottom:2px}
+.fig{margin:14px 0;text-align:center}
+.fig img{max-width:100%;border:1px solid var(--line);border-radius:8px}
+.fig figcaption,.fig .cap{font-size:13px;color:var(--mut);margin-top:4px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps>li{counter-increment:s;position:relative;padding:4px 0 8px 44px;margin:6px 0}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:2px;width:30px;height:30px;border-radius:50%;background:var(--sig);color:#1b1600;font:700 16px/30px system-ui;text-align:center}
+.chk{list-style:none;padding-left:4px}
+.chk li{padding-left:28px;position:relative}
+.chk li::before{content:"";position:absolute;left:0;top:4px;width:15px;height:15px;border:2px solid var(--ink);border-radius:3px}
+.cover{min-height:260px;display:flex;flex-direction:column;justify-content:center;border-bottom:6px solid var(--sig);margin-bottom:20px}
+.cover .k{font:700 15px system-ui;text-transform:uppercase;letter-spacing:.12em;color:var(--mut)}
+.cover h1 span{color:var(--sig)}
+.cover p{font-size:18px;color:var(--mut);max-width:620px}
+.toc{columns:2;column-gap:30px;font-size:15px}
+.toc a{text-decoration:none;color:var(--ink)}
+.toc li{break-inside:avoid}
+.ico{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid var(--line);border-radius:7px;background:#fff;vertical-align:middle}
+.ico svg{width:18px;height:18px;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+code,.k2{font-family:ui-monospace,Consolas,monospace;font-size:.92em;background:var(--soft);padding:1px 5px;border-radius:4px}
+.key{display:inline-block;min-width:24px;padding:0 6px;border:1px solid #aaa;border-bottom-width:3px;border-radius:5px;font:600 13px/20px system-ui;text-align:center;background:#fff}
+.formula{font:600 16px ui-monospace,Consolas,monospace;background:var(--soft);padding:10px 14px;border-radius:8px;margin:10px 0}
+.memo{border:2px solid var(--ink);border-radius:10px;padding:12px 16px}
+.memo h3{margin-top:12px}
+.memo table{font-size:13.5px}
+.lg{display:inline-block;width:26px;height:10px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.write td{height:30px}
+.pdfbtn{position:fixed;right:18px;bottom:18px;background:var(--sig);color:#1b1600;font:700 15px system-ui;padding:11px 16px;border-radius:10px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.np{page-break-before:always;break-before:page}
+@media (max-width:700px){body{padding:16px}.cols{grid-template-columns:1fr}.toc{columns:1}h1{font-size:32px}}
+@media print{
+  @page{size:A4;margin:14mm 14mm 16mm}
+  html,body{background:#fff}
+  body{max-width:none;padding:0;font-size:10pt;line-height:1.4}
+  table{font-size:9pt}td,th{padding:4px 6px}
+  h2{margin-top:0;page-break-before:always;break-before:page;font-size:21pt}
+  h3{font-size:14pt;break-after:avoid}
+  table,.fig,.box,.memo,tr{break-inside:avoid}
+  .pdfbtn,.noprint{display:none}
+  .cover{min-height:150mm}
+  a{color:var(--ink);text-decoration:none}
+  .fig img{max-height:92mm;width:auto}
+  .fig{margin:8px 0}
+}
+</style>
+</head>
+<body>
+
+<a class="pdfbtn noprint" id="pdfbtn" href="aide-planning.pdf" download="Manuel Planning BauGest.pdf">PDF à imprimer</a>
+<script>if (window.top !== window) document.getElementById('pdfbtn').hidden = true;</script>
+
+<section class="cover">
+  <div class="k">BauGest · Manuel</div>
+  <h1>Planifier un chantier<br><span>sans surprise</span></h1>
+  <p>Méthode pour construire, suivre et défendre un planning de chantier — tâches, liens, chemin critique, ressources et budget — et mode d’emploi complet du Planning BauGest (tablette et PC).</p>
+  <p style="font-size:14px">Exemples : génie civil (collecteur et réfection de route) et bâtiment (villa, gros œuvre). Édition octobre 2026.</p>
+</section>
+
+<h3 style="margin-top:0">Sommaire</h3>
+<ol class="toc">
+  <li><a href="#c1">L’essentiel en 1 page</a></li>
+  <li><a href="#c2">Les notions de base</a></li>
+  <li><a href="#c3">Construire un planning en 8 étapes</a></li>
+  <li><a href="#c4">Les liens entre tâches</a></li>
+  <li><a href="#c5">Chemin critique et marges</a></li>
+  <li><a href="#c6">Ressources : affecter, contrôler, lisser</a></li>
+  <li><a href="#c7">Budget, réalisé et valeur acquise</a></li>
+  <li><a href="#c8">Suivre et rattraper un retard</a></li>
+  <li><a href="#c9">Communiquer le planning</a></li>
+  <li><a href="#c10">BauGest pas à pas</a></li>
+  <li><a href="#c11">Cas pratique 1 · génie civil</a></li>
+  <li><a href="#c12">Cas pratique 2 · bâtiment</a></li>
+  <li><a href="#c13">Check-lists</a></li>
+  <li><a href="#c14">Aide-mémoire</a></li>
+  <li><a href="#c15">Glossaire</a></li>
+  <li><a href="#c16">Annexe : mes rendements</a></li>
+</ol>
+
+<!-- ===================================================== 1 -->
+<h2 id="c1"><small>Chapitre 1</small>L’essentiel en 1 page</h2>
+<p>Un bon planning répond à trois questions : <b>quand</b> chaque travail se fait, <b>avec qui et quoi</b> (équipes, machines, fournitures), et <b>combien</b> il coûte. Il doit être <b>juste</b> (enchaînements réels), <b>tenable</b> (ressources disponibles) et <b>à jour</b>.</p>
+<ol class="steps">
+  <li><b>Découpe</b> le chantier en lots puis en tâches de 1 à 15 jours, chacune avec un résultat vérifiable sur place (« fouille tronçon 1 terminée »).</li>
+  <li><b>Calcule les durées</b> : quantité ÷ (rendement de l’équipe par jour). Jamais « au feeling » pour les tâches longues ou chères.</li>
+  <li><b>Lie toutes les tâches</b> : chaque tâche a au moins un prédécesseur et un successeur (sauf la première et la dernière). Pas de dates imposées sans raison.</li>
+  <li><b>Lis le chemin critique</b> (barres rouges) : c’est là que chaque jour perdu retarde la fin. Mets tes meilleures équipes et ton attention sur ces tâches.</li>
+  <li><b>Affecte les ressources</b> et regarde la charge : une pelle ne peut pas être à deux endroits. Supprime les surcharges (lissage, renfort ou autre méthode).</li>
+  <li><b>Fige la référence</b> avant de démarrer. Elle sert à mesurer les glissements de délai et de coût.</li>
+  <li><b>Mets à jour</b> quand quelque chose change : dates réelles, % d’avancement, heures et jours réalisés. Annonce un retard <b>par écrit</b> dès que tu le vois.</li>
+</ol>
+<div class="box"><b>Règle d’or</b>Le planning n’est pas une prévision météo : c’est un outil de décision. S’il ne t’aide pas à décider quoi faire lundi matin, il est trop détaillé, trop vague ou pas à jour.</div>
+
+<!-- ===================================================== 2 -->
+<h2 id="c2"><small>Chapitre 2</small>Les notions de base</h2>
+<table>
+  <tr><th style="width:24%">Notion</th><th>Ce que c’est</th><th style="width:30%">Dans BauGest</th></tr>
+  <tr><td><b>Tâche</b></td><td>Un travail avec une durée, un début et une fin. Ex. « Pose collecteur tronçon 1 ».</td><td>Bouton <b>Tâche</b> ; barre bleue (rouge si critique).</td></tr>
+  <tr><td><b>Lot</b></td><td>Groupe de tâches (Terrassement, Collecteur, Chaussée…). Ses dates et son coût sont la somme de ses tâches.</td><td>Bouton <b>Lot</b> ; barre noire avec crochets.</td></tr>
+  <tr><td><b>Jalon</b></td><td>Un événement sans durée : début des travaux, « hors d’eau », route rendue au trafic, réception.</td><td>Bouton <b>Jalon</b> ; losange ◆.</td></tr>
+  <tr><td><b>Durée</b></td><td>Nombre de <b>jours ouvrés</b> (sans week-ends, fériés ni vacances du bâtiment).</td><td>Calendrier réglé par planning (canton, vacances, samedi).</td></tr>
+  <tr><td><b>Lien</b></td><td>Règle d’enchaînement entre deux tâches (FS, SS, FF, SF) avec un décalage éventuel.</td><td>Colonne <b>Préd.</b>, ex. <code>2.2SS+2</code>.</td></tr>
+  <tr><td><b>Chemin critique</b></td><td>La suite de tâches sans marge : si l’une glisse, la fin du chantier glisse.</td><td>Barres et flèches rouges.</td></tr>
+  <tr><td><b>Marge</b></td><td>Nombre de jours ouvrés dont une tâche peut glisser sans retarder la fin du chantier (marge totale).</td><td>Colonne <b>Marge</b>.</td></tr>
+  <tr><td><b>Ressource</b></td><td>Équipe, machine, sous-traitant ou fourniture, avec un tarif (et une capacité pour équipes et machines).</td><td>Onglet <b>Ressources</b>.</td></tr>
+  <tr><td><b>Référence</b></td><td>Photo du planning à une date (dates + budget). On compare toujours le planning actuel à cette photo.</td><td>Bouton <b>Référence</b> ; barres grises fines.</td></tr>
+  <tr><td><b>Avancement</b></td><td>Part du travail physiquement réalisée (%), pas le temps écoulé.</td><td>Fiche de la tâche ou bouton <b>Réalisé</b>.</td></tr>
+</table>
+
+<h3>Trois niveaux de planning</h3>
+<table>
+  <tr><th>Niveau</th><th>Pour qui</th><th>Détail</th><th>Horizon</th></tr>
+  <tr><td><b>Planning directeur</b> (contractuel)</td><td>Maître d’ouvrage, DT</td><td>Lots et jalons, 10–40 lignes</td><td>Tout le chantier</td></tr>
+  <tr><td><b>Planning d’exécution</b></td><td>Toi, chefs d’équipe</td><td>Tâches de 1–15 j, liens, ressources</td><td>Tout le chantier</td></tr>
+  <tr><td><b>Planning à 3 semaines</b></td><td>Contremaître, équipes</td><td>Tâches au jour près</td><td>3 semaines glissantes</td></tr>
+</table>
+<p>Dans BauGest, fais <b>un planning d’exécution</b> par chantier. Pour le maître d’ouvrage, exporte-le en PDF en mode <b>Mois</b> avec les lots repliés mentalement (ou fais un 2<sup>e</sup> planning « directeur » plus simple avec <b>Nouveau</b> ; plusieurs plannings par chantier sont possibles). Pour les 3 semaines à venir, utilise le zoom <b>Jour</b> et le bouton <b>Auj.</b></p>
+
+<!-- ===================================================== 3 -->
+<h2 id="c3"><small>Chapitre 3</small>Construire un planning en 8 étapes</h2>
+
+<h3>Étape 1 · Rassembler les données</h3>
+<ul class="chk">
+  <li>Contrat / conditions : date de début, délai, jalons contractuels, pénalités éventuelles.</li>
+  <li>Soumission : positions et quantités (elles donnent les durées et le budget).</li>
+  <li>Plans d’exécution et phasage imposé (circulation, accès, riverains, exploitation).</li>
+  <li>Contraintes : autorisations, coupures réseaux, livraisons longues (préfabriqués, armatures, menuiseries), météo (enrobés, bétonnage par temps froid), délais de séchage et de décoffrage fixés par l’ingénieur ou les fiches techniques.</li>
+  <li>Calendrier : canton, vacances du bâtiment, fermetures de l’entreprise.</li>
+  <li>Équipes et machines réellement disponibles pendant la période.</li>
+</ul>
+
+<h3>Étape 2 · Découper (lots puis tâches)</h3>
+<p>Découpe <b>dans l’ordre où le chantier se construit</b>, pas dans l’ordre de la soumission. Une tâche = une équipe, un lieu, un résultat contrôlable.</p>
+<div class="cols">
+<div class="box green"><b>Bon découpage</b>Fouille blindée tronçon 1 (60 m) · Pose collecteur tronçon 1 · Remblayage tronçon 1 · Fouille tronçon 2…</div>
+<div class="box red"><b>Mauvais découpage</b>« Canalisations » 25 jours : impossible de suivre l’avancement, de lier finement, de voir où sont les équipes.</div>
+</div>
+<p><b>Règles :</b> 1 à 15 jours ouvrés par tâche (découpe au-delà) ; découper par tronçon, étage ou zone pour permettre le travail en parallèle ; les petites tâches de moins d’une demi-journée se regroupent ; un jalon pour chaque date importante (début, réceptions, mise en service, fin).</p>
+
+<h3>Étape 3 · Calculer les durées</h3>
+<div class="formula">Durée (j ouvrés) = Quantité ÷ (Rendement par équipe et par jour × Nombre d’équipes)</div>
+<p><b>Exemple de calcul</b> (chiffres d’exemple, pas des valeurs de référence) : fouille blindée de 60 m ; si ton équipe fait 12 m par jour → 60 ÷ 12 = <b>5 jours</b>. Avec deux équipes en parallèle sur deux fronts : 2,5 → arrondi <b>3 jours</b> (arrondis toujours vers le haut).</p>
+<ul>
+  <li>Utilise <b>tes propres rendements</b> (chantiers passés, rapports journaliers, bons de régie) : tableau à remplir en <a href="#c16">annexe</a>.</li>
+  <li>Ajoute les temps cachés : mise en place, repli, essais, réceptions, contrôles.</li>
+  <li>Les délais d’attente (séchage, cure, décoffrage) se mettent dans les <b>liens</b> (décalage), pas dans la durée de la tâche.</li>
+  <li>Intempéries : ne gonfle pas toutes les durées. Ajoute plutôt une tâche « Réserve intempéries » sur le chemin critique avant le jalon de fin, visible et discutable.</li>
+</ul>
+
+<h3>Étape 4 · Enchaîner (liens)</h3>
+<p>Pour chaque tâche, demande-toi : <b>qu’est-ce qui doit être fait (ou commencé) avant ?</b> Mets les liens logiques (techniques) d’abord ; les contraintes de ressources viennent ensuite (étape 6). Détail des liens au <a href="#c4">chapitre 4</a>.</p>
+
+<h3>Étape 5 · Lire le résultat</h3>
+<p>BauGest calcule tout seul les dates, la fin du chantier et le chemin critique. Vérifie : la date de fin est-elle compatible avec le contrat ? Le chemin critique est-il logique (il passe par les gros travaux) ? Y a-t-il des tâches sans lien (marge énorme, souvent un oubli) ?</p>
+
+<h3>Étape 6 · Affecter les ressources et supprimer les surcharges</h3>
+<p>Affecte équipes et machines, puis regarde la charge dans l’onglet <b>Ressources</b> (<a href="#c6">chapitre 6</a>).</p>
+
+<h3>Étape 7 · Vérifier le budget</h3>
+<p>Compare le total du planning avec la soumission / le devis. Un écart important signale une durée, un rendement ou un tarif faux (<a href="#c7">chapitre 7</a>).</p>
+
+<h3>Étape 8 · Figer la référence et diffuser</h3>
+<p>Quand le planning est validé : bouton <b>Référence</b> → « Figer la référence », export PDF A3, transmission à la DT. À partir de là, on met à jour le planning actuel et on compare à la référence.</p>
+
+<!-- ===================================================== 4 -->
+<h2 id="c4"><small>Chapitre 4</small>Les liens entre tâches</h2>
+<figure class="fig">
+<svg viewBox="0 0 760 250" width="100%" style="max-width:760px" font-family="Segoe UI,system-ui,sans-serif" font-size="13">
+  <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#1d2023"/></marker></defs>
+  <g transform="translate(10,10)"><text font-weight="700">FS · Fin → Début (le plus courant)</text>
+    <rect x="0" y="14" width="120" height="16" rx="3" fill="#3e8ed0"/><text x="4" y="27" fill="#fff" font-size="11">A Fouille</text>
+    <rect x="150" y="44" width="110" height="16" rx="3" fill="#3e8ed0"/><text x="154" y="57" fill="#fff" font-size="11">B Pose</text>
+    <path d="M120 22h12v30h16" fill="none" stroke="#1d2023" marker-end="url(#ah)"/><text x="0" y="82" fill="#5b6169" font-size="12">B commence quand A est fini.</text></g>
+  <g transform="translate(390,10)"><text font-weight="700">SS · Début → Début (+ décalage)</text>
+    <rect x="0" y="14" width="160" height="16" rx="3" fill="#3e8ed0"/><text x="4" y="27" fill="#fff" font-size="11">A Fouille</text>
+    <rect x="60" y="44" width="150" height="16" rx="3" fill="#3e8ed0"/><text x="64" y="57" fill="#fff" font-size="11">B Pose</text>
+    <path d="M0 22h-8v30h66" fill="none" stroke="#1d2023" marker-end="url(#ah)"/><text x="16" y="42" fill="#5b6169" font-size="11">+2 j</text><text x="0" y="82" fill="#5b6169" font-size="12">B commence 2 j après le début de A.</text></g>
+  <g transform="translate(10,130)"><text font-weight="700">FF · Fin → Fin (+ décalage)</text>
+    <rect x="0" y="14" width="160" height="16" rx="3" fill="#3e8ed0"/><text x="4" y="27" fill="#fff" font-size="11">A Fouille</text>
+    <rect x="70" y="44" width="120" height="16" rx="3" fill="#3e8ed0"/><text x="74" y="57" fill="#fff" font-size="11">B Pose</text>
+    <path d="M160 22h30v30h2" fill="none" stroke="#1d2023" marker-end="url(#ah)"/><text x="164" y="42" fill="#5b6169" font-size="11">+1 j</text><text x="0" y="82" fill="#5b6169" font-size="12">B finit au plus tôt 1 j après la fin de A.</text></g>
+  <g transform="translate(390,130)"><text font-weight="700">SF · Début → Fin (rare)</text>
+    <rect x="120" y="14" width="120" height="16" rx="3" fill="#3e8ed0"/><text x="124" y="27" fill="#fff" font-size="11">A Déviation n°2</text>
+    <rect x="0" y="44" width="120" height="16" rx="3" fill="#3e8ed0"/><text x="4" y="57" fill="#fff" font-size="11">B Déviation n°1</text>
+    <path d="M120 22h-6v30h8" fill="none" stroke="#1d2023" marker-end="url(#ah)"/><text x="0" y="82" fill="#5b6169" font-size="12">B ne peut finir que quand A a commencé.</text></g>
+</svg>
+<figcaption>Les quatre types de liens. Le décalage peut être négatif (avance) : FS−2 = B commence 2 jours avant la fin de A.</figcaption>
+</figure>
+
+<h3>Quel lien choisir ?</h3>
+<table>
+  <tr><th>Situation de chantier</th><th>Lien</th><th>Exemple</th></tr>
+  <tr><td>Il faut que ce soit fini avant</td><td><b>FS</b></td><td>Inspection caméra → fondation en grave</td></tr>
+  <tr><td>On attend un délai technique</td><td><b>FS + décalage</b></td><td>Bétonnage radier → murs : FS+2 (délai fixé par l’ingénieur)</td></tr>
+  <tr><td>Travail « à la suite » sur le même front (en chenille)</td><td><b>SS + décalage</b> et <b>FF + décalage</b></td><td>Fouille → pose : SS+2 et FF+1 (la pose suit la fouille à 2 j et finit 1 j après elle)</td></tr>
+  <tr><td>Deux travaux doivent finir ensemble</td><td><b>FF</b></td><td>Bordures et fondation finies avant l’enrobé</td></tr>
+  <tr><td>Une installation doit rester jusqu’au début de la suivante</td><td><b>SF</b></td><td>Signalisation provisoire maintenue jusqu’au début de la définitive</td></tr>
+</table>
+
+<div class="box blue"><b>Le duo SS + FF : la clé des travaux linéaires</b>Pour une fouille suivie par une pose puis un remblayage, ne mets pas trois FS (trop long, irréaliste). Mets <b>SS+n</b> pour démarrer derrière l’équipe précédente et <b>FF+m</b> pour qu’elle ne finisse pas avant celle qu’elle suit. Dans BauGest, une tâche peut avoir deux liens vers la même tâche (un SS et un FF).</div>
+
+<h3>Pièges fréquents</h3>
+<ul>
+  <li><b>Tâche orpheline</b> (sans successeur) : elle peut glisser sans que la fin bouge → marge énorme et trompeuse. Relie-la au jalon de fin ou à la tâche suivante.</li>
+  <li><b>Dates forcées partout</b> (« début au plus tôt ») : le planning ne réagit plus aux retards. Réserve-les aux vraies contraintes (autorisation, livraison, coupure).</li>
+  <li><b>Liens sur les lots</b> : dans BauGest, les liens se font entre tâches, pas entre lots. Relie la dernière tâche d’un lot à la première du lot suivant.</li>
+  <li><b>Boucle</b> (A attend B qui attend A) : BauGest la refuse et l’indique.</li>
+  <li><b>Liens « de confort »</b> qui ne correspondent à rien sur le terrain : ils créent un faux chemin critique.</li>
+</ul>
+
+<!-- ===================================================== 5 -->
+<h2 id="c5"><small>Chapitre 5</small>Chemin critique et marges</h2>
+<p>BauGest calcule pour chaque tâche la date <b>au plus tôt</b> (aller : de la première à la dernière tâche) et la date <b>au plus tard</b> (retour : de la fin vers le début) sans retarder la fin. La différence est la <b>marge totale</b>.</p>
+<figure class="fig">
+<svg viewBox="0 0 760 170" width="100%" style="max-width:760px" font-family="Segoe UI,system-ui,sans-serif" font-size="12">
+  <defs><marker id="ah2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#d93b3f"/></marker></defs>
+  <rect x="20" y="20" width="160" height="20" rx="3" fill="#d93b3f"/><text x="26" y="34" fill="#fff">Fouille 5 j (critique)</text>
+  <rect x="180" y="55" width="200" height="20" rx="3" fill="#d93b3f"/><text x="186" y="69" fill="#fff">Pose 6 j (critique)</text>
+  <rect x="380" y="90" width="130" height="20" rx="3" fill="#d93b3f"/><text x="386" y="104" fill="#fff">Remblai 4 j</text>
+  <rect x="180" y="125" width="100" height="20" rx="3" fill="#3e8ed0"/><text x="186" y="139" fill="#fff">Commande 3 j</text>
+  <rect x="280" y="129" width="230" height="12" rx="2" fill="none" stroke="#3e8ed0" stroke-dasharray="4 3"/><text x="300" y="160" fill="#3e8ed0">marge 7 j : peut glisser sans retarder la fin</text>
+  <path d="M180 30h6v35h-4" fill="none" stroke="#d93b3f" marker-end="url(#ah2)"/>
+  <path d="M380 65h6v35h-4" fill="none" stroke="#d93b3f" marker-end="url(#ah2)"/>
+  <path d="M510 100h40" stroke="#d93b3f" marker-end="url(#ah2)"/><path d="M560 90 l10 10 -10 10 -10 -10z" fill="#d93b3f"/><text x="578" y="104">Fin</text>
+  <path d="M510 135h40v-25" fill="none" stroke="#5b6169" stroke-dasharray="3 2"/>
+</svg>
+<figcaption>Chemin critique en rouge (marge 0). « Commande » a 7 jours de marge.</figcaption>
+</figure>
+<h3>Ce que ça change pour toi</h3>
+<ul>
+  <li><b>Tâche critique en retard d’1 jour = fin du chantier en retard d’1 jour</b>, sauf si tu rattrapes plus loin.</li>
+  <li>Une tâche avec marge peut glisser, mais <b>la marge est partagée</b> : si la tâche A consomme la marge, la tâche suivante B n’en a plus.</li>
+  <li>Le chemin critique <b>change</b> pendant le chantier : une tâche non critique qui prend beaucoup de retard devient critique. Regarde les barres rouges à chaque mise à jour.</li>
+  <li>Marge négative impossible dans BauGest : la fin recule automatiquement. Compare-la à la référence (« réf. … (+3 j) » à droite de la barre d’outils).</li>
+</ul>
+<div class="box"><b>Pour raccourcir un chantier</b>Il ne sert à rien d’accélérer une tâche qui a de la marge. On agit uniquement sur le chemin critique : plus d’équipes, travail en parallèle (SS au lieu de FS), découpage en tronçons, méthode plus rapide, samedi travaillé (réglage du planning).</div>
+
+<!-- ===================================================== 6 -->
+<h2 id="c6"><small>Chapitre 6</small>Ressources : affecter, contrôler, lisser</h2>
+<h3>Les quatre types de ressources</h3>
+<table>
+  <tr><th>Type</th><th>Tarif</th><th>Capacité</th><th>Dans une tâche, tu saisis…</th><th>Coût calculé</th></tr>
+  <tr><td><b>Équipe</b></td><td>CHF/h par personne</td><td>Personnes disponibles par jour</td><td>Nombre de personnes</td><td>pers. × jours × heures/jour × tarif</td></tr>
+  <tr><td><b>Machine / matériel</b></td><td>CHF/jour par unité</td><td>Unités disponibles par jour</td><td>Nombre d’unités</td><td>unités × jours × tarif</td></tr>
+  <tr><td><b>Sous-traitant</b></td><td>CHF par unité (forfait, m², ml…)</td><td>—</td><td>Quantité totale</td><td>quantité × prix unitaire</td></tr>
+  <tr><td><b>Fourniture</b></td><td>CHF par unité (m³, t, m…)</td><td>—</td><td>Quantité totale</td><td>quantité × prix unitaire</td></tr>
+</table>
+<p>Les heures par jour des équipes se règlent dans <b>Réglages › Heures par jour</b> (8,5 par défaut). Les ressources sont propres à chaque chantier.</p>
+
+<h3>Conseils pour bien définir les ressources</h3>
+<ul>
+  <li>Une ressource « Équipe » = un <b>groupe qui travaille ensemble</b> (ex. équipe canalisation, capacité 4 personnes). Si tu as deux équipes distinctes, crée deux ressources.</li>
+  <li>Une machine rare (pelle, grue, finisseur) mérite sa propre ressource avec capacité 1 : c’est elle qui crée les vrais conflits.</li>
+  <li>Le tarif horaire d’équipe : prends le <b>prix de revient</b> de ton entreprise (pas le prix de vente) pour suivre le coût réel ; ou le prix de vente si tu veux comparer à la soumission. Reste cohérent sur tout le planning.</li>
+</ul>
+
+<h3>Lire la charge</h3>
+<figure class="fig"><img src="aide/ressources.png" alt="Onglet Ressources, charge de la pelle"><figcaption>Onglet Ressources : la pelle (capacité 1) est demandée 2 fois certains jours → barres rouges et liste des périodes en surcharge.</figcaption></figure>
+<ul>
+  <li>Barres sous la ligne pointillée jaune = OK. <b>Barres rouges = surcharge</b> (plus de personnes ou de machines que disponibles).</li>
+  <li>Le tableau sous le graphique liste les tâches qui utilisent la ressource, avec leurs dates.</li>
+  <li>Planning long (plus de 70 jours) : une barre = une semaine (charge maximale du jour dans la semaine).</li>
+</ul>
+
+<h3>Supprimer une surcharge : 5 solutions</h3>
+<table>
+  <tr><th>Solution</th><th>Effet sur le délai</th><th>Effet sur le coût</th><th>Quand l’utiliser</th></tr>
+  <tr><td><b>1. Lisser</b> (décaler des tâches)</td><td>Nul si la tâche a de la marge, sinon retard</td><td>Neutre</td><td>Tâches avec marge</td></tr>
+  <tr><td><b>2. Renforcer</b> (2<sup>e</sup> machine, personnes en plus)</td><td>Aucun retard</td><td>+ location / main-d’œuvre</td><td>Chemin critique, délai serré</td></tr>
+  <tr><td><b>3. Changer l’ordre</b> (autre tronçon d’abord)</td><td>Souvent nul</td><td>Neutre</td><td>Travaux répétitifs</td></tr>
+  <tr><td><b>4. Changer la méthode</b> (mini-pelle pour le remblayage, préfabriqué…)</td><td>Variable</td><td>Variable</td><td>Conflits répétés</td></tr>
+  <tr><td><b>5. Allonger la tâche avec moins de monde</b></td><td>Tâche plus longue</td><td>À peu près neutre</td><td>Tâches avec marge</td></tr>
+</table>
+
+<h3>Le lissage automatique de BauGest</h3>
+<p>Bouton <b>Lisser</b> (ou « Proposer un lissage » dans l’onglet Ressources). BauGest place les tâches dans l’ordre des liens, <b>les critiques d’abord</b>, et repousse une tâche <b>non commencée</b> jusqu’au premier jour où ses équipes et machines tiennent dans la capacité. Il ne touche jamais aux tâches commencées ni aux jalons.</p>
+<figure class="fig"><img src="aide/lissage.png" alt="Proposition de lissage" style="max-width:640px"><figcaption>La proposition : décalage, nouvelles dates, marge restante et effet sur la fin du chantier. Décoche une ligne pour la refuser.</figcaption></figure>
+<div class="box red"><b>Lisser n’est pas gratuit</b>Ici le lissage supprime la surcharge mais repousse la fin de 6 jours. Avant d’appliquer, demande-toi si une 2<sup>e</sup> machine pendant quelques jours (solution 2) coûte moins que 6 jours de chantier en plus (installations, encadrement, pénalités).</div>
+<p><b>Retirer le lissage</b> (onglet Ressources) remet tous les décalages à zéro. Si tu déplaces toi-même une barre, son décalage de lissage est remplacé par ta date.</p>
+
+<!-- ===================================================== 7 -->
+<h2 id="c7"><small>Chapitre 7</small>Budget, réalisé et valeur acquise</h2>
+<h3>Source du budget (Réglages › Source du budget)</h3>
+<table>
+  <tr><th>Choix</th><th>Budget d’une tâche</th><th>Pour quoi</th></tr>
+  <tr><td><b>Ressources</b></td><td>Somme des coûts des ressources affectées</td><td>Suivi précis main-d’œuvre / machines</td></tr>
+  <tr><td><b>Montant saisi</b></td><td>Montant tapé dans la fiche de la tâche</td><td>Reprise simple des montants de la soumission</td></tr>
+  <tr><td><b>Ressources + montant</b></td><td>Les deux additionnés</td><td>Ressources + forfaits (essais, frais, divers)</td></tr>
+</table>
+
+<h3>Saisir le réalisé</h3>
+<p>Onglet <b>Budget</b> › bouton <b>Réalisé</b> de la tâche : une ligne par saisie (date, ressource, quantité). Équipes en <b>heures</b>, machines en <b>jours</b>, sous-traitants et fournitures en <b>quantités</b>, ou <b>montant libre</b> (facture). Le montant = quantité × tarif de la ressource. Règle aussi l’<b>avancement %</b> dans la même fenêtre.</p>
+<figure class="fig"><img src="aide/realise.png" alt="Saisie du réalisé" style="max-width:620px"><figcaption>Saisie du réalisé d’une tâche (heures de l’équipe, jours de la pelle).</figcaption></figure>
+<div class="box"><b>Source des chiffres</b>Les heures et jours viennent de tes <b>rapports journaliers</b> et <b>bons de régie</b> BauGest. Saisis-les au même rythme que tes mises à jour du planning.</div>
+
+<h3>La valeur acquise expliquée simplement</h3>
+<p>À une date donnée (« Situation au »), BauGest compare trois montants :</p>
+<table>
+  <tr><th>Montant</th><th>Question</th><th>Calcul</th></tr>
+  <tr><td><b>PV</b> · Prévu à date</td><td>Combien de travail <i>aurait dû</i> être fait ?</td><td>Budget de référence × part du temps prévu écoulée</td></tr>
+  <tr><td><b>VA</b> · Valeur acquise</td><td>Combien de travail <i>est</i> fait (en budget) ?</td><td>Budget × avancement %</td></tr>
+  <tr><td><b>CR</b> · Coût réel</td><td>Combien ça a <i>coûté</i> ?</td><td>Somme du réalisé saisi</td></tr>
+</table>
+<figure class="fig">
+<svg viewBox="0 0 640 230" width="100%" style="max-width:640px" font-family="Segoe UI,system-ui,sans-serif" font-size="12">
+  <line x1="50" y1="200" x2="620" y2="200" stroke="#1d2023"/><line x1="50" y1="20" x2="50" y2="200" stroke="#1d2023"/>
+  <text x="56" y="30" fill="#5b6169">CHF cumulés</text><text x="560" y="218" fill="#5b6169">temps</text>
+  <path d="M50 198 C 180 190, 260 120, 330 90 S 520 30, 600 26" fill="none" stroke="#8a8f96" stroke-width="2.5"/><text x="470" y="40" fill="#5b6169">Budget prévu (PV)</text>
+  <path d="M50 198 C 150 192, 230 150, 330 130" fill="none" stroke="#3f9e66" stroke-width="2.5"/><text x="340" y="134" fill="#3f9e66">VA (fait)</text>
+  <path d="M50 198 C 150 190, 230 130, 330 104" fill="none" stroke="#d93b3f" stroke-width="2.5"/><text x="340" y="104" fill="#d93b3f">CR (coûté)</text>
+  <line x1="330" y1="20" x2="330" y2="200" stroke="#d9a400" stroke-dasharray="5 4"/><text x="292" y="214" fill="#7a5a00">aujourd’hui</text>
+  <path d="M322 90v38" stroke="#5b6169" stroke-width="1"/><text x="200" y="76" fill="#5b6169">retard (VA &lt; PV)</text>
+</svg>
+<figcaption>VA sous PV = en retard ; CR au-dessus de VA = plus cher que prévu pour ce qui est fait.</figcaption>
+</figure>
+<h3>Les indicateurs</h3>
+<table>
+  <tr><th>Indicateur</th><th>Calcul</th><th>Lecture</th></tr>
+  <tr><td><b>Écart de coût</b></td><td>VA − CR</td><td>Négatif = dépassement</td></tr>
+  <tr><td><b>Écart de délai</b></td><td>VA − PV</td><td>Négatif = retard (en CHF de travail)</td></tr>
+  <tr><td><b>SPI</b> (indice délai)</td><td>VA ÷ PV</td><td>1 = à l’heure ; 0,80 = on a fait 80 % de ce qui était prévu</td></tr>
+  <tr><td><b>CPI</b> (indice coût)</td><td>VA ÷ CR</td><td>1 = dans le budget ; 0,90 = chaque franc dépensé ne rapporte que 90 ct de travail</td></tr>
+  <tr><td><b>Coût final estimé</b></td><td>Budget ÷ CPI</td><td>Où on finira si la tendance continue</td></tr>
+  <tr><td><b>Écart final estimé</b></td><td>Budget − coût final</td><td>Négatif = perte estimée</td></tr>
+</table>
+<p><b>Exemple chiffré :</b> budget 100 000 CHF. À date, il était prévu d’avoir fait 40 000 (PV). On a fait 30 % du travail → VA = 30 000. On a dépensé 36 000 (CR). SPI = 30 000 ÷ 40 000 = <b>0,75</b> (retard) ; CPI = 30 000 ÷ 36 000 = <b>0,83</b> (dépassement) ; coût final estimé = 100 000 ÷ 0,83 ≈ <b>120 000 CHF</b>, soit une perte estimée de 20 000 CHF si rien ne change.</p>
+<div class="box blue"><b>Condition pour que ça marche</b>Un avancement % <b>honnête</b> (ce qui est physiquement fait, mesuré en m, m³, pièces), et un réalisé saisi <b>jusqu’à la même date</b>. Sans référence figée, BauGest compare au planning actuel : fige la référence avant de démarrer.</div>
+
+<!-- ===================================================== 8 -->
+<h2 id="c8"><small>Chapitre 8</small>Suivre et rattraper un retard</h2>
+<h3>Quand mettre à jour (au besoin)</h3>
+<p>Tu mets à jour quand un de ces déclencheurs se produit :</p>
+<ul class="chk">
+  <li>Une tâche critique commence ou finit à une autre date que prévu.</li>
+  <li>Un imprévu : intempéries, panne, découverte (conduite non répertoriée, mauvais terrain), livraison en retard.</li>
+  <li>Une modification de commande (travaux en plus ou en moins, phasage modifié).</li>
+  <li>Avant une séance de chantier où le délai sera discuté.</li>
+  <li>Avant une facturation ou une situation de travaux (pour la valeur acquise).</li>
+  <li>Au minimum une fois par mois, même si tout va bien, pour garder la main.</li>
+</ul>
+<h3>La mise à jour en 6 gestes</h3>
+<ol class="steps">
+  <li>Pour chaque tâche commencée : <b>Début réel</b> et <b>avancement %</b>.</li>
+  <li>Pour chaque tâche finie : <b>Fin réelle</b> (l’avancement passe à 100 %).</li>
+  <li>Durées restantes fausses ? Corrige la <b>durée</b> des tâches en cours ou à venir.</li>
+  <li>Saisis le <b>réalisé</b> (heures, jours, quantités) jusqu’à la date de mise à jour.</li>
+  <li>Regarde la <b>fin du chantier</b> par rapport à la référence et les nouvelles barres rouges.</li>
+  <li>Contrôle les <b>surcharges</b> des 3 prochaines semaines (onglet Ressources).</li>
+</ol>
+<figure class="fig"><img src="aide/gantt-suivi.png" alt="Gantt avec référence"><figcaption>Planning mis à jour : barres vertes = terminées, trait noir dans la barre = avancement, barres grises fines = référence, « réf. 25.05.2027 (+1 j) » = glissement de la fin.</figcaption></figure>
+<h3>Repérer un retard</h3>
+<ul>
+  <li><b>Contour orange pointillé</b> sur une barre et ⚠ dans le tableau : tâche en retard (devait commencer et n’a pas de début réel, ou devait être finie et ne l’est pas).</li>
+  <li>Barre actuelle à droite de la barre grise de référence : glissement.</li>
+  <li>SPI &lt; 1 dans l’onglet Budget.</li>
+</ul>
+<h3>Rattraper un retard : 5 options concrètes</h3>
+<table>
+  <tr><th>Option</th><th>Comment dans BauGest</th><th>Coût</th></tr>
+  <tr><td><b>1. Renforcer le chemin critique</b> (équipe ou machine en plus)</td><td>Réduire la durée de la tâche, ajouter la ressource</td><td>+ main-d’œuvre / location</td></tr>
+  <tr><td><b>2. Chevaucher</b> des tâches (travail en chenille)</td><td>Remplacer un FS par SS+n et FF+m</td><td>Faible, demande de l’organisation</td></tr>
+  <tr><td><b>3. Découper</b> pour ouvrir un 2<sup>e</sup> front</td><td>Scinder la tâche en tronçons, lier en parallèle</td><td>+ installation, + encadrement</td></tr>
+  <tr><td><b>4. Allonger le temps de travail</b></td><td>Réglages › Samedi travaillé ; durées réduites</td><td>Suppléments horaires, à valider</td></tr>
+  <tr><td><b>5. Changer de méthode</b></td><td>Nouvelles tâches et durées</td><td>Variable</td></tr>
+</table>
+<div class="box red"><b>À ne pas faire</b>Raccourcir les durées « sur le papier » sans moyens en plus. Le planning redevient vert, le chantier reste en retard, et tu perds ta crédibilité à la prochaine séance.</div>
+
+<!-- ===================================================== 9 -->
+<h2 id="c9"><small>Chapitre 9</small>Communiquer le planning</h2>
+<h3>Planning contractuel et planning de travail</h3>
+<p>Le <b>planning contractuel</b> (directeur) est remis au maître d’ouvrage / à la DT : peu de lignes, jalons clairs, dates engageantes. Le <b>planning de travail</b> (exécution) est ton outil interne : détaillé, avec ressources et coûts. Ne transmets pas ton planning interne avec les coûts : dans l’export PDF, seuls les dates et les ressources affectées apparaissent, pas les montants.</p>
+<h3>Présenter un planning en séance (5 minutes)</h3>
+<ol>
+  <li>La date de fin prévue et l’écart à la référence (+/− jours).</li>
+  <li>Ce qui a été fait depuis la dernière séance (barres vertes).</li>
+  <li>Les 3 prochaines semaines (zoom Jour ou Semaine).</li>
+  <li>Les points critiques et ce dont tu as besoin du maître d’ouvrage / de la DT (plans, décisions, accès, autorisations) <b>avec une date limite</b>.</li>
+</ol>
+<h3>Annoncer un retard par écrit</h3>
+<p>Annonce un retard <b>dès que tu le constates</b>, par écrit (courriel ou PV de séance), avec la cause, l’impact et les mesures proposées. Vérifie les délais et la forme d’avis prévus par ton contrat.</p>
+<div class="box"><b>Modèle de courriel</b>
+Objet : Chantier [N° Nom] – avis de retard [lot / tâche]<br><br>
+Madame, Monsieur,<br>
+Nous vous informons que [tâche] a pris un retard de [n] jours ouvrés en raison de [cause précise, date du constat].<br>
+Impact selon notre planning mis à jour du [date] : fin de [lot/jalon] reportée du [date référence] au [nouvelle date].<br>
+Mesures proposées : [renfort, chevauchement, samedi…] permettant de ramener le retard à [n] jours. Décision attendue de votre part : [plans, validation…] d’ici le [date].<br>
+Planning mis à jour en annexe (PDF A3, indice [B]).<br>
+Meilleures salutations
+</div>
+<h3>Exports</h3>
+<table>
+  <tr><th>Export</th><th>Pour</th></tr>
+  <tr><td><b>PDF A3 paysage</b></td><td>Séances, affichage dans la baraque, envoi à la DT. Cartouche : entreprise, chantier, planning, indice, date d’impression, page.</td></tr>
+  <tr><td><b>Excel</b></td><td>Analyses, tableaux de coûts. Feuilles : Tâches, Ressources, Budget, Réalisé, Fériés et vacances.</td></tr>
+  <tr><td><b>MS Project (XML)</b></td><td>Envoyer à un bureau qui utilise MS Project (Fichier › Ouvrir › XML). L’import XML crée un nouveau planning dans BauGest.</td></tr>
+</table>
+<p>Change l’<b>indice</b> (Réglages › Indice : A, B, C…) à chaque nouvelle version transmise. Les exports sont téléchargés et copiés dans le Drive : <code>&lt;Chantier&gt;/Planning/Exports</code>.</p>
+
+<!-- ===================================================== 10 -->
+<h2 id="c10"><small>Chapitre 10</small>BauGest pas à pas</h2>
+<h3>Ouvrir le Planning</h3>
+<ul>
+  <li><b>Tablette</b> : rubrique <b>Planning</b> dans la barre de gauche (le téléphone n’a pas de planning).</li>
+  <li><b>PC</b> : onglet <b>Planning</b> en haut (à droite de Devis).</li>
+  <li>En haut : chantier, planning du chantier (plusieurs possibles), <b>+</b> pour un nouveau planning, onglets <b>Gantt · Ressources · Budget · Réglages</b>.</li>
+</ul>
+<h3>Les boutons</h3>
+<table>
+  <tr><th style="width:60px"></th><th>Bouton</th><th>Rôle</th></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></td><td>Nouveau / Tâche</td><td>En haut : nouveau planning. Dans la barre du Gantt : nouvelle tâche après la sélection (liée FS à la tâche sélectionnée).</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l9 9-9 9-9-9z"/></svg></span></td><td>Jalon</td><td>Nouveau jalon (durée 0).</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span></td><td>Lot</td><td>Nouveau lot ; avec un lot sélectionné, « Tâche » crée une tâche dedans.</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h16M10 12h10M10 18h10M7 10l-4 2 4 2"/></svg></span> <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h16M10 12h10M10 18h10M3 10l4 2-4 2"/></svg></span></td><td>Remonter / Mettre dans le lot</td><td>Change le niveau de la tâche (la tâche au-dessus devient un lot).</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span> <span class="ico"><svg viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span></td><td>Monter / Descendre</td><td>Ordre d’affichage (ne change pas les liens).</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></span></td><td>Lier</td><td>Lie la tâche sélectionnée à celle du dessus (FS).</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span> <span class="ico"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></span></td><td>Modifier / Supprimer</td><td>Ouvre la fiche / supprime (un lot avec ses tâches après confirmation).</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2v20M5 7h14"/></svg></span></td><td>Auj.</td><td>Fait défiler jusqu’à aujourd’hui (ou la tâche sélectionnée). Zoom : Jour · Semaine · Mois.</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg></span></td><td>Tableau</td><td>Tableau complet (Début, Fin, Préd., %, Marge) ou réduit.</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></span> <span class="ico"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></span></td><td>Annuler / Rétablir</td><td>Toutes les modifications (PC : Ctrl+Z / Ctrl+Y).</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 16h12M8 12h8M10 8h4"/></svg></span></td><td>Référence</td><td>Figer, remplacer ou supprimer le planning de référence.</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 20h18M6 16V9M10 16V5M14 16v-6M18 16v-3"/></svg></span></td><td>Lisser</td><td>Proposition de lissage des surcharges.</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span></td><td>Exporter</td><td>PDF A3, Excel, MS Project XML, import XML.</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg></span> <span class="ico"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span></td><td>Double vue / Fenêtre (PC)</td><td>Planning à gauche et explorateur à droite (largeur réglable au bord) / planning dans une fenêtre séparée pour le 2<sup>e</sup> écran.</td></tr>
+  <tr><td><span class="ico" style="font-weight:700">?</span></td><td>Manuel</td><td>Ce manuel.</td></tr>
+</table>
+<p class="noprint" style="font-size:14px;color:var(--mut)">Sur un écran étroit (tablette, double vue), seuls les icônes s’affichent ; le nom apparaît en laissant la souris dessus.</p>
+
+<h3>1. Créer le planning et régler le calendrier</h3>
+<ol>
+  <li><b>+</b> (Nouveau) : nom, date de début des travaux, canton.</li>
+  <li>Onglet <b>Réglages</b> :
+    <ul>
+      <li><b>Jours fériés</b> : canton, puis coche / décoche selon ta commune et ta convention. La liste « Jours non travaillés du planning » montre toutes les dates exclues depuis le début.</li>
+      <li><b>Autres jours chômés</b> (fête locale, pont) et <b>Vacances du bâtiment</b> (reprises automatiquement dans tes prochains plannings).</li>
+      <li><b>Samedi travaillé</b>, <b>Heures par jour</b> des équipes, <b>Indice</b>.</li>
+      <li><b>Structure des tâches</b> : liste simple, lots › tâches (2 niveaux) ou arborescence libre.</li>
+      <li><b>Source du budget</b> : ressources, montant saisi ou les deux.</li>
+    </ul></li>
+</ol>
+<figure class="fig"><img src="aide/reglages.png" alt="Réglages du planning"><figcaption>Réglages : canton et fériés cochables, avec la prochaine date de chaque férié.</figcaption></figure>
+<div class="box"><b>À vérifier une fois</b>Les fériés proposés par canton sont une base : contrôle-les pour tes communes (certains fériés ne valent que dans une partie du canton) et décoche / ajoute ce qui manque.</div>
+
+<h3>2. Saisir les tâches</h3>
+<ol>
+  <li><b>Lot</b> pour chaque grande partie, puis sélectionne le lot et ajoute ses <b>Tâches</b>.</li>
+  <li>Dans la fiche : nom, type (tâche / jalon), <b>durée en jours ouvrés</b>, début au plus tôt (seulement si vraie contrainte).</li>
+  <li>Une nouvelle tâche est liée automatiquement (FS) à la tâche sélectionnée : vérifie le lien.</li>
+</ol>
+<figure class="fig"><img src="aide/fiche-tache.png" alt="Fiche d’une tâche" style="max-width:600px"><figcaption>Fiche d’une tâche : deux liens vers la même fouille (SS+2 et FF+1), deux ressources avec leur coût.</figcaption></figure>
+<h3>3. Lier</h3>
+<ul>
+  <li><b>Dans la fiche</b> : « + Lien », choisir la tâche, le type (FS, SS, FF, SF) et le décalage en jours ouvrés (négatif = avance).</li>
+  <li><b>Au stylet ou à la souris</b> : tirer depuis le <b>petit rond</b> au bout de la barre jusqu’à une autre barre → lien FS (sur tablette, le rond apparaît quand la barre est sélectionnée).</li>
+  <li><b>Bouton Lier</b> : lien FS avec la tâche du dessus.</li>
+  <li>La colonne <b>Préd.</b> affiche les liens : <code>2.2SS+2 ; 2.2FF+1</code>.</li>
+</ul>
+<h3>4. Ajuster les barres</h3>
+<ul>
+  <li><b>Déplacer</b> une barre (stylet / souris) = poser un « début au plus tôt ». Si les liens l’empêchent, BauGest l’indique.</li>
+  <li><b>Tirer le bord droit</b> = changer la durée.</li>
+  <li><b>Doigt</b> = faire défiler, jamais déplacer. Toucher une ligne la sélectionne, la toucher encore ouvre la fiche (souris : double clic).</li>
+  <li>Une tâche commencée ne se déplace pas : change sa date de début réel dans la fiche.</li>
+</ul>
+<h3>5. Ressources</h3>
+<ol>
+  <li>Onglet <b>Ressources</b> › <b>+ Ressource</b> : nom, type, tarif, capacité, couleur.</li>
+  <li>Dans chaque fiche de tâche : <b>+ Ressource</b>, quantité (personnes, unités ou quantité totale). Le coût s’affiche à droite.</li>
+  <li>Onglet <b>Ressources</b> : clique une ressource pour voir sa charge ; <b>Proposer un lissage</b> si barres rouges.</li>
+</ol>
+<h3>6. Référence, suivi et budget</h3>
+<ol>
+  <li><b>Référence</b> › Figer avant le démarrage.</li>
+  <li>Pendant le chantier : fiche de la tâche › avancement, début réel, fin réelle ; ou onglet <b>Budget</b> › <b>Réalisé</b>.</li>
+  <li>Onglet <b>Budget</b> : choisis la date « Situation au » et lis PV, VA, CR, SPI, CPI.</li>
+</ol>
+<figure class="fig"><img src="aide/budget.png" alt="Onglet Budget"><figcaption>Onglet Budget : indicateurs à la date choisie et tableau par tâche (budget de référence, actuel, avancement, valeur acquise, réel, écart).</figcaption></figure>
+
+<h3>Couleurs du Gantt</h3>
+<table>
+  <tr><td><span class="lg" style="background:#d93b3f"></span> rouge</td><td>Tâche critique (marge 0) ; flèches rouges = liens critiques</td></tr>
+  <tr><td><span class="lg" style="background:#3e8ed0"></span> bleu</td><td>Tâche avec marge</td></tr>
+  <tr><td><span class="lg" style="background:#3f9e66"></span> vert</td><td>Tâche terminée</td></tr>
+  <tr><td><span class="lg" style="background:#8a8f96;height:4px"></span> gris fin</td><td>Référence</td></tr>
+  <tr><td><span class="lg" style="border:2px dashed #e8902c;background:none"></span> contour orange</td><td>Tâche en retard (⚠ dans le tableau)</td></tr>
+  <tr><td><span class="lg" style="border-top:2px dashed #d9a400;height:0"></span> pointillé jaune</td><td>Aujourd’hui</td></tr>
+  <tr><td><span class="lg" style="background:#1d2023;height:5px"></span> noir</td><td>Lot</td></tr>
+  <tr><td>◆</td><td>Jalon (affiché en fin de journée, comme dans MS Project)</td></tr>
+  <tr><td>colonnes grises</td><td>Week-ends, fériés, vacances (survoler pour voir le nom)</td></tr>
+</table>
+
+<h3>Raccourcis clavier (PC)</h3>
+<table>
+  <tr><td><span class="key">↑</span> <span class="key">↓</span></td><td>Tâche précédente / suivante</td><td><span class="key">Entrée</span></td><td>Ouvrir la fiche</td></tr>
+  <tr><td><span class="key">Inser</span></td><td>Nouvelle tâche</td><td><span class="key">Suppr</span></td><td>Supprimer</td></tr>
+  <tr><td><span class="key">Tab</span> / <span class="key">Maj</span>+<span class="key">Tab</span></td><td>Mettre dans le lot / remonter</td><td><span class="key">Ctrl</span>+<span class="key">Z</span> / <span class="key">Y</span></td><td>Annuler / rétablir</td></tr>
+  <tr><td><span class="key">Échap</span></td><td>Fermer la fenêtre ou le planning</td><td></td><td></td></tr>
+</table>
+<h3>Enregistrement</h3>
+<p>Tout est enregistré automatiquement sur l’appareil puis dans le Drive (<code>&lt;Chantier&gt;/Planning/&lt;nom&gt;.json</code>). Sans réseau, tu continues à travailler ; l’envoi au Drive se fait au retour du réseau. L’état est affiché en haut (« Enregistré sur le Drive »). Évite de modifier le même planning sur la tablette et le PC en même temps : la dernière version enregistrée l’emporte.</p>
+
+<!-- ===================================================== 11 -->
+<h2 id="c11"><small>Chapitre 11</small>Cas pratique 1 · génie civil</h2>
+<p><b>Remplacement d’un collecteur EU (2 × 60 m) et réfection de la chaussée</b>, canton de Vaud, début lundi 12.04.2027. Durées, tarifs et quantités <b>d’exemple</b>.</p>
+<table>
+  <tr><th>N°</th><th>Tâche</th><th class="n">Durée</th><th>Préd.</th><th>Ressources</th></tr>
+  <tr><td>1</td><td><b>Préparation</b></td><td></td><td></td><td></td></tr>
+  <tr><td>1.1</td><td>Installation de chantier</td><td class="n">2 j</td><td>—</td><td>Équipe ×2</td></tr>
+  <tr><td>1.2</td><td>Signalisation et déviation</td><td class="n">1 j</td><td>1.1</td><td>Équipe ×2</td></tr>
+  <tr><td>2</td><td><b>Collecteur</b></td><td></td><td></td><td></td></tr>
+  <tr><td>2.1</td><td>Démolition enrobé</td><td class="n">2 j</td><td>1.2</td><td>Équipe ×2, pelle</td></tr>
+  <tr><td>2.2</td><td>Fouille blindée tronçon 1</td><td class="n">5 j</td><td>2.1</td><td>Équipe ×2, pelle</td></tr>
+  <tr><td>2.3</td><td>Pose collecteur tronçon 1</td><td class="n">4 j</td><td>2.2SS+2 ; 2.2FF+1</td><td>Équipe ×2, tuyaux 60 m</td></tr>
+  <tr><td>2.4</td><td>Remblayage tronçon 1</td><td class="n">3 j</td><td>2.3SS+2 ; 2.3FF+1</td><td>Équipe ×1, pelle</td></tr>
+  <tr><td>2.5</td><td>Fouille blindée tronçon 2</td><td class="n">5 j</td><td>2.2</td><td>Équipe ×2, pelle</td></tr>
+  <tr><td>2.6–2.7</td><td>Pose et remblayage tronçon 2</td><td class="n">4 j / 3 j</td><td>comme tronçon 1</td><td>idem</td></tr>
+  <tr><td>2.8</td><td>Inspection caméra</td><td class="n">1 j</td><td>2.4 ; 2.7</td><td>montant 1 200</td></tr>
+  <tr><td>3</td><td><b>Chaussée</b></td><td></td><td></td><td></td></tr>
+  <tr><td>3.1</td><td>Fondation en grave</td><td class="n">3 j</td><td>2.8</td><td>Équipe ×3, pelle</td></tr>
+  <tr><td>3.2</td><td>Bordures</td><td class="n">3 j</td><td>3.1SS+1</td><td>Équipe ×2</td></tr>
+  <tr><td>3.3</td><td>Enrobé couche de base</td><td class="n">1 j</td><td>3.1 ; 3.2</td><td>Sous-traitant 60 %</td></tr>
+  <tr><td>3.4</td><td>Enrobé couche de roulement</td><td class="n">1 j</td><td>3.3FS+5</td><td>Sous-traitant 40 %</td></tr>
+  <tr><td>3.5</td><td>Marquage et repli</td><td class="n">1 j</td><td>3.4</td><td>Équipe ×2</td></tr>
+  <tr><td>3.6</td><td>◆ Route rendue au trafic</td><td class="n">0 j</td><td>3.5</td><td></td></tr>
+</table>
+<figure class="fig"><img src="aide/gantt-gc.png" alt="Gantt du collecteur"><figcaption>Résultat : fin le 25.05.2027, 30 jours ouvrés. La pose et le remblayage du tronçon 1 ont 5 jours de marge (bleu).</figcaption></figure>
+<h3>Ce qu’il faut remarquer</h3>
+<ul>
+  <li><b>Travail en chenille</b> : la pose démarre 2 jours après la fouille (SS+2) et finit 1 jour après elle (FF+1). Avec des FS, le collecteur durerait beaucoup plus longtemps.</li>
+  <li><b>Fériés</b> : l’Ascension (06.05.2027) et le lundi de Pentecôte (17.05.2027) sont sautés automatiquement ; la couche de roulement (FS+5 après la couche de base) tombe le 24.05.</li>
+  <li><b>Chemin critique</b> : il passe par les fouilles, le tronçon 2 et toute la chaussée. Le tronçon 1 (pose, remblai) n’est pas critique.</li>
+  <li><b>Surcharges</b> : la pelle est demandée deux fois les 23.04, 26–27.04 et 30.04 (fouille d’un tronçon + remblai de l’autre), et l’équipe (4 personnes) dépasse certains jours.</li>
+</ul>
+<h3>Décision : lisser ou renforcer ?</h3>
+<p>Le lissage proposé repousse le remblayage 1 de 9 jours, le remblayage 2 de 1 jour et les bordures de 2 jours : <b>fin le 02.06.2027 (+6 jours)</b>.</p>
+<figure class="fig"><img src="aide/gantt-lisse.png" alt="Gantt après lissage"><figcaption>Après lissage : plus de surcharge, mais 6 jours de plus.</figcaption></figure>
+<p><b>Alternative</b> : une mini-pelle pour les remblayages (nouvelle ressource « Mini-pelle », affectée aux tâches 2.4 et 2.7 à la place de la pelle) et une 5<sup>e</sup> personne les jours de pointe. Coût : quelques jours de location et de main-d’œuvre, à comparer à 6 jours d’installations, de signalisation et d’encadrement. C’est le genre de décision que le planning doit t’aider à prendre <b>avant</b> le chantier.</p>
+<h3>Suivi à mi-parcours</h3>
+<p>Situation au 22.04.2027 : la démolition a pris 3 jours au lieu de 2. L’onglet Budget donne SPI 0,66 et CPI 0,76 (voir figure du chapitre 10) : le chantier est en retard et plus cher que prévu pour ce qui est fait. Le coût final estimé dépasse le budget de référence : il faut agir maintenant (renfort sur la fouille du tronçon 2, critique) et l’annoncer si la fin est touchée.</p>
+
+<!-- ===================================================== 12 -->
+<h2 id="c12"><small>Chapitre 12</small>Cas pratique 2 · bâtiment</h2>
+<p><b>Villa individuelle, gros œuvre</b>, canton de Vaud, début lundi 01.03.2027. Durées et tarifs <b>d’exemple</b>.</p>
+<table>
+  <tr><th>N°</th><th>Tâche</th><th class="n">Durée</th><th>Préd.</th><th>Ressources / budget</th></tr>
+  <tr><td>1.1</td><td>Installation de chantier</td><td class="n">3 j</td><td>—</td><td>montant 8 000</td></tr>
+  <tr><td>1.2</td><td>Fouille en pleine masse</td><td class="n">6 j</td><td>1.1</td><td>montant 24 000 (sous-traité)</td></tr>
+  <tr><td>2.1</td><td>Béton maigre</td><td class="n">1 j</td><td>1.2</td><td>Maçons ×3, béton 8 m³</td></tr>
+  <tr><td>2.2</td><td>Radier : coffrage et armature</td><td class="n">4 j</td><td>2.1</td><td>Maçons ×4, grue</td></tr>
+  <tr><td>2.3</td><td>Radier : bétonnage</td><td class="n">1 j</td><td>2.2</td><td>Maçons ×4, béton 45 m³</td></tr>
+  <tr><td>2.4</td><td>Murs sous-sol</td><td class="n">10 j</td><td>2.3FS+2</td><td>Maçons ×4, grue, béton 38 m³</td></tr>
+  <tr><td>2.5</td><td>Dalle sur sous-sol</td><td class="n">6 j</td><td>2.4</td><td>Maçons ×5, grue, béton 42 m³</td></tr>
+  <tr><td>3.1</td><td>Murs rez-de-chaussée</td><td class="n">8 j</td><td>2.5FS+3</td><td>Maçons ×4, grue</td></tr>
+  <tr><td>3.2</td><td>Dalle toiture</td><td class="n">6 j</td><td>3.1</td><td>Maçons ×5, grue, béton 40 m³</td></tr>
+  <tr><td>3.3</td><td>Isolation périphérique et remblayage</td><td class="n">4 j</td><td>2.5FS+5</td><td>montant 16 000</td></tr>
+  <tr><td>3.4</td><td>◆ Gros œuvre terminé</td><td class="n">0 j</td><td>3.2 ; 3.3</td><td></td></tr>
+</table>
+<figure class="fig"><img src="aide/gantt-bat.png" alt="Gantt de la villa"><figcaption>Résultat : gros œuvre terminé le 12.05.2027, 50 jours ouvrés, budget 198 443 CHF (exemple).</figcaption></figure>
+<h3>Ce qu’il faut remarquer</h3>
+<ul>
+  <li><b>Délais techniques dans les liens</b> : FS+2 après le bétonnage du radier, FS+3 après la dalle (valeurs à fixer avec l’ingénieur selon le béton, la saison et l’étayage).</li>
+  <li><b>Pâques</b> : Vendredi saint (26.03) et lundi de Pâques (29.03) tombent pendant les murs du sous-sol : la tâche s’allonge en calendrier, pas en jours ouvrés.</li>
+  <li><b>Une seule grue</b> (capacité 1) : les tâches qui l’utilisent se suivent, donc pas de surcharge. Si tu chevauches murs et dalle pour gagner du temps, la grue passera en rouge.</li>
+  <li><b>Isolation et remblayage</b> a 8 jours de marge : c’est elle qu’on décale si l’équipe manque, pas les dalles.</li>
+  <li>Bâtiment = beaucoup de <b>FS</b> (étage par étage). Pour gagner du temps : découper par <b>zones</b> (zone A / zone B) et lier en SS, ou préfabriquer.</li>
+</ul>
+<h3>Aller plus loin</h3>
+<p>Ajoute un lot « Second œuvre » avec les sous-traitants (ferblanterie, fenêtres, sanitaire, électricité, chape, plâtrerie…) liés au jalon « Gros œuvre terminé » ou « Hors d’eau », et des jalons pour les <b>commandes à long délai</b> (fenêtres, escaliers préfabriqués) placés avant la tâche qui en a besoin, avec un lien FS négatif si nécessaire.</p>
+
+<!-- ===================================================== 13 -->
+<h2 id="c13"><small>Chapitre 13</small>Check-lists</h2>
+<div class="cols">
+<div>
+<h3>Avant de figer la référence</h3>
+<ul class="chk">
+  <li>Date de début et canton justes, fériés vérifiés</li>
+  <li>Vacances du bâtiment saisies</li>
+  <li>Toutes les tâches ont un prédécesseur et un successeur</li>
+  <li>Aucune tâche de plus de 15 jours sans raison</li>
+  <li>« Début au plus tôt » seulement pour de vraies contraintes</li>
+  <li>Délais techniques dans les liens (décalages)</li>
+  <li>Jalons contractuels présents et à la bonne date</li>
+  <li>Chemin critique logique</li>
+  <li>Ressources affectées aux tâches importantes</li>
+  <li>Pas de surcharge (ou décision prise : renfort / lissage)</li>
+  <li>Budget total cohérent avec la soumission</li>
+  <li>Indice A, export PDF A3 envoyé</li>
+</ul>
+</div>
+<div>
+<h3>À chaque mise à jour</h3>
+<ul class="chk">
+  <li>Débuts et fins réels saisis</li>
+  <li>Avancement % mesuré (pas estimé au temps)</li>
+  <li>Durées restantes corrigées</li>
+  <li>Réalisé saisi jusqu’à la date</li>
+  <li>Fin comparée à la référence</li>
+  <li>Nouvelles tâches critiques repérées</li>
+  <li>Surcharges des 3 prochaines semaines</li>
+  <li>Retard annoncé par écrit si la fin bouge</li>
+  <li>Indice changé si le planning est transmis</li>
+</ul>
+<h3>Avant une séance</h3>
+<ul class="chk">
+  <li>Planning à jour, PDF A3 imprimé</li>
+  <li>Écart de fin et causes</li>
+  <li>Décisions attendues des autres, avec dates</li>
+  <li>3 semaines à venir présentées</li>
+</ul>
+</div>
+</div>
+
+<!-- ===================================================== 14 -->
+<h2 id="c14"><small>Chapitre 14</small>Aide-mémoire</h2>
+<div class="memo">
+<div class="cols">
+<div>
+<h3 style="margin-top:0">Liens</h3>
+<table>
+  <tr><td><b>FS</b></td><td>B commence à la fin de A</td></tr>
+  <tr><td><b>SS+n</b></td><td>B commence n j après le début de A</td></tr>
+  <tr><td><b>FF+n</b></td><td>B finit au plus tôt n j après la fin de A</td></tr>
+  <tr><td><b>SF</b></td><td>B ne finit pas avant le début de A</td></tr>
+  <tr><td><b>FS+n / FS−n</b></td><td>Attente / chevauchement de n j ouvrés</td></tr>
+</table>
+<h3>Formules</h3>
+<table>
+  <tr><td>Durée</td><td>Quantité ÷ (rendement × équipes)</td></tr>
+  <tr><td>Marge</td><td>Au plus tard − au plus tôt</td></tr>
+  <tr><td>SPI</td><td>VA ÷ PV (&lt; 1 = retard)</td></tr>
+  <tr><td>CPI</td><td>VA ÷ CR (&lt; 1 = dépassement)</td></tr>
+  <tr><td>Coût final</td><td>Budget ÷ CPI</td></tr>
+  <tr><td>Équipe</td><td>pers. × j × h/j × CHF/h</td></tr>
+  <tr><td>Machine</td><td>u. × j × CHF/j</td></tr>
+</table>
+</div>
+<div>
+<h3 style="margin-top:0">Couleurs</h3>
+<table>
+  <tr><td><span class="lg" style="background:#d93b3f"></span></td><td>Critique</td></tr>
+  <tr><td><span class="lg" style="background:#3e8ed0"></span></td><td>Avec marge</td></tr>
+  <tr><td><span class="lg" style="background:#3f9e66"></span></td><td>Terminée</td></tr>
+  <tr><td><span class="lg" style="background:#8a8f96;height:4px"></span></td><td>Référence</td></tr>
+  <tr><td><span class="lg" style="border:2px dashed #e8902c"></span></td><td>En retard</td></tr>
+</table>
+<h3>Gestes (tablette)</h3>
+<table>
+  <tr><td>Doigt</td><td>Défiler, toucher = sélectionner, 2<sup>e</sup> toucher = fiche</td></tr>
+  <tr><td>Stylet sur barre</td><td>Déplacer</td></tr>
+  <tr><td>Stylet bord droit</td><td>Changer la durée</td></tr>
+  <tr><td>Stylet depuis ●</td><td>Créer un lien FS</td></tr>
+  <tr><td>Retour Android</td><td>Ferme la fenêtre, puis le planning</td></tr>
+</table>
+<h3>Rattraper un retard</h3>
+<p style="font-size:13.5px">1 Renforcer le critique · 2 Chevaucher (SS/FF) · 3 Ouvrir un 2<sup>e</sup> front · 4 Samedi / horaires · 5 Changer de méthode — et l’annoncer par écrit.</p>
+</div>
+</div>
+</div>
+
+<!-- ===================================================== 15 -->
+<h2 id="c15"><small>Chapitre 15</small>Glossaire</h2>
+<table>
+  <tr><td style="width:28%"><b>Au plus tôt / au plus tard</b></td><td>Dates de début possibles d’une tâche : la première possible, et la dernière qui ne retarde pas la fin.</td></tr>
+  <tr><td><b>Avancement %</b></td><td>Part du travail physiquement réalisée.</td></tr>
+  <tr><td><b>Chemin critique</b></td><td>Suite de tâches à marge nulle qui fixe la date de fin.</td></tr>
+  <tr><td><b>Coût réel (CR)</b></td><td>Somme des heures, jours, quantités et montants saisis, valorisés aux tarifs.</td></tr>
+  <tr><td><b>Décalage</b></td><td>Jours ouvrés ajoutés (attente) ou retirés (avance) à un lien.</td></tr>
+  <tr><td><b>Début au plus tôt</b></td><td>Contrainte : la tâche ne peut pas commencer avant cette date.</td></tr>
+  <tr><td><b>Jalon</b></td><td>Événement de durée nulle (début, réception, mise en service).</td></tr>
+  <tr><td><b>Jours ouvrés</b></td><td>Jours travaillés : sans week-ends (samedi en option), fériés du canton, jours chômés et vacances.</td></tr>
+  <tr><td><b>Lissage</b></td><td>Décalage de tâches pour que la charge ne dépasse pas la capacité des ressources.</td></tr>
+  <tr><td><b>Lot</b></td><td>Groupe de tâches ; ses dates et son coût sont calculés.</td></tr>
+  <tr><td><b>Marge (totale)</b></td><td>Jours dont une tâche peut glisser sans retarder la fin du chantier.</td></tr>
+  <tr><td><b>Prévu à date (PV)</b></td><td>Budget du travail qui aurait dû être fait à la date d’état.</td></tr>
+  <tr><td><b>Référence</b></td><td>Copie figée des dates et du budget, pour comparer.</td></tr>
+  <tr><td><b>Surcharge</b></td><td>Jour où une équipe ou une machine est demandée plus que sa capacité.</td></tr>
+  <tr><td><b>Valeur acquise (VA)</b></td><td>Budget du travail réellement fait (budget × avancement).</td></tr>
+</table>
+
+<!-- ===================================================== 16 -->
+<h2 id="c16"><small>Annexe</small>Mes rendements</h2>
+<p>Remplis ce tableau avec <b>tes</b> chiffres (rapports journaliers, chantiers terminés). Note les conditions (terrain, profondeur, accès) : un rendement n’a de sens que dans son contexte. Mets-le à jour après chaque chantier.</p>
+<table class="write">
+  <tr><th style="width:28%">Travail</th><th style="width:10%">Unité</th><th style="width:16%">Équipe (pers. + machines)</th><th style="width:12%">Rendement / jour</th><th>Conditions / remarques</th><th style="width:12%">Chantier, date</th></tr>
+  <tr><td>Démolition enrobé</td><td>m²</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Fouille en tranchée blindée</td><td>m</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Fouille en pleine masse</td><td>m³</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Pose collecteur Ø …</td><td>m</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Chambre de visite</td><td>pce</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Remblayage compacté</td><td>m³</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Fondation en grave</td><td>m²</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Bordures</td><td>m</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Coffrage murs</td><td>m²</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Coffrage dalle</td><td>m²</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Armature</td><td>t</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Bétonnage (pompe)</td><td>m³</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Maçonnerie</td><td>m²</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+</table>
+<p style="margin-top:30px;font-size:13px;color:var(--mut)">Manuel Planning BauGest · octobre 2026 · les valeurs des exemples (durées, tarifs, quantités) servent à illustrer la méthode et ne sont pas des valeurs de référence.</p>
+</body>
+</html>
