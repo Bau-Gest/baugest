@@ -1024,13 +1024,14 @@ function kindOf(f){
   if (m === 'application/pdf' || x === 'pdf') return 'pdf';
   if (/^image\/(jpeg|png|webp|gif|bmp)$/.test(m) || /^(jpe?g|png|webp|gif|bmp)$/.test(x)) return 'img';
   if (/^image\//.test(m) || /^(heic|heif|tiff?)$/.test(x)) return 'img2';
+  if (f.appProperties && (f.appProperties.kind === 'planning' || f.appProperties.kind === 'planningxml')) return 'plan';
   if ((f.appProperties && f.appProperties.kind === 'doc') || (m === 'application/json' && /_(PV|Rapport-journalier|Bon-de-regie|Constat|Note)_/.test(n))) return 'doc';
   if (m.startsWith('application/vnd.google-apps.') && /document|spreadsheet|presentation|drawing/.test(m)) return 'office';
   if (OFFICE[x] && x !== 'txt' && x !== 'csv') return 'office';
   if (/^text\//.test(m) || /^(txt|csv|md|log|xml|json)$/.test(x)) return 'text';
   return 'other';
 }
-const TYPE_LABEL = {folder:'Dossier', pdf:'PDF', img:'Photo', img2:'Photo', doc:'Document BauGest', office:'Bureautique', text:'Texte', other:'Fichier'};
+const TYPE_LABEL = {plan:'Planning BauGest', folder:'Dossier', pdf:'PDF', img:'Photo', img2:'Photo', doc:'Document BauGest', office:'Bureautique', text:'Texte', other:'Fichier'};
 function docLabel(f){
   const a = f.appProperties || {}, d = DOCS[a.dtype];
   const date = (a.taken || '').slice(0, 10) || (f.name.match(/^(\d{4}-\d{2}-\d{2})/) || [])[1] || '';
@@ -1813,6 +1814,7 @@ function endPick(){ E.pick = null; $('#pickbar').hidden = true; }
 $('#pickCancel').addEventListener('click', () => { endPick(); if (V.panes.some(p => p.item)) showViewer(); });
 
 async function openIn(pi, f, list){
+  if (f._k === 'plan' || (extOf(f.name) === 'xml' && await isMspXml(f))) { openPlanFile(f); return; }
   const p = V.panes[pi];
   if (p.dirty && !(await confirmDlg('Annotations non enregistrées', `Les annotations sur « ${esc(displayName(p.item))} » seront perdues.`, 'Continuer sans enregistrer', true))) return;
   if (p.item && p.item.id !== f.id) p.zoom = 1;
@@ -2797,6 +2799,21 @@ if (window.BGPlan) BGPlan.init({
   online:() => !!P.rootId && navigator.onLine, loadScript,
   company:id => { const s = S.sites.find(x => x.id === id), c = s && compById(s.comp); return (c && c.name) || ''; }
 });
+/* fichier du dossier Planning ouvert depuis l'explorateur : planning BauGest (.json ou sa copie .xml) → module Planning ; autre .xml MS Project → import */
+async function isMspXml(f){
+  try { const t = await (await blobOf(f)).slice(0, 4000).text(); return /<Project[^>]+schemas\.microsoft\.com\/project/.test(t); } catch (e) { return false; }
+}
+async function openPlanFile(f){
+  if (!window.BGPlan) { toast('Module Planning non chargé : recharge la page', 'err'); return; }
+  if (!$('#viewer').hidden) hideViewer();
+  const ap = f.appProperties || {};
+  try {
+    if (ap.kind === 'planning' || ap.kind === 'planningxml') { await BGPlan.open(ap.site && ap.site !== 'none' ? ap.site : null, ap.uid || null); return; }
+    const top = chainIds((f.parents || [])[0] || E.cur)[1], n = top && FN.get(top), s = n && siteByFolder(n.name);
+    if (!(await confirmDlg('Fichier MS Project', `Importer « ${esc(f.name)} » comme nouveau planning${s ? ' du chantier ' + esc(siteLabel(s)) : ''} ?`, 'Importer'))) return;
+    await BGPlan.importXml(await (await blobOf(f)).text(), s ? s.id : null);
+  } catch (e) { toast('Planning : ' + e.message, 'err'); }
+}
 function openPlanning(){
   if (!window.BGPlan) { toast('Module Planning non chargé : recharge la page', 'err'); return; }
   let sid = null;

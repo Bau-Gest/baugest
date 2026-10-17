@@ -318,10 +318,10 @@ function toMSPDI(plan, sch){
     const links = o.sum ? '' : t.deps.filter(d => uidOf.has(d.id)).map(d => `<PredecessorLink><PredecessorUID>${uidOf.get(d.id)}</PredecessorUID><Type>${MSP_TYPE[d.type] ?? 1}</Type><CrossProject>0</CrossProject><LinkLag>${Math.round(+d.lag || 0) * 4800}</LinkLag><LagFormat>7</LagFormat></PredecessorLink>`).join('');
     return `<Task><UID>${u}</UID><ID>${u}</ID><Name>${xesc(t.name)}</Name><Type>1</Type><IsNull>0</IsNull><WBS>${o.wbs}</WBS><OutlineNumber>${o.wbs}</OutlineNumber><OutlineLevel>${o.lvl + 1}</OutlineLevel>`
       + `<Start>${dt(r.start, ms)}</Start><Finish>${dt(r.finish, !ms)}</Finish><Duration>${hrs(r.dur)}</Duration><DurationFormat>7</DurationFormat>`
-      + `<Milestone>${ms ? 1 : 0}</Milestone><Summary>${o.sum ? 1 : 0}</Summary><Critical>${r.crit ? 1 : 0}</Critical><PercentComplete>${Math.round(+t.pct || 0)}</PercentComplete>`
+      + `<Milestone>${ms ? 1 : 0}</Milestone><Summary>${o.sum ? 1 : 0}</Summary><Critical>${r.crit ? 1 : 0}</Critical><TotalSlack>${Math.max(0, r.tf || 0) * 4800}</TotalSlack><PercentComplete>${Math.round(+t.pct || 0)}</PercentComplete>`
+      + (t.aStart && !o.sum ? `<ActualStart>${t.aStart}T08:00:00</ActualStart>` : '') + (t.aEnd && !o.sum ? `<ActualFinish>${t.aEnd}T17:00:00</ActualFinish>` : '')
       + (t.snet && !o.sum ? `<ConstraintType>4</ConstraintType><ConstraintDate>${t.snet}T08:00:00</ConstraintDate>` : '<ConstraintType>0</ConstraintType>')
       + (t.lvl && !o.sum ? `<LevelingDelay>${t.lvl * 4800}</LevelingDelay><LevelingDelayFormat>7</LevelingDelayFormat>` : '')
-      + (t.aStart ? `<ActualStart>${t.aStart}T08:00:00</ActualStart>` : '') + (t.aEnd ? `<ActualFinish>${t.aEnd}T17:00:00</ActualFinish>` : '')
       + (t.note ? `<Notes>${xesc(t.note)}</Notes>` : '') + links + '</Task>';
   }).join('');
   const res = plan.res.map(r => `<Resource><UID>${resUid.get(r.id)}</UID><ID>${resUid.get(r.id)}</ID><Name>${xesc(r.name)}</Name><Type>${RTYPES[r.type] && RTYPES[r.type].time ? 1 : 0}</Type>`
@@ -331,8 +331,8 @@ function toMSPDI(plan, sch){
   const asg = ol.filter(o => !o.sum).flatMap(o => o.t.asg.filter(a => resUid.has(a.r)).map(a => `<Assignment><UID>${++au}</UID><TaskUID>${uidOf.get(o.t.id)}</TaskUID><ResourceUID>${resUid.get(a.r)}</ResourceUID><Units>${(+a.q || 0).toFixed(2)}</Units></Assignment>`)).join('');
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Project xmlns="http://schemas.microsoft.com/project">`
     + `<SaveVersion>14</SaveVersion><Name>${xesc(plan.name)}</Name><Title>${xesc(plan.name)}</Title><ScheduleFromStart>1</ScheduleFromStart>`
-    + `<StartDate>${dt(sch.cal.start)}</StartDate><FinishDate>${dt(sch.end, true)}</FinishDate><CalendarUID>1</CalendarUID><DefaultStartTime>08:00:00</DefaultStartTime><DefaultFinishTime>17:00:00</DefaultFinishTime>`
-    + `<MinutesPerDay>480</MinutesPerDay><MinutesPerWeek>${plan.opts.sat ? 2880 : 2400}</MinutesPerWeek><DaysPerMonth>20</DaysPerMonth><DurationFormat>7</DurationFormat><CurrencyCode>CHF</CurrencyCode>`
+    + `<StartDate>${dt(sch.cal.start)}</StartDate><FinishDate>${dt(sch.end, true)}</FinishDate><CurrencyCode>CHF</CurrencyCode><CalendarUID>1</CalendarUID><DefaultStartTime>08:00:00</DefaultStartTime><DefaultFinishTime>17:00:00</DefaultFinishTime>`
+    + `<MinutesPerDay>480</MinutesPerDay><MinutesPerWeek>${plan.opts.sat ? 2880 : 2400}</MinutesPerWeek><DaysPerMonth>20</DaysPerMonth><DurationFormat>7</DurationFormat>`
     + `<Calendars><Calendar><UID>1</UID><Name>BauGest ${xesc((plan.hol && plan.hol.canton) || '')} ${y0}</Name><IsBaseCalendar>1</IsBaseCalendar><WeekDays>${wd}</WeekDays></Calendar></Calendars>`
     + `<Tasks>${tasks}</Tasks><Resources>${res}</Resources><Assignments>${asg}</Assignments></Project>`;
 }
@@ -595,14 +595,17 @@ async function listRecs(siteId){
   let info = '';
   if (online()) {
     try {
-      const q = `trashed=false and appProperties has { key='kind' and value='planning' } and appProperties has { key='site' and value='${qEsc(siteId)}' }`;
-      const r = await H.api(DRV + '?' + new URLSearchParams({q, pageSize:'200', fields:'files(id,name,modifiedTime,appProperties)'}));
-      const files = (r && r.files) || [], seen = new Set();
+      const q = `trashed=false and (appProperties has { key='kind' and value='planning' } or appProperties has { key='kind' and value='planningxml' }) and appProperties has { key='site' and value='${qEsc(siteId)}' }`;
+      const r = await H.api(DRV + '?' + new URLSearchParams({q, pageSize:'400', fields:'files(id,name,modifiedTime,appProperties)'}));
+      const all = (r && r.files) || [], seen = new Set(), xmlOf = new Map();
+      for (const f of all) if (f.appProperties.kind === 'planningxml') xmlOf.set(f.appProperties.uid, f.id);
+      const files = all.filter(f => f.appProperties.kind === 'planning');
       for (const f of files) {
         const id = (f.appProperties && f.appProperties.uid) || f.id; seen.add(id);
         let rec = recs.find(x => x.uid === id);
         if (!rec) { rec = {uid:id, siteId, name:f.name.replace(/\.json$/i, ''), plan:null, dirty:false, driveId:f.id, driveMod:f.modifiedTime}; recs.push(rec); }
         else { rec.driveId = f.id; if (!rec.dirty && (!rec.driveMod || f.modifiedTime > rec.driveMod)) { rec.stale = true; rec.name = f.name.replace(/\.json$/i, ''); } }
+        rec.xmlId = xmlOf.get(id) || null;
       }
       for (const rec of recs.slice()) if (rec.driveId && !seen.has(rec.uid) && !rec.dirty) { recs = recs.filter(x => x !== rec); PDB.del(rec.uid).catch(() => {}); }
     } catch (e) { info = 'Drive illisible (' + e.message + ') · plannings de cet appareil seulement'; }
@@ -642,6 +645,16 @@ async function pushRec(rec){
     if (rec.driveId) { try { f = await driveUpload(blob, md, rec.driveId); } catch (e) { if (e.status !== 404) throw e; rec.driveId = null; } }
     if (!f) { const parent = await H.ensureFolder([s.folder, 'Planning']); f = await driveUpload(blob, Object.assign({parents:[parent]}, md)); }
     rec.driveId = f.id; rec.driveMod = f.modifiedTime;
+    /* copie MS Project (.xml) à jour à côté, à ouvrir directement dans Project */
+    try {
+      const p2 = normPlan(JSON.parse(JSON.stringify(rec.plan))), xblob = new Blob([toMSPDI(p2, schedule(p2, makeCal(p2)))], {type:'application/xml'});
+      const xmd = {name:cleanName(rec.plan.name) + '.xml', mimeType:'application/xml', description:'Planning BauGest au format MS Project – ' + s.label,
+        appProperties:{pc:'1', site:rec.siteId, kind:'planningxml', uid:rec.uid}};
+      let xf = null;
+      if (rec.xmlId) { try { xf = await driveUpload(xblob, xmd, rec.xmlId); } catch (e) { if (e.status !== 404) throw e; } }
+      if (!xf) { const parent = await H.ensureFolder([s.folder, 'Planning']); xf = await driveUpload(xblob, Object.assign({parents:[parent]}, xmd)); }
+      rec.xmlId = xf.id;
+    } catch (e) { console.warn('planning xml', e); }
     if (rec.plan.updatedAt === stamp) rec.dirty = false;
     await PDB.put(rec);
   })();
@@ -809,6 +822,7 @@ async function openRec(rec){
   try { localStorage.setItem('baugest.plan.' + U.siteId, rec.uid); } catch (e) {}
   U.cal = makeCal(U.plan); U.sch = schedule(U.plan, U.cal, U.statusDn);
   setState(rec.dirty ? (online() ? 'Envoi au Drive…' : 'Enregistré sur l’appareil') : rec.driveId ? 'Enregistré sur le Drive' : '');
+  if (!rec.dirty && rec.driveId && !rec.xmlId && online()) rec.dirty = true;   /* planning d'avant la copie .xml : la créer */
   if (rec.dirty) pushRec(rec);
   render();
   if (U.tab === 'gantt') setTimeout(scrollToday, 30);
@@ -1413,7 +1427,7 @@ function renderSet(){
       ${p.vac.length ? `<p class="bp-hint">+ vacances : ${p.vac.map(v => `${esc(v.label || 'vacances')} ${v.from ? chOfDn(dnOfIso(v.from)) : '?'} – ${v.to ? chOfDn(dnOfIso(v.to)) : '?'}`).join(' · ')}</p>` : ''}
     </div>
     <div class="bp-card"><h3>Fichier</h3>
-      <p class="bp-hint">Enregistré sur l’appareil et dans le Drive : « ${esc(site(U.siteId) ? site(U.siteId).folder : '')} / Planning / ${esc(cleanName(p.name))}.json ». Exports dans « Planning / Exports ».</p>
+      <p class="bp-hint">Enregistré sur l’appareil et dans le Drive : « ${esc(site(U.siteId) ? site(U.siteId).folder : '')} / Planning / ${esc(cleanName(p.name))}.json », avec une copie MS Project à jour « ${esc(cleanName(p.name))}.xml » (à ouvrir dans Project : Fichier › Ouvrir). Exports dans « Planning / Exports ».</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="bp-btn" data-dup>Dupliquer ce planning</button><button class="bp-btn" data-a="import">${I.imp}Importer MS Project (XML)</button><button class="bp-btn dang" data-delplan>${I.del}Supprimer ce planning</button></div>
     </div>
   </div>`;
@@ -1643,7 +1657,7 @@ function bind(el){
     if (e.target.closest('[data-delplan]')) {
       if (!await confirmDlg('Supprimer le planning', `Supprimer « ${esc(U.plan.name)} » ? Le fichier part dans la corbeille du Drive (récupérable 30 jours).`, 'Supprimer', true)) return;
       const rec = U.rec;
-      try { if (rec.driveId && online()) await H.api(`${DRV}/${encodeURIComponent(rec.driveId)}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})}); }
+      try { for (const id of [rec.driveId, rec.xmlId]) if (id && online()) await H.api(`${DRV}/${encodeURIComponent(id)}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})}); }
       catch (err) { toast('Drive : ' + err.message); return; }
       await PDB.del(rec.uid).catch(() => {});
       U.recs = U.recs.filter(r => r !== rec); U.rec = null; U.plan = null;
@@ -1695,6 +1709,7 @@ function bind(el){
 root.BGPlan = Object.assign(CORE, {
   init(host){ H = host; },
   open, close, back,
+  async importXml(xml, siteId){ await open(siteId); const p = fromMSPDI(xml, U.siteId); if (!p.tasks.length) throw new Error('aucune tâche trouvée'); await addRec(p); toast(`Importé : ${p.tasks.length} tâches. Vérifie le canton dans Réglages.`, 5000); },
   isOpen:() => { const el = document.getElementById('bgPlan'); return !!el && !el.hidden; }
 });
 })(typeof window !== 'undefined' ? window : globalThis);
