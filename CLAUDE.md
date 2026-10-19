@@ -132,8 +132,8 @@ Réglages & synchro (~1868–2130) · GPS/caméra/prise de vue (~2164–2515) ·
 
 | Tâche | Horaire (Europe/Zurich) | Rôle |
 |---|---|---|
-| Transcription BauGest | lu–ve 11:53 et 17:53 | JSON manuscrit → PDF texte tapé à côté du JSON (un item par paragraphe, texte à la largeur de la page, sans ligne vide, aligné à gauche, pages manuscrites enchaînées sur les lignes libres — validé par Joel le 17.10.2026) ; signatures recopiées, jamais transcrites ; notification si ≥ 1 document |
-| Plans BauGest | lu–ve 11:17 et 17:17 | Renomme les plans d'après le cartouche (« Sujet ind C AAAA-MM-JJ.pdf »), doublons/anciens indices → Plans annulés ; notification si changement |
+| Transcription BauGest | lu–ve 17:53 (11:53 retiré le 19.10.2026) | JSON manuscrit → PDF texte tapé à côté du JSON (un item par paragraphe, texte à la largeur de la page, sans ligne vide, aligné à gauche, pages manuscrites enchaînées sur les lignes libres — validé par Joel le 17.10.2026) ; signatures recopiées, jamais transcrites ; notification si ≥ 1 document |
+| Plans BauGest | lu–ve 17:17 (11:17 retiré le 19.10.2026) | Renomme les plans d'après le cartouche (« Sujet ind C AAAA-MM-JJ.pdf »), doublons/anciens indices → Plans annulés ; notification si changement |
 | Récap PV BauGest | lu–ve 17:35 | Veille de séance (vendredi pour le lundi) : compare les 2 derniers PV DT du chantier + points cochés, PDF « <PV> – récap.pdf » à côté du PV + notification ; « PV manquant » si aucun nouveau PV |
 | Soumission BauGest | vendredi 17:44 | Word / PDF du dossier « Soumission » → « <nom> – positions.json » à côté (tools/soumission), contrôle des totaux par CAN ; notification si ≥ 1 soumission |
 | Rappel séance BauGest | tous les jours 06:52 | Jour de séance : notification avec le résumé et les liens directs vers le récap (Drive + BauGest tablette `?pvdt=<id>&site=<id>`) |
