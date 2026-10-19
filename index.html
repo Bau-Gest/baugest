@@ -866,6 +866,100 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .so-can em{font-style:normal;font-weight:700;white-space:nowrap}
 @media (max-width:760px){.so-r{grid-template-columns:64px minmax(0,1fr) 84px}.so-r>.so-u,.so-r>.so-n:not(.so-m){display:none}.so-h{grid-template-columns:64px minmax(0,1fr)}}
 
+/* ---------- À faire par chantier (v2.3) ---------- */
+.todo-btn{position:relative}
+.badge.red{background:var(--bad);color:#fff}
+.rail button .badge{top:2px;right:8px}
+.mn-grid .badge.red{top:6px;right:8px}
+.topbar .todo-btn .badge,.panel-head .todo-btn .badge,.de-top .todo-btn .badge{top:-6px;right:-6px}
+.panel-head .todo-btn,.pv-top .todo-btn,.de-top .todo-btn{background:var(--surface2);border:1px solid var(--line)}
+@media (min-width:761px){
+  #sheetTodo.tab{left:auto;right:0;top:0;bottom:0;margin:0;width:min(560px,100%);max-width:none;max-height:none;border-radius:20px 0 0 20px;border:1px solid var(--line);border-right:0;animation:tdside .22s ease-out}
+  #sheetTodo.tab::before{display:none}
+  #sheetTodo.tab .sheet-head{padding-top:calc(var(--st) + 14px)}
+}
+@keyframes tdside{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+.td-sub{display:block;font:500 13px var(--body);color:var(--muted);text-transform:none;letter-spacing:0;margin-top:3px}
+.td-new{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}
+.dk-main .td-new{margin-bottom:18px}
+.td-sites{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.td-sites::-webkit-scrollbar{display:none}
+.td-sites .chip{flex:none;min-height:38px;font-size:14px}
+.td-pad{position:relative;border:2px dashed var(--line);border-radius:12px;background:var(--surface);color:var(--text);overflow:hidden}
+.td-pad canvas{display:block;width:100%;touch-action:pan-y;cursor:crosshair}
+.td-ph{position:absolute;left:16px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font:600 17px var(--body)}
+.td-opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.td-opts .chip{min-height:42px;max-width:100%;font-size:14.5px}
+.td-opts .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.td-opts .chip .ic{width:18px;height:18px;flex:none}
+.td-pri{display:flex;gap:6px;padding:4px 8px;border-radius:21px;border:1px solid var(--line);background:var(--surface)}
+.td-pri button{width:32px;height:32px;border-radius:50%;border:3px solid transparent;background:var(--muted);padding:0}
+.td-pri .p-r{background:#e5312b}.td-pri .p-o{background:#f08c00}.td-pri .p-g{background:#8a929c}
+.td-pri button.on{border-color:var(--text);box-shadow:0 0 0 2px var(--surface)}
+.td-acts{display:flex;gap:8px;align-items:center}
+.td-acts .spacer{flex:1}
+.td-acts .btn{min-height:46px}
+.td-list{display:grid;gap:8px}
+.td-row{display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;min-height:60px;border:1px solid var(--line);border-left:6px solid #8a929c;border-radius:12px;background:var(--surface2)}
+.td-row.p-r{border-left-color:#e5312b}.td-row.p-o{border-left-color:#f08c00}
+.td-row.done{opacity:.62}
+.td-row.done .td-txt{text-decoration:line-through}
+.td-row.flash{animation:tdflash 1.6s ease-out}
+@keyframes tdflash{0%,40%{box-shadow:0 0 0 3px var(--signal)}100%{box-shadow:none}}
+.td-chk{width:52px;height:100%;min-height:58px;display:grid;place-items:center;border:0;background:none;padding:0}
+.td-chk i{width:30px;height:30px;border:2.5px solid var(--muted);border-radius:8px;display:grid;place-items:center;font:800 18px/1 var(--body);font-style:normal;color:#fff}
+.td-row.done .td-chk i{background:var(--ok);border-color:var(--ok)}
+.td-body{display:grid;gap:4px;min-width:0;padding:8px 12px 8px 0;color:inherit;text-align:left;cursor:pointer}
+.td-txt{font:600 16px/1.3 var(--body);overflow-wrap:anywhere}
+.td-inkh{display:block;min-height:0;overflow:hidden;color:var(--text)}
+.td-inkh canvas{display:block;max-width:100%}
+.td-meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font:500 13px var(--body);color:var(--muted)}
+.td-meta>span{display:inline-flex;align-items:center;gap:4px}
+.td-meta .ic{width:15px;height:15px}
+.td-due.late{color:var(--bad);font-weight:700}
+.td-due.today{color:var(--warn);font-weight:700}
+html:not([data-theme="light"]):not([data-contrast]) .td-due.today{color:#f2b233}
+.td-lnk,.td-hand{display:inline-flex;align-items:center;gap:6px;min-height:34px;max-width:100%;padding:0 10px 0 4px;border-radius:17px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:600 13px var(--body)}
+.td-lnk span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.td-lnk img{width:28px;height:28px;border-radius:14px;object-fit:cover}
+.td-lnk>.ic{width:16px;height:16px;margin-left:6px}
+.td-hand{padding:0 10px}.td-hand.on{border-color:var(--signal)}
+.td-sec{display:grid;gap:8px}
+.td-sh{display:flex;align-items:center;gap:10px}
+.td-sh .slogo{width:30px;height:30px;font-size:12px}
+.td-sh b{flex:1;min-width:0;font:700 18px/1.15 var(--display);text-transform:uppercase;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-sh .n{min-width:24px;height:22px;border-radius:11px;padding:0 7px;background:var(--surface2);font:700 12.5px/22px var(--body);text-align:center}
+.td-sh .btn{min-height:36px;padding:0 10px;font-size:13.5px}
+#tdPanelList{display:grid;gap:18px}
+.td-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.td-cal button{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);font:600 16px var(--body);color:var(--text)}
+.td-cal button.today{border-color:var(--signal)}
+.td-cal button.on{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+.td-cal button:disabled{opacity:.3}
+.td-wd{text-align:center;font:600 12px var(--body);color:var(--muted);text-transform:uppercase;padding:4px 0}
+.td-mhead{display:flex;align-items:center;gap:10px}
+.td-mhead b{flex:1;text-align:center;font:700 18px var(--display);text-transform:uppercase;letter-spacing:.03em}
+.td-quick,.td-hours{display:flex;flex-wrap:wrap;gap:8px}
+.td-quick .chip{flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;min-height:52px;border-radius:12px;padding:4px 14px}
+.td-quick .chip small{font:500 12px var(--body);color:var(--muted)}
+.td-hours .chip{min-height:40px;padding:0 12px}
+.td-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+.td-photos .hint{grid-column:1/-1}
+.td-photos.busy{opacity:.5;pointer-events:none}
+.td-ph-pick{aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background:#333;overflow:hidden;padding:0}
+.td-ph-pick img{width:100%;height:100%;object-fit:cover;display:block}
+.td-lbl{margin:0;font:700 14px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+#tdPhotoImg{display:block;width:100%;max-height:70vh;object-fit:contain;border-radius:12px;background:#000}
+.td-banner{position:fixed;z-index:45;left:50%;top:calc(var(--st) + 12px);transform:translateX(-50%);display:flex;align-items:center;gap:10px;max-width:calc(100% - 24px);
+  padding:8px 8px 8px 16px;border-radius:14px;background:var(--bad);color:#fff;box-shadow:0 10px 26px rgba(0,0,0,.45);font:600 15px var(--body);cursor:pointer}
+.td-banner .ic{width:22px;height:22px;flex:none}
+.td-banner span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-banner b{flex:none;padding:6px 12px;border-radius:9px;background:rgba(255,255,255,.18)}
+.td-banner button{flex:none;width:36px;height:36px;border:0;border-radius:9px;background:none;color:#fff;display:grid;place-items:center}
+.pd-pt .pd-todo{flex:none;align-self:center;min-height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:600 12.5px var(--body);white-space:nowrap}
+.pd-pt .pd-todo.on{border-color:var(--ok);color:var(--ok)}
+
+.pd-pt{grid-template-columns:36px minmax(0,1fr) auto}
 /* ---------- Devis particuliers (v1.7) ---------- */
 .addr-sug{display:grid;margin-top:4px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);overflow:hidden}
 .addr-sug button{display:grid;gap:2px;text-align:left;padding:10px 12px;min-height:46px;border:0;border-top:1px solid var(--line);background:none;color:var(--text);font:inherit;cursor:pointer}
@@ -1180,6 +1274,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
         <span class="site-text"><b id="siteName">À classer</b><small id="siteSub">Recherche GPS…</small></span>
         <svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
       </button>
+      <button class="icon-btn glass todo-btn" data-todo aria-label="À faire" title="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span class="badge red" data-tdbadge hidden>0</span></button>
       <button id="btnCloud" class="icon-btn glass" aria-label="Envoi vers le Drive"><svg class="ic" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.9-9.9A6 6 0 0 1 17.7 9 4.5 4.5 0 0 1 17 18M12 12v8M9 15l3-3 3 3"/></svg><span id="cloudBadge" class="badge" hidden>0</span></button>
       <button id="btnDocs" class="icon-btn glass" aria-label="Menu : photos, documents, devis, réglages"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg></button>
       <button id="btnSettings" class="icon-btn glass" aria-label="Paramètres" hidden>
@@ -1240,6 +1335,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
       <button data-mn="soum" data-tab hidden><svg class="ic" viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5M15 15h1M15 18h1M8 18h5"/></svg><span>Soumission</span></button>
       <button data-mn="plan" data-tab hidden><svg class="ic" viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/></svg><span>Planning</span></button>
       <button data-mn="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg><span>Devis</span></button>
+      <button data-mn="todo"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span>À faire</span><span class="badge red" data-tdbadge hidden>0</span></button>
       <button data-mn="queue"><svg class="ic" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.9-9.9A6 6 0 0 1 17.7 9 4.5 4.5 0 0 1 17 18M12 12v8M9 15l3-3 3 3"/></svg><span>Envoi Drive</span><span id="mnQueue" class="badge" hidden>0</span></button>
       <button data-mn="contrast" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg><span>Fort contraste</span></button>
       <button data-mn="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Réglages</span></button>
@@ -1258,6 +1354,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <button data-rail="soum"><svg class="ic" viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5M15 15h1M15 18h1M8 18h5"/></svg>Soumission</button>
   <button data-rail="plan"><svg class="ic" viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/></svg>Planning</button>
   <button data-rail="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button>
+  <button data-rail="todo"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg>À faire<span class="badge red" data-tdbadge hidden>0</span></button>
   <span class="rail-grow"></span>
   <button data-rail="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Réglages</button>
 </nav>
@@ -1445,6 +1542,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <h1 id="galTitle" style="flex:1;min-width:0">Photos</h1>
     <button id="galImport" class="icon-btn" aria-label="Importer des photos d'autres applications"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg><span id="galImportBadge" class="inbox-badge" hidden>0</span></button>
     <button class="icon-btn hd-contrast contrast-btn" aria-label="Fort contraste" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
+    <button class="icon-btn todo-btn" data-todo aria-label="À faire" title="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span class="badge red" data-tdbadge hidden>0</span></button>
     <button id="galRefresh" class="icon-btn" aria-label="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
     <button id="galSelect" class="btn" style="padding:0 14px">Choisir</button>
   </header>
@@ -1481,9 +1579,10 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <h1 id="dkTitle" class="sr">Documents</h1>
     <button id="dkGps" class="dk-gps" aria-label="Aller au chantier détecté"><span id="dkGpsDot" class="dot"></span><span class="t"><b id="dkGpsName">À classer</b><small id="dkGpsSub">Recherche GPS…</small></span></button>
     <button id="dkSiteBtn" class="dk-gps dk-sitebtn" aria-haspopup="true" aria-expanded="false"><span class="t"><b id="dkSiteName">Chantier</b><small>Changer de chantier</small></span><svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button><button data-dmode="pvdt">PV DT</button><button data-dmode="soum">Soumission</button><button data-dmode="devis">Devis</button></div>
+    <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button><button data-dmode="pvdt">PV DT</button><button data-dmode="soum">Soumission</button><button data-dmode="todo">À faire</button><button data-dmode="devis">Devis</button></div>
     <span class="spacer"></span>
     <button class="icon-btn hd-contrast contrast-btn" aria-label="Fort contraste" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
+    <button class="icon-btn todo-btn" data-todo aria-label="À faire" title="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span class="badge red" data-tdbadge hidden>0</span></button>
     <button id="dkRefresh" class="icon-btn" aria-label="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
     <button id="dkPhoto" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg><span class="lb">Caméra</span></button>
     <button id="dkSettings" class="icon-btn" aria-label="Paramètres"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
@@ -1507,6 +1606,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <div class="pv-pager" id="pvPager" hidden><button id="pvPrev" class="pv-pgb" aria-label="Page précédente">‹</button><span id="pvPg" class="mono">1 / 1</span><button id="pvNext" class="pv-pgb" aria-label="Page suivante">›</button></div>
     <div class="pv-scale"><label for="pvScale">Échelle</label><select id="pvScale"></select><input id="pvScaleCustom" type="number" min="1" step="1" placeholder="ex. 750" aria-label="Échelle personnalisée 1:" hidden><span id="pvWarn" class="pv-warn" hidden>à confirmer</span></div>
     <span id="pvSave" class="pv-save"></span>
+    <button class="icon-btn todo-btn" data-todo aria-label="À faire" title="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span class="badge red" data-tdbadge hidden>0</span></button>
     <button class="icon-btn calc-btn" data-calc aria-label="Calculette" title="Calculette"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg></button>
     <button id="pvPanelBtn" class="icon-btn" aria-pressed="true" aria-label="Afficher ou masquer les mesures (M)"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
   </header>
@@ -1563,6 +1663,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <div class="pdv-t"><b id="pdTitle">PV de chantier</b><small id="pdSub"></small></div>
     <button id="pdPtsBtn" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Points <span id="pdPtsN" class="pdv-n"></span></button>
     <span class="pd-notes"><button id="pdNotes" class="btn" title="Basculer vers mon document de notes relié à ce PV"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span id="pdNotesT">Notes</span></button><button id="pdNotesPick" class="btn pd-notes-pick" aria-label="Choisir un autre document de notes" title="Choisir un autre document"><svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button></span>
+    <button class="icon-btn todo-btn" data-todo aria-label="À faire" title="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span class="badge red" data-tdbadge hidden>0</span></button>
     <button class="icon-btn calc-btn" data-calc aria-label="Calculette" title="Calculette"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg></button>
     <button id="pdShare" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>
   </header>
@@ -1625,6 +1726,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
       <select id="deSite" aria-label="Chantier"></select>
       <input type="date" id="deDate" aria-label="Date">
     </div>
+    <button class="icon-btn todo-btn" data-todo aria-label="À faire" title="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span class="badge red" data-tdbadge hidden>0</span></button>
     <button class="icon-btn calc-btn" data-calc aria-label="Calculette" title="Calculette"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg></button>
     <button id="deSave" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>Enregistrer</button>
   </div>
@@ -1695,6 +1797,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <div id="dzModes" class="dk-modes" hidden><button data-zmode="plans">Plans</button><button data-zmode="docs">Documents</button><button data-zmode="pvdt">PV DT</button><button data-zmode="soum">Soumission</button><button data-zmode="devis" class="on" aria-pressed="true">Devis</button></div>
     <span class="spacer"></span>
     <button class="icon-btn hd-contrast contrast-btn" aria-label="Fort contraste" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
+    <button class="icon-btn todo-btn" data-todo aria-label="À faire" title="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span class="badge red" data-tdbadge hidden>0</span></button>
     <button id="dzCam" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg>Caméra</button>
   </header>
   <div class="dz-body">
@@ -1778,6 +1881,47 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   </div>
   <div class="sheet-foot"><button id="cpDel" class="btn danger" hidden>Supprimer</button><button id="cpSave" class="btn primary">Enregistrer</button></div>
 </div>
+
+<!-- À faire par chantier (v2.3) -->
+<div id="sheetTodo" class="sheet" hidden role="dialog" aria-labelledby="tdPanelTitle">
+  <div class="sheet-head"><h3 id="tdPanelTitle">À faire<small id="tdPanelSub" class="td-sub"></small></h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body" id="tdPanel"><div id="tdPanelNew"></div><div id="tdPanelList"></div></div>
+</div>
+<div id="sheetTodoEd" class="sheet" hidden role="dialog" aria-labelledby="tdEdTitle">
+  <div class="sheet-head"><h3 id="tdEdTitle">Tâche<small id="tdEdSub" class="td-sub"></small></h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body"><p id="tdEdTxt" class="td-txt" hidden></p><div id="tdEdHost"></div></div>
+</div>
+<div id="sheetTodoDate" class="sheet" hidden role="dialog" aria-labelledby="tdDateTitle">
+  <div class="sheet-head"><h3 id="tdDateTitle">Rappel</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body">
+    <div id="tdQuick" class="td-quick"></div>
+    <p class="td-lbl">Autre jour</p>
+    <div class="td-mhead"><button class="icon-btn" id="tdMPrev" aria-label="Mois précédent" style="background:var(--surface2);border:1px solid var(--line)"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><b id="tdMonth"></b><button class="icon-btn" id="tdMNext" aria-label="Mois suivant" style="background:var(--surface2);border:1px solid var(--line)"><svg class="ic" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button></div>
+    <div id="tdCal" class="td-cal"></div>
+    <p class="td-lbl">Heure</p>
+    <div id="tdHours" class="td-hours"></div>
+  </div>
+  <div class="sheet-foot"><button id="tdDateNone" class="btn">Pas de rappel</button><button id="tdDateOk" class="btn primary">Valider</button></div>
+</div>
+<div id="sheetTodoLink" class="sheet" hidden role="dialog" aria-labelledby="tdLnTitle">
+  <div class="sheet-head"><h3 id="tdLnTitle">Lier une photo, un plan ou un PV</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body">
+    <div id="tdLnHere" class="list"></div>
+    <button id="tdLnCam" class="btn block"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg>Prendre une photo</button>
+    <p class="td-lbl">Photos du chantier</p>
+    <div id="tdLnPhotos" class="td-photos"></div>
+    <p class="td-lbl">Plans et PV DT</p>
+    <div id="tdLnDocs" class="list"></div>
+    <button id="tdLnDel" class="btn danger block" hidden>Retirer le lien</button>
+  </div>
+</div>
+<div id="sheetTodoPhoto" class="sheet" hidden role="dialog" aria-label="Photo de la tâche">
+  <div class="sheet-head"><h3>Photo</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body"><img id="tdPhotoImg" alt=""></div>
+  <div class="sheet-foot"><button id="tdPhotoDrive" class="btn" hidden>Ouvrir dans le Drive</button></div>
+</div>
+<input type="file" id="tdLnFile" accept="image/*" capture="environment" hidden>
+<div id="tdBanner" class="td-banner" hidden role="status"><svg class="ic" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span id="tdBannerT"></span><b>Voir</b><button id="tdBannerX" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
 
 <div id="calc" class="calc" hidden role="dialog" aria-label="Calculette">
   <div class="calc-head" id="calcHead"><span>Calculette</span><button id="calcClose" aria-label="Fermer la calculette"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
@@ -4266,6 +4410,7 @@ function goSection(k){
   }
   if (k === 'devis') { if (galOpen) closeGallery(); if (!dzOpen) openDevis(); return; }
   if (k === 'plan') { openPlanning(); return; }
+  if (k === 'todo' && !isTabletScreen()) { openTodo(); return; }
   // plans, docs, pvdt, soum : bureau des documents
   if (galOpen) closeGallery();
   if (dzOpen) closeDevis(true);
@@ -4375,7 +4520,7 @@ async function seedDemo(){
     hw(g, 'Maçon', 80, 486, 26); hw(g, 'CFC', 480, 486, 26); hw(g, '3.5', 780, 486, 26); hw(g, 'Mini-pelle 3 t', 80, 756, 26); hw(g, '2', 780, 756, 26);
     hw(g, 'Béton C25/30', 80, 940, 26); hw(g, '0.4', 600, 940, 26); hw(g, 'm³', 780, 940, 26); });
 }
-function loadDocs(){ return desk.mode === 'plans' ? loadPlans() : desk.mode === 'pvdt' ? loadPvdt() : desk.mode === 'soum' ? loadSoum() : loadDocsRaw(); }
+function loadDocs(){ return desk.mode === 'plans' ? loadPlans() : desk.mode === 'pvdt' ? loadPvdt() : desk.mode === 'soum' ? loadSoum() : desk.mode === 'todo' ? loadTodo() : loadDocsRaw(); }
 async function loadDocsRaw(){
   const tok = ++desk.token, sid = desk.site === '__none' ? 'none' : desk.site;
   desk.loading = true; desk.err = null;
@@ -4410,6 +4555,7 @@ function renderDesk(){
   if (desk.mode === 'plans') return renderPlans();
   if (desk.mode === 'pvdt') return renderPvdt();
   if (desk.mode === 'soum') return renderSoum();
+  if (desk.mode === 'todo') return renderTodo();
   const s = desk.site === '__none' ? null : siteById(desk.site);
   $('#dkHead').innerHTML = `${s ? logoHTML(s) : ''}<div class="t"><small>${s ? esc(s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(s ? s.name : 'À classer')}</h2></div>
     <div class="dk-acts"><button class="btn" id="dkGalSite"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Photos</button><button class="btn primary" id="dkNew"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Nouveau document</button></div>`;
@@ -5855,7 +6001,7 @@ function renderDeskModes(){
   const show = isTabletScreen();
   $('#dkModes').hidden = !show;
   $$('#dkModes [data-dmode]').forEach(b => { const on = b.dataset.dmode === desk.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
-  $('#dkTitle').textContent = desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV DT' : desk.mode === 'soum' ? 'Soumission' : 'Documents';
+  $('#dkTitle').textContent = desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV DT' : desk.mode === 'soum' ? 'Soumission' : desk.mode === 'todo' ? 'À faire' : 'Documents';
   syncRail();
 }
 async function planUploaded(uid, f){
@@ -7135,6 +7281,7 @@ function bindPvdtViewer(){
   $('#pdPtsBtn').addEventListener('click', () => { $('#pdSide').hidden = !$('#pdSide').hidden; $('#pdPtsBtn').classList.toggle('on', !$('#pdSide').hidden); if (PDV.doc) pdLayout(); });
   $('#pdPtsList').addEventListener('click', e => {
     const c = e.target.closest('[data-pdpt]');
+    if (c && e.target.closest('.pd-todo')) { const p = PDV.points.find(x => x.id === c.dataset.pdpt); if (p) tdFromPvPoint(p); return; }
     if (c && e.target.closest('.pd-chk')) { const id = c.dataset.pdpt; if (PDV.ann.done[id]) delete PDV.ann.done[id]; else PDV.ann.done[id] = (PDV.points.find(x => x.id === id) || {}).text || Date.now(); pdChanged(); pdRenderPoints(); return; }
     if (c) { const p = PDV.points.find(x => x.id === c.dataset.pdpt), o = p && PDV.ovs[p.page]; if (o) o.parentElement.scrollIntoView({behavior:'smooth', block:'start'}); }
   });
@@ -7180,7 +7327,7 @@ function pdRenderPoints(){
   const keys = pdKeys();
   $('#pdPtsList').innerHTML = !keys.length ? '<p class="hint">Indique le nom de ton entreprise dans Paramètres › PV de chantier (DT) pour repérer les points à ta charge.</p>'
     : !P.length ? `<p class="hint">Aucun point trouvé avec : ${esc(keys.join(', '))}.</p>`
-    : P.map(p => `<div class="pd-pt ${done[p.id] ? 'done' : ''}" data-pdpt="${esc(p.id)}"><button class="pd-chk" aria-label="Fait">${done[p.id] ? '✓' : ''}</button><span><small>Page ${p.page}</small>${esc(p.text)}${!done[p.id] && PDV.prevDone && PDV.prevDone.set.has(pdPtKey(p.text)) ? `<b class="pd-prev">✓ Coché fait au ${esc(PDV.prevDone.label)}</b>` : ''}</span></div>`).join('');
+    : P.map(p => `<div class="pd-pt ${done[p.id] ? 'done' : ''}" data-pdpt="${esc(p.id)}"><button class="pd-chk" aria-label="Fait">${done[p.id] ? '✓' : ''}</button><span><small>Page ${p.page}</small>${esc(p.text)}${!done[p.id] && PDV.prevDone && PDV.prevDone.set.has(pdPtKey(p.text)) ? `<b class="pd-prev">✓ Coché fait au ${esc(PDV.prevDone.label)}</b>` : ''}</span>${pdTodoBtn(p)}</div>`).join('');
 }
 
 /* ---------- partage (PDF d'origine ou avec annotations) ---------- */
@@ -8970,6 +9117,655 @@ function openPlanning(){
   BGPlan.open(sid).catch(e => note('Planning : ' + e.message, 4000));
 }
 
+/* ---------- À faire par chantier (v2.3) ----------
+   Tâches écrites au stylo (tablette), rappel par notification BauGest (app ouverte), accès rapide ☑ partout.
+   Drive : « <Chantier>/À faire (ne pas supprimer).json » (appProperties kind='todo', site) ; copie sur l'appareil (IndexedDB baugest-todo).
+   Fusion par tâche (champ m = dernière modification) ; tâches supprimées gardées 90 j (del) pour la synchro.
+   La tâche « Transcription BauGest » écrit tx = {v: iv de l'écriture, t: texte} sans toucher m (tools/transcription/todo.py). */
+const TD_FILE = 'À faire (ne pas supprimer).json', TW = 1000, TH = 200, TD_INK = '#1d2733';
+const TD_PRI = {r:'Urgent', o:'Important', g:'Normal'}, TD_RANK = {r:0, o:1, g:2};
+const TD_REP = [0, 7, 14, 'm'], TD_REPN = {0:'Pas de répétition', 7:'Chaque semaine', 14:'Toutes les 2 sem.', m:'Chaque mois'};
+const TD = {lists:{}, files:{}, syncing:false, again:false, timer:0, pads:new Map(), ed:null, showDone:false, open:new Set(), notif:{}};
+const TDSTORE = {
+  db:null,
+  async open(){
+    if (this.db !== null) return this.db;
+    try { this.db = await new Promise((res, rej) => { const r = indexedDB.open('baugest-todo', 1); r.onupgradeneeded = () => r.result.createObjectStore('lists', {keyPath:'sid'}); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+    catch (e) { this.db = false; }
+    return this.db;
+  },
+  async tx(mode, fn){ const db = await this.open(); if (!db) return null; return new Promise((res, rej) => { const t = db.transaction('lists', mode), st = t.objectStore('lists'); const r = fn(st); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }); },
+  all(){ return this.tx('readonly', s => s.getAll()).then(a => a || []).catch(() => []); },
+  put(o){ return this.tx('readwrite', s => s.put(o)).catch(() => null); }
+};
+const tdList = sid => TD.lists[sid] || (TD.lists[sid] = {sid, tasks:[], fileId:'', rmod:'', dirty:false});
+const tdLive = t => !t.del;
+const tdOpen = t => !t.del && !t.done;
+const tdSites = () => S.sites.filter(s => !s.example);
+function tdEndOfDay(d = new Date()){ const x = new Date(d); x.setHours(23, 59, 59, 999); return x.getTime(); }
+const tdUrgent = t => tdOpen(t) && t.due && t.due <= tdEndOfDay();
+function tdSort(a, b){
+  const ua = tdUrgent(a), ub = tdUrgent(b);
+  if (ua !== ub) return ua ? -1 : 1;
+  if (ua) return a.due - b.due;
+  return (TD_RANK[a.pri] ?? 2) - (TD_RANK[b.pri] ?? 2) || (a.due || Infinity) - (b.due || Infinity) || b.c - a.c;
+}
+function tdDueLabel(ms){
+  if (!ms) return '';
+  const d = new Date(ms), now = new Date(), t0 = new Date(now); t0.setHours(0, 0, 0, 0);
+  const day = Math.round((new Date(d).setHours(0, 0, 0, 0) - t0) / 864e5), hm = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  if (day === 0) return 'Aujourd’hui ' + hm;
+  if (day === 1) return 'Demain ' + hm;
+  if (day === -1) return 'Hier ' + hm;
+  const wd = d.toLocaleDateString('fr-CH', {weekday:'short'}).replace('.', '');
+  return wd + ' ' + pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + (d.getFullYear() !== now.getFullYear() ? '.' + d.getFullYear() : '') + ' ' + hm;
+}
+function tdNextDue(from, rep){
+  const d = new Date(from), now = Date.now();
+  do { if (rep === 'm') d.setMonth(d.getMonth() + 1); else d.setDate(d.getDate() + rep); } while (d.getTime() < now);
+  return d.getTime();
+}
+function tdCount(){ let n = 0; for (const s of tdSites()) n += (TD.lists[s.id]?.tasks || []).filter(tdUrgent).length; return n; }
+function tdBadges(){
+  const n = tdCount();
+  $$('[data-tdbadge]').forEach(b => { b.textContent = n > 99 ? '99+' : String(n); b.hidden = !n; });
+}
+
+/* ---------- stockage : appareil + Drive ---------- */
+function tdMerge(a, b){
+  const map = new Map();
+  for (const t of a) map.set(t.id, t);
+  for (const t of b) {
+    const o = map.get(t.id);
+    if (!o) { map.set(t.id, t); continue; }
+    const win = (t.m || 0) > (o.m || 0) ? t : o, lose = win === t ? o : t;
+    if ((!win.tx || win.tx.v !== win.iv) && lose.tx && lose.tx.v === win.iv) map.set(t.id, {...win, tx:lose.tx});
+    else map.set(t.id, win);
+  }
+  const old = Date.now() - 90 * 864e5;
+  return [...map.values()].filter(t => !t.del || t.del > old).sort((x, y) => x.c - y.c || (x.id > y.id ? 1 : -1));
+}
+const tdSig = tasks => JSON.stringify(tasks.map(t => [t.id, t.m, t.tx ? t.tx.v : '']));
+async function tdLoadLocal(){
+  for (const r of await TDSTORE.all()) TD.lists[r.sid] = {sid:r.sid, tasks:r.tasks || [], fileId:r.fileId || '', rmod:r.rmod || '', dirty:!!r.dirty};
+  try { TD.notif = JSON.parse(localStorage.getItem('baugest.todo.notif') || '{}') || {}; } catch (e) { TD.notif = {}; }
+  tdBadges();
+}
+function tdSaveLocal(sid){ const L = tdList(sid); return TDSTORE.put({sid, tasks:L.tasks, fileId:L.fileId, rmod:L.rmod, dirty:L.dirty}); }
+function tdChanged(sid){
+  const L = tdList(sid); L.dirty = true; tdSaveLocal(sid);
+  tdBadges(); tdRenderAll();
+  clearTimeout(TD.timer); TD.timer = setTimeout(tdSync, 1500);
+}
+function tdSyncState(){
+  const r = queueReason();
+  if (DEMO && !tokenValid()) return 'Aperçu : les tâches restent sur cet appareil.';
+  if (r && r.a !== null) return r.t + ' · tâches gardées sur cet appareil';
+  if (!navigator.onLine) return 'Hors ligne · tâches gardées sur cet appareil';
+  return '';
+}
+async function tdSync(){
+  if (TD.syncing) { TD.again = true; return; }
+  if (queueReason() || (DEMO && !tokenValid())) return;
+  TD.syncing = true;
+  try {
+    const q = "trashed=false and appProperties has { key='kind' and value='todo' }";
+    const res = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, pageSize:'200', fields:'files(id,modifiedTime,appProperties)'}));
+    const remote = {};
+    for (const f of res.files || []) { const sid = remapId((f.appProperties || {}).site); if (sid && (!remote[sid] || f.modifiedTime > remote[sid].modifiedTime)) remote[sid] = f; }
+    let changed = false;
+    for (const s of tdSites()) {
+      const sid = s.id, L = tdList(sid), f = remote[sid];
+      if (f && !L.fileId) L.fileId = f.id;
+      if (f && f.id !== L.fileId) L.fileId = f.id;
+      let tasks = L.tasks, upload = L.dirty;
+      if (f && f.modifiedTime !== L.rmod) {
+        const r = await api(PL_FILES + encodeURIComponent(f.id) + '?alt=media');
+        let body = null; try { body = typeof r.json === 'function' ? await r.json() : r; } catch (e) {}
+        const rt = Array.isArray(body?.tasks) ? body.tasks : [];
+        tasks = tdMerge(L.tasks, rt);
+        if (tdSig(tasks) !== tdSig(rt)) upload = true;
+        L.rmod = f.modifiedTime; changed = true;
+      }
+      if (!f && !L.tasks.length) { L.dirty = false; continue; }
+      if (!f) upload = true;
+      L.tasks = tasks;
+      if (upload) {
+        const md = {name:TD_FILE, mimeType:'application/json', description:`À faire BauGest du chantier « ${siteLabel(s)} »`,
+          appProperties:{pc:'1', kind:'todo', site:sid, n:String(tasks.filter(tdOpen).length)}};
+        const blob = new Blob([JSON.stringify({v:1, siteId:sid, site:siteLabel(s), updatedAt:new Date().toISOString(), tasks})], {type:'application/json'});
+        let out = null;
+        if (L.fileId) {
+          try { out = await driveMultipart(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(L.fileId)}?uploadType=multipart&fields=id,modifiedTime`, 'PATCH', md, blob, 'application/json'); }
+          catch (e) { if (e.status !== 404) throw e; }
+        }
+        if (!out) {
+          const dir = await ensurePath([siteFolder(s)]);
+          out = await driveMultipart('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime', 'POST', {...md, parents:[dir]}, blob, 'application/json');
+        }
+        L.fileId = out.id; L.rmod = out.modifiedTime || '';
+      }
+      L.dirty = false; await tdSaveLocal(sid);
+    }
+    if (changed) { tdBadges(); tdRenderAll(); }
+    tdCheckDue();
+  } catch (e) { /* nouvel essai à la prochaine modification ou à la synchro suivante */ }
+  finally { TD.syncing = false; if (TD.again) { TD.again = false; setTimeout(tdSync, 500); } }
+}
+
+/* ---------- modifications ---------- */
+function tdFind(id){ for (const sid in TD.lists) { const t = TD.lists[sid].tasks.find(x => x.id === id); if (t) return {sid, t}; } return null; }
+function tdAdd(sid, o){
+  const now = Date.now();
+  const t = {id:newUid(), c:now, m:now, ink:o.ink || [], iv:newUid(), pri:o.pri || 'g', due:o.due || null, rep:o.rep || 0, ln:o.ln || null, done:null, del:null, ...(o.t ? {t:o.t} : {}), ...(o.src ? {src:o.src} : {})};
+  tdList(sid).tasks.push(t); tdChanged(sid);
+  if (t.due) tdAskNotif();
+  return t;
+}
+function tdToggle(id){
+  const f = tdFind(id); if (!f) return;
+  const t = f.t, now = Date.now();
+  if (t.done) { t.done = null; t.m = now; }
+  else if (t.rep) {
+    // tâche répétée : une copie va dans l'historique, la tâche revient à la prochaine échéance
+    tdList(f.sid).tasks.push({...t, id:newUid(), c:now, m:now, done:now, rep:0, repOf:t.id});
+    t.due = tdNextDue(t.due || new Date().setHours(7, 0, 0, 0), t.rep); t.m = now;
+    note('Fait · revient ' + tdDueLabel(t.due).toLowerCase(), 2600);
+  } else { t.done = now; t.m = now; }
+  tdChanged(f.sid);
+}
+function tdDelete(id){ const f = tdFind(id); if (!f) return; f.t.del = Date.now(); f.t.m = f.t.del; tdChanged(f.sid); }
+
+/* ---------- dessin de l'écriture ---------- */
+const tdInkCol = el => (el && getComputedStyle(el).color) || '#f2f1ec'; // couleur du texte du thème (clair, sombre, fort contraste)
+function tdBox(ink){
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const s of ink) for (const p of s.p) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
+  if (!isFinite(x0)) return null;
+  const m = 8; return {x:Math.max(0, x0 - m), y:Math.max(0, y0 - m), w:Math.min(TW, x1 + m) - Math.max(0, x0 - m), h:Math.min(TH, y1 + m) - Math.max(0, y0 - m)};
+}
+function tdInkCanvas(ink, h = 42, maxW = 560, host){
+  const b = tdBox(ink), c = document.createElement('canvas'); c.className = 'td-ink';
+  if (!b) { c.width = c.height = 1; return c; }
+  let k = h / Math.max(b.h, 60); if (b.w * k > maxW) k = maxW / b.w;
+  const dpr = Math.min(3, devicePixelRatio || 1), w = Math.max(1, Math.round(b.w * k)), hh = Math.max(1, Math.round(Math.max(b.h, 60) * k));
+  c.width = w * dpr; c.height = hh * dpr; c.style.width = w + 'px'; c.style.height = hh + 'px';
+  const g = c.getContext('2d'), col = tdInkCol(host);
+  g.setTransform(k * dpr, 0, 0, k * dpr, -b.x * k * dpr, -(b.y - (Math.max(b.h, 60) - b.h) / 2) * k * dpr);
+  for (const s of ink) drawStroke(g, {...s, c:col});
+  return c;
+}
+function tdText(t){ const tx = t.tx && t.tx.v === t.iv ? t.tx.t : ''; return [t.t || '', tx].filter(Boolean).join(' — '); }
+
+/* ---------- liste ---------- */
+function tdLinkLabel(ln){ return !ln ? '' : ln.t === 'photo' ? 'Photo' : ln.t === 'plan' ? 'Plan · ' + plBase(ln.name || '') : 'PV · ' + plBase(ln.name || ''); }
+const TD_IC = {
+  link:'<svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
+  rep:'<svg class="ic" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg>',
+  bell:'<svg class="ic" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',
+  hand:'<svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  todo:'<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg>'
+};
+function tdRowHTML(t, sid){
+  const late = tdOpen(t) && t.due && t.due < Date.now(), today = !late && tdUrgent(t), txt = tdText(t), hand = TD.open.has(t.id);
+  const meta = [
+    t.done ? `<span>Fait le ${fmtISO(new Date(t.done).toISOString().slice(0, 10))}</span>` : t.due ? `<span class="td-due${late ? ' late' : today ? ' today' : ''}">${TD_IC.bell}${esc(tdDueLabel(t.due))}${late ? ' · en retard' : ''}</span>` : '',
+    t.rep && !t.done ? `<span>${TD_IC.rep}${esc(TD_REPN[t.rep])}</span>` : '',
+    t.ln ? `<button class="td-lnk" data-tdlnk="${esc(t.id)}">${t.ln.th ? `<img alt="" src="${esc(t.ln.th)}">` : TD_IC.link}<span>${esc(tdLinkLabel(t.ln))}</span></button>` : '',
+    txt && t.ink && t.ink.length && t.tx && t.tx.v === t.iv ? `<button class="td-hand${hand ? ' on' : ''}" data-tdhand="${esc(t.id)}" title="Voir mon écriture">${TD_IC.hand}</button>` : ''
+  ].filter(Boolean).join('');
+  return `<div class="td-row p-${esc(t.pri || 'g')}${t.done ? ' done' : ''}" data-tdid="${esc(t.id)}" data-tdsid="${esc(sid)}">
+    <button class="td-chk" data-tdchk="${esc(t.id)}" aria-label="${t.done ? 'Remettre à faire' : 'Fait'}"><i>${t.done ? '✓' : ''}</i></button>
+    <div class="td-body" data-tdedit="${esc(t.id)}" role="button" tabindex="0">${txt ? `<span class="td-txt">${esc(txt)}</span>` : ''}<span class="td-inkh" data-tdink="${esc(t.id)}"${txt && !hand ? ' hidden' : ''}></span>${meta ? `<span class="td-meta">${meta}</span>` : ''}</div>
+  </div>`;
+}
+function tdFillInk(root){
+  root.querySelectorAll('[data-tdink]').forEach(h => {
+    if (h.hidden || h.firstChild) return;
+    const f = tdFind(h.dataset.tdink); if (f && f.t.ink && f.t.ink.length) h.appendChild(tdInkCanvas(f.t.ink, isTabletScreen() ? 44 : 34, Math.max(160, h.parentElement.clientWidth - 8), h));
+  });
+}
+function tdListHTML(tasks, sid){ return `<div class="td-list">${tasks.map(t => tdRowHTML(t, sid)).join('')}</div>`; }
+
+/* ---------- bloc « nouvelle tâche » (stylet) ---------- */
+function tdNewHTML(id, o = {}){
+  return `<div class="td-new" id="${id}">
+    ${o.sites ? `<div class="td-sites" data-tdsites></div>` : ''}
+    <div class="td-pad"><canvas></canvas><span class="td-ph">${esc(o.ph || 'Écris la tâche ici au stylo')}</span></div>
+    <div class="td-opts">
+      <span class="td-pri" role="group" aria-label="Priorité">${['r', 'o', 'g'].map(p => `<button data-tdpri="${p}" class="p-${p}" title="${TD_PRI[p]}" aria-label="${TD_PRI[p]}"></button>`).join('')}</span>
+      <button class="chip" data-tddate>${TD_IC.bell}<span>Rappel</span></button>
+      <button class="chip" data-tdrep>${TD_IC.rep}<span>${TD_REPN[0]}</span></button>
+      <button class="chip" data-tdlink>${TD_IC.link}<span>Lier</span></button>
+    </div>
+    <div class="td-acts">
+      <button class="btn" data-tdundo aria-label="Annuler le dernier trait"><svg class="ic" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+      <button class="btn" data-tdclear>Effacer</button>
+      <span class="spacer"></span>
+      ${o.edit ? '<button class="btn danger" data-tddel>Supprimer</button><button class="btn primary" data-tdsave>Enregistrer</button>' : '<button class="btn primary" data-tdadd>Ajouter</button>'}
+    </div>
+  </div>`;
+}
+function tdPadState(el){ return TD.pads.get(el.id); }
+function tdPadInit(el, st){
+  st = Object.assign({ink:[], pri:'g', due:null, rep:0, ln:null, sid:null, edit:null}, st || {});
+  TD.pads.set(el.id, st);
+  const c = el.querySelector('canvas'), pad = el.querySelector('.td-pad');
+  const size = () => {
+    const w = pad.clientWidth; if (!w) return;
+    const dpr = Math.min(3, devicePixelRatio || 1); c.width = Math.round(w * dpr); c.height = Math.round(w * TH / TW * dpr);
+    c.style.height = Math.round(w * TH / TW) + 'px'; tdPadDraw(el);
+  };
+  if (!el._ro) { el._ro = new ResizeObserver(size); el._ro.observe(pad); bindTdPad(el); }
+  size(); tdPadOpts(el);
+  return st;
+}
+function tdPadDraw(el){
+  const st = tdPadState(el), c = el.querySelector('canvas'); if (!st || !c.width) return;
+  const g = c.getContext('2d'), k = c.width / TW;
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
+  g.setTransform(k, 0, 0, k, 0, 0);
+  g.strokeStyle = 'rgba(128,140,155,.45)'; g.lineWidth = 2; g.setLineDash([10, 10]);
+  g.beginPath(); g.moveTo(24, TH * .72); g.lineTo(TW - 24, TH * .72); g.stroke(); g.setLineDash([]);
+  const col = tdInkCol(el.querySelector('.td-pad'));
+  for (const s of st.ink) drawStroke(g, {...s, c:col});
+  el.querySelector('.td-ph').hidden = st.ink.length > 0;
+}
+function tdPadOpts(el){
+  const st = tdPadState(el); if (!st) return;
+  el.querySelectorAll('[data-tdpri]').forEach(b => { const on = b.dataset.tdpri === st.pri; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  const d = el.querySelector('[data-tddate]'); d.classList.toggle('on', !!st.due); d.querySelector('span').textContent = st.due ? tdDueLabel(st.due) : 'Rappel';
+  const r = el.querySelector('[data-tdrep]'); r.classList.toggle('on', !!st.rep); r.querySelector('span').textContent = TD_REPN[st.rep];
+  const l = el.querySelector('[data-tdlink]'); l.classList.toggle('on', !!st.ln); l.querySelector('span').textContent = st.ln ? tdLinkLabel(st.ln) : 'Lier';
+  const ss = el.querySelector('[data-tdsites]');
+  if (ss) ss.innerHTML = tdSites().map(s => `<button class="chip${s.id === st.sid ? ' on' : ''}" data-tdsite="${esc(s.id)}">${esc(siteLabel(s))}</button>`).join('') || '<p class="hint">Crée d’abord un chantier.</p>';
+}
+function bindTdPad(el){
+  const c = el.querySelector('canvas');
+  let cur = null;
+  const pt = e => { const r = c.getBoundingClientRect(); return [Math.round((e.clientX - r.left) / r.width * TW * 10) / 10, Math.round((e.clientY - r.top) / r.height * TH * 10) / 10, e.pointerType === 'pen' ? Math.round((e.pressure || .5) * 100) / 100 : .5]; };
+  c.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch' || cur) return; // le doigt fait défiler, seul le stylet (ou la souris) écrit
+    e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch (x) {}
+    cur = {id:e.pointerId, s:{c:TD_INK, w:2.6, p:[pt(e)]}};
+    el.querySelector('.td-ph').hidden = true;
+    const g = c.getContext('2d'), k = c.width / TW; g.setTransform(k, 0, 0, k, 0, 0); drawStroke(g, {...cur.s, c:tdInkCol(c.parentElement)});
+  });
+  c.addEventListener('pointermove', e => {
+    if (!cur || e.pointerId !== cur.id) return;
+    const g = c.getContext('2d'), k = c.width / TW, col = tdInkCol(c.parentElement); g.setTransform(k, 0, 0, k, 0, 0);
+    for (const ev of (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]) || [e]) {
+      const p = pt(ev), a = cur.s.p[cur.s.p.length - 1];
+      if (Math.hypot(p[0] - a[0], p[1] - a[1]) < 1.2) continue;
+      cur.s.p.push(p); drawStroke(g, {c:col, w:cur.s.w, p:[a, p]});
+    }
+  });
+  const end = e => { if (!cur || e.pointerId !== cur.id) return; const st = tdPadState(el); if (st) st.ink.push(cur.s); cur = null; };
+  c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
+}
+function tdPadReset(el, keep){
+  const st = tdPadState(el); if (!st) return;
+  Object.assign(st, {ink:[], pri:'g', due:null, rep:0, ln:null}, keep || {});
+  tdPadDraw(el); tdPadOpts(el);
+}
+function tdPadClick(e){
+  const el = e.target.closest('.td-new'); if (!el) return false;
+  const st = tdPadState(el); if (!st) return false;
+  let b;
+  if ((b = e.target.closest('[data-tdpri]'))) { st.pri = b.dataset.tdpri; tdPadOpts(el); return true; }
+  if ((b = e.target.closest('[data-tdsite]'))) { st.sid = b.dataset.tdsite; tdPadOpts(el); return true; }
+  if (e.target.closest('[data-tdrep]')) { st.rep = TD_REP[(TD_REP.indexOf(st.rep) + 1) % TD_REP.length]; tdPadOpts(el); return true; }
+  if (e.target.closest('[data-tddate]')) { tdDatePick(st.due, st.sid, v => { st.due = v; tdPadOpts(el); if (v) tdAskNotif(); }); return true; }
+  if (e.target.closest('[data-tdlink]')) { tdLinkPick(st.sid, st.ln, v => { st.ln = v; tdPadOpts(el); }); return true; }
+  if (e.target.closest('[data-tdundo]')) { st.ink.pop(); tdPadDraw(el); return true; }
+  if (e.target.closest('[data-tdclear]')) { st.ink = []; tdPadDraw(el); return true; }
+  if (e.target.closest('[data-tdadd]')) {
+    if (!st.sid || !siteById(st.sid)) { note('Choisis le chantier de la tâche', 2500); return true; }
+    if (!st.ink.length) { note('Écris d’abord la tâche au stylo', 2500); return true; }
+    tdAdd(st.sid, {ink:st.ink, pri:st.pri, due:st.due, rep:st.rep, ln:st.ln});
+    note('Tâche ajoutée · ' + siteLabel(siteById(st.sid)), 2200);
+    tdPadReset(el); return true;
+  }
+  if (e.target.closest('[data-tdsave]')) { tdEdSave(); return true; }
+  if (e.target.closest('[data-tddel]')) { confirmBox('Supprimer cette tâche ?', 'Elle disparaît aussi des autres appareils.', 'Supprimer', () => { tdDelete(st.edit); closeSheet($('#sheetTodoEd')); }); return true; }
+  return false;
+}
+
+/* ---------- modifier une tâche ---------- */
+function tdEdit(id){
+  const f = tdFind(id); if (!f) return;
+  if (!isTabletScreen()) { if (f.t.ln) tdOpenLink(f.t, f.sid); return; } // téléphone : consultation et case à cocher seulement
+  const t = f.t, s = siteById(f.sid);
+  $('#tdEdSub').textContent = s ? siteLabel(s) : '';
+  $('#tdEdTxt').hidden = !tdText(t); $('#tdEdTxt').textContent = tdText(t);
+  $('#tdEdHost').innerHTML = tdNewHTML('tdEdPad', {edit:true, ph:t.t ? 'Ajoute une précision au stylo (facultatif)' : 'Écris la tâche ici au stylo'});
+  openSheet('#sheetTodoEd');
+  tdPadInit($('#tdEdPad'), {ink:(t.ink || []).map(s => ({...s, p:s.p.slice()})), pri:t.pri || 'g', due:t.due, rep:t.rep || 0, ln:t.ln, sid:f.sid, edit:id});
+}
+function tdEdSave(){
+  const el = $('#tdEdPad'), st = el && tdPadState(el); if (!st) return;
+  const f = tdFind(st.edit); if (!f) { closeSheet($('#sheetTodoEd')); return; }
+  const t = f.t, inkChanged = JSON.stringify(t.ink || []) !== JSON.stringify(st.ink);
+  if (!st.ink.length && !t.t) { note('La tâche est vide : écris-la ou supprime-la', 2800); return; }
+  if (inkChanged) { t.ink = st.ink; t.iv = newUid(); }
+  if (st.due !== t.due) delete TD.notif[t.id];
+  Object.assign(t, {pri:st.pri, due:st.due, rep:st.rep, ln:st.ln, m:Date.now()});
+  tdChanged(f.sid); closeSheet($('#sheetTodoEd'));
+}
+
+/* ---------- choix de la date du rappel ---------- */
+const TDD = {cb:null, month:null, day:null, hour:7, min:0, sid:null};
+function tdSeance(sid){
+  const s = siteById(sid), m = s && s.meet; if (!m || !m.from) return null;
+  const [hh, mm] = String(m.time || '07:00').split(':').map(Number), every = Math.max(1, +m.every || 1);
+  const d = new Date(m.from + 'T00:00:00'); d.setHours(hh || 0, mm || 0, 0, 0);
+  for (let i = 0; i < 400 && d.getTime() <= Date.now(); i++) d.setDate(d.getDate() + 7 * every);
+  return d.getTime();
+}
+function tdQuick(){
+  const at = (days, h, m = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(h, m, 0, 0); return d.getTime(); };
+  const now = new Date(), out = [];
+  if (now.getHours() < 17) out.push(['Ce soir 17:00', at(0, 17)]);
+  out.push(['Demain 07:00', at(1, 7)]);
+  const toMon = (8 - now.getDay()) % 7 || 7; out.push(['Lundi 07:00', at(toMon, 7)]);
+  const se = tdSeance(TDD.sid);
+  if (se) { const d = new Date(se); d.setDate(d.getDate() - 1); d.setHours(17, 0, 0, 0); out.push(['Avant la séance', d.getTime() > Date.now() ? d.getTime() : se - 2 * 3600e3]); }
+  out.push(['Dans 1 semaine', at(7, 7)]);
+  return out;
+}
+function tdDatePick(cur, sid, cb){
+  TDD.cb = cb; TDD.sid = sid;
+  const d = cur ? new Date(cur) : null;
+  TDD.day = d ? new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() : null;
+  TDD.hour = d ? d.getHours() : 7; TDD.min = d ? d.getMinutes() : 0;
+  const m = d || new Date(); TDD.month = new Date(m.getFullYear(), m.getMonth(), 1);
+  tdDateRender(); openSheet('#sheetTodoDate');
+}
+function tdDateRender(){
+  $('#tdQuick').innerHTML = tdQuick().map(([l, v]) => `<button class="chip" data-tdq="${v}"><b>${esc(l)}</b>${tdDueLabel(v) !== l ? `<small>${esc(tdDueLabel(v))}</small>` : ''}</button>`).join('');
+  const m = TDD.month, y = m.getFullYear(), mo = m.getMonth(), first = (new Date(y, mo, 1).getDay() + 6) % 7, n = new Date(y, mo + 1, 0).getDate();
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  $('#tdMonth').textContent = m.toLocaleDateString('fr-CH', {month:'long', year:'numeric'});
+  let h = ['lu', 'ma', 'me', 'je', 've', 'sa', 'di'].map(x => `<span class="td-wd">${x}</span>`).join('') + '<span></span>'.repeat(first);
+  for (let i = 1; i <= n; i++) {
+    const v = new Date(y, mo, i).getTime();
+    h += `<button data-tdday="${v}" class="${v === TDD.day ? 'on' : ''}${v === t0.getTime() ? ' today' : ''}"${v < t0.getTime() ? ' disabled' : ''}>${i}</button>`;
+  }
+  $('#tdCal').innerHTML = h;
+  $('#tdHours').innerHTML = [6, 7, 8, 10, 12, 14, 16, 17, 18, 20].map(x => `<button class="chip${x === TDD.hour && !TDD.min ? ' on' : ''}" data-tdh="${x}">${pad2(x)}:00</button>`).join('');
+  $('#tdDateOk').disabled = TDD.day === null;
+  $('#tdDateOk').textContent = TDD.day === null ? 'Choisis un jour' : 'Rappel ' + tdDueLabel(TDD.day + (TDD.hour * 60 + TDD.min) * 60000).toLowerCase();
+}
+function tdDateDone(v){ const cb = TDD.cb; TDD.cb = null; closeSheet($('#sheetTodoDate')); if (cb) cb(v); }
+
+/* ---------- lien : photo, plan ou PV ---------- */
+const TDL = {cb:null, sid:null, tok:0};
+function tdLinkPick(sid, cur, cb){
+  if (!sid || !siteById(sid)) { note('Choisis d’abord le chantier', 2500); return; }
+  TDL.cb = cb; TDL.sid = sid;
+  const here = [];
+  if (!$('#planView').hidden && PV.item && (PV.siteId === sid)) here.push({t:'plan', id:PV.item.driveId || '', key:PV.key, name:PV.planName});
+  if (!$('#pdView').hidden && PDV.it && PDV.siteId === sid && PDV.it.driveId) here.push({t:'pv', id:PDV.it.driveId, name:PDV.it.name});
+  $('#tdLnHere').innerHTML = here.map((l, i) => `<button class="pick" data-tdln="h${i}"><span class="t"><b>${esc(l.t === 'plan' ? 'Plan ouvert' : 'PV ouvert')}</b><small>${esc(plBase(l.name || ''))}</small></span></button>`).join('');
+  TDL.here = here;
+  $('#tdLnDel').hidden = !cur;
+  $('#tdLnPhotos').innerHTML = '<p class="hint">Chargement des photos…</p>'; $('#tdLnDocs').innerHTML = '<p class="hint">Chargement…</p>';
+  openSheet('#sheetTodoLink');
+  tdLinkLoad(sid);
+}
+async function tdLinkLoad(sid){
+  const tok = ++TDL.tok, docs = new Map();
+  for (const r of await PLANCACHE.all()) if ((r.siteId || 'none') === sid) docs.set('pl' + r.key, {t:'plan', id:r.driveId || '', key:r.key, name:r.name});
+  if (PL.sid === sid) for (const o of PL.items) docs.set('pl' + o.key, {t:'plan', id:o.driveId || '', key:o.key, name:o.name});
+  if (desk.site === sid) for (const o of PDX.items) if (o.driveId) docs.set('pv' + o.key, {t:'pv', id:o.driveId, name:o.name, date:o.created});
+  let photos = [];
+  const drawDocs = () => {
+    const list = [...docs.values()].sort((a, b) => a.t === b.t ? String(b.date || b.name).localeCompare(String(a.date || a.name)) : a.t === 'pv' ? -1 : 1);
+    TDL.docs = list;
+    $('#tdLnDocs').innerHTML = list.length ? list.map((l, i) => `<button class="pick" data-tdln="d${i}"><span class="pill">${l.t === 'pv' ? 'PV' : 'Plan'}</span><span class="t"><b>${esc(plBase(l.name || ''))}</b></span></button>`).join('') : '<p class="hint">Aucun plan ni PV trouvé pour ce chantier.</p>';
+  };
+  drawDocs();
+  if (queueReason() || (DEMO && !tokenValid())) { $('#tdLnPhotos').innerHTML = '<p class="hint">Photos du Drive : connexion nécessaire. « Prendre une photo » fonctionne quand même.</p>'; return; }
+  try {
+    const qs = (q, f, o) => api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, orderBy:o, pageSize:'40', fields:'files(' + f + ')'}));
+    const [ph, pv, pl] = await Promise.all([
+      qs(`trashed=false and mimeType='image/jpeg' and ${siteClause(sid)}`, 'id,name,thumbnailLink,createdTime', 'createdTime desc'),
+      qs(`trashed=false and appProperties has { key='kind' and value='pvdt' } and ${siteClause(sid)}`, 'id,name,createdTime', 'createdTime desc'),
+      qs(`trashed=false and appProperties has { key='kind' and value='plan' } and ${siteClause(sid)}`, 'id,name,appProperties', 'name')
+    ]);
+    if (tok !== TDL.tok) return;
+    photos = ph.files || [];
+    for (const f of pv.files || []) docs.set('pv' + f.id, {t:'pv', id:f.id, name:f.name, date:f.createdTime});
+    for (const f of pl.files || []) { const k = (f.appProperties || {}).uid || f.id; if (![...docs.values()].some(x => x.id === f.id)) docs.set('pl' + k, {t:'plan', id:f.id, key:k, name:f.name}); }
+    drawDocs();
+    TDL.photos = photos;
+    $('#tdLnPhotos').innerHTML = photos.length ? photos.map((f, i) => `<button class="td-ph-pick" data-tdlp="${i}">${f.thumbnailLink ? `<img alt="" loading="lazy" referrerpolicy="no-referrer" src="${esc(f.thumbnailLink.replace(/=s\d+$/, '=s200'))}">` : ''}</button>`).join('') : '<p class="hint">Aucune photo de ce chantier sur le Drive.</p>';
+  } catch (e) { if (tok === TDL.tok) $('#tdLnPhotos').innerHTML = `<p class="hint">Lecture du Drive impossible : ${esc(e.message)}</p>`; }
+}
+function tdLinkDone(v){ const cb = TDL.cb; TDL.cb = null; closeSheet($('#sheetTodoLink')); if (cb) cb(v); }
+function tdThumb(src, max = 640){
+  const k = Math.min(1, max / Math.max(src.width, src.height));
+  const c = document.createElement('canvas'); c.width = Math.round(src.width * k); c.height = Math.round(src.height * k);
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', .72);
+}
+async function tdPhotoFile(file){
+  if (!file) return;
+  const sid = TDL.sid, site = siteById(sid); if (!site) return;
+  let src = null;
+  try { src = await createImageBitmap(file, {imageOrientation:'from-image'}); } catch (e) {}
+  if (!src) { note('Impossible de lire cette image.'); return; }
+  const th = tdThumb(src);
+  // la photo part aussi dans « <Chantier>/Photos » comme une photo normale
+  try {
+    const info = {time:new Date(), site:{...site}, devis:null, pos:pos ? {...pos} : null, tags:['À faire'], note:''};
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    const blob = await render(src, info);
+    await DB.put({id, blob, created:Date.now(), thumb:thumbOf(src), meta:{name:fileName(info), path:pathFor(info), description:describe(info), siteId:sid, taken:info.time.toISOString(), tags:info.tags.slice(), ...(info.pos ? {lat:info.pos.lat, lon:info.pos.lon} : {})}, error:''});
+    refreshQueue().then(processQueue);
+  } catch (e) {}
+  src.close?.();
+  tdLinkDone({t:'photo', id:'', name:'Photo', th});
+}
+async function tdPhotoDrive(f){
+  $('#tdLnPhotos').classList.add('busy');
+  try {
+    const r = await api(PL_FILES + encodeURIComponent(f.id) + '?alt=media'), b = await r.blob();
+    const src = await createImageBitmap(b); const th = tdThumb(src); src.close?.();
+    tdLinkDone({t:'photo', id:f.id, name:f.name, th});
+  } catch (e) { note('Photo illisible : ' + e.message, 3000); }
+  finally { $('#tdLnPhotos').classList.remove('busy'); }
+}
+async function tdOpenLink(t, sid){
+  const ln = t.ln; if (!ln) return;
+  if (ln.t === 'photo') {
+    $('#tdPhotoImg').src = ln.th || ''; $('#tdPhotoDrive').hidden = !ln.id;
+    $('#tdPhotoDrive').onclick = () => window.open('https://drive.google.com/file/d/' + encodeURIComponent(ln.id) + '/view', '_blank', 'noopener');
+    openSheet('#sheetTodoPhoto'); return;
+  }
+  if (!isTabletScreen()) { if (ln.id) location.href = 'https://drive.google.com/file/d/' + encodeURIComponent(ln.id) + '/view'; return; }
+  $$('.sheet').forEach(s => { if (!s.hidden) closeSheet(s); });
+  if (ln.t === 'pv') { if (ln.id) pdOpenFromParam(ln.id, sid); return; }
+  if (!$('#planView').hidden && (PV.key === ln.key || (ln.id && PV.item && PV.item.driveId === ln.id))) return;
+  if (!$('#pdView').hidden) closePvdt();
+  if (!$('#planView').hidden) closePlan();
+  desk.site = sid; desk.mode = 'plans';
+  if ($('#desk').hidden) openDesk(); else { renderDeskModes(); renderDeskSites(); loadPlans(); }
+  const find = () => PL.items.find(x => (ln.key && x.key === ln.key) || (ln.id && x.driveId === ln.id));
+  for (let i = 0; i < 60 && !(PL.sid === sid && find()); i++) await new Promise(r => setTimeout(r, 250));
+  const it = find();
+  if (it) openPlan(it.key);
+  else if (ln.id) window.open('https://drive.google.com/file/d/' + encodeURIComponent(ln.id) + '/view', '_blank', 'noopener');
+  else note('Plan introuvable', 2500);
+}
+
+/* ---------- panneau ☑ (accès rapide, tous les chantiers) ---------- */
+function tdDefaultSite(){
+  if (!$('#planView').hidden && PV.siteId && siteById(PV.siteId)) return PV.siteId;
+  if (!$('#pdView').hidden && PDV.siteId && siteById(PDV.siteId)) return PDV.siteId;
+  if (!$('#desk').hidden && desk.site && siteById(desk.site)) return desk.site;
+  const c = currentSite(); return c ? c.id : (tdSites()[0]?.id || null);
+}
+function openTodo(focus){
+  const tab = isTabletScreen();
+  $('#sheetTodo').classList.toggle('tab', tab);
+  $('#tdPanelNew').hidden = !tab;
+  if (tab) {
+    if (!$('#tdQuickPad')) $('#tdPanelNew').innerHTML = tdNewHTML('tdQuickPad', {sites:true});
+    const el = $('#tdQuickPad'), st = tdPadState(el);
+    openSheet('#sheetTodo');
+    tdPadInit(el, st ? {...st, sid:st.ink.length && st.sid ? st.sid : tdDefaultSite()} : {sid:tdDefaultSite()});
+  } else openSheet('#sheetTodo');
+  TD.focus = focus || null;
+  renderTodoPanel();
+  tdSync();
+}
+function renderTodoPanel(){
+  if ($('#sheetTodo').hidden) return;
+  const sites = tdSites(), cur = tdDefaultSite();
+  const blocks = sites.map(s => ({s, tasks:(TD.lists[s.id]?.tasks || []).filter(tdOpen).sort(tdSort)})).filter(b => b.tasks.length || b.s.id === cur)
+    .sort((a, b) => (b.s.id === cur) - (a.s.id === cur) || (b.tasks.some(tdUrgent) - a.tasks.some(tdUrgent)) || siteLabel(a.s).localeCompare(siteLabel(b.s), 'fr', {numeric:true}));
+  const info = tdSyncState(), n = blocks.reduce((k, b) => k + b.tasks.length, 0);
+  $('#tdPanelSub').textContent = n ? n + ' tâche' + (n > 1 ? 's' : '') + ' à faire' : 'Rien à faire';
+  $('#tdPanelList').innerHTML = (info ? `<p class="dk-info">${esc(info)}</p>` : '') + (blocks.length ? blocks.map(b => `<section class="td-sec" data-tdsec="${esc(b.s.id)}">
+      <div class="td-sh">${logoHTML(b.s)}<b>${esc(siteLabel(b.s))}</b><span class="n">${b.tasks.length}</span>${isTabletScreen() ? `<button class="btn ghost" data-tdgo="${esc(b.s.id)}">Historique</button>` : ''}</div>
+      ${b.tasks.length ? tdListHTML(b.tasks, b.s.id) : '<p class="hint">Aucune tâche pour ce chantier.</p>'}</section>`).join('')
+    : '<p class="dk-empty">Aucun chantier.</p>');
+  tdFillInk($('#tdPanelList'));
+  if (TD.focus) { const r = $('#tdPanelList').querySelector(`[data-tdid="${CSS.escape(TD.focus)}"]`); TD.focus = null; if (r) { r.classList.add('flash'); r.scrollIntoView({block:'center'}); } }
+}
+
+/* ---------- rubrique « À faire » du bureau (tablette) ---------- */
+function loadTodo(){ renderTodo(); tdSync(); }
+function renderTodo(){
+  const s = desk.site === '__none' ? null : siteById(desk.site);
+  renderDeskSites();
+  $('#dkHead').innerHTML = `${s ? logoHTML(s) : ''}<div class="t"><small>${s ? esc(s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(s ? s.name : 'À classer')}</h2></div>`;
+  const info = tdSyncState(); $('#dkInfo').hidden = !info; $('#dkInfo').textContent = info;
+  if (!s) { $('#dkList').innerHTML = '<p class="dk-empty">Choisis un chantier pour voir ses tâches.</p>'; renderDeskModes(); return; }
+  // le bloc d'écriture n'est recréé qu'au changement de chantier (une tâche en cours d'écriture n'est jamais effacée)
+  const pad = $('#tdDeskPad'), st = pad && tdPadState(pad);
+  if (!pad || !st || st.sid !== s.id || !$('#tdDeskList')) {
+    $('#dkList').innerHTML = tdNewHTML('tdDeskPad') + '<div id="tdDeskList"></div>';
+    tdPadInit($('#tdDeskPad'), {sid:s.id});
+  }
+  renderTodoList(s);
+  renderDeskModes();
+}
+function renderTodoList(s){
+  const all = (TD.lists[s.id]?.tasks || []).filter(tdLive), open = all.filter(t => !t.done).sort(tdSort), done = all.filter(t => t.done).sort((a, b) => b.done - a.done);
+  $('#tdDeskList').innerHTML = `<section class="dk-sec"><div class="dk-sep"><h3>À faire</h3><span class="n">${open.length}</span></div>${open.length ? tdListHTML(open, s.id) : '<p class="dk-empty">Rien à faire sur ce chantier.</p>'}</section>
+    ${done.length ? `<section class="dk-sec"><div class="dk-sep"><h3>Historique</h3><span class="n">${done.length}</span><span class="p">Tâches faites</span><button class="btn" id="tdShowDone">${TD.showDone ? 'Masquer' : 'Afficher'}</button></div>${TD.showDone ? tdListHTML(done, s.id) : ''}</section>` : ''}`;
+  tdFillInk($('#tdDeskList'));
+}
+function tdRenderAll(){
+  if (!$('#desk').hidden && desk.mode === 'todo') renderTodo();
+  renderTodoPanel();
+}
+
+/* ---------- rappels (notification BauGest quand l'app est ouverte) ---------- */
+function tdAskNotif(){
+  if (!('Notification' in window) || Notification.permission !== 'default') return;
+  try { Notification.requestPermission(); } catch (e) {}
+}
+async function tdCheckDue(){
+  const now = Date.now(), fresh = [];
+  for (const s of tdSites()) for (const t of (TD.lists[s.id]?.tasks || [])) {
+    if (!tdOpen(t) || !t.due || t.due > now || TD.notif[t.id] === t.due) continue;
+    TD.notif[t.id] = t.due;
+    if (now - t.due < 12 * 3600e3) fresh.push({s, t});
+  }
+  for (const id of Object.keys(TD.notif)) { const f = tdFind(id); if (!f || !tdOpen(f.t)) delete TD.notif[id]; }
+  try { localStorage.setItem('baugest.todo.notif', JSON.stringify(TD.notif)); } catch (e) {}
+  tdBadges();
+  if (!fresh.length) return;
+  const perm = 'Notification' in window && Notification.permission === 'granted';
+  const reg = perm && 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration().catch(() => null) : null;
+  for (const {s, t} of fresh.slice(0, 5)) {
+    const title = 'À faire · ' + siteLabel(s), body = tdText(t) || 'Tâche écrite au stylo · touche pour la voir';
+    if (perm) { const opt = {body, tag:'todo-' + t.id, icon:'icon-192.png', badge:'icon-192.png', data:{todo:t.id, site:s.id}}; try { if (reg) reg.showNotification(title, opt); else new Notification(title, opt); } catch (e) {} }
+  }
+  if (!document.hidden) tdBanner(fresh.length === 1 ? 'Rappel · ' + siteLabel(fresh[0].s) + (tdText(fresh[0].t) ? ' : ' + tdText(fresh[0].t) : '') : fresh.length + ' rappels de tâches', fresh[0].t.id);
+}
+function tdBanner(msg, id){
+  const b = $('#tdBanner'); $('#tdBannerT').textContent = msg; b.hidden = false; b.dataset.id = id || '';
+  clearTimeout(TD.banT); TD.banT = setTimeout(() => b.hidden = true, 12000);
+}
+function tdStartup(){
+  const late = []; for (const s of tdSites()) for (const t of (TD.lists[s.id]?.tasks || [])) if (tdOpen(t) && t.due && t.due < Date.now()) late.push(t);
+  tdCheckDue();
+  if (late.length) tdBanner(late.length === 1 ? '1 tâche en retard' : late.length + ' tâches en retard', late.length === 1 ? late[0].id : '');
+}
+
+/* ---------- depuis un PV DT : point à notre charge → tâche ---------- */
+function pdTodoBtn(p){
+  const sid = PDV.siteId, pv = PDV.it && (PDV.it.driveId || PDV.it.key);
+  if (!siteById(sid) || !pv) return '';
+  const has = (TD.lists[sid]?.tasks || []).some(t => tdLive(t) && t.src && t.src.pv === pv && t.src.pt === p.id);
+  return `<button class="pd-todo${has ? ' on' : ''}" title="Créer une tâche À faire avec ce point">${has ? '✓ À faire' : '→ À faire'}</button>`;
+}
+function tdFromPvPoint(p){
+  const sid = PDV.siteId; if (!siteById(sid)) { note('Range d’abord ce PV dans un chantier', 2800); return; }
+  const pv = PDV.it.driveId || PDV.it.key, exists = (TD.lists[sid]?.tasks || []).find(t => tdLive(t) && t.src && t.src.pv === pv && t.src.pt === p.id);
+  if (exists) { tdEdit(exists.id); return; }
+  const t = tdAdd(sid, {t:String(p.text).replace(/\s+/g, ' ').trim().slice(0, 300), pri:'o', ln:PDV.it.driveId ? {t:'pv', id:PDV.it.driveId, name:PDV.it.name} : null, src:{pv, pt:p.id}});
+  note('Tâche ajoutée · règle le rappel si besoin', 2600);
+  pdRenderPoints(); tdEdit(t.id);
+}
+
+function bindTodo(){
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-todo]'); if (!b) return;
+    e.preventDefault(); openTodo();
+  });
+  const lists = e => {
+    let b;
+    if (tdPadClick(e)) return;
+    if ((b = e.target.closest('[data-tdchk]'))) { tdToggle(b.dataset.tdchk); return; }
+    if ((b = e.target.closest('[data-tdlnk]'))) { const f = tdFind(b.dataset.tdlnk); if (f) tdOpenLink(f.t, f.sid); return; }
+    if ((b = e.target.closest('[data-tdhand]'))) { const id = b.dataset.tdhand; TD.open.has(id) ? TD.open.delete(id) : TD.open.add(id); tdRenderAll(); return; }
+    if ((b = e.target.closest('[data-tdedit]'))) { tdEdit(b.dataset.tdedit); return; }
+    if ((b = e.target.closest('[data-tdgo]'))) { closeSheet($('#sheetTodo')); desk.site = b.dataset.tdgo; goSection('todo'); TD.showDone = true; if (desk.mode === 'todo') renderTodo(); return; }
+  };
+  $('#sheetTodo').addEventListener('click', lists);
+  $('#sheetTodoEd').addEventListener('click', lists);
+  $('#dkMain').addEventListener('click', e => {
+    if (desk.mode !== 'todo') return;
+    if (e.target.closest('#tdShowDone')) { TD.showDone = !TD.showDone; renderTodo(); return; }
+    lists(e);
+  });
+  $('#sheetTodoDate').addEventListener('click', e => {
+    let b;
+    if ((b = e.target.closest('[data-tdq]'))) { tdDateDone(+b.dataset.tdq); return; }
+    if ((b = e.target.closest('[data-tdday]'))) { TDD.day = +b.dataset.tdday; tdDateRender(); return; }
+    if ((b = e.target.closest('[data-tdh]'))) { TDD.hour = +b.dataset.tdh; TDD.min = 0; tdDateRender(); return; }
+    if (e.target.closest('#tdMPrev')) { TDD.month = new Date(TDD.month.getFullYear(), TDD.month.getMonth() - 1, 1); tdDateRender(); return; }
+    if (e.target.closest('#tdMNext')) { TDD.month = new Date(TDD.month.getFullYear(), TDD.month.getMonth() + 1, 1); tdDateRender(); return; }
+    if (e.target.closest('#tdDateNone')) { tdDateDone(null); return; }
+    if (e.target.closest('#tdDateOk') && TDD.day !== null) tdDateDone(TDD.day + (TDD.hour * 60 + TDD.min) * 60000);
+  });
+  $('#sheetTodoLink').addEventListener('click', e => {
+    let b;
+    if (e.target.closest('#tdLnCam')) { $('#tdLnFile').click(); return; }
+    if (e.target.closest('#tdLnDel')) { tdLinkDone(null); return; }
+    if ((b = e.target.closest('[data-tdlp]'))) { const f = (TDL.photos || [])[+b.dataset.tdlp]; if (f) tdPhotoDrive(f); return; }
+    if ((b = e.target.closest('[data-tdln]'))) { const k = b.dataset.tdln, l = k[0] === 'h' ? TDL.here[+k.slice(1)] : (TDL.docs || [])[+k.slice(1)]; if (l) tdLinkDone({t:l.t, id:l.id || '', key:l.key || '', name:l.name || ''}); }
+  });
+  $('#tdLnFile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; tdPhotoFile(f); });
+  $('#tdBanner').addEventListener('click', e => { if (e.target.closest('#tdBannerX')) { $('#tdBanner').hidden = true; return; } $('#tdBanner').hidden = true; openTodo($('#tdBanner').dataset.id); });
+  $('#sheetTodo').addEventListener('closed', () => { const el = $('#tdQuickPad'), st = el && tdPadState(el); if (st && !st.ink.length) tdPadReset(el, {sid:null}); });
+  addEventListener('online', tdSync);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { tdCheckDue(); tdSync(); } });
+  setInterval(tdCheckDue, 30000);
+  setInterval(() => { if (!document.hidden) tdSync(); }, 120000);
+  navigator.serviceWorker?.addEventListener('message', e => { const d = e.data || {}; if (d.todo) openTodo(d.todo); });
+}
+async function initTodo(param){
+  await tdLoadLocal();
+  tdStartup();
+  tdSync();
+  if (param) openTodo(param);
+}
+
 /* ---------- Calculette flottante (tablette : documents, plans, PV DT) ---------- */
 const CALC = {on:false, exp:'', last:null};
 const CALC_HOSTS = ['#docEditor', '#planView', '#pdView'];
@@ -9086,9 +9882,10 @@ async function init(){
   const auth = readAuthHash();
   const shareParam = new URLSearchParams(location.search).get('share');
   const pvParam = new URLSearchParams(location.search).get('pvdt'), pvSite = new URLSearchParams(location.search).get('site');
-  if (shareParam !== null || pvParam) history.replaceState(null, '', location.pathname + location.hash);
+  const todoParam = new URLSearchParams(location.search).get('todo');
+  if (shareParam !== null || pvParam || todoParam) history.replaceState(null, '', location.pathname + location.hash);
   await DB.open();
-  bind(); bindDocs(); bindPlans(); bindPvdt(); bindSoum(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); bindCalc(); initPlanning(); applyBrand(); renderSiteChip(); renderActiveTag();
+  bind(); bindDocs(); bindPlans(); bindPvdt(); bindSoum(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); bindCalc(); bindTodo(); initPlanning(); applyBrand(); renderSiteChip(); renderActiveTag();
   startGeo();
   if (isTabletScreen()) { keepAwake(); document.addEventListener('pointerdown', keepAwake, {passive:true}); }
   if (auth === 'cid') note('Client ID enregistré. Ouvre Paramètres › Google Drive › Connecter.', 4500);
@@ -9109,6 +9906,7 @@ async function init(){
   else if (shareParam === '0') note('Aucune photo reçue.', 3000);
   mesFlushAll();
   if (pvParam) pdOpenFromParam(pvParam, pvSite);
+  initTodo(todoParam);
   initBackNav();
   if ('serviceWorker' in navigator && !IN_FRAME && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
   if (document.fonts?.load) document.fonts.load('700 20px Barlow').then(() => { if (!$('#settings').hidden) drawPreview(); }).catch(() => {});

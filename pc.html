@@ -437,6 +437,25 @@ body.bp-split #app{left:var(--bp-w,55%)}
 .dm-lbl.name b{font:700 14px/1.1 "Barlow Condensed",sans-serif;text-transform:uppercase}
 #dmMap.drawing{cursor:crosshair}
 .syncbtn.on{background:var(--signal-soft);border-color:var(--signal)}
+/* ---------- À faire par chantier (v2.3) ---------- */
+#btnTodo{position:relative}
+#tdBadge{position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font:700 11px/18px var(--body);text-align:center}
+.tdp-opt{display:flex;gap:8px;align-items:center;color:var(--muted)}
+.tdp-sec{display:grid;gap:6px}
+.tdp-sec h4{margin:6px 0 0;font:700 17px var(--display);text-transform:uppercase;letter-spacing:.03em}
+.tdp-sec h4 span{display:inline-block;min-width:20px;padding:0 6px;border-radius:10px;background:var(--surface2);font:700 12px/20px var(--body);text-align:center}
+.tdp-h{margin:4px 0 0;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+.tdp-row{display:grid;grid-template-columns:36px 1fr;gap:6px;align-items:center;padding:6px 10px 6px 0;border:1px solid var(--line);border-left:5px solid #8a929c;border-radius:8px;background:var(--surface2)}
+.tdp-row.p-r{border-left-color:#e5312b}.tdp-row.p-o{border-left-color:#f08c00}
+.tdp-row.done{opacity:.6}.tdp-row.done b{text-decoration:line-through}
+.tdp-row label{display:grid;place-items:center;height:100%;cursor:pointer}
+.tdp-row input{width:18px;height:18px}
+.tdp-row>div{display:grid;gap:3px;min-width:0}
+.tdp-row img{display:block;max-width:100%}
+.tdp-row img.th{width:64px;height:48px;object-fit:cover;border-radius:5px}
+.tdp-row small{color:var(--muted)}
+.tdp-row small .late{color:var(--bad);font-weight:700}
+.tdp-row small .today{color:var(--warn);font-weight:700}
 </style>
 </head>
 <body>
@@ -459,6 +478,7 @@ body.bp-split #app{left:var(--bp-w,55%)}
     <div class="gsearch"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="gSearch" placeholder="Rechercher dans tous les chantiers" title="Nom, date (2026-09), indice (ind C)… puis Entrée"></div>
     <div class="grow"></div>
     <button id="btnSync" class="btn syncbtn" hidden title="Zoom et défilement liés entre les deux volets"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Lier les vues</button>
+    <button id="btnTodo" class="ibtn" title="À faire : tâches de tous les chantiers (écrites au stylo sur la tablette)" aria-label="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span id="tdBadge" hidden>0</span></button>
     <button id="btnSplit" class="btn" title="Afficher deux fichiers côte à côte"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg>Double vue</button>
     <button id="btnContrast" class="ibtn" title="Fort contraste (noir sur blanc)" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
     <button id="btnTheme" class="ibtn" title="Thème clair / sombre"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
@@ -2785,6 +2805,109 @@ function syncNav(){
   const cur = !$('#devis').hidden ? 'devis' : !$('#pvdt').hidden ? 'pvdt' : E.mode === 'photos' ? 'photos' : 'files';
   $$('#navtabs [data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === cur));
 }
+/* ---------- À faire par chantier (v2.3) : consultation et case à cocher (l'écriture se fait au stylo sur la tablette) ----------
+   Fichier « <Chantier>/À faire (ne pas supprimer).json » (appProperties kind='todo'), même format que la tablette. */
+const TDP = {files:{}, lists:{}, done:false, busy:false};
+const TD_REPN = {7:'Chaque semaine', 14:'Toutes les 2 sem.', m:'Chaque mois'};
+const tdOpen = t => !t.del && !t.done;
+function tdEndOfDay(){ const x = new Date(); x.setHours(23, 59, 59, 999); return x.getTime(); }
+const tdUrgent = t => tdOpen(t) && t.due && t.due <= tdEndOfDay();
+const tdText = t => [t.t || '', t.tx && t.tx.v === t.iv ? t.tx.t : ''].filter(Boolean).join(' — ');
+function tdSort(a, b){
+  const ua = tdUrgent(a), ub = tdUrgent(b);
+  if (ua !== ub) return ua ? -1 : 1;
+  if (ua) return a.due - b.due;
+  const R = {r:0, o:1, g:2};
+  return (R[a.pri] ?? 2) - (R[b.pri] ?? 2) || (a.due || Infinity) - (b.due || Infinity) || b.c - a.c;
+}
+function tdDueLabel(ms){
+  const d = new Date(ms), t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const day = Math.round((new Date(d).setHours(0, 0, 0, 0) - t0) / 864e5), hm = pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  if (day === 0) return 'Aujourd’hui ' + hm; if (day === 1) return 'Demain ' + hm; if (day === -1) return 'Hier ' + hm;
+  return d.toLocaleDateString('fr-CH', {weekday:'short'}).replace('.', '') + ' ' + pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + ' ' + hm;
+}
+function tdNextDue(from, rep){ const d = new Date(from), now = Date.now(); do { if (rep === 'm') d.setMonth(d.getMonth() + 1); else d.setDate(d.getDate() + rep); } while (d.getTime() < now); return d.getTime(); }
+async function tdLoad(){
+  if (!P.rootId) return;
+  const fs = await listAll("trashed=false and appProperties has { key='kind' and value='todo' }", 'id,modifiedTime,appProperties', 'modifiedTime');
+  const files = {};
+  for (const f of fs) { const sid = (f.appProperties || {}).site; if (sid) files[sid] = f; }
+  for (const sid in files) {
+    const f = files[sid], old = TDP.files[sid];
+    if (old && old.modifiedTime === f.modifiedTime && TDP.lists[sid]) continue;
+    try { const j = await (await api(`${DRV}/${encodeURIComponent(f.id)}?alt=media`, {}, true)).json(); TDP.lists[sid] = Array.isArray(j.tasks) ? j.tasks : []; } catch (e) {}
+  }
+  TDP.files = files; tdBadge();
+}
+function tdBadge(){
+  let n = 0; for (const sid in TDP.lists) if (S.sites.some(s => s.id === sid)) n += TDP.lists[sid].filter(tdUrgent).length;
+  const b = $('#tdBadge'); b.textContent = String(n); b.hidden = !n;
+}
+function tdInk(ink){
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const s of ink) for (const p of s.p) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
+  if (!isFinite(x0)) return '';
+  x0 -= 8; y0 -= 8; x1 += 8; y1 += 8;
+  const h = Math.max(y1 - y0, 60), k = Math.min(40 / h, 520 / (x1 - x0)), c = document.createElement('canvas'), dpr = Math.min(3, devicePixelRatio || 1);
+  c.width = Math.round((x1 - x0) * k * dpr); c.height = Math.round(h * k * dpr); c.style.width = Math.round((x1 - x0) * k) + 'px'; c.style.height = Math.round(h * k) + 'px';
+  const g = c.getContext('2d'), col = getComputedStyle(document.body).color;
+  g.setTransform(k * dpr, 0, 0, k * dpr, -x0 * k * dpr, -(y0 - (h - (y1 - y0)) / 2) * k * dpr);
+  for (const s of ink) drawStroke(g, {...s, c:col});
+  return c.toDataURL();
+}
+function tdRow(t, sid){
+  const late = tdOpen(t) && t.due && t.due < Date.now(), txt = tdText(t), img = !txt && t.ink && t.ink.length ? tdInk(t.ink) : '';
+  const meta = [t.done ? 'Fait le ' + fmtISO(new Date(t.done).toISOString().slice(0, 10)) : t.due ? `<span class="${late ? 'late' : tdUrgent(t) ? 'today' : ''}">⏰ ${esc(tdDueLabel(t.due))}${late ? ' · en retard' : ''}</span>` : '',
+    t.rep && !t.done ? '↻ ' + esc(TD_REPN[t.rep] || '') : '',
+    t.ln ? (t.ln.id ? `<a href="#" data-tdf="${esc(t.ln.id)}">${t.ln.t === 'photo' ? 'Photo' : t.ln.t === 'plan' ? 'Plan' : 'PV'} · ${esc(String(t.ln.name || '').replace(/\.pdf$/i, ''))}</a>` : 'Photo jointe (tablette)') : ''].filter(Boolean).join(' · ');
+  return `<div class="tdp-row p-${esc(t.pri || 'g')}${t.done ? ' done' : ''}"><label><input type="checkbox" data-tdc="${esc(t.id)}" data-tds="${esc(sid)}"${t.done ? ' checked' : ''}></label>
+    <div>${txt ? `<b>${esc(txt)}</b>` : img ? `<img alt="Tâche écrite au stylo" src="${img}">` : '<i>(vide)</i>'}${t.ln && t.ln.th ? `<img class="th" alt="" src="${esc(t.ln.th)}">` : ''}${meta ? `<small>${meta}</small>` : ''}</div></div>`;
+}
+function tdBody(){
+  const sites = S.sites.filter(s => !s.example).sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}));
+  const blocks = sites.map(s => {
+    const all = (TDP.lists[s.id] || []).filter(t => !t.del), open = all.filter(t => !t.done).sort(tdSort), done = all.filter(t => t.done).sort((a, b) => b.done - a.done);
+    if (!open.length && !(TDP.done && done.length)) return '';
+    return `<section class="tdp-sec"><h4>${esc(siteLabel(s))} <span>${open.length}</span></h4>${open.map(t => tdRow(t, s.id)).join('')}${TDP.done && done.length ? '<p class="tdp-h">Historique</p>' + done.map(t => tdRow(t, s.id)).join('') : ''}</section>`;
+  }).join('');
+  return `<label class="tdp-opt"><input type="checkbox" id="tdpDone"${TDP.done ? ' checked' : ''}> Afficher l’historique (tâches faites)</label>${blocks || '<p class="muted">Rien à faire. Les tâches s’écrivent au stylo sur la tablette.</p>'}`;
+}
+async function tdToggle(sid, id){
+  const f = TDP.files[sid]; if (!f || TDP.busy) return;
+  TDP.busy = true;
+  try {
+    const j = await (await api(`${DRV}/${encodeURIComponent(f.id)}?alt=media`, {}, true)).json(), tasks = Array.isArray(j.tasks) ? j.tasks : [];
+    const t = tasks.find(x => x.id === id); if (!t) throw new Error('tâche introuvable');
+    const now = Date.now();
+    if (t.done) { t.done = null; t.m = now; }
+    else if (t.rep) { tasks.push({...t, id:now.toString(36) + Math.random().toString(36).slice(2, 8), c:now, m:now, done:now, rep:0, repOf:t.id}); t.due = tdNextDue(t.due || new Date().setHours(7, 0, 0, 0), t.rep); t.m = now; }
+    else { t.done = now; t.m = now; }
+    j.tasks = tasks; j.updatedAt = new Date().toISOString();
+    const out = await putFile({id:f.id, md:{appProperties:{n:String(tasks.filter(tdOpen).length)}}, blob:new Blob([JSON.stringify(j)], {type:'application/json'})});
+    TDP.lists[sid] = tasks; TDP.files[sid] = {...f, modifiedTime:out.modifiedTime || ''};
+    tdBadge();
+  } catch (e) { toast('À faire : ' + e.message, 'err'); }
+  finally { TDP.busy = false; }
+}
+async function openTodoPc(){
+  try { await tdLoad(); } catch (e) { toast('À faire : ' + e.message, 'err'); }
+  dialog({title:'À faire', width:720, body:'<div id="tdpBody"></div>', buttons:[{label:'Fermer', value:null, primary:true}], onOpen:(dlg, done) => {
+    const draw = () => { dlg.querySelector('#tdpBody').innerHTML = tdBody(); };
+    draw();
+    dlg.addEventListener('change', async e => {
+      if (e.target.id === 'tdpDone') { TDP.done = e.target.checked; draw(); return; }
+      const c = e.target.closest('[data-tdc]'); if (c) { await tdToggle(c.dataset.tds, c.dataset.tdc); draw(); }
+    });
+    dlg.addEventListener('click', async e => {
+      const a = e.target.closest('[data-tdf]'); if (!a) return;
+      e.preventDefault(); done(null);
+      try { const m = await meta(a.dataset.tdf); m._k = kindOf(m); openIn(0, m, [m]); } catch (x) { toast('Fichier introuvable : ' + x.message, 'err'); }
+    });
+  }});
+}
+$('#btnTodo').addEventListener('click', openTodoPc);
+setInterval(() => { if (!document.hidden && !$('#app').hidden) tdLoad().catch(() => {}); }, 120000);
+
 /* ---------- Planning (Gantt, chemin critique, ressources, budget) : module partagé planning.js ----------
    Double vue : planning à gauche, BauGest PC à droite. Fenêtre séparée : pc.html#planning=<chantier>&plan=<uid> */
 const PLAN_WIN = /[#&]planning=/.test(location.hash);
@@ -4511,6 +4634,7 @@ async function start(){
     FN.set(P.rootId, {id:P.rootId, name:P.rootName || 'BauGest', parent:null, kids:null, open:true});
     await Promise.all([loadSettings(), loadKids(P.rootId)]);
     renderTree();
+    tdLoad().catch(() => {});
     if (PLAN_WIN && window.BGPlan) {
       const hp = k => decodeURIComponent((location.hash.match(new RegExp('[#&]' + k + '=([^&]*)')) || [])[1] || '');
       document.title = 'Planning · BauGest PC';

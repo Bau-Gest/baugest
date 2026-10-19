@@ -35,7 +35,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 
 ### Plateformes
 - **Téléphone** : `isTabletScreen()` = petit côté d'écran < 600 px. Démarre toujours sur la caméra. Pas de plans (un PDF partagé est rangé dans Plans ou PV du chantier).
-- **Tablette** (Lenovo Idea Tab Pro Gen 2, stylet) : bureau avec barre de rubriques à gauche (Photos, Plans, Documents, PV DT, Soumission, Planning, Devis). Écran de démarrage réglable (`S.home`). Écran toujours allumé tant que BauGest est au premier plan (Wake Lock `keepAwake`, 16.10.2026) ; s'éteint seulement par le bouton ou la coque, verrou repris au retour dans l'app ou au 1er toucher.
+- **Tablette** (Lenovo Idea Tab Pro Gen 2, stylet) : bureau avec barre de rubriques à gauche (Photos, Plans, Documents, PV DT, Soumission, Planning, Devis, À faire). Écran de démarrage réglable (`S.home`). Écran toujours allumé tant que BauGest est au premier plan (Wake Lock `keepAwake`, 16.10.2026) ; s'éteint seulement par le bouton ou la coque, verrou repris au retour dans l'app ou au 1er toucher.
 - **Aiguillage (19.10.2026)** : script en tête de `index.html` → un PC de bureau (Windows, ou Linux/Mac sans écran tactile) est renvoyé vers `pc.html` ; Android/iPhone/iPad et tablette Android en « site pour ordinateur » (Linux + tactile) restent sur `index.html`. `?tablette=1` garde la version tablette sur l'appareil (`localStorage['baugest.forceTab']`), `?tablette=0` annule. Pas d'aiguillage au retour Google (`#access_token`), au partage (`?share`) ni avec `?pvdt`.
 - **PC** (`pc.html`) : onglet Planning (même module que la tablette), infos du chantier et séances (`editSiteDlg` : onglet PV DT › bouton agenda, ou clic droit sur un dossier chantier ; réécrit le chantier dans le fichier de réglages avec `smod` = maintenant et renomme le dossier Drive si N°/nom changent), explorateur Drive, double vue optionnelle, annotation, impression, glisser-déposer Windows ↔ BauGest, filtres photos, devis, métrés, comparaison d'indices, recherche globale, rapport photo PDF, dépôt PV DT.
 
@@ -55,7 +55,8 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 ### Stockage local (noms hérités de PhotoChantier — NE PAS RENOMMER)
 - `localStorage['photochantier.v1']` : état/réglages principal (`S`).
 - IndexedDB : `baugest-planning` (plannings, cache + modifs hors ligne), `photochantier` (file d'envoi photos), `photochantier-inbox` (fichiers reçus par partage, écrit par `sw.js`), `photochantier-docs` v2 (documents manuscrits), `baugest-plans` (cache des PDF de plans), `baugest-pvdt` (cache PV), `baugest-soum` (tableau de la soumission par chantier).
-- Clés `baugest.*` : `plPaths`, `plView`, `pltree.<site>`, `pvPanel`, `pvann.<id>`, `pvdt.seen`, `pvdt.last`, `pvpts.<id>`, `calcPos`, `activeDevis`, `dmLayer`, `dmCad`, `pc.pqSite`, `cal` (événements agenda déjà envoyés par cet appareil : `{idFiche: contenu}`), `plan.<site>` (dernier planning ouvert), `planSplit` (double vue PC : `{on, w}`), `planVac` (vacances reprises dans les nouveaux plannings).
+- IndexedDB `baugest-todo` (tâches À faire par chantier).
+- Clés `baugest.*` : `todo.notif`, `plPaths`, `plView`, `pltree.<site>`, `pvPanel`, `pvann.<id>`, `pvdt.seen`, `pvdt.last`, `pvpts.<id>`, `calcPos`, `activeDevis`, `dmLayer`, `dmCad`, `pc.pqSite`, `cal` (événements agenda déjà envoyés par cet appareil : `{idFiche: contenu}`), `plan.<site>` (dernier planning ouvert), `planSplit` (double vue PC : `{on, w}`), `planVac` (vacances reprises dans les nouveaux plannings).
 
 ### Organisation du Google Drive
 ```
@@ -76,6 +77,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 │   │   └── Exports/            (PDF A3, Excel, XML MS Project)
 │   ├── Soumission/           (soumission rentrée .crbx / Word / PDF + « <nom> – positions.json » de la tâche Soumission)
 │   │   └── Anciennes versions/
+│   ├── À faire (ne pas supprimer).json   (tâches du chantier, kind='todo')
 │   └── PV de chantier/         (PV DT + « <nom du PV> – récap[ AAAA-MM-JJ].pdf » à côté de chaque PV, tâche Récap PV)
 │       ├── PV annulés/
 │       └── Annotations/        (« <PV> - annotations BauGest.json » : traits + points cochés `done` {id: texte du point})
@@ -89,7 +91,7 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 **Identification des fichiers BauGest** : chaque fichier écrit porte des `appProperties` Drive (les tâches et la galerie filtrent dessus) :
 - commun : `pc:'1'`, `site:<siteId|none>`
 - photo : `taken`, `tags` (séparés par `|`, 60 car. max), `lat`, `lon`, `imp:'1'` si importée ; texte lisible dans `description`
-- `kind` : `plan` (+ `uid`), `planning` (+ `uid`), `planningxml` (+ `uid`, copie MS Project du planning), `export`, `soum` (soumission importée par la tablette), `mesures` (+ `plan`, `n`), `pvdt` (+ `pvn`, `pvdate`), `doc` (+ `dtype`, `title`), `settings`
+- `kind` : `todo` (+ `n` = nb de tâches ouvertes), `plan` (+ `uid`), `planning` (+ `uid`), `planningxml` (+ `uid`, copie MS Project du planning), `export`, `soum` (soumission importée par la tablette), `mesures` (+ `plan`, `n`), `pvdt` (+ `pvn`, `pvdate`), `doc` (+ `dtype`, `title`), `settings`
 - ⚠ Une **copie** Drive perd les `appProperties` → toujours déplacer/renommer.
 
 **Réglages synchronisés** (`Réglages PhotoChantier (ne pas supprimer).json`, `appProperties.kind='settings'`) : champs `SYNC_FIELDS` = companies, tags, logoLib, docLay, docTitles, stamp, logoOn, logoPos, logoSize, logoBg, stampLines, quality, tagPrompt, tagDelay, structure, pvKeys + chantiers `S.sites` + devis `S.devis`/`S.ddel`. Fusion par horodatage par champ/chantier (`S.fmod`, `S.smod`, `S.sdel`, `S.remap`). Valeurs par défaut : objet `DEF` (index.html ~l.1870).
@@ -104,6 +106,8 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 **Calculette flottante (15.10.2026, tablette seulement)** : bouton 🧮 dans la barre du haut + dans le tiroir d'outils de l'éditeur de documents, de la visionneuse PV DT et de la barre d'outils des plans (`[data-calc]`, cachés sur téléphone via `html.calc-ok`). Fenêtre `#calc` (z-index 60) déplaçable par sa barre de titre, position gardée dans `baugest.calcPos`. Touches + − × ÷ % ( ), C, ⌫, = et « Copier » (presse-papiers, sans séparateur). « a + b % » = a + a×b/100 ; « a × b % » = a×b/100. Se ferme toute seule quand on quitte l'éditeur / le plan / le PV. Bloc « Calculette flottante » (`calcEval`, `bindCalc`) ; absente de `pc.html`.
 
 **Planning (17.10.2026, `planning.js`)** : `{v:1, uid, siteId, name, start, indice, hol:{canton, keys[], extra[{d,label}]}, vac[{from,to,label}], opts:{sat, hpd, structure:'flat'|'lots'|'tree', budget:'res'|'man'|'mix'}, res[{id,name,type:'team'|'machine'|'sub'|'supply',unit,rate,cap,color}], tasks[{id,name,parent,lot?,ms?,dur (j ouvrés),deps[{id,type:FS|SS|FF|SF,lag}],snet?,lvl (décalage du lissage),asg[{r,q}],bud?,pct,aStart?,aEnd?,act[{d,r,q|amt}],note?}], baseline:{at,end,tasks:{id:{start,finish,dur,cost}}}|null}`. Dates internes en n° de jour UTC ; calendrier = lu–ve (+ samedi en option) moins fériés du canton (table `CANTONS`, modifiable par planning) et vacances. Coûts : équipe = pers. × j × `hpd` h × CHF/h ; machine = u. × j × CHF/j ; sous-traitant / fourniture = quantité × PU. Réalisé saisi en h / j / quantités ou montant libre. Valeur acquise à la date d'état (PV/VA/CR, SPI, CPI, coût final). Lissage = ordonnancement en série (critiques d'abord), proposé puis appliqué par l'utilisateur. Le doigt fait défiler, la souris / le stylet déplacent et allongent les barres, tirent un lien depuis le rond au bout de la barre. PC seulement : double vue (planning à gauche, BauGest PC à droite, séparation réglable, gardée dans `baugest.planSplit` ; le clavier va au côté cliqué) et fenêtre séparée `pc.html#planning=<chantier>&plan=<uid>` (2e écran ; le planning se ferme dans la fenêtre principale). PC : ouvrir un fichier `planning`/`planningxml` dans l'explorateur ouvre le module (`openPlanFile`), un autre .xml MS Project propose l'import (`BGPlan.importXml`). Hôte : `BGPlan.init({sites, api, ensureFolder, online, loadScript, company, onToggle, split, onSplit, popout, onClose})` puis `BGPlan.open(idChantier, uidPlanning?)` ; `BGPlan.back()` pour le retour Android. Absent du téléphone.
+
+**À faire (19.10.2026)** : `{v:1, siteId, site, updatedAt, tasks:[{id, c (création ms), m (modif ms), ink:[traits stylet, page 1000 × 200], iv (version de l'écriture), tx?:{v:iv, t:texte transcrit}, t?:texte tapé (point de PV), pri:'r'|'o'|'g', due:ms|null, rep:0|7|14|'m', ln?:{t:'photo'|'plan'|'pv', id Drive, key?, name, th? (miniature 640 px)}, done:ms|null, del:ms|null, src?:{pv, pt}, repOf?}]}`. Fusion par tâche (m le plus récent ; `tx` repris si `tx.v == iv`) ; supprimées gardées 90 j. Tablette : rubrique « À faire » (bloc d'écriture au stylet, le doigt fait défiler ; priorité, rappel = boutons rapides + calendrier, répétition, lien photo / plan / PV), bouton ☑ + compteur rouge (tâches en retard ou du jour) dans toutes les barres du haut → panneau à droite tous chantiers ; « → À faire » sur chaque point à notre charge d'un PV DT. Téléphone : ☑ dans la barre caméra, consultation + case à cocher. PC : bouton ☑ dans la barre du haut, consultation + case à cocher. Rappel = notification BauGest (seulement si l'app est ouverte) + bandeau rouge à l'ouverture ; IndexedDB `baugest-todo`, clé `baugest.todo.notif`. Tâche répétée cochée → copie dans l'historique, la tâche revient à la prochaine échéance.
 
 **Mesures d'un plan** : `{v:1, plan:{key,name}, siteId, scales, confirmed, measures:[…], updatedAt}` ; lié à l'ID Drive du plan (renommer/déplacer garde le lien).
 
@@ -132,7 +136,7 @@ Réglages & synchro (~1868–2130) · GPS/caméra/prise de vue (~2164–2515) ·
 
 | Tâche | Horaire (Europe/Zurich) | Rôle |
 |---|---|---|
-| Transcription BauGest | lu–ve 17:53 (11:53 retiré le 19.10.2026) | JSON manuscrit → PDF texte tapé à côté du JSON (un item par paragraphe, texte à la largeur de la page, sans ligne vide, aligné à gauche, pages manuscrites enchaînées sur les lignes libres — validé par Joel le 17.10.2026) ; signatures recopiées, jamais transcrites ; notification si ≥ 1 document |
+| Transcription BauGest | lu–ve 17:53 (11:53 retiré le 19.10.2026) | (À faire : prompt à compléter avec `tools/transcription/todo.py` à la mise en ligne) JSON manuscrit → PDF texte tapé à côté du JSON (un item par paragraphe, texte à la largeur de la page, sans ligne vide, aligné à gauche, pages manuscrites enchaînées sur les lignes libres — validé par Joel le 17.10.2026) ; signatures recopiées, jamais transcrites ; notification si ≥ 1 document |
 | Plans BauGest | lu–ve 17:17 (11:17 retiré le 19.10.2026) | Renomme les plans d'après le cartouche (« Sujet ind C AAAA-MM-JJ.pdf »), doublons/anciens indices → Plans annulés ; notification si changement |
 | Récap PV BauGest | lu–ve 17:35 | Veille de séance (vendredi pour le lundi) : compare les 2 derniers PV DT du chantier + points cochés, PDF « <PV> – récap.pdf » à côté du PV + notification ; « PV manquant » si aucun nouveau PV |
 | Soumission BauGest | vendredi 17:44 | Word / PDF du dossier « Soumission » → « <nom> – positions.json » à côté (tools/soumission), contrôle des totaux par CAN ; notification si ≥ 1 soumission |
@@ -178,6 +182,7 @@ Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_0
 
 ## 7. Pistes ouvertes (non commencées, à confirmer avec Joel)
 
+- À faire : rappel quand l'app est fermée (serveur push ou tâche planifiée du matin).
 - Planning : lien des tâches aux positions de la soumission (`positions.json`) comme source de budget ; jalons du planning dans le récap de séance.
 - Outils non faits de la maquette : texte sur plan (tablette), comptage de points, zoom caméra.
 - Notifications PV quand l'app est fermée (nécessiterait un serveur push).

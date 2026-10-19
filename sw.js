@@ -1,4 +1,4 @@
-const C='baugest-v30';
+const C='baugest-v31';
 const A=['./','./index.html','./pc.html','./pc.webmanifest','./planning.js','./aide-planning.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(A)));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))));self.clients.claim();});
@@ -34,7 +34,7 @@ self.addEventListener('fetch',e=>{
 });
 self.addEventListener('notificationclick',e=>{
   e.notification.close();
-  const d=e.notification.data||{},url=self.registration.scope+(d.pvdt?'?pvdt='+encodeURIComponent(d.pvdt)+'&site='+encodeURIComponent(d.site||''):'');
+  const d=e.notification.data||{},url=self.registration.scope+(d.pvdt?'?pvdt='+encodeURIComponent(d.pvdt)+'&site='+encodeURIComponent(d.site||''):d.todo?'?todo='+encodeURIComponent(d.todo):'');
   e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>{
     const c=cs.find(x=>x.url.startsWith(self.registration.scope));
     if(c){c.postMessage(d);return c.focus();}
