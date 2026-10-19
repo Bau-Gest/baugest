@@ -36,6 +36,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 ### Plateformes
 - **Téléphone** : `isTabletScreen()` = petit côté d'écran < 600 px. Démarre toujours sur la caméra. Pas de plans (un PDF partagé est rangé dans Plans ou PV du chantier).
 - **Tablette** (Lenovo Idea Tab Pro Gen 2, stylet) : bureau avec barre de rubriques à gauche (Photos, Plans, Documents, PV DT, Soumission, Planning, Devis). Écran de démarrage réglable (`S.home`). Écran toujours allumé tant que BauGest est au premier plan (Wake Lock `keepAwake`, 16.10.2026) ; s'éteint seulement par le bouton ou la coque, verrou repris au retour dans l'app ou au 1er toucher.
+- **Aiguillage (19.10.2026)** : script en tête de `index.html` → un PC de bureau (Windows, ou Linux/Mac sans écran tactile) est renvoyé vers `pc.html` ; Android/iPhone/iPad et tablette Android en « site pour ordinateur » (Linux + tactile) restent sur `index.html`. `?tablette=1` garde la version tablette sur l'appareil (`localStorage['baugest.forceTab']`), `?tablette=0` annule. Pas d'aiguillage au retour Google (`#access_token`), au partage (`?share`) ni avec `?pvdt`.
 - **PC** (`pc.html`) : onglet Planning (même module que la tablette), infos du chantier et séances (`editSiteDlg` : onglet PV DT › bouton agenda, ou clic droit sur un dossier chantier ; réécrit le chantier dans le fichier de réglages avec `smod` = maintenant et renomme le dossier Drive si N°/nom changent), explorateur Drive, double vue optionnelle, annotation, impression, glisser-déposer Windows ↔ BauGest, filtres photos, devis, métrés, comparaison d'indices, recherche globale, rapport photo PDF, dépôt PV DT.
 
 ### Bibliothèques (CDN, mises en cache par `sw.js`)
@@ -165,7 +166,7 @@ Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_0
 | 1 | Notification « nouveau PV » seulement si l'app est ouverte (pas de push serveur) | PV DT | Limite connue |
 | 2 | Détection auto chantier/n°/date d'un PV impossible sur PDF scanné (pas de texte) → saisie manuelle | PV DT (PC) | Limite connue |
 | 3 | Visionneuse PV : défilement sans élan | PV DT tablette | Corrigé le 13.10.2026 |
-| 4 | `sw.js` ne pré-cache que `index.html` : `pc.html`/`pc.webmanifest` ne sont en cache qu'après une 1re visite en ligne | PWA PC | À corriger si usage hors ligne PC |
+| 4 | `sw.js` ne pré-cachait que `index.html` (hors ligne, `pc.html` pouvait s'ouvrir en version tablette) | PWA PC | Corrigé le 19.10.2026 : `pc.html` + `pc.webmanifest` pré-cachés, repli hors ligne vers `pc.html` |
 | 5 | Texte d'aide de l'URI de redirection affiche encore `tonnom.github.io/photochantier` (aperçu hors ligne) | Réglages Drive | Cosmétique |
 | 6 | Outils vus dans la maquette ergonomie mais non implémentés : texte (tablette), comptage de points, zoom caméra | Ergonomie v2 | Non fait volontairement |
 | 7 | Photos copiées (au lieu de déplacées) dans le Drive perdent leurs métadonnées (chantier, GPS, étiquettes) | Drive | Règle : toujours déplacer/renommer, jamais copier |
@@ -177,7 +178,6 @@ Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_0
 
 ## 7. Pistes ouvertes (non commencées, à confirmer avec Joel)
 
-- Pré-cache de `pc.html` dans `sw.js` (bug 4).
 - Planning : lien des tâches aux positions de la soumission (`positions.json`) comme source de budget ; jalons du planning dans le récap de séance.
 - Outils non faits de la maquette : texte sur plan (tablette), comptage de points, zoom caméra.
 - Notifications PV quand l'app est fermée (nécessiterait un serveur push).

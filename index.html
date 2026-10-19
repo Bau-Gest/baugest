@@ -2,6 +2,22 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<script>
+/* PC de bureau → BauGest PC (pc.html) ; téléphone et tablette restent ici.
+   Windows = PC ; Linux / Mac sans écran tactile = PC (une tablette Android en « site pour ordinateur » annonce Linux mais est tactile).
+   ?tablette=1 garde la version tablette sur cet appareil, ?tablette=0 annule. */
+(function(){
+  try {
+    var q = new URLSearchParams(location.search), k = 'baugest.forceTab';
+    if (q.has('tablette')) { if (q.get('tablette') === '0') localStorage.removeItem(k); else localStorage.setItem(k, '1'); }
+    if (localStorage.getItem(k) || window.self !== window.top) return;
+    if (/access_token|error=|cid=/.test(location.hash) || q.has('share') || q.has('pvdt')) return;
+    var ua = navigator.userAgent || '', touch = navigator.maxTouchPoints > 0;
+    if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return;
+    if (/Windows/.test(ua) || !touch) location.replace('pc.html' + location.hash);
+  } catch (e) {}
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#131518">
 <meta name="description" content="BauGest : photos, documents et plans de chantier rangés dans Google Drive.">
