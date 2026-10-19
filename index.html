@@ -9121,8 +9121,9 @@ function openPlanning(){
    Tâches écrites au stylo (tablette), rappel par notification BauGest (app ouverte), accès rapide ☑ partout.
    Drive : « <Chantier>/À faire (ne pas supprimer).json » (appProperties kind='todo', site) ; copie sur l'appareil (IndexedDB baugest-todo).
    Fusion par tâche (champ m = dernière modification) ; tâches supprimées gardées 90 j (del) pour la synchro.
-   La tâche « Transcription BauGest » écrit tx = {v: iv de l'écriture, t: texte} sans toucher m (tools/transcription/todo.py). */
-const TD_FILE = 'À faire (ne pas supprimer).json', TW = 1000, TH = 200, TD_INK = '#1d2733';
+   La tâche « Transcription BauGest » dépose à côté « À faire – texte tapé.json » = {id: {v: iv de l'écriture, t: texte}} (tools/transcription/todo.py) ;
+   repris dans tx de la tâche si l'écriture n'a pas changé (v == iv), sans toucher m. */
+const TD_FILE = 'À faire (ne pas supprimer).json', TD_TXFILE = 'À faire – texte tapé.json', TW = 1000, TH = 200, TD_INK = '#1d2733';
 const TD_PRI = {r:'Urgent', o:'Important', g:'Normal'}, TD_RANK = {r:0, o:1, g:2};
 const TD_REP = [0, 7, 14, 'm'], TD_REPN = {0:'Pas de répétition', 7:'Chaque semaine', 14:'Toutes les 2 sem.', m:'Chaque mois'};
 const TD = {lists:{}, files:{}, syncing:false, again:false, timer:0, pads:new Map(), ed:null, showDone:false, open:new Set(), notif:{}};
@@ -9138,7 +9139,7 @@ const TDSTORE = {
   all(){ return this.tx('readonly', s => s.getAll()).then(a => a || []).catch(() => []); },
   put(o){ return this.tx('readwrite', s => s.put(o)).catch(() => null); }
 };
-const tdList = sid => TD.lists[sid] || (TD.lists[sid] = {sid, tasks:[], fileId:'', rmod:'', dirty:false});
+const tdList = sid => TD.lists[sid] || (TD.lists[sid] = {sid, tasks:[], fileId:'', rmod:'', txmod:'', dirty:false});
 const tdLive = t => !t.del;
 const tdOpen = t => !t.del && !t.done;
 const tdSites = () => S.sites.filter(s => !s.example);
@@ -9187,11 +9188,11 @@ function tdMerge(a, b){
 }
 const tdSig = tasks => JSON.stringify(tasks.map(t => [t.id, t.m, t.tx ? t.tx.v : '']));
 async function tdLoadLocal(){
-  for (const r of await TDSTORE.all()) TD.lists[r.sid] = {sid:r.sid, tasks:r.tasks || [], fileId:r.fileId || '', rmod:r.rmod || '', dirty:!!r.dirty};
+  for (const r of await TDSTORE.all()) TD.lists[r.sid] = {sid:r.sid, tasks:r.tasks || [], fileId:r.fileId || '', rmod:r.rmod || '', txmod:r.txmod || '', dirty:!!r.dirty};
   try { TD.notif = JSON.parse(localStorage.getItem('baugest.todo.notif') || '{}') || {}; } catch (e) { TD.notif = {}; }
   tdBadges();
 }
-function tdSaveLocal(sid){ const L = tdList(sid); return TDSTORE.put({sid, tasks:L.tasks, fileId:L.fileId, rmod:L.rmod, dirty:L.dirty}); }
+function tdSaveLocal(sid){ const L = tdList(sid); return TDSTORE.put({sid, tasks:L.tasks, fileId:L.fileId, rmod:L.rmod, txmod:L.txmod, dirty:L.dirty}); }
 function tdChanged(sid){
   const L = tdList(sid); L.dirty = true; tdSaveLocal(sid);
   tdBadges(); tdRenderAll();
@@ -9210,7 +9211,8 @@ async function tdSync(){
   TD.syncing = true;
   try {
     const q = "trashed=false and appProperties has { key='kind' and value='todo' }";
-    const res = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, pageSize:'200', fields:'files(id,modifiedTime,appProperties)'}));
+    const res = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, pageSize:'200', fields:'files(id,modifiedTime,appProperties,parents)'}));
+    const txr = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q:`trashed=false and name='${qEsc(TD_TXFILE)}'`, orderBy:'modifiedTime desc', pageSize:'200', fields:'files(id,modifiedTime,parents)'}));
     const remote = {};
     for (const f of res.files || []) { const sid = remapId((f.appProperties || {}).site); if (sid && (!remote[sid] || f.modifiedTime > remote[sid].modifiedTime)) remote[sid] = f; }
     let changed = false;
@@ -9226,6 +9228,14 @@ async function tdSync(){
         tasks = tdMerge(L.tasks, rt);
         if (tdSig(tasks) !== tdSig(rt)) upload = true;
         L.rmod = f.modifiedTime; changed = true;
+      }
+      const txf = f && (txr.files || []).find(x => (x.parents || []).some(p => (f.parents || []).includes(p)));
+      if (txf && txf.modifiedTime !== L.txmod) {
+        try {
+          const map = await api(PL_FILES + encodeURIComponent(txf.id) + '?alt=media');
+          for (const t of tasks) { const x = map && map[t.id]; if (x && x.t && x.v === t.iv && (!t.tx || t.tx.v !== t.iv || t.tx.t !== x.t)) { t.tx = {v:x.v, t:String(x.t)}; upload = true; changed = true; } }
+          L.txmod = txf.modifiedTime;
+        } catch (e) {}
       }
       if (!f && !L.tasks.length) { L.dirty = false; continue; }
       if (!f) upload = true;
