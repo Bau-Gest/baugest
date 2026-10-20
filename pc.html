@@ -401,6 +401,9 @@ body.bp-split #app{left:var(--bp-w,55%)}
 .dz-memo{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface);text-align:left}
 .dz-memo .t{flex:1;display:grid}
 .dz-memo small{color:var(--muted);font-size:12px}
+.dz-mrow{display:flex;gap:6px;align-items:stretch}
+.dz-mrow .dz-memo{flex:1;min-width:0}
+.dz-mdel{flex:none;width:44px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--bad);display:grid;place-items:center}
 .dz-selbar{display:flex;gap:6px;margin-top:auto;position:sticky;bottom:0;background:var(--surface);padding-top:8px}
 .dz-selbar .btn{flex:1;justify-content:center;padding:0 6px}
 /* ---------- devis : orthophoto ---------- */
@@ -4130,7 +4133,7 @@ function renderDzPhotos(){
 function renderDzMemos(){
   const el = $('#dzMemos'); if (!el) return;
   el.hidden = !DV.memos.length;
-  el.innerHTML = DV.memos.length ? `<h3>Mémos enregistrés · ${DV.memos.length}</h3>` + DV.memos.map(m => `<button class="dz-memo" data-memo="${esc(m.id)}">${ICON_DOC}<span class="t"><b>Mémo du ${dFmt(new Date(m.appProperties?.taken || m.createdTime))} · ${tFmt(new Date(m.appProperties?.taken || m.createdTime))}</b><small>${esc(m.name)}</small></span>${ICON_CHEV}</button>`).join('') : '';
+  el.innerHTML = DV.memos.length ? `<h3>Mémos enregistrés · ${DV.memos.length}</h3>` + DV.memos.map(m => `<div class="dz-mrow"><button class="dz-memo" data-memo="${esc(m.id)}">${ICON_DOC}<span class="t"><b>Mémo du ${dFmt(new Date(m.appProperties?.taken || m.createdTime))} · ${tFmt(new Date(m.appProperties?.taken || m.createdTime))}</b><small>${esc(m.name)}</small></span>${ICON_CHEV}</button><button class="dz-mdel" data-memodel="${esc(m.id)}" title="Effacer le mémo" aria-label="Effacer le mémo"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg></button></div>`).join('') : '';
 }
 async function dzPath(d, sub){
   let id = await ensureChild(P.rootId, DZ_ROOT);
@@ -4290,6 +4293,15 @@ $('#dzMain').addEventListener('click', async e => {
   const b = e.target.closest('button, [data-dzp], [data-memo]'); if (!b) return;
   if (b.dataset.dzp) { const f = DV.photos.find(x => x.id === b.dataset.dzp); if (f) openIn(0, f, DV.photos); return; }
   if (b.dataset.memo) { const f = DV.memos.find(x => x.id === b.dataset.memo); if (f) openIn(0, f, DV.memos); return; }
+  if (b.dataset.memodel) {
+    const f = DV.memos.find(x => x.id === b.dataset.memodel); if (!f) return;
+    if (!(await confirmDlg('Effacer ce mémo ?', `« ${esc(f.name)} »<br><small>Mis à la corbeille du Drive (récupérable pendant 30 jours).</small>`, 'Effacer', true))) return;
+    try {
+      await api(`${DRV}/${encodeURIComponent(f.id)}?fields=id`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})});
+      DV.memos = DV.memos.filter(x => x.id !== f.id); renderDzMemos(); toast('Mémo effacé');
+    } catch (err) { toast('Effacement impossible : ' + err.message, 'err'); }
+    return;
+  }
   if (b.dataset.acc) { const a = b.dataset.acc; d.access = d.access || []; d.access = d.access.includes(a) ? d.access.filter(x => x !== a) : d.access.concat(a); b.classList.toggle('on'); devSave(d); return; }
   if (b.dataset.itmet != null) { const it = d.items[+b.dataset.itmet]; if (!it) return; DV.metOpen.has(it.id) ? DV.metOpen.delete(it.id) : DV.metOpen.add(it.id); renderDzItems(); return; }
   if (b.dataset.itdel != null) {

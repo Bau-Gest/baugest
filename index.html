@@ -1132,6 +1132,9 @@ input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{
 .dz-memo .ic{color:var(--muted)}
 .dz-memo>.ic:first-child{color:var(--signal)}
 .dz-memo .wait{color:var(--warn)}
+.dz-mrow{display:flex;gap:8px;align-items:stretch}
+.dz-mrow .dz-memo{flex:1;min-width:0}
+.dz-mdel{flex:none;width:56px;min-height:56px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--bad);display:grid;place-items:center}
 #mvPages canvas,#mvPages img{width:100%;max-width:760px;height:auto;border-radius:4px;background:#fff;display:block;box-shadow:0 6px 24px rgba(0,0,0,.45)}
 
 /* ---------- Ergonomie v2 (oct. 2026) : même navigation sur téléphone, tablette et PC ---------- */
@@ -1913,6 +1916,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <small id="mvStatus"></small>
     <div class="btn-row">
       <button id="mvSave" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.9-9.9A6 6 0 0 1 17.7 9 4.5 4.5 0 0 1 17 18"/><path d="M12 12v8M9 15l3-3 3 3"/></svg>Enregistrer sur le Drive</button>
+      <button id="mvDel" class="btn danger" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>Effacer</button>
       <button id="mvDown" class="btn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg>Télécharger</button>
       <button id="mvShare" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>
     </div>
@@ -8459,6 +8463,7 @@ function openMemoView(o){
 function mvStatus(){
   if (!mv) return;
   $('#mvSave').hidden = mv.saved;
+  $('#mvDel').hidden = !mv.key;
   $('#mvStatus').textContent = mv.saved ? (mv.pending ? 'Enregistré dans l’app · envoi au Drive dès que possible' : 'Enregistré dans Drive › ' + DZ_ROOT + ' › ' + mv.d.folder)
     : 'Aperçu · pas encore enregistré. « Partager » l’enregistre aussi sur le Drive.';
 }
@@ -8498,11 +8503,27 @@ function renderDzMemos(){
   const el = $('#dzMemos'); if (!el) return;
   const list = dz.memos || [];
   el.hidden = !list.length;
-  el.innerHTML = list.length ? `<h3>Mémos enregistrés · ${list.length}</h3>` + list.map(m => `<button class="dz-memo" data-memo="${esc(m.key)}">${ICON_DOC}<span class="t"><b>Mémo du ${fmtDate(m.time)} · ${fmtTime(m.time)}</b><small>${m.src === 'local' ? '<span class="wait">En attente d’envoi</span> · ' : 'Sur le Drive · '}${esc(m.name)}</small></span>${ICON_CHEV}</button>`).join('') : '';
+  el.innerHTML = list.length ? `<h3>Mémos enregistrés · ${list.length}</h3>` + list.map(m => `<div class="dz-mrow"><button class="dz-memo" data-memo="${esc(m.key)}">${ICON_DOC}<span class="t"><b>Mémo du ${fmtDate(m.time)} · ${fmtTime(m.time)}</b><small>${m.src === 'local' ? '<span class="wait">En attente d’envoi</span> · ' : 'Sur le Drive · '}${esc(m.name)}</small></span>${ICON_CHEV}</button><button class="dz-mdel" data-memodel="${esc(m.key)}" aria-label="Effacer le mémo du ${esc(fmtDate(m.time))}" title="Effacer le mémo">${ICON_TRASH}</button></div>`).join('') : '';
+}
+/* effacer un mémo : sur le Drive → corbeille (récupérable 30 jours), en attente → retiré de la file d'envoi */
+function dzAskDelMemo(key){
+  const m = (dz.memos || []).find(x => x.key === key); if (!m) return;
+  if (m.src === 'drive') { const r = queueReason(); if (r) { note(r.t + ' : effacement impossible pour l’instant.', 3500); return; } }
+  confirmBox('Effacer ce mémo ?', `« ${esc(m.name)} »<small>${m.src === 'drive' ? 'Mis à la corbeille du Drive (récupérable pendant 30 jours).' : 'Pas encore envoyé sur le Drive : retiré de l’app.'}</small>`, 'Effacer', () => dzDelMemo(m));
+}
+async function dzDelMemo(m){
+  try {
+    if (m.src === 'local') { const id = m.key.slice(1); removed.add(id); await DB.del(id); }
+    else await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(m.id)}?fields=id,trashed`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})});
+    if (mv && mv.key === m.key) closeMemoView();
+    dz.memos = (dz.memos || []).filter(x => x.key !== m.key); renderDzMemos();
+    if (m.src === 'local') refreshQueue();
+    note('Mémo effacé.', 2500);
+  } catch (e) { note('Effacement impossible : ' + (e.status === 403 ? 'droits insuffisants sur ce fichier' : e.message), 4000); }
 }
 async function dzOpenMemo(key){
   const d = devById(dz.cur), m = (dz.memos || []).find(x => x.key === key); if (!d || !m) return;
-  openMemoView({d, file:null, pages:null, saved:true, pending:m.src === 'local', when:m.time, name:m.name});
+  openMemoView({d, file:null, pages:null, saved:true, pending:m.src === 'local', when:m.time, name:m.name, key:m.key});
   const cur = mv;
   try {
     const blob = m.src === 'local' ? m.blob : await driveBlob(m.id);
@@ -8529,7 +8550,8 @@ function bindMemoView(){
   $('#mvSave').addEventListener('click', async () => { await mvSaveDrive(); note('Mémo enregistré sur le Drive de la fiche.', 3000); });
   $('#mvDown').addEventListener('click', () => { if (!mv || !mv.file) return; if (IN_FRAME) { note('Le téléchargement est bloqué dans cet aperçu.', 3000); return; } dzDownload(mv.file); });
   $('#mvShare').addEventListener('click', () => { if (mv && mv.file) mvShare(); });
-  $('#dzMain').addEventListener('click', e => { const b = e.target.closest('[data-memo]'); if (b) dzOpenMemo(b.dataset.memo); });
+  $('#dzMain').addEventListener('click', e => { const x = e.target.closest('[data-memodel]'); if (x) { dzAskDelMemo(x.dataset.memodel); return; } const b = e.target.closest('[data-memo]'); if (b) dzOpenMemo(b.dataset.memo); });
+  $('#mvDel').addEventListener('click', () => { if (mv && mv.key) dzAskDelMemo(mv.key); });
 }
 
 /* ---------- Entreprises (Paramètres) ---------- */
