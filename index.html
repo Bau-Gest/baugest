@@ -887,6 +887,8 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .td-sites .chip{flex:none;min-height:38px;font-size:14px}
 .td-pad{position:relative;border:2px dashed var(--line);border-radius:12px;background:var(--surface);color:var(--text);overflow:hidden}
 .td-pad canvas{display:block;width:100%;touch-action:pan-y;cursor:crosshair}
+:is(#sheetTodo,#sheetTodoEd,#sheetTodoDate,#sheetTodoLink,#desk.td-mode .dk-main),:is(#sheetTodo,#sheetTodoEd,#sheetTodoDate,#sheetTodoLink,#desk.td-mode .dk-main) *{touch-action:pan-y}
+.td-new{-webkit-user-select:none;user-select:none}
 .td-tool{position:absolute;z-index:1;top:8px;right:8px;display:flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:600 13.5px var(--body)}
 .td-tool .ic{width:17px;height:17px}
 .td-tool.on{background:#e5312b;border-color:#e5312b;color:#fff}
@@ -6007,6 +6009,7 @@ function renderDeskModes(){
   $('#dkModes').hidden = !show;
   $$('#dkModes [data-dmode]').forEach(b => { const on = b.dataset.dmode === desk.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
   $('#dkTitle').textContent = desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV DT' : desk.mode === 'soum' ? 'Soumission' : desk.mode === 'todo' ? 'À faire' : 'Documents';
+  $('#desk').classList.toggle('td-mode', desk.mode === 'todo');
   syncRail();
 }
 async function planUploaded(uid, f){
@@ -9426,7 +9429,7 @@ function bindTdPad(el){
   const pt = e => { const r = c.getBoundingClientRect(); return [Math.round((e.clientX - r.left) / r.width * TW * 10) / 10, Math.round((e.clientY - r.top) / r.height * (tdPadState(el)?.lines || 2) * TD_LH * 10) / 10, e.pointerType === 'pen' ? Math.round((e.pressure || .5) * 100) / 100 : .5]; };
   let tap = null, lastTap = null, er = null;
   c.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'touch') { tap = {id:e.pointerId, x:e.clientX, y:e.clientY, t:Date.now()}; return; } // le doigt fait défiler ; double tape = stylo ⇄ gomme
+    if (e.pointerType === 'touch') { if (!tdPenActive() && !tdPalmSize(e.width, e.height)) tap = {id:e.pointerId, x:e.clientX, y:e.clientY, t:Date.now()}; return; } // le doigt fait défiler ; double tape = stylo ⇄ gomme
     if (cur || er) return;
     const st0 = tdPadState(el);
     e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch (x) {}
@@ -9451,7 +9454,7 @@ function bindTdPad(el){
       const t = tap; tap = null;
       if (e.type === 'pointerup' && Date.now() - t.t < 350) {
         const now = Date.now();
-        if (lastTap && now - lastTap.t < 380 && Math.hypot(t.x - lastTap.x, t.y - lastTap.y) < 40) { lastTap = null; tdToggleTool(el); }
+        if (lastTap && now - lastTap.t < 380 && Math.hypot(t.x - lastTap.x, t.y - lastTap.y) < 40) { lastTap = null; if (Date.now() - (TD.penT || 0) > 1000) tdToggleTool(el); }
         else lastTap = {t:now, x:t.x, y:t.y};
       }
       return;
@@ -9778,7 +9781,39 @@ function tdFromPvPoint(p){
   pdRenderPoints(); tdEdit(t.id);
 }
 
+/* ---------- main posée pendant l'écriture et zoom aux doigts (rubrique À faire) ----------
+   Pendant que le stylet écrit ou survole l'écran (et 0,8 s après), les touchers de la main sont ignorés :
+   pas de défilement, pas de bouton touché, pas de double tape. Une grande surface de contact (paume) est toujours ignorée.
+   Zoom à 2 doigts bloqué dans les zones À faire. */
+const TD_ZONES = '#sheetTodo,#sheetTodoEd,#sheetTodoDate,#sheetTodoLink,#desk.td-mode .dk-main';
+const tdPenActive = () => TD.penDown || Date.now() - (TD.penT || 0) < 800;
+const tdInZone = t => !!(t && t.closest && t.closest(TD_ZONES));
+const tdPalmSize = (w, h) => Math.max(w || 0, h || 0) > 40;
+function bindTdPalm(){
+  const pen = e => { if (e.pointerType !== 'pen') return; TD.penT = Date.now(); if (e.type === 'pointerdown') TD.penDown = true; else if (e.type === 'pointerup' || e.type === 'pointercancel') TD.penDown = false; };
+  ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'pointerover'].forEach(t => document.addEventListener(t, pen, true));
+  // toucher de la main : bloqué dès le début (pas de défilement, pas de clic)
+  document.addEventListener('touchstart', e => {
+    if (!tdInZone(e.target)) return;
+    const palm = [...e.changedTouches].some(t => tdPalmSize(t.radiusX * 2, t.radiusY * 2));
+    if (tdPenActive() || palm || e.touches.length > 1) { if (e.cancelable) e.preventDefault(); TD.palmT = Date.now(); }
+  }, {capture:true, passive:false});
+  document.addEventListener('touchmove', e => {
+    if (!tdInZone(e.target)) return;
+    if ((tdPenActive() || e.touches.length > 1 || Date.now() - (TD.palmT || 0) < 600) && e.cancelable) e.preventDefault();
+  }, {capture:true, passive:false});
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch' || !tdInZone(e.target)) return;
+    if (tdPenActive() || tdPalmSize(e.width, e.height)) { TD.palmT = Date.now(); e.stopPropagation(); }
+  }, true);
+  document.addEventListener('click', e => {
+    if (!tdInZone(e.target) || e.pointerType !== 'touch') return;
+    if (Date.now() - (TD.palmT || 0) < 700) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  ['gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, e => { if (tdInZone(e.target)) e.preventDefault(); }, {passive:false}));
+}
 function bindTodo(){
+  bindTdPalm();
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-todo]'); if (!b) return;
     e.preventDefault(); openTodo();
