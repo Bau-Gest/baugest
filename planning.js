@@ -1710,6 +1710,22 @@ root.BGPlan = Object.assign(CORE, {
   init(host){ H = host; },
   open, close, back,
   async importXml(xml, siteId){ await open(siteId); const p = fromMSPDI(xml, U.siteId); if (!p.tasks.length) throw new Error('aucune tâche trouvée'); await addRec(p); toast(`Importé : ${p.tasks.length} tâches. Vérifie le canton dans Réglages.`, 5000); },
-  isOpen:() => { const el = document.getElementById('bgPlan'); return !!el && !el.hidden; }
+  isOpen:() => { const el = document.getElementById('bgPlan'); return !!el && !el.hidden; },
+  /* jalons non terminés entre deux dates (AAAA-MM-JJ, fin exclue), plannings gardés sur cet appareil : accueil de la tablette */
+  async milestones(from, to){
+    const d0 = dnOfIso(from), d1 = dnOfIso(to), out = [];
+    for (const rec of await PDB.all().catch(() => [])) {
+      if (!rec || !rec.plan || !Array.isArray(rec.plan.tasks) || !rec.plan.tasks.some(t => t.ms)) continue;
+      try {
+        const p = normPlan(JSON.parse(JSON.stringify(rec.plan))), sch = schedule(p, makeCal(p));
+        for (const t of p.tasks) {
+          if (!t.ms || +t.pct >= 100 || t.aEnd) continue;
+          const r = sch.R.get(t.id); if (!r || r.sum || r.start < d0 || r.start >= d1) continue;
+          out.push({siteId:rec.siteId || p.siteId, plan:rec.name || p.name, uid:rec.uid, name:t.name, iso:isoOfDn(r.start)});
+        }
+      } catch (e) {}
+    }
+    return out;
+  }
 });
 })(typeof window !== 'undefined' ? window : globalThis);

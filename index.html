@@ -880,6 +880,54 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .so-can em{font-style:normal;font-weight:700;white-space:nowrap}
 @media (max-width:760px){.so-r{grid-template-columns:64px minmax(0,1fr) 84px}.so-r>.so-u,.so-r>.so-n:not(.so-m){display:none}.so-h{grid-template-columns:64px minmax(0,1fr)}}
 
+/* ---------- Accueil (tablette) : journée, semaine, À faire par chantier en colonnes ---------- */
+body.tabshell #desk.hm-mode .dk-sitebtn{display:none!important}
+#desk.hm-mode #dkList{display:grid;gap:22px;min-width:0}
+#desk.hm-mode #dkList > section{min-width:0}
+.hm-day small{display:block;font:500 13px var(--mono);color:var(--muted)}
+.hm-day h2{margin:0;font:700 30px/1.05 var(--display);text-transform:uppercase;letter-spacing:.03em}
+.dk-head .hm-gps{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:18px;border:1px solid var(--line);background:var(--surface);font:600 14px/1.1 var(--body);color:var(--muted)}
+.hm-gps .ic{width:18px;height:18px}
+.hm-gps.on{color:var(--text)} .hm-gps.on .ic{color:var(--ok)}
+.hm-lbl{margin:0 0 8px;font:700 12.5px/1 var(--body);text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.hm-today{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.hm-ev{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px;padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-align:left;color:var(--text)}
+.hm-ev .t{grid-row:span 3;min-width:60px;font:700 26px/1 var(--display);font-variant-numeric:tabular-nums}
+.hm-ev .k{font:700 12px/1.1 var(--body);text-transform:uppercase;letter-spacing:.1em}
+.hm-ev b{font:600 16.5px/1.25 var(--body);min-width:0;overflow-wrap:anywhere}
+.hm-ev small{font-size:13.5px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.hm-ev .acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.hm-ev.se{border-color:color-mix(in srgb,#5aa2f0 55%,var(--line))} .hm-ev.se .k{color:#5aa2f0}
+.hm-ev.dv .k{color:var(--signal)}
+.hm-ev.pv .k{color:var(--warn)}
+.hm-ev.al{background:color-mix(in srgb,var(--bad) 12%,var(--surface));border-color:color-mix(in srgb,var(--bad) 45%,var(--line))} .hm-ev.al .k,.hm-ev.al .t{color:var(--bad)}
+.hm-ev.ok .k,.hm-ev.ok .t{color:var(--ok)}
+.hm-week{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);gap:8px;overflow-x:auto;padding-bottom:4px}
+.hm-wd{display:grid;gap:6px;align-content:start;min-width:0;padding:10px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.hm-wd.now{border-color:var(--signal)}
+.hm-wd > b{font:700 15px/1 var(--display);text-transform:uppercase;letter-spacing:.04em}
+.hm-wd.now > b{color:var(--signal)}
+.hm-wd .e{font-size:12.5px;color:var(--muted)}
+.hm-it{display:flex;gap:6px;align-items:baseline;min-width:0;padding:0;border:0;background:none;color:var(--text);font:500 13px/1.3 var(--body);text-align:left}
+.hm-it i{flex:none;width:8px;height:8px;border-radius:2px;transform:translateY(-1px)}
+.hm-it span{min-width:0;overflow-wrap:anywhere}
+.hm-it small{font:12px var(--mono);color:var(--muted)}
+.hm-it.se i{background:#5aa2f0} .hm-it.dv i{background:var(--signal)} .hm-it.ms i{background:var(--ok);transform:translateY(-1px) rotate(45deg)} .hm-it.td i{background:var(--bad);border-radius:50%}
+.hm-cols{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(300px,1fr);gap:12px;overflow-x:auto;padding-bottom:6px;align-items:start}
+.hm-col{display:grid;min-width:0;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.hm-ch{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:center;padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+.hm-ch .slogo{width:36px;height:36px}
+.hm-ch b{font:700 19px/1.1 var(--display);text-transform:uppercase;letter-spacing:.02em;overflow-wrap:anywhere}
+.hm-ch .meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+.hm-pill{display:inline-flex;align-items:center;padding:3px 8px;border-radius:9px;background:var(--surface2);color:var(--muted);font:600 12px/1.2 var(--body)}
+.hm-pill.red{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.hm-pill.blue{background:color-mix(in srgb,#5aa2f0 18%,transparent);color:#5aa2f0}
+.hm-pill.here{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.hm-col .td-list{padding:6px 8px}
+.hm-col .hm-add{margin:2px 10px 12px;justify-content:center;border-style:dashed;background:none;color:var(--muted)}
+html[data-theme="light"] :is(.hm-ev.se .k,.hm-pill.blue){color:#2366b8}
+html[data-theme="light"] .hm-it.se i{background:#2366b8}
+
 /* ---------- À faire par chantier (v2.3) ---------- */
 .todo-btn{position:relative}
 .badge.red{background:var(--bad);color:#fff}
@@ -1183,6 +1231,8 @@ html[data-theme="light"] .rail button.rail-cam .ic{color:#8a6200}
 html[data-contrast] .rail button.rail-cam{border-color:#000}
 html[data-contrast] .rail button.rail-cam .ic{color:#000}
 .rail button[data-rail="contrast"].on{background:var(--signal);color:var(--signal-ink)}
+.rail button.rail-logo{display:grid;justify-items:center;gap:3px;margin:0 0 10px;padding:8px 2px;color:var(--signal)}
+.rail button.rail-logo .ic{width:30px;height:30px;color:var(--signal)}
 .rail button[data-rail="contrast"].on .ic{color:var(--signal-ink)}
 .rail-grow{flex:1;min-height:8px}
 html[data-theme="light"] #rail{--asphalt:#f2f0eb;--surface:#ffffff;--surface2:#e9e6df;--line:#d2cec5;--text:#1b1d21;--muted:#5b6169;--signal-soft:#fbefc4;color-scheme:light}
@@ -1370,7 +1420,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
 
 <!-- Ergonomie v2 : barre des rubriques (tablette) -->
 <nav id="rail" class="rail" hidden aria-label="Rubriques">
-  <div class="rail-logo"><svg class="ic" viewBox="0 0 24 24"><path d="M3 21h8M7 21V4M4 4h16M7 4l4 4M7 8l4-4M18 4v6M16 10h4v3h-4z"/></svg><span>Bau<b>Gest</b></span></div>
+  <button class="rail-logo" data-rail="home" aria-label="Accueil" title="Accueil"><svg class="ic" viewBox="0 0 24 24"><path d="M3 21h8M7 21V4M4 4h16M7 4l4 4M7 8l4-4M18 4v6M16 10h4v3h-4z"/></svg><span>Bau<b>Gest</b></span></button>
   <button data-rail="photos"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M9 8.5h.01"/></svg>Photos</button>
   <button data-rail="plans"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg>Plans</button>
   <button data-rail="docs"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5"/></svg>Documents</button>
@@ -2114,8 +2164,8 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
       <section class="group" id="g-docs">
         <h2>Documents</h2>
         <div class="field"><span>Au démarrage</span>
-          <div class="seg"><label><input type="radio" name="homeMode" value="auto"><span>Auto</span></label><label><input type="radio" name="homeMode" value="camera"><span>Caméra</span></label><label><input type="radio" name="homeMode" value="plans"><span>Plans</span></label><label><input type="radio" name="homeMode" value="docs"><span>Documents</span></label></div>
-          <p class="hint">Auto : plans sur la tablette, caméra sur le téléphone. Plans et Documents ne s’appliquent qu’à la tablette ; sur le téléphone, l’app s’ouvre sur la caméra (ou les documents). Les plans PDF ne s’affichent que sur la tablette.</p>
+          <div class="seg"><label><input type="radio" name="homeMode" value="auto"><span>Accueil</span></label><label><input type="radio" name="homeMode" value="camera"><span>Caméra</span></label><label><input type="radio" name="homeMode" value="plans"><span>Plans</span></label><label><input type="radio" name="homeMode" value="docs"><span>Documents</span></label></div>
+          <p class="hint">Accueil : tâches À faire par chantier, séances et visites du jour sur la tablette, caméra sur le téléphone (le logo BauGest de la barre de gauche ramène toujours à l’accueil). Plans et Documents ne s’appliquent qu’à la tablette ; sur le téléphone, l’app s’ouvre sur la caméra (ou les documents). Les plans PDF ne s’affichent que sur la tablette.</p>
         </div>
         <div class="field"><span>Titre de chaque document</span><div id="dlTitles" style="display:grid;gap:10px"></div></div>
         <div class="field"><span>Mise en page par défaut</span>
@@ -4546,7 +4596,7 @@ const desk = {site:null, items:[], err:null, loading:false, token:0};
 const isTabletScreen = () => Math.min(screen.width || innerWidth, screen.height || innerHeight) >= 600;
 const deskHome = () => isTabletScreen() && S.home !== 'camera'; // téléphone : toujours la caméra au démarrage
 function openDesk(){
-  if (!isTabletScreen()) desk.mode = 'docs'; else if (!desk.mode) desk.mode = S.home === 'docs' ? 'docs' : 'plans';
+  if (!isTabletScreen()) desk.mode = 'docs'; else if (!desk.mode) desk.mode = S.home === 'docs' ? 'docs' : S.home === 'plans' ? 'plans' : 'home';
   renderDeskModes();
   if (!desk.site || (desk.site !== '__none' && !siteById(desk.site))) { const c = currentSite(); desk.site = c ? c.id : (S.sites[0]?.id || '__none'); }
   $('#desk').hidden = false; stopCamera();
@@ -4600,7 +4650,7 @@ async function seedDemo(){
     hw(g, 'Maçon', 80, 486, 26); hw(g, 'CFC', 480, 486, 26); hw(g, '3.5', 780, 486, 26); hw(g, 'Mini-pelle 3 t', 80, 756, 26); hw(g, '2', 780, 756, 26);
     hw(g, 'Béton C25/30', 80, 940, 26); hw(g, '0.4', 600, 940, 26); hw(g, 'm³', 780, 940, 26); });
 }
-function loadDocs(){ return desk.mode === 'plans' ? loadPlans() : desk.mode === 'pvdt' ? loadPvdt() : desk.mode === 'soum' ? loadSoum() : desk.mode === 'todo' ? loadTodo() : loadDocsRaw(); }
+function loadDocs(){ return desk.mode === 'home' ? loadHome() : desk.mode === 'plans' ? loadPlans() : desk.mode === 'pvdt' ? loadPvdt() : desk.mode === 'soum' ? loadSoum() : desk.mode === 'todo' ? loadTodo() : loadDocsRaw(); }
 async function loadDocsRaw(){
   const tok = ++desk.token, sid = desk.site === '__none' ? 'none' : desk.site;
   desk.loading = true; desk.err = null;
@@ -4632,6 +4682,7 @@ async function loadDocsRaw(){
   desk.items = local.concat(more); desk.loading = false; renderDesk();
 }
 function renderDesk(){
+  if (desk.mode === 'home') return renderHome();
   if (desk.mode === 'plans') return renderPlans();
   if (desk.mode === 'pvdt') return renderPvdt();
   if (desk.mode === 'soum') return renderSoum();
@@ -5276,7 +5327,7 @@ function bindDocs(){
   $('#dlBox').addEventListener('change', () => { S.docLay = readLay('dl'); save(); $('#dlPosSeg').hidden = !S.docLay.logo; drawDlPreview(); });
   $('#dlKind').addEventListener('change', drawDlPreview);
   $('#dlTitles').addEventListener('input', e => { const t = e.target.dataset.dtitle; if (!t) return; S.docTitles = S.docTitles || {}; const v = e.target.value.trim(); if (v && v !== DOCS[t].title) S.docTitles[t] = v; else delete S.docTitles[t]; save(); if ($('#dlKind').value === t) drawDlPreview(); });
-  $$('input[name=homeMode]').forEach(r => r.addEventListener('change', () => { S.home = r.value; save(); if (r.value === 'plans') { note('Au démarrage : plans sur la tablette, caméra sur le téléphone', 3200); return; } note(r.value === 'docs' ? 'Au démarrage : documents sur la tablette, caméra sur le téléphone' : r.value === 'camera' ? 'Au démarrage : caméra' : 'Au démarrage : documents sur tablette, caméra sur téléphone', 3200); }));
+  $$('input[name=homeMode]').forEach(r => r.addEventListener('change', () => { S.home = r.value; save(); if (r.value === 'plans') { note('Au démarrage : plans sur la tablette, caméra sur le téléphone', 3200); return; } note(r.value === 'docs' ? 'Au démarrage : documents sur la tablette, caméra sur le téléphone' : r.value === 'camera' ? 'Au démarrage : caméra' : 'Au démarrage : accueil sur la tablette, caméra sur le téléphone', 3200); }));
   /* fiche chantier */
   $('#seDocCustom').addEventListener('change', e => { seDocOn = e.target.checked; renderSeDoc(); });
   $('#sdBox').addEventListener('change', () => { seDocLay = readLay('sd'); $('#sdPosSeg').hidden = !seDocLay.logo; drawSeDoc(); });
@@ -6081,9 +6132,10 @@ function renderDeskModes(){
   const show = isTabletScreen();
   $('#dkModes').hidden = !show;
   $$('#dkModes [data-dmode]').forEach(b => { const on = b.dataset.dmode === desk.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
-  $('#dkTitle').textContent = desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV DT' : desk.mode === 'soum' ? 'Soumission' : desk.mode === 'todo' ? 'À faire' : 'Documents';
+  $('#dkTitle').textContent = desk.mode === 'home' ? 'Accueil' : desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV DT' : desk.mode === 'soum' ? 'Soumission' : desk.mode === 'todo' ? 'À faire' : 'Documents';
   $('#desk').classList.toggle('td-mode', desk.mode === 'todo');
-  syncRail();
+  $('#desk').classList.toggle('hm-mode', desk.mode === 'home');
+  syncRail(); backSchedule();
 }
 async function planUploaded(uid, f){
   const r = await PLANCACHE.get(uid);
@@ -9477,7 +9529,9 @@ function bindSketch(){
 
 /* ---------- Bouton « retour » d'Android (v1.6) ---------- */
 /* Chaque écran ou fenêtre ouvert ajoute une étape dans l'historique : « retour » ferme le dernier ouvert.
-   À l'écran de départ (caméra sur le téléphone, documents sur la tablette), « retour » quitte l'app comme toute app Android. */
+   À l'écran de départ (caméra sur le téléphone, accueil ou documents sur la tablette), « retour » quitte l'app comme toute app Android.
+   Tablette avec l'accueil au démarrage : depuis une rubrique du bureau, « retour » ramène à l'accueil. */
+const hmBackHome = () => isTabletScreen() && isOpen('#desk') && !!desk.mode && desk.mode !== 'home' && !['docs', 'plans', 'camera'].includes(S.home);
 const BACK = {on:false, depth:0, ignore:0, timer:0};
 const isOpen = sel => { const el = $(sel); return !!el && !el.hidden; };
 function backLayers(){
@@ -9495,6 +9549,7 @@ function backLayers(){
   if (isOpen('#memoView')) n++;
   if (isOpen('#gallery')) { n++; if (gal.view === 'map' && isOpen('#mapStrip')) n++; if (gal.selMode) n++; }
   if (deskHome() ? !isOpen('#desk') : isOpen('#desk')) n++;
+  if (hmBackHome()) n++;
   return n;
 }
 function backCloseTop(){
@@ -9522,6 +9577,7 @@ function backCloseTop(){
     if (gal.selMode) { gal.selMode = false; gal.sel.clear(); renderGallery(); return true; }
     closeGallery(); return true;
   }
+  if (hmBackHome()) { goSection('home'); return true; }
   if (deskHome()) { if (!isOpen('#desk')) { openDesk(); return true; } }
   else if (isOpen('#desk')) { closeDesk(); return true; }
   return false;
@@ -10168,6 +10224,7 @@ function renderTodoList(s){
 }
 function tdRenderAll(){
   if (!$('#desk').hidden && desk.mode === 'todo') renderTodo();
+  if (!$('#desk').hidden && desk.mode === 'home') renderHome();
   renderTodoPanel();
 }
 
@@ -10203,6 +10260,130 @@ function tdStartup(){
   const late = []; for (const s of tdSites()) for (const t of (TD.lists[s.id]?.tasks || [])) if (tdOpen(t) && t.due && t.due < Date.now()) late.push(t);
   tdCheckDue();
   if (late.length) tdBanner(late.length === 1 ? '1 tâche en retard' : late.length + ' tâches en retard', late.length === 1 ? late[0].id : '');
+}
+
+/* ---------- Accueil (tablette) : journée, semaine, À faire par chantier en colonnes ----------
+   Mode 'home' du bureau ; le logo BauGest de la barre de gauche y ramène toujours. Écran de démarrage de la tablette (S.home 'auto').
+   Sources : séances (s.meet), visites devis (S.devis[].visit), PV DT non lus (Drive kind='pvdt' des 14 derniers jours, baugest.pvdt.seen),
+   jalons des plannings gardés sur l'appareil (BGPlan.milestones), tâches À faire (TD). */
+const HM = {pvs:[], ms:[], tok:0, timer:0};
+const hmDay0 = (d = new Date()) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
+const hmIso = ms => { const d = new Date(ms); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+const hmHM = ms => { const d = new Date(ms); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); };
+function hmSeances(t0, t1){
+  const out = [];
+  for (const s of tdSites()) {
+    const m = s.meet; if (!m || !/^\d{4}-\d{2}-\d{2}$/.test(m.from || '')) continue;
+    const [hh, mm] = String(m.time || '08:00').split(':').map(Number), every = Math.max(1, +m.every || 1);
+    const d = new Date(m.from + 'T00:00:00'); d.setHours(hh || 0, mm || 0, 0, 0); if (isNaN(d)) continue;
+    for (let i = 0; i < 800 && d.getTime() < t1; i++) { if (d.getTime() >= t0) out.push({s, at:d.getTime(), m}); d.setDate(d.getDate() + 7 * every); }
+  }
+  return out.sort((a, b) => a.at - b.at);
+}
+function hmVisits(t0, t1){
+  return (S.devis || []).map(d => ({d, at:new Date(d.visit || '').getTime()})).filter(o => o.d.visit && isFinite(o.at) && o.at >= t0 && o.at < t1).sort((a, b) => a.at - b.at);
+}
+async function loadHome(){
+  renderHome();
+  tdSync();
+  const tok = ++HM.tok, t0 = hmDay0();
+  if (window.BGPlan && BGPlan.milestones) { try { HM.ms = await BGPlan.milestones(hmIso(t0), hmIso(t0 + 7 * 864e5)); } catch (e) { HM.ms = []; } }
+  if (driveReady() && navigator.onLine && !queueReason()) {
+    try {
+      const since = new Date(Date.now() - 14 * 864e5).toISOString();
+      const q = `trashed=false and appProperties has { key='kind' and value='pvdt' } and createdTime > '${since}'`;
+      const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, orderBy:'createdTime desc', pageSize:'50', fields:'files(id,name,createdTime,appProperties)'}));
+      HM.pvs = (r.files || []).filter(f => !PD_RECAP.test(f.name || ''));
+    } catch (e) {}
+  }
+  if (tok === HM.tok && !$('#desk').hidden && desk.mode === 'home') renderHome();
+}
+function hmTaskLabel(t){ const x = tdText(t); return x ? x.slice(0, 60) : 'Tâche écrite au stylo'; }
+function renderHome(){
+  if ($('#desk').hidden || desk.mode !== 'home') return;
+  const now = new Date(), t0 = hmDay0(now), t1 = t0 + 864e5, c = currentSite();
+  const wk = (() => { const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())); const day = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() + 4 - day); return Math.ceil(((d - Date.UTC(d.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7); })();
+  const day = now.toLocaleDateString('fr-CH', {weekday:'long', day:'numeric', month:'long'});
+  $('#dkHead').innerHTML = `<div class="t hm-day"><small>Semaine ${wk} · ${hmHM(now)}</small><h2>${esc(day)}</h2></div>
+    <span class="hm-gps${c ? ' on' : ''}"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>${esc(c ? 'Sur place : ' + siteLabel(c) : pos ? 'Pas sur un chantier' : 'Recherche GPS…')}</span>`;
+  const info = tdSyncState(); $('#dkInfo').hidden = !info; $('#dkInfo').textContent = info;
+
+  /* aujourd'hui */
+  const sites = tdSites(), all = sites.map(s => ({s, tasks:(TD.lists[s.id]?.tasks || []).filter(tdOpen)}));
+  const late = all.reduce((n, b) => n + b.tasks.filter(t => t.due && t.due < Date.now()).length, 0), today = all.reduce((n, b) => n + b.tasks.filter(tdUrgent).length, 0) - late;
+  const seen = pdSeen(), pvs = HM.pvs.filter(f => !seen[f.id]);
+  const cards = [];
+  cards.push(late || today
+    ? `<div class="hm-ev al"><span class="t">${late + today}</span><span class="k">Rappels</span><b>${[late && late + ' en retard', today && today + ' pour aujourd’hui'].filter(Boolean).join(', ')}</b><small>Les plus urgentes sont en haut de chaque colonne.</small></div>`
+    : `<div class="hm-ev ok"><span class="t">0</span><span class="k">Rappels</span><b>Rien en retard</b><small>Aucune tâche pour aujourd’hui.</small></div>`);
+  for (const o of hmVisits(t0, t1)) {
+    const d = o.d, addr = [d.addr?.street, [d.addr?.npa, d.addr?.city].filter(Boolean).join(' ')].map(x => (x || '').trim()).filter(Boolean).join(', ');
+    cards.push(`<div class="hm-ev dv"><span class="t">${hmHM(o.at)}</span><span class="k">Visite devis</span><b>${esc(devName(d) + (devCity(d) ? ' – ' + devCity(d) : ''))}</b><small>${esc([addr, (d.client?.tel || '').trim()].filter(Boolean).join(' · ') || 'Adresse à compléter')}</small>
+      <span class="acts"><button class="btn" data-hmdv="${esc(d.id)}">Ouvrir la fiche</button></span></div>`);
+  }
+  for (const o of hmSeances(t0, t1)) {
+    cards.push(`<div class="hm-ev se"><span class="t">${hmHM(o.at)}</span><span class="k">Séance de chantier</span><b>${esc(siteLabel(o.s))}</b><small>${esc(o.m.place || 'Lieu non indiqué')} · récap prêt la veille dans PV DT</small>
+      <span class="acts"><button class="btn primary" data-hmpv="${esc(o.s.id)}">PV DT et récap</button><button class="btn" data-hmtd="${esc(o.s.id)}">À faire du chantier</button></span></div>`);
+  }
+  if (pvs.length) {
+    const f = pvs[0], a = f.appProperties || {}, s = siteById(remapId(a.site));
+    cards.push(`<div class="hm-ev pv"><span class="t">${pvs.length}</span><span class="k">${pvs.length > 1 ? 'Nouveaux PV DT' : 'Nouveau PV DT'}</span><b>${esc((s ? siteLabel(s) + ' · ' : '') + (a.pvn ? 'PV n° ' + a.pvn : plBase(f.name || '')))}</b><small>Reçu le ${esc(fmtISO((f.createdTime || '').slice(0, 10)))} · pas encore lu${pvs.length > 1 ? ' · ' + (pvs.length - 1) + ' autre' + (pvs.length > 2 ? 's' : '') : ''}</small>
+      <span class="acts"><button class="btn" data-hmpvo="${esc(f.id)}" data-hmsid="${esc(s ? s.id : '')}">Lire le PV</button></span></div>`);
+  }
+
+  /* cette semaine */
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const a = new Date(t0); a.setDate(a.getDate() + i); const b = new Date(a); b.setDate(b.getDate() + 1);
+    const A = a.getTime(), B = b.getTime(), it = [];
+    if (a.getDay() === 0 || a.getDay() === 6) { if (!hmSeances(A, B).length && !hmVisits(A, B).length) continue; }
+    for (const o of hmSeances(A, B)) it.push([o.at, `<button class="hm-it se" data-hmpv="${esc(o.s.id)}"><i></i><span><small>${hmHM(o.at)}</small> Séance ${esc(o.s.number || o.s.name)}</span></button>`]);
+    for (const o of hmVisits(A, B)) it.push([o.at, `<button class="hm-it dv" data-hmdv="${esc(o.d.id)}"><i></i><span><small>${hmHM(o.at)}</small> Visite ${esc(devName(o.d))}</span></button>`]);
+    const iso = hmIso(A);
+    for (const m of HM.ms.filter(m => m.iso === iso)) { const s = siteById(m.siteId); it.push([A + 1, `<span class="hm-it ms"><i></i><span>${esc(m.name)}${s ? ' · ' + esc(s.number || s.name) : ''}</span></span>`]); }
+    const due = []; for (const b2 of all) for (const t of b2.tasks) if (t.due && t.due >= A && t.due < B) due.push({s:b2.s, t});
+    due.sort((x, y) => x.t.due - y.t.due);
+    for (const o of due.slice(0, 3)) it.push([o.t.due, `<button class="hm-it td" data-hmgo="${esc(o.t.id)}" data-hmsid="${esc(o.s.id)}"><i></i><span>${esc(hmTaskLabel(o.t))} · ${esc(o.s.number || o.s.name)}</span></button>`]);
+    if (due.length > 3) it.push([B, `<span class="hm-it"><span class="e">+ ${due.length - 3} tâche${due.length > 4 ? 's' : ''}</span></span>`]);
+    const wd = a.toLocaleDateString('fr-CH', {weekday:'short'}).replace('.', '');
+    days.push(`<div class="hm-wd${i === 0 ? ' now' : ''}"><b>${esc(wd)} ${a.getDate()}</b>${it.length ? it.sort((x, y) => x[0] - y[0]).map(x => x[1]).join('') : '<span class="e">Rien de prévu</span>'}</div>`);
+  }
+
+  /* À faire par chantier : une colonne par chantier avec au moins 1 tâche ouverte ; chantier où je suis d'abord */
+  const cols = all.filter(b => b.tasks.length).map(b => ({...b, tasks:b.tasks.sort(tdSort)}))
+    .sort((a, b) => ((b.s.id === c?.id) - (a.s.id === c?.id)) || (b.tasks.some(tdUrgent) - a.tasks.some(tdUrgent)) || siteLabel(a.s).localeCompare(siteLabel(b.s), 'fr', {numeric:true}));
+  const colHTML = b => {
+    const nl = b.tasks.filter(t => t.due && t.due < Date.now()).length, se = tdSeance(b.s.id), seD = se && hmDay0(new Date(se)) === t0;
+    const seL = se ? 'Séance ' + (seD ? 'aujourd’hui ' + hmHM(se) : tdDueLabel(se).replace(/^Demain/, 'demain').replace(/^(\w+) (\d\d)\.(\d\d) /, '$1 $2.$3 · ')) : '';
+    return `<section class="hm-col" data-hmcol="${esc(b.s.id)}"><div class="hm-ch">${logoHTML(b.s)}<b>${esc(siteLabel(b.s))}</b><span class="meta">
+      ${c && c.id === b.s.id ? '<span class="hm-pill here">Sur place</span>' : ''}${seL ? `<span class="hm-pill${seD ? ' blue' : ''}">${esc(seL)}</span>` : ''}
+      ${nl ? `<span class="hm-pill red">${nl} en retard</span>` : ''}<span class="hm-pill">${b.tasks.length} à faire</span></span></div>
+      ${tdListHTML(b.tasks, b.s.id)}<button class="btn hm-add" data-hmtd="${esc(b.s.id)}">+ Tâche</button></section>`;
+  };
+  $('#dkList').innerHTML = `<section><h3 class="hm-lbl">Aujourd’hui</h3><div class="hm-today">${cards.join('')}</div></section>
+    <section><h3 class="hm-lbl">Cette semaine</h3><div class="hm-week">${days.join('')}</div></section>
+    <section><h3 class="hm-lbl">À faire par chantier</h3>${cols.length ? `<div class="hm-cols">${cols.map(colHTML).join('')}</div>` : '<p class="dk-empty">Rien à faire sur tes chantiers. Touche « À faire » dans la barre de gauche pour écrire une tâche.</p>'}</section>`;
+  tdFillInk($('#dkList'));
+  renderDeskModes();
+  clearTimeout(HM.timer); HM.timer = setTimeout(renderHome, 60000 - Date.now() % 60000 + 50); // heure et retards à jour chaque minute
+}
+function hmGoTodo(sid, id){
+  if (!siteById(sid)) return;
+  desk.site = sid; goSection('todo');
+  if (!id) return;
+  const r = $('#tdDeskList') && $('#tdDeskList').querySelector(`[data-tdid="${CSS.escape(id)}"]`);
+  if (r) { r.classList.add('flash'); r.scrollIntoView({block:'center'}); }
+}
+function hmClick(e){
+  let b;
+  if ((b = e.target.closest('[data-tdchk]'))) { tdToggle(b.dataset.tdchk); return; }
+  if ((b = e.target.closest('[data-tdlnk]'))) { const f = tdFind(b.dataset.tdlnk); if (f) tdOpenLink(f.t, f.sid); return; }
+  if ((b = e.target.closest('[data-tdedit]'))) { const r = b.closest('[data-tdsid]'); hmGoTodo(r && r.dataset.tdsid, b.dataset.tdedit); return; }
+  if ((b = e.target.closest('[data-hmgo]'))) { hmGoTodo(b.dataset.hmsid, b.dataset.hmgo); return; }
+  if ((b = e.target.closest('[data-hmtd]'))) { hmGoTodo(b.dataset.hmtd); return; }
+  if ((b = e.target.closest('[data-hmpv]'))) { desk.site = b.dataset.hmpv; goSection('pvdt'); return; }
+  if ((b = e.target.closest('[data-hmpvo]'))) { pdOpenFromParam(b.dataset.hmpvo, b.dataset.hmsid); return; }
+  if ((b = e.target.closest('[data-hmdv]'))) { if (devById(b.dataset.hmdv)) { dz.cur = b.dataset.hmdv; dz.view = 'fiche'; } goSection('devis'); }
 }
 
 /* ---------- depuis un PV DT : point à notre charge → tâche ---------- */
@@ -10270,6 +10451,7 @@ function bindTodo(){
   $('#sheetTodo').addEventListener('click', lists);
   $('#sheetTodoEd').addEventListener('click', lists);
   $('#dkMain').addEventListener('click', e => {
+    if (desk.mode === 'home') { if (!tdPadClick(e)) hmClick(e); return; }
     if (desk.mode !== 'todo') return;
     if (e.target.closest('#tdShowDone')) { TD.showDone = !TD.showDone; renderTodo(); return; }
     lists(e);
@@ -10302,6 +10484,7 @@ function bindTodo(){
 }
 async function initTodo(param){
   await tdLoadLocal();
+  if (!$('#desk').hidden && desk.mode === 'home') renderHome();
   tdStartup();
   tdSync();
   if (param) openTodo(param);
@@ -10467,6 +10650,7 @@ async function init(){
     let tried = null; try { tried = sessionStorage.getItem('pc_silent'); } catch (e) {}
     if (!tried) { try { sessionStorage.setItem('pc_silent', '1'); } catch (e) {} authorize(true); return; }
   }
+  if (!S.homeV) { if (S.home === 'plans' || S.home === 'docs') S.home = 'auto'; S.homeV = 1; save(); } // accueil au démarrage de la tablette (oct. 2026)
   if (deskHome()) openDesk(); else await startCamera();
   await refreshQueue();
   processQueue();
