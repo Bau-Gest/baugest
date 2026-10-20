@@ -30,6 +30,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
+*{touch-action:pan-x pan-y}
 :root{
   color-scheme:dark;
   --asphalt:#131518;--surface:#1c1f23;--surface2:#262a30;--line:#353a41;
@@ -800,7 +801,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 #pdPtsBtn.on{border-color:var(--signal)}
 .pdv-body{flex:1;min-height:0;display:flex;position:relative}
 .pdv-scroll{flex:1;min-width:0;overflow:auto;background:#3a3f46;touch-action:none;overscroll-behavior:contain}
-.pdv-top{flex:none;touch-action:manipulation}
+.pdv-top{flex:none}
 .pdv .de-top .icon-btn{background:var(--surface2);border:1px solid var(--line)}
 .pdv .de-status{flex:none}
 .pdv-top .pdv-t{order:0}
@@ -10418,10 +10419,11 @@ function bindCalc(){
 }
 
 /* ---------- Zoom aux doigts : seulement dans ce qu'on ouvre ---------- */
-// zoom du navigateur bloqué partout (menus, listes, fiches) ; les visionneuses (photo, plan, PV, document, croquis, carte) ont leur propre zoom
+// zoom du navigateur bloqué partout (menus, listes, fiches) : CSS touch-action sur tous les éléments + 2 doigts annulés ; les visionneuses (photo, plan, PV, document, croquis, carte) ont leur propre zoom
 function blockPageZoom(){
-  document.addEventListener('touchmove', e => { if (e.touches.length > 1 && e.cancelable) e.preventDefault(); }, {passive:false});
-  ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), {passive:false}));
+  document.addEventListener('touchstart', e => { if (e.touches.length > 1 && e.cancelable) e.preventDefault(); }, {capture:true, passive:false});
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1 && e.cancelable) e.preventDefault(); }, {capture:true, passive:false});
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), {capture:true, passive:false}));
 }
 // zoom interne des visionneuses de pages (document transcrit, mémo de devis) : 1 à 4×, défilement natif
 function pageZoomReset(box){ box.style.removeProperty('--z'); box.classList.remove('zoomed'); }
