@@ -18,7 +18,7 @@
   } catch (e) {}
 })();
 </script>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#131518">
 <meta name="description" content="BauGest : photos, documents et plans de chantier rangés dans Google Drive.">
 <meta name="mobile-web-app-capable" content="yes">
@@ -522,7 +522,8 @@ html[data-theme="light"] .dk-st.tx{color:#1f4fbf}
 .dv-t h1{font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dv-t small{display:block;font:12.5px/1.3 var(--mono);color:var(--muted);margin-top:4px}
 .dv-pages{display:grid;gap:14px;justify-items:center;padding:16px calc(var(--sr) + 16px) 24px calc(var(--sl) + 16px)}
-.dv-pages img{width:100%;max-width:760px;border-radius:4px;background:#fbfaf6;display:block;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+.dv-pages.zoomed{width:calc(var(--z) * 100%)}
+.dv-pages img{width:100%;max-width:calc(760px * var(--z, 1));border-radius:4px;background:#fbfaf6;display:block;box-shadow:0 6px 24px rgba(0,0,0,.45)}
 .dv-bar{display:grid;gap:8px;padding:12px calc(var(--sr) + 16px) calc(var(--sb) + 12px) calc(var(--sl) + 16px);border-top:1px solid var(--line);background:var(--surface)}
 .dv-bar small{font:12.5px/1.3 var(--mono);color:var(--muted)}
 .dv-bar .btn-row{display:flex;gap:10px;flex-wrap:wrap}
@@ -1135,7 +1136,7 @@ input[type=tel],input[type=email],input[type=search],input[type=datetime-local]{
 .dz-mrow{display:flex;gap:8px;align-items:stretch}
 .dz-mrow .dz-memo{flex:1;min-width:0}
 .dz-mdel{flex:none;width:56px;min-height:56px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--bad);display:grid;place-items:center}
-#mvPages canvas,#mvPages img{width:100%;max-width:760px;height:auto;border-radius:4px;background:#fff;display:block;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+#mvPages canvas,#mvPages img{width:100%;max-width:calc(760px * var(--z, 1));height:auto;border-radius:4px;background:#fff;display:block;box-shadow:0 6px 24px rgba(0,0,0,.45)}
 
 /* ---------- Ergonomie v2 (oct. 2026) : même navigation sur téléphone, tablette et PC ---------- */
 :root{--railw:92px}
@@ -4689,7 +4690,7 @@ async function openDocView(it){
   $('#dvTitle').textContent = it.title;
   $('#dvSub').textContent = [DOCS[it.dtype].name, fmtISO(it.date), s ? siteLabel(s) : 'À classer'].join(' · ');
   $('#dvStatus').textContent = 'Ouverture…';
-  $('#dvPages').innerHTML = '';
+  $('#dvPages').innerHTML = ''; pageZoomReset($('#dvPages'));
   $('#docView').hidden = false; $('#dvText').hidden = true; $('#dvMode').hidden = true; setDvButtons('hand');
   try {
     const rec = await getDocRec(it); if (!rec) throw new Error('document introuvable sur cet appareil');
@@ -8458,7 +8459,7 @@ function openMemoView(o){
   if (o.pages) { o.pages.forEach((c, i) => c.setAttribute('aria-label', 'Page ' + (i + 1))); box.replaceChildren(...o.pages); }
   else box.innerHTML = '<p class="hint" style="text-align:center">Ouverture du mémo…</p>';
   mvStatus();
-  $('#memoView').hidden = false; $('#mvScroll').scrollTop = 0;
+  pageZoomReset(box); $('#memoView').hidden = false; $('#mvScroll').scrollTop = 0;
 }
 function mvStatus(){
   if (!mv) return;
@@ -10415,6 +10416,37 @@ function bindCalc(){
   const mo = new MutationObserver(() => { if (CALC.on && CALC_HOSTS.every(h => $(h).hidden)) calcShow(false); });
   CALC_HOSTS.forEach(h => mo.observe($(h), {attributes:true, attributeFilter:['hidden']}));
 }
+
+/* ---------- Zoom aux doigts : seulement dans ce qu'on ouvre ---------- */
+// zoom du navigateur bloqué partout (menus, listes, fiches) ; les visionneuses (photo, plan, PV, document, croquis, carte) ont leur propre zoom
+function blockPageZoom(){
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1 && e.cancelable) e.preventDefault(); }, {passive:false});
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), {passive:false}));
+}
+// zoom interne des visionneuses de pages (document transcrit, mémo de devis) : 1 à 4×, défilement natif
+function pageZoomReset(box){ box.style.removeProperty('--z'); box.classList.remove('zoomed'); }
+function bindPageZoom(sc, box){
+  let p = null;
+  const mid = t => ({x:(t[0].clientX + t[1].clientX) / 2, y:(t[0].clientY + t[1].clientY) / 2, d:Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY) || 1});
+  sc.addEventListener('touchstart', e => {
+    if (e.touches.length !== 2) return;
+    const m = mid(e.touches), r = sc.getBoundingClientRect();
+    p = {m0:m, z0:+box.style.getPropertyValue('--z') || 1, sl:sc.scrollLeft + m.x - r.left, st:sc.scrollTop + m.y - r.top};
+  }, {passive:true});
+  sc.addEventListener('touchmove', e => {
+    if (!p || e.touches.length < 2) return;
+    if (e.cancelable) e.preventDefault();
+    const m = mid(e.touches), r = sc.getBoundingClientRect();
+    const z = Math.min(4, Math.max(1, p.z0 * m.d / p.m0.d)), k = z / p.z0;
+    box.style.setProperty('--z', z.toFixed(3)); box.classList.toggle('zoomed', z > 1.001);
+    sc.scrollLeft = p.sl * k - (m.x - r.left); sc.scrollTop = p.st * k - (m.y - r.top);
+  }, {passive:false});
+  sc.addEventListener('touchend', e => { if (e.touches.length < 2) p = null; });
+  sc.addEventListener('touchcancel', () => { p = null; });
+}
+blockPageZoom();
+bindPageZoom($('#docView .panel-body'), $('#dvPages'));
+bindPageZoom($('#mvScroll'), $('#mvPages'));
 
 /* ---------- Démarrage ---------- */
 async function init(){
