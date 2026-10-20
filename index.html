@@ -503,6 +503,18 @@ html[data-theme="light"] .dk-st.tx{color:#1f4fbf}
 }
 
 #docView{z-index:44}
+/* croquis du devis */
+#sketch{z-index:47}
+.sk-title{flex:1;min-width:0}
+.sk-title b{display:block;font:700 20px/1.1 var(--display);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sk-title small{display:block;font:12.5px/1.3 var(--mono);color:var(--muted);margin-top:3px}
+.sk-stage{position:relative;overflow:hidden;touch-action:none;min-height:0;background:#0e1012}
+.sk-stage canvas{position:absolute;left:0;top:0;transform-origin:0 0;touch-action:none;box-shadow:0 6px 24px rgba(0,0,0,.45);background:#fff}
+.sk-new{display:grid;gap:10px}
+.sk-new .btn{justify-content:flex-start}
+.sk-photos .dp-tile{position:relative}
+.sk-photos .dp-tile span{position:absolute;left:4px;bottom:4px;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.65);color:#fff;font:600 11px/1.2 var(--body)}
+#skTextIn{width:100%;min-height:90px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--text);font:inherit;resize:vertical}
 #docView .panel-head{flex-wrap:wrap}
 #dvMode button{flex:1}
 @media (max-width:600px){#dvMode{order:3;flex:1 1 100%}}
@@ -1501,11 +1513,63 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <div class="vt"><b id="viewerName"></b><small id="viewerSub"></small></div>
     <div class="btn-row">
       <button id="viewerShare" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager</button>
+      <button id="viewerSketch" class="btn" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Croquis</span></button>
       <a id="viewerDrive" class="btn" target="_blank" rel="noopener">Ouvrir dans Drive</a>
       <button id="viewerDelete" class="btn danger" aria-label="Supprimer la photo"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>Supprimer</button>
     </div>
   </div>
   <button id="viewerClose" class="icon-btn glass" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+
+<!-- Croquis du devis (tablette) -->
+<section id="sketch" class="de" hidden aria-label="Croquis">
+  <div class="de-top">
+    <button id="skClose" class="icon-btn" aria-label="Fermer le croquis"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div class="sk-title"><b id="skName">Croquis</b><small id="skSub"></small></div>
+    <button id="skSave" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>Enregistrer</button>
+  </div>
+  <div class="de-status pen"><i></i><span>Stylet : dessiner · 1 doigt : déplacer · 2 doigts : zoom · double tape : gomme</span><b id="skToolT" class="de-cur"></b></div>
+  <div class="de-body">
+    <div id="skTools" class="de-tools">
+      <button class="de-tool on" data-sktool="pen" title="Stylo"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Stylo</button>
+      <button class="de-tool" data-sktool="line" title="Trait droit"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20 20 4"/><circle cx="4" cy="20" r="1.5"/><circle cx="20" cy="4" r="1.5"/></svg>Trait</button>
+      <button class="de-tool" data-sktool="text" title="Texte (cote, remarque)"><svg class="ic" viewBox="0 0 24 24"><path d="M5 7V4h14v3M12 4v16M9 20h6"/></svg>Texte</button>
+      <button class="de-tool" data-sktool="eraser" title="Gomme"><svg class="ic" viewBox="0 0 24 24"><path d="M20 20H9L4 15a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-8 9"/><path d="M8 11l6 6"/></svg>Gomme</button>
+      <span class="de-sep"></span>
+      <button class="de-tool" data-skcolor="#1d2733" title="Noir"><span class="de-sw" style="background:#1d2733"></span></button>
+      <button class="de-tool" data-skcolor="#c8302a" title="Rouge"><span class="de-sw" style="background:#c8302a"></span></button>
+      <button class="de-tool" data-skcolor="#1f4fbf" title="Bleu"><span class="de-sw" style="background:#1f4fbf"></span></button>
+      <button class="de-tool" data-skcolor="#f5c400" title="Jaune"><span class="de-sw" style="background:#f5c400"></span></button>
+      <span class="de-sep"></span>
+      <button class="de-tool" data-sksize="f" title="Fin"><span class="de-th" style="height:2px"></span>Fin</button>
+      <button class="de-tool on" data-sksize="m" title="Moyen"><span class="de-th" style="height:4px"></span>Moyen</button>
+      <button class="de-tool" data-sksize="g" title="Gras"><span class="de-th" style="height:7px"></span>Gras</button>
+      <span class="de-sep"></span>
+      <button class="de-tool" id="skUndo" title="Annuler" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Annuler</button>
+      <button class="de-tool" id="skRedo" title="Rétablir" disabled><svg class="ic" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>Rétablir</button>
+      <button class="de-tool" id="skGrid" title="Quadrillage"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>Carreaux</button>
+      <button class="de-tool" id="skClear" title="Tout effacer"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Effacer</button>
+    </div>
+    <div id="skStage" class="sk-stage"><canvas id="skCanvas"></canvas></div>
+  </div>
+</section>
+<div id="sheetSkNew" class="sheet" hidden role="dialog" aria-labelledby="skNewTitle">
+  <div class="sheet-head"><h3 id="skNewTitle">Nouveau croquis</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body sk-new">
+    <button id="skBlank" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 3v18M12 3v18M16 3v18M4 8h16M4 13h16M4 18h16"/></svg>Page blanche (quadrillée)</button>
+    <label class="btn file-btn"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Dessiner sur une image importée<input type="file" id="skFile" accept="image/*"></label>
+    <div class="field"><span>Ou dessiner sur une photo de la fiche</span><div id="skPhotos" class="dp-grid sk-photos"></div></div>
+  </div>
+</div>
+<div id="sheetSkText" class="sheet" hidden role="dialog" aria-labelledby="skTextTitle">
+  <div class="sheet-head"><h3 id="skTextTitle">Texte sur le croquis</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body"><textarea id="skTextIn" placeholder="ex. 4.20 m, mur à démolir, regard EU…"></textarea></div>
+  <div class="sheet-foot"><button id="skTextNo" class="btn">Annuler</button><button id="skTextOk" class="btn primary">Placer le texte</button></div>
+</div>
+<div id="sheetSkQuit" class="sheet" hidden role="dialog" aria-labelledby="skQuitTitle">
+  <div class="sheet-head"><h3 id="skQuitTitle">Croquis non enregistré</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body"><p class="hint">Les derniers traits ne sont pas encore rangés dans la fiche.</p></div>
+  <div class="sheet-foot"><button id="skQuitNo" class="btn danger">Ne pas enregistrer</button><button id="skQuitYes" class="btn primary">Enregistrer</button></div>
+</div>
 
 <!-- Partage -->
 <div id="sheetShare" class="sheet" hidden role="dialog" aria-labelledby="shTitle">
@@ -2887,7 +2951,7 @@ async function uploadFile(blob, meta, parent){
   const md = {name:meta.name, parents:[parent], description:meta.description, mimeType:mime,
     appProperties:{pc:'1', site:meta.siteId || 'none', taken:meta.taken || '', tags:(meta.tags || []).join('|').slice(0, 60), ...(meta.imported ? {imp:'1'} : {}), ...(meta.lat != null ? {lat:(+meta.lat).toFixed(6), lon:(+meta.lon).toFixed(6)} : {}),
       ...(meta.kind === 'plan' ? {kind:'plan', uid:meta.uid} : {}), ...(meta.kind === 'export' ? {kind:'export'} : {}), ...(meta.kind === 'soum' ? {kind:'soum'} : {}), ...(meta.kind === 'pvdt' ? {kind:'pvdt', pvn:meta.pvn || '', pvdate:meta.pvdate || ''} : {}),
-      ...(meta.kind === 'doc' ? {kind:'doc', dtype:meta.dtype || 'libre', title:String(meta.title || '').slice(0, 50)} : {})}};
+      ...(meta.kind === 'doc' ? {kind:'doc', dtype:meta.dtype || 'libre', title:String(meta.title || '').slice(0, 50)} : {}), ...(meta.kind === 'croquis' ? {kind:'croquis'} : {}), ...(meta.sk ? {sk:meta.sk} : {})}};
   const auth = {Authorization:'Bearer ' + S.drive.token};
   if (blob.size < 4.5e6) {
     const b = 'pc' + Math.random().toString(36).slice(2);
@@ -2931,17 +2995,19 @@ async function processQueue(){
       if (removed.has(it.id)) continue;
       try {
         const folder = await ensurePath(it.meta.path);
-        const f = it.meta.kind === 'doc' ? await uploadDoc(it, folder) : await uploadFile(it.blob, it.meta, folder);
+        const f = it.meta.kind === 'doc' ? await uploadDoc(it, folder) : it.meta.fid ? await skReplaceImg(it, folder) : await uploadFile(it.blob, it.meta, folder);
+        if (it.meta.sk) await skUploaded(it, f);
         if (it.meta.kind === 'plan') await planUploaded(it.meta.uid, f);
         if (it.meta.kind === 'pvdt') await pdUploaded(it.meta, f, it.blob);
-        if (it.meta.kind === 'doc') { const cur = (await DB.all()).find(x => x.id === it.id); if (!cur || cur.created === it.created) await DB.del(it.id); } else await DB.del(it.id);
+        if (it.meta.kind === 'doc' || it.meta.sk) { const cur = (await DB.all()).find(x => x.id === it.id); if (!cur || cur.created === it.created) await DB.del(it.id); else if (it.meta.sk) { cur.meta.fid = it.meta.fid; cur.meta.skFid = it.meta.skFid; await DB.put(cur); } } else await DB.del(it.id);
         up++;
         done.unshift({name:it.meta.name, path:it.meta.path.join(' / '), link:f.webViewLink || '', thumb:it.thumb});
         await refreshQueue();
       } catch (e) {
         if (e.status === 404) { S.drive.folderCache = {}; save(); }
         if (e.status === 401 || e instanceof TypeError) break;
-        it.error = e.message; await DB.put(it);
+        const cur = it.meta.sk ? (await DB.all()).find(x => x.id === it.id) : null;
+        if (cur && cur.created !== it.created) { cur.error = e.message; await DB.put(cur); } else { it.error = e.message; await DB.put(it); }
         if (e.status >= 500 || e.status === 403 || e.status === 429) break;
       }
     }
@@ -3475,13 +3541,13 @@ const blobCache = {};
 const DAYS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
 function localItem(it){
   return {key:'l' + it.id, src:'local', id:it.id, name:it.meta.name, time:new Date(it.meta.taken || it.created),
-    tags:it.meta.tags || [], siteId:it.meta.siteId || 'none', blob:it.blob, link:'', thumb:it.thumb || '',
+    tags:it.meta.tags || [], siteId:it.meta.siteId || 'none', blob:it.blob, link:'', thumb:it.thumb || '', sk:it.meta.sk || '',
     pos:it.meta.lat != null ? {lat:+it.meta.lat, lon:+it.meta.lon} : parseGps(it.meta.description)};
 }
 function driveItem(f){
   const ap = f.appProperties || {};
   return {key:'d' + f.id, src:'drive', id:f.id, name:f.name, time:new Date(ap.taken || f.createdTime),
-    tags:ap.tags ? ap.tags.split('|').filter(Boolean) : [], siteId:remapId(ap.site) || 'none',
+    tags:ap.tags ? ap.tags.split('|').filter(Boolean) : [], siteId:remapId(ap.site) || 'none', sk:ap.sk || '',
     thumb:f.thumbnailLink ? f.thumbnailLink.replace(/=s\d+$/, '=s400') : '', big:f.thumbnailLink ? f.thumbnailLink.replace(/=s\d+$/, '=s2000') : '', link:f.webViewLink || '',
     pos:ap.lat && ap.lon ? {lat:+ap.lat, lon:+ap.lon} : parseGps(f.description)};
 }
@@ -3803,6 +3869,7 @@ function showViewerItem(){
   $('#viewerName').textContent = item.name;
   $('#viewerSub').textContent = [site ? siteLabel(site) : (item.siteId && item.siteId !== 'none' ? 'Chantier supprimé' : 'À classer'), DAYS[item.time.getDay()] + ' ' + fmtDate(item.time) + ' ' + fmtTime(item.time), item.tags.join(', '), item.src === 'local' ? 'en attente d’envoi' : ''].filter(Boolean).join(' · ');
   const a = $('#viewerDrive'); a.hidden = !item.link; if (item.link) a.href = item.link;
+  const sb = $('#viewerSketch'); sb.hidden = !skCanOn(item); sb.lastChild.textContent = item.sk ? 'Retoucher le croquis' : 'Dessiner dessus';
   const n = viewList.length;
   $('#viewerCount').hidden = n < 2; $('#viewerCount').textContent = `${viewIdx + 1} / ${n}`;
   $('#viewerPrev').hidden = $('#viewerNext').hidden = n < 2;
@@ -8066,7 +8133,7 @@ function renderDzFiche(){
     <section class="dz-card">
       <div class="dz-ch"><h3>Photos de la visite</h3><small id="dzPhotoInfo"></small></div>
       <div class="dz-photos" id="dzPhotos"></div>
-      <div class="btn-row"><button class="btn primary" id="dzShoot">${ICON_CAM}Prendre des photos</button><label class="btn file-btn">${ICON_IMG}Importer<input type="file" id="dzFile" accept="image/*" multiple></label></div>
+      <div class="btn-row"><button class="btn primary" id="dzShoot">${ICON_CAM}Prendre des photos</button><label class="btn file-btn">${ICON_IMG}Importer<input type="file" id="dzFile" accept="image/*" multiple></label>${isTabletScreen() ? `<button class="btn" id="dzSketch">${ICON_SKETCH}Croquis</button>` : ''}</div>
       <h3 style="margin-top:6px">Notes de visite</h3>
       <div class="dz-notes-wrap"><textarea class="dz-notes" data-f="notes" placeholder="Constats, souhaits du client, variantes à chiffrer…">${esc(d.notes || '')}</textarea>
         ${SR ? `<button class="icon-btn mic" id="dzMic" aria-label="Dicter une note">${ICON_MIC}</button>` : ''}</div>
@@ -8615,6 +8682,7 @@ function bindDevis(){
       acc.classList.toggle('on'); acc.setAttribute('aria-pressed', String(d.access.includes(a))); devSave(d); return;
     }
     const ph = t.closest('[data-dzp]'); if (ph) { const it = dz.photos.find(p => p.key === ph.dataset.dzp); if (it) openViewer(it, dz.photos); return; }
+    if (t.closest('#dzSketch')) { skNew(); return; }
     if (t.closest('#dzMic')) {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition, btn = $('#dzMic');
       if (dz.rec) { dz.rec.stop(); return; }
@@ -9037,6 +9105,352 @@ function bindDzSel(){
   $('#dzSelAll').addEventListener('click', () => { const vis = $$('#dzList [data-dz]').map(b => b.dataset.dz); const all = vis.every(id => dz.sel.has(id)); vis.forEach(id => all ? dz.sel.delete(id) : dz.sel.add(id)); renderDzList(); dzSelUI(); });
 }
 
+/* ---------- Devis : croquis (page blanche ou sur photo, tablette) ---------- */
+/* Le croquis est rangé comme une photo de la fiche (JPG, étiquette « Croquis »). Les traits restent modifiables :
+   « <photo> – croquis.json » dans Devis particuliers › <fiche> › Croquis (kind='croquis'), relié au JPG par appProperties.sk.
+   Retouche : le JPG est remplacé sur place (même fichier Drive), le JSON aussi. */
+const ICON_SKETCH = '<svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+const SK_LONG = 2000, SK_SHORT = 1414, SK_SQ = SK_LONG / 59.4;
+const SK_SIZES = {f:3, m:6, g:11}, SK_TXT = {f:34, m:50, g:72};
+const SK_TOOLS = {pen:'Stylo', line:'Trait droit', text:'Texte', eraser:'Gomme'};
+const SK = {d:null, uid:'', w:0, h:0, grid:false, bg:'', bgImg:null, strokes:[], undo:[], redo:[], tool:'pen', prev:'pen', color:'#1d2733', size:'m',
+  dirty:false, qid:'', fid:'', jfid:'', name:'', path:null, taken:'', base:null, v:{k:1, x:0, y:0, fit:1}, cur:null, lastPen:0, busy:false, textAt:null};
+const skCanOn = it => !!it && it.src !== 'demo' && isTabletScreen() && /^devis:/.test(it.siteId || '') && !!devById(it.siteId.slice(6));
+const skLoadImg = url => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('image illisible')); i.src = url; });
+
+function skDraw(g, s){
+  if (s.t !== 'txt') { drawStroke(g, s); return; }
+  g.font = `700 ${s.z}px Barlow, sans-serif`; g.textBaseline = 'middle'; g.lineJoin = 'round';
+  String(s.s).split('\n').forEach((l, i) => {
+    const y = s.y + i * s.z * 1.15;
+    g.lineWidth = s.z / 5; g.strokeStyle = 'rgba(255,255,255,.9)'; g.strokeText(l, s.x, y);
+    g.fillStyle = s.c; g.fillText(l, s.x, y);
+  });
+}
+function skPaint(g){
+  g.fillStyle = '#fff'; g.fillRect(0, 0, SK.w, SK.h);
+  if (SK.bgImg) g.drawImage(SK.bgImg, 0, 0, SK.w, SK.h);
+  else if (SK.grid) {
+    g.strokeStyle = '#d3e2ef'; g.lineWidth = 1.2; g.beginPath();
+    for (let x = SK_SQ; x < SK.w; x += SK_SQ) { g.moveTo(Math.round(x) + .5, 0); g.lineTo(Math.round(x) + .5, SK.h); }
+    for (let y = SK_SQ; y < SK.h; y += SK_SQ) { g.moveTo(0, Math.round(y) + .5); g.lineTo(SK.w, Math.round(y) + .5); }
+    g.stroke();
+  }
+  SK.strokes.forEach(s => skDraw(g, s));
+}
+function skRebuild(){ skPaint(SK.base.getContext('2d')); skShow(); }
+function skShow(extra){
+  const g = $('#skCanvas').getContext('2d');
+  g.drawImage(SK.base, 0, 0);
+  if (extra) skDraw(g, extra);
+}
+
+/* ---------- ouverture ---------- */
+function skNew(){
+  const d = devById(dz.cur); if (!d) return;
+  dzFlush();
+  const tile = p => {
+    const src = $(`#dzPhotos [data-dzp="${CSS.escape(p.key)}"] img`)?.getAttribute('src') || (p.src === 'drive' ? p.thumb : '') || '';
+    return `<button class="dp-tile" data-skp="${esc(p.key)}" aria-label="${p.sk ? 'Retoucher le croquis' : 'Dessiner sur la photo'} du ${esc(fmtDate(p.time))}">${src ? `<img alt="" src="${esc(src)}">` : ''}${p.sk ? '<span>Croquis</span>' : ''}</button>`;
+  };
+  $('#skPhotos').innerHTML = dz.photos.length ? dz.photos.map(tile).join('') : '<p class="hint" style="grid-column:1/-1">Aucune photo dans la fiche pour l’instant.</p>';
+  openSheet('#sheetSkNew');
+}
+async function skFromItem(it){
+  const d = devById(String(it.siteId || '').replace(/^devis:/, '')); if (!d || SK.busy) return;
+  if (it.sk) return skEdit(it, d);
+  SK.busy = true; note('Ouverture de la photo…', 8000);
+  try {
+    const blob = it.src === 'local' ? it.blob : await driveBlob(it.id);
+    const bmp = await createImageBitmap(blob);
+    await skOpen({d, bmp}); bmp.close?.();
+  } catch (e) { note('Photo illisible : ' + e.message, 4000); }
+  finally { SK.busy = false; }
+}
+async function skEdit(it, d){
+  SK.busy = true;
+  try {
+    const q = (await DB.all()).find(x => x.meta && x.meta.sk === it.sk && x.meta.skJson);
+    if (q) { await skOpen({d, data:JSON.parse(q.meta.skJson), qid:q.id, fid:q.meta.fid || '', jfid:q.meta.skFid || '', name:q.meta.name, path:q.meta.path, taken:q.meta.taken}); return; }
+    const r = queueReason(); if (r) { note(r.t + ' : retouche impossible pour l’instant', 4000); return; }
+    note('Ouverture du croquis…', 8000);
+    const res = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q:`trashed=false and mimeType='application/json' and appProperties has { key='sk' and value='${qEsc(it.sk)}' }`, pageSize:'1', fields:'files(id)'}));
+    const jid = res.files?.[0]?.id;
+    if (!jid) { note('Traits du croquis introuvables : nouveau croquis sur cette image', 4000); SK.busy = false; return skFromItem({...it, sk:''}); }
+    const data = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(jid)}?alt=media`);
+    await skOpen({d, data, fid:it.id, jfid:jid, name:it.name, path:pathFor({devis:dzInfo(d)}), taken:it.time.toISOString()});
+  } catch (e) { note('Croquis illisible : ' + e.message, 4000); }
+  finally { SK.busy = false; }
+}
+async function skOpen(o){
+  const d = o.d;
+  Object.assign(SK, {d, undo:[], redo:[], dirty:false, cur:null, qid:o.qid || '', fid:o.fid || '', jfid:o.jfid || '', name:o.name || '', path:o.path || null, taken:o.taken || ''});
+  if (o.data) {
+    const x = o.data;
+    Object.assign(SK, {uid:x.uid, w:x.w, h:x.h, grid:!!x.grid, bg:x.bg || '', strokes:Array.isArray(x.strokes) ? x.strokes : []});
+  } else if (o.bmp) {
+    const k = SK_LONG / Math.max(o.bmp.width, o.bmp.height);
+    const c = document.createElement('canvas'); c.width = Math.round(o.bmp.width * k); c.height = Math.round(o.bmp.height * k);
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(o.bmp, 0, 0, c.width, c.height);
+    Object.assign(SK, {uid:newUid(), w:c.width, h:c.height, grid:false, bg:c.toDataURL('image/jpeg', .85), strokes:[]});
+  } else {
+    const land = innerWidth >= innerHeight;
+    Object.assign(SK, {uid:newUid(), w:land ? SK_LONG : SK_SHORT, h:land ? SK_SHORT : SK_LONG, grid:true, bg:'', strokes:[]});
+  }
+  SK.bgImg = SK.bg ? await skLoadImg(SK.bg) : null;
+  SK.color = SK.bg ? '#c8302a' : '#1d2733';
+  SK.base = document.createElement('canvas'); SK.base.width = SK.w; SK.base.height = SK.h;
+  const cv = $('#skCanvas'); cv.width = SK.w; cv.height = SK.h; cv.style.width = SK.w + 'px'; cv.style.height = SK.h + 'px';
+  if (document.fonts?.load) await document.fonts.load('700 40px Barlow').catch(() => {});
+  $('#skName').textContent = 'Croquis · ' + devName(d);
+  $('#skSub').textContent = (SK.qid || SK.fid ? 'Retouche' : SK.bg ? 'Sur photo' : 'Page blanche') + ' · rangé dans les photos de la fiche';
+  $('#skGrid').hidden = !!SK.bg;
+  $('#note').hidden = true;
+  closeViewer();
+  $('#sketch').hidden = false;
+  skSetTool('pen'); skUi(); skRebuild();
+  requestAnimationFrame(skFit);
+}
+function skClose(force){
+  if (!force && SK.dirty) { openSheet('#sheetSkQuit'); return; }
+  $('#sketch').hidden = true; SK.cur = null; SK.bgImg = null; SK.base = null;
+  const cv = $('#skCanvas'); cv.width = cv.height = 1;
+}
+
+/* ---------- vue : ajustée, zoom 2 doigts, déplacement 1 doigt ---------- */
+function skFit(){
+  const st = $('#skStage'); if ($('#sketch').hidden || !st.clientWidth) return;
+  const k = Math.min((st.clientWidth - 24) / SK.w, (st.clientHeight - 24) / SK.h);
+  SK.v = {k, fit:k, x:0, y:0}; skClamp(); skApply();
+}
+function skClamp(){
+  const st = $('#skStage'), W = st.clientWidth, H = st.clientHeight, cw = SK.w * SK.v.k, ch = SK.h * SK.v.k;
+  SK.v.x = cw <= W ? (W - cw) / 2 : Math.min(0, Math.max(W - cw, SK.v.x));
+  SK.v.y = ch <= H ? (H - ch) / 2 : Math.min(0, Math.max(H - ch, SK.v.y));
+}
+function skApply(){ $('#skCanvas').style.transform = `translate(${SK.v.x}px,${SK.v.y}px) scale(${SK.v.k})`; }
+function skPt(e){
+  const r = $('#skCanvas').getBoundingClientRect();
+  const pr = e.pointerType === 'pen' ? Math.min(1, Math.max(.15, e.pressure || .5)) : .5;
+  return [Math.round((e.clientX - r.left) * SK.w / r.width * 10) / 10, Math.round((e.clientY - r.top) * SK.h / r.height * 10) / 10, Math.round(pr * 100) / 100];
+}
+
+/* ---------- outils ---------- */
+function skSetTool(t){
+  if (t !== 'eraser') SK.prev = t;
+  SK.tool = t;
+  $$('#skTools [data-sktool]').forEach(b => b.classList.toggle('on', b.dataset.sktool === t));
+  $('#skToolT').textContent = SK_TOOLS[t];
+}
+function skUi(){
+  $$('#skTools [data-skcolor]').forEach(b => b.classList.toggle('on', b.dataset.skcolor === SK.color));
+  $$('#skTools [data-sksize]').forEach(b => b.classList.toggle('on', b.dataset.sksize === SK.size));
+  $('#skUndo').disabled = !SK.undo.length; $('#skRedo').disabled = !SK.redo.length;
+  $('#skGrid').classList.toggle('on', SK.grid);
+  $('#skClear').disabled = !SK.strokes.length;
+}
+function skPush(op){ SK.undo.push(op); SK.redo = []; SK.dirty = true; skUi(); }
+function skApplyOp(op, back){
+  const add = (op.a === 'add') !== back;
+  if (op.a === 'add') { if (add) SK.strokes.push(op.s); else { const i = SK.strokes.lastIndexOf(op.s); if (i >= 0) SK.strokes.splice(i, 1); } }
+  else if (op.a === 'del') { if (back) op.list.slice().reverse().forEach(x => SK.strokes.splice(x.i, 0, x.s)); else op.list.forEach(x => { const i = SK.strokes.indexOf(x.s); if (i >= 0) SK.strokes.splice(i, 1); }); }
+  else if (op.a === 'grid') SK.grid = back ? !op.on : op.on;
+  SK.dirty = true; skRebuild(); skUi();
+}
+function skUndo(){ const op = SK.undo.pop(); if (!op) return; skApplyOp(op, true); SK.redo.push(op); skUi(); }
+function skRedo(){ const op = SK.redo.pop(); if (!op) return; skApplyOp(op, false); SK.undo.push(op); skUi(); }
+function skSegDist(p, a, b){
+  const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+  const t = L ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L)) : 0;
+  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+}
+function skHit(s, p, r){
+  if (s.t === 'txt') { const n = String(s.s).split('\n').length; return p[0] > s.x - r && p[0] < s.x + (s.bw || 0) + r && p[1] > s.y - s.z / 2 - r && p[1] < s.y + (n - .5) * s.z * 1.15 + r; }
+  if (s.p.length === 1) return Math.hypot(p[0] - s.p[0][0], p[1] - s.p[0][1]) < r + s.w;
+  for (let j = 1; j < s.p.length; j++) if (skSegDist(p, s.p[j - 1], s.p[j]) < r + s.w / 2) return true;
+  return false;
+}
+function skEraseAt(p){
+  const r = 16 / SK.v.k; let hit = false;
+  for (let i = SK.strokes.length - 1; i >= 0; i--) if (skHit(SK.strokes[i], p, r)) { SK.cur.list.push({s:SK.strokes[i], i}); SK.strokes.splice(i, 1); hit = true; }
+  if (hit) skRebuild();
+}
+/* trait droit : accroché à l'horizontale / verticale à ±4° */
+function skSnap(a, b){
+  const ang = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI, m = ((ang % 90) + 90) % 90;
+  if (m < 4 || m > 86) { const h = Math.abs(b[0] - a[0]) >= Math.abs(b[1] - a[1]); return h ? [b[0], a[1], b[2]] : [a[0], b[1], b[2]]; }
+  return b;
+}
+function skTextPlace(){
+  const t = $('#skTextIn').value.replace(/\s+$/, ''), at = SK.textAt;
+  closeSheet($('#sheetSkText')); SK.textAt = null;
+  if (!t.trim() || !at) return;
+  const z = SK_TXT[SK.size], g = SK.base.getContext('2d'); g.font = `700 ${z}px Barlow, sans-serif`;
+  const s = {t:'txt', c:SK.color, z, x:Math.round(at[0]), y:Math.round(at[1]), s:t, bw:Math.ceil(Math.max(...t.split('\n').map(l => g.measureText(l).width)))};
+  SK.strokes.push(s); skPush({a:'add', s}); skRebuild();
+}
+
+/* ---------- enregistrement ---------- */
+async function skSave(){
+  const d = SK.d; if (!d || SK.busy) return;
+  SK.busy = true; $('#skSave').disabled = true;
+  try {
+    skPaint(SK.base.getContext('2d'));
+    const blob = await new Promise((res, rej) => SK.base.toBlob(b => b ? res(b) : rej(new Error('encodage JPEG')), 'image/jpeg', .9));
+    const thumb = thumbOf(SK.base), json = JSON.stringify({v:1, uid:SK.uid, devis:d.id, w:SK.w, h:SK.h, grid:SK.grid, bg:SK.bg, strokes:SK.strokes, mod:Date.now()});
+    const all = await DB.all();
+    let it = (SK.qid && all.find(x => x.id === SK.qid)) || all.find(x => x.meta && x.meta.sk === SK.uid) || null;
+    if (it) Object.assign(it, {blob, thumb, created:Date.now(), error:''}), Object.assign(it.meta, {skJson:json});
+    else if (SK.fid) it = {id:newUid(), blob, created:Date.now(), thumb, error:'', meta:{name:SK.name, path:SK.path, description:'Fiche : ' + devLabel(d) + '\nCroquis BauGest', siteId:devSid(d), taken:SK.taken, tags:['Croquis'], sk:SK.uid, skJson:json, fid:SK.fid, skFid:SK.jfid}};
+    else {
+      const info = {time:new Date(), site:null, devis:dzInfo(d), pos:null, tags:['Croquis'], note:''};
+      it = {id:newUid(), blob, created:Date.now(), thumb, error:'', meta:{name:fileName(info), path:pathFor(info), description:describe(info).replace('Pris avec BauGest', 'Croquis BauGest'), siteId:devSid(d), taken:info.time.toISOString(), tags:['Croquis'], sk:SK.uid, skJson:json}};
+    }
+    await DB.put(it); SK.qid = it.id;
+    if (SK.fid && blobCache[SK.fid]) { URL.revokeObjectURL(blobCache[SK.fid]); delete blobCache[SK.fid]; }
+    SK.dirty = false;
+    skClose(true);
+    note('Croquis rangé dans les photos de la fiche', 3000);
+    await refreshQueue(); processQueue();
+    if (!$('#devis').hidden && dz.cur === d.id) dzLoadPhotos();
+  } catch (e) { note('Enregistrement impossible : ' + e.message, 4500); }
+  finally { SK.busy = false; $('#skSave').disabled = false; }
+}
+/* file d'envoi : retouche → le JPG est remplacé sur place, puis les traits (JSON) sont envoyés à côté */
+async function skReplaceImg(it, folder){
+  try { return await api(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(it.meta.fid)}?uploadType=media&fields=id,name,webViewLink`, {method:'PATCH', headers:{'Content-Type':'image/jpeg'}, body:it.blob}); }
+  catch (e) { if (e.status !== 404) throw e; delete it.meta.fid; return uploadFile(it.blob, it.meta, folder); }
+}
+async function skUploaded(it, f){
+  const m = it.meta; m.fid = f.id;
+  const cur = (await DB.all()).find(x => x.id === it.id);
+  if (cur && cur.meta.fid !== f.id) { cur.meta.fid = f.id; await DB.put(cur); }
+  const body = new Blob([m.skJson || '{}'], {type:'application/json'});
+  let jid = m.skFid || '';
+  if (!jid) { const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q:`trashed=false and mimeType='application/json' and appProperties has { key='sk' and value='${qEsc(m.sk)}' }`, pageSize:'1', fields:'files(id)'})); jid = r.files?.[0]?.id || ''; }
+  if (jid) {
+    try { await api(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(jid)}?uploadType=media&fields=id`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body}); }
+    catch (e) { if (e.status !== 404) throw e; jid = ''; }
+  }
+  if (!jid) {
+    const folder = await ensurePath([...m.path.slice(0, -1), 'Croquis']);
+    jid = (await uploadFile(body, {name:m.name.replace(/\.jpg$/i, '') + ' – croquis.json', mime:'application/json', description:'Traits modifiables du croquis BauGest « ' + m.name + ' » (ne pas supprimer)', siteId:m.siteId, taken:m.taken, kind:'croquis', sk:m.sk}, folder)).id;
+  }
+  m.skFid = jid;
+  if (blobCache[f.id]) { URL.revokeObjectURL(blobCache[f.id]); delete blobCache[f.id]; }
+}
+
+/* ---------- gestes ---------- */
+function bindSketch(){
+  const st = $('#skStage'), pts = new Map();
+  let pinch = null, pan = null, tap = null, lastTap = null, penId = null;
+  if (window.ResizeObserver) new ResizeObserver(() => { if ($('#sketch').hidden) return; if (SK.v.k === SK.v.fit) skFit(); else { skClamp(); skApply(); } }).observe(st);
+  const rel = (x, y) => { const r = st.getBoundingClientRect(); return {x:x - r.left, y:y - r.top}; };
+  const palm = e => e.pointerType === 'touch' && (performance.now() - SK.lastPen < 800 || (e.width > 45 && e.height > 45));
+  st.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch') {
+      if (SK.cur || palm(e)) return;
+      pts.set(e.pointerId, rel(e.clientX, e.clientY));
+      try { st.setPointerCapture(e.pointerId); } catch (err) {}
+      if (pts.size === 2) {
+        const [a, b] = [...pts.values()], m = {x:(a.x + b.x) / 2, y:(a.y + b.y) / 2};
+        pinch = {d0:Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), k0:SK.v.k, cx:(m.x - SK.v.x) / SK.v.k, cy:(m.y - SK.v.y) / SK.v.k}; pan = null; tap = null;
+      } else if (pts.size === 1) { const p = pts.get(e.pointerId); pan = {x0:p.x, y0:p.y, tx:SK.v.x, ty:SK.v.y}; tap = {x:p.x, y:p.y, t:performance.now()}; }
+      return;
+    }
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (SK.cur) return;
+    e.preventDefault(); SK.lastPen = performance.now(); penId = e.pointerId;
+    pts.clear(); pinch = pan = tap = null;
+    try { st.setPointerCapture(e.pointerId); } catch (err) {}
+    const p = skPt(e), w = SK_SIZES[SK.size];
+    if (SK.tool === 'pen') { SK.cur = {c:SK.color, w, p:[p]}; skShow(SK.cur); }
+    else if (SK.tool === 'line') { SK.cur = {c:SK.color, w, p:[[p[0], p[1], .5], [p[0], p[1], .5]], line:true}; }
+    else if (SK.tool === 'eraser') { SK.cur = {erase:true, list:[]}; skEraseAt(p); }
+    else SK.cur = {text:true, p};
+  });
+  st.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'touch') {
+      if (e.pointerType === 'pen') SK.lastPen = performance.now();
+      if (!SK.cur || e.pointerId !== penId) return;
+      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+      if (SK.cur.erase) { evs.forEach(x => skEraseAt(skPt(x))); return; }
+      if (SK.cur.line) { const p = skPt(e); SK.cur.p[1] = skSnap(SK.cur.p[0], [p[0], p[1], .5]); skShow(SK.cur); return; }
+      if (SK.cur.text) return;
+      const g = $('#skCanvas').getContext('2d');
+      for (const x of (evs.length ? evs : [e])) {
+        const p = skPt(x), q = SK.cur.p[SK.cur.p.length - 1];
+        if (Math.hypot(p[0] - q[0], p[1] - q[1]) < 1.5) continue;
+        SK.cur.p.push(p); drawStroke(g, {c:SK.cur.c, w:SK.cur.w, p:[q, p]});
+      }
+      return;
+    }
+    if (!pts.has(e.pointerId)) return;
+    const p = rel(e.clientX, e.clientY); pts.set(e.pointerId, p);
+    if (tap && Math.hypot(p.x - tap.x, p.y - tap.y) > 10) tap = null;
+    if (pinch && pts.size >= 2) {
+      const [a, b] = [...pts.values()], m = {x:(a.x + b.x) / 2, y:(a.y + b.y) / 2};
+      SK.v.k = Math.min(SK.v.fit * 6, Math.max(SK.v.fit, pinch.k0 * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0));
+      SK.v.x = m.x - pinch.cx * SK.v.k; SK.v.y = m.y - pinch.cy * SK.v.k; skClamp(); skApply(); return;
+    }
+    if (pan) { SK.v.x = pan.tx + p.x - pan.x0; SK.v.y = pan.ty + p.y - pan.y0; skClamp(); skApply(); }
+  });
+  const up = e => {
+    if (e.pointerType !== 'touch') {
+      if (e.pointerId !== penId || !SK.cur) return;
+      const c = SK.cur; SK.cur = null; penId = null; SK.lastPen = performance.now();
+      if (c.erase) { if (c.list.length) skPush({a:'del', list:c.list}); return; }
+      if (c.text) { if (e.type === 'pointerup') { SK.textAt = c.p; $('#skTextIn').value = ''; openSheet('#sheetSkText'); setTimeout(() => $('#skTextIn').focus(), 250); } return; }
+      const s = {c:c.c, w:c.w, p:c.p};
+      if (c.line && Math.hypot(s.p[1][0] - s.p[0][0], s.p[1][1] - s.p[0][1]) < 3) { skShow(); return; }
+      SK.strokes.push(s); skPush({a:'add', s}); skRebuild(); return;
+    }
+    if (!pts.has(e.pointerId)) return;
+    pts.delete(e.pointerId);
+    if (pts.size < 2) pinch = null;
+    if (pts.size === 1) { const p = [...pts.values()][0]; pan = {x0:p.x, y0:p.y, tx:SK.v.x, ty:SK.v.y}; }
+    if (!pts.size) {
+      pan = null;
+      if (tap && e.type === 'pointerup' && performance.now() - tap.t < 300) {
+        const now = performance.now();
+        if (lastTap && now - lastTap.t < 350 && Math.hypot(tap.x - lastTap.x, tap.y - lastTap.y) < 40) { skSetTool(SK.tool === 'eraser' ? SK.prev : 'eraser'); lastTap = null; }
+        else lastTap = {x:tap.x, y:tap.y, t:now};
+      }
+      tap = null;
+    }
+  };
+  st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
+  $('#skTools').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.sktool) skSetTool(b.dataset.sktool);
+    else if (b.dataset.skcolor) { SK.color = b.dataset.skcolor; if (SK.tool === 'eraser') skSetTool(SK.prev); skUi(); }
+    else if (b.dataset.sksize) { SK.size = b.dataset.sksize; skUi(); }
+    else if (b.id === 'skUndo') skUndo();
+    else if (b.id === 'skRedo') skRedo();
+    else if (b.id === 'skGrid') { const op = {a:'grid', on:!SK.grid}; skApplyOp(op, false); skPush(op); }
+    else if (b.id === 'skClear' && SK.strokes.length) { const list = SK.strokes.map((s, i) => ({s, i})).reverse(); const op = {a:'del', list}; skApplyOp(op, false); skPush(op); }
+  });
+  $('#skClose').addEventListener('click', () => skClose());
+  $('#skSave').addEventListener('click', skSave);
+  $('#skQuitYes').addEventListener('click', () => { closeSheet($('#sheetSkQuit')); skSave(); });
+  $('#skQuitNo').addEventListener('click', () => { closeSheet($('#sheetSkQuit')); skClose(true); });
+  $('#skTextOk').addEventListener('click', skTextPlace);
+  $('#skTextNo').addEventListener('click', () => { SK.textAt = null; closeSheet($('#sheetSkText')); });
+  $('#skBlank').addEventListener('click', () => { const d = devById(dz.cur); closeSheet($('#sheetSkNew')); if (d) skOpen({d}); });
+  $('#skFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; const d = devById(dz.cur); if (!f || !d) return;
+    closeSheet($('#sheetSkNew'));
+    try { const bmp = await createImageBitmap(f, {imageOrientation:'from-image'}); await skOpen({d, bmp}); bmp.close?.(); } catch (err) { note('Image illisible'); }
+  });
+  $('#skPhotos').addEventListener('click', e => {
+    const b = e.target.closest('[data-skp]'); if (!b) return;
+    const it = dz.photos.find(p => p.key === b.dataset.skp); closeSheet($('#sheetSkNew'));
+    if (it) skFromItem(it);
+  });
+  $('#viewerSketch').addEventListener('click', () => { if (skCanOn(viewItem)) skFromItem(viewItem); });
+}
+
+
 /* ---------- Bouton « retour » d'Android (v1.6) ---------- */
 /* Chaque écran ou fenêtre ouvert ajoute une étape dans l'historique : « retour » ferme le dernier ouvert.
    À l'écran de départ (caméra sur le téléphone, documents sur la tablette), « retour » quitte l'app comme toute app Android. */
@@ -9046,6 +9460,7 @@ function backLayers(){
   let n = stack.length;
   if (window.BGPlan && BGPlan.isOpen()) n++;
   if (isOpen('#docEditor')) { n++; if (ed.drawer) n++; }
+  if (isOpen('#sketch')) n++;
   if (isOpen('#viewer')) n++;
   if (isOpen('#docView')) n++;
   if (isOpen('#planView')) n++;
@@ -9065,6 +9480,7 @@ function backCloseTop(){
     if (ed.drawer) { if (Date.now() - ed.toolsT > 800) edTools(!ed.toolsOpen); return true; }
     closeEditor(); return true;
   }
+  if (isOpen('#sketch')) { skClose(); return true; }
   if (isOpen('#viewer')) { closeViewer(); return true; }
   if (isOpen('#docView')) { closeDocView(); return true; }
   if (isOpen('#planView')) { if (PV.imm) { pvToggleImm(false); return true; } closePlan(); return true; }
@@ -9099,7 +9515,7 @@ function initBackNav(){
   BACK.on = true;
   try { history.replaceState({pc:0}, ''); } catch (e) {}
   const mo = new MutationObserver(backSchedule);
-  ['.sheet', '#docEditor', '#viewer', '#docView', '#planView', '#pdView', '#settings', '#gallery', '#mapStrip', '#galBar', '#desk', '#devis', '#dzSide', '#dzMapP', '#dzSelBar', '#memoView'].forEach(q => $$(q).forEach(el => mo.observe(el, {attributes:true, attributeFilter:['hidden']})));
+  ['.sheet', '#docEditor', '#sketch', '#viewer', '#docView', '#planView', '#pdView', '#settings', '#gallery', '#mapStrip', '#galBar', '#desk', '#devis', '#dzSide', '#dzMapP', '#dzSelBar', '#memoView'].forEach(q => $$(q).forEach(el => mo.observe(el, {attributes:true, attributeFilter:['hidden']})));
   window.addEventListener('popstate', () => {
     if (BACK.ignore) { BACK.ignore--; return; }
     if (BACK.depth > 0) BACK.depth--;
@@ -9986,7 +10402,7 @@ async function init(){
   const todoParam = new URLSearchParams(location.search).get('todo');
   if (shareParam !== null || pvParam || todoParam) history.replaceState(null, '', location.pathname + location.hash);
   await DB.open();
-  bind(); bindDocs(); bindPlans(); bindPvdt(); bindSoum(); bindDevis(); bindDzSel(); bindDzMap(); bindMemoView(); bindCalc(); bindTodo(); initPlanning(); applyBrand(); renderSiteChip(); renderActiveTag();
+  bind(); bindDocs(); bindPlans(); bindPvdt(); bindSoum(); bindDevis(); bindSketch(); bindDzSel(); bindDzMap(); bindMemoView(); bindCalc(); bindTodo(); initPlanning(); applyBrand(); renderSiteChip(); renderActiveTag();
   startGeo();
   if (isTabletScreen()) { keepAwake(); document.addEventListener('pointerdown', keepAwake, {passive:true}); }
   if (auth === 'cid') note('Client ID enregistré. Ouvre Paramètres › Google Drive › Connecter.', 4500);
