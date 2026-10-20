@@ -20,6 +20,6 @@ BauGest l'affiche en priorité (pastille « Texte », bascule Manuscrit / Texte 
 Les tâches écrites au stylo dans BauGest sont dans `<Chantier>/À faire (ne pas supprimer).json` (appProperties `kind='todo'`). Ce fichier n'est jamais modifié par la tâche planifiée.
 
 1. `todo.py render afaire.json dossier [texte_tape.json]` : une image PNG par tâche à transcrire + `todo.json` (liste vide = rien à faire). `texte_tape.json` = l'actuel « À faire – texte tapé.json » du chantier s'il existe.
-2. Claude lit chaque image et écrit `textes.json` = `{"<id>": "texte"}` (une tâche = une ligne courte).
+2. Claude lit chaque image et écrit `textes.json` = `{"<id>": "texte"}` : une ligne de texte par ligne écrite, séparées par `\n` (liste de matériel : un article par ligne, quantités et unités telles qu'écrites).
 3. `todo.py texts afaire.json textes.json [texte_tape.json] sortie.json` → nouveau « À faire – texte tapé.json » (`{id: {v: iv, t: texte}}`), déposé dans le dossier du chantier ; l'ancien va à la corbeille après vérification.
    BauGest reprend le texte dans la tâche seulement si l'écriture n'a pas changé depuis (`v == iv`).

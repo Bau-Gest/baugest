@@ -12,7 +12,8 @@ Usage :
       → dossier_sortie/<id>.png (écriture de la tâche, fond blanc) + dossier_sortie/todo.json
         todo.json = [{id, img, t}] (t = texte déjà tapé, à garder en contexte) ; liste vide = rien à faire
   python3 todo.py texts afaire.json textes.json [texte_tape.json] sortie.json
-      textes.json = {"<id>": "texte tapé", ...}
+      textes.json = {"<id>": "texte tapé", ...} — une ligne de texte par ligne écrite, séparées par \n
+      (liste de matériel : un article par ligne, quantités et unités telles qu'écrites)
       → sortie.json = nouveau « À faire – texte tapé.json » (anciens textes encore valables + nouveaux)
 """
 import json
@@ -21,7 +22,7 @@ import sys
 
 from prepare import draw_strokes
 
-TW, TH, SC = 1000, 200, 2.0
+TW, SC = 1000, 2.0  # largeur 1000 unités ; hauteur libre (une ligne = 100 unités, plusieurs lignes possibles)
 
 
 def load(path):
@@ -51,7 +52,7 @@ def render(src, out, old_path=None):
         x0 = max(0, min(p[0] for p in pts) - 20)
         y0 = max(0, min(p[1] for p in pts) - 20)
         x1 = min(TW, max(p[0] for p in pts) + 20)
-        y1 = min(TH, max(p[1] for p in pts) + 20)
+        y1 = max(p[1] for p in pts) + 20
         size = (max(1, round((x1 - x0) * SC)), max(1, round((y1 - y0) * SC)))
         strokes = [{**s, "c": "#1d2733"} for s in t["ink"]]
         img = draw_strokes(strokes, size, (x0, y0), SC)

@@ -887,7 +887,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .td-sites .chip{flex:none;min-height:38px;font-size:14px}
 .td-pad{position:relative;border:2px dashed var(--line);border-radius:12px;background:var(--surface);color:var(--text);overflow:hidden}
 .td-pad canvas{display:block;width:100%;touch-action:pan-y;cursor:crosshair}
-.td-ph{position:absolute;left:16px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font:600 17px var(--body)}
+.td-ph{position:absolute;left:16px;right:16px;top:28px;pointer-events:none;color:var(--muted);font:600 17px var(--body)}
 .td-opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .td-opts .chip{min-height:42px;max-width:100%;font-size:14.5px}
 .td-opts .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
@@ -910,7 +910,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .td-chk i{width:30px;height:30px;border:2.5px solid var(--muted);border-radius:8px;display:grid;place-items:center;font:800 18px/1 var(--body);font-style:normal;color:#fff}
 .td-row.done .td-chk i{background:var(--ok);border-color:var(--ok)}
 .td-body{display:grid;gap:4px;min-width:0;padding:8px 12px 8px 0;color:inherit;text-align:left;cursor:pointer}
-.td-txt{font:600 16px/1.3 var(--body);overflow-wrap:anywhere}
+.td-txt{font:600 16px/1.3 var(--body);overflow-wrap:anywhere;white-space:pre-line}
 .td-inkh{display:block;min-height:0;overflow:hidden;color:var(--text)}
 .td-inkh canvas{display:block;max-width:100%}
 .td-meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font:500 13px var(--body);color:var(--muted)}
@@ -9123,7 +9123,7 @@ function openPlanning(){
    Fusion par tâche (champ m = dernière modification) ; tâches supprimées gardées 90 j (del) pour la synchro.
    La tâche « Transcription BauGest » dépose à côté « À faire – texte tapé.json » = {id: {v: iv de l'écriture, t: texte}} (tools/transcription/todo.py) ;
    repris dans tx de la tâche si l'écriture n'a pas changé (v == iv), sans toucher m. */
-const TD_FILE = 'À faire (ne pas supprimer).json', TD_TXFILE = 'À faire – texte tapé.json', TW = 1000, TH = 200, TD_INK = '#1d2733';
+const TD_FILE = 'À faire (ne pas supprimer).json', TD_TXFILE = 'À faire – texte tapé.json', TW = 1000, TD_LH = 100, TD_MAXL = 40, TD_INK = '#1d2733'; // largeur 1000 unités, une ligne = 100 unités (plusieurs lignes possibles : listes de matériel…)
 const TD_PRI = {r:'Urgent', o:'Important', g:'Normal'}, TD_RANK = {r:0, o:1, g:2};
 const TD_REP = [0, 7, 14, 'm'], TD_REPN = {0:'Pas de répétition', 7:'Chaque semaine', 14:'Toutes les 2 sem.', m:'Chaque mois'};
 const TD = {lists:{}, files:{}, syncing:false, again:false, timer:0, pads:new Map(), ed:null, showDone:false, open:new Set(), notif:{}};
@@ -9292,12 +9292,12 @@ function tdBox(ink){
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const s of ink) for (const p of s.p) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
   if (!isFinite(x0)) return null;
-  const m = 8; return {x:Math.max(0, x0 - m), y:Math.max(0, y0 - m), w:Math.min(TW, x1 + m) - Math.max(0, x0 - m), h:Math.min(TH, y1 + m) - Math.max(0, y0 - m)};
+  const m = 8; return {x:Math.max(0, x0 - m), y:Math.max(0, y0 - m), w:Math.min(TW, x1 + m) - Math.max(0, x0 - m), h:y1 + m - Math.max(0, y0 - m)};
 }
 function tdInkCanvas(ink, h = 42, maxW = 560, host){
   const b = tdBox(ink), c = document.createElement('canvas'); c.className = 'td-ink';
   if (!b) { c.width = c.height = 1; return c; }
-  let k = h / Math.max(b.h, 60); if (b.w * k > maxW) k = maxW / b.w;
+  let k = h / TD_LH; if (b.w * k > maxW) k = maxW / b.w; // même échelle pour une ou plusieurs lignes
   const dpr = Math.min(3, devicePixelRatio || 1), w = Math.max(1, Math.round(b.w * k)), hh = Math.max(1, Math.round(Math.max(b.h, 60) * k));
   c.width = w * dpr; c.height = hh * dpr; c.style.width = w + 'px'; c.style.height = hh + 'px';
   const g = c.getContext('2d'), col = tdInkCol(host);
@@ -9341,7 +9341,7 @@ function tdListHTML(tasks, sid){ return `<div class="td-list">${tasks.map(t => t
 function tdNewHTML(id, o = {}){
   return `<div class="td-new" id="${id}">
     ${o.sites ? `<div class="td-sites" data-tdsites></div>` : ''}
-    <div class="td-pad"><canvas></canvas><span class="td-ph">${esc(o.ph || 'Écris la tâche ici au stylo')}</span></div>
+    <div class="td-pad"><canvas></canvas><span class="td-ph">${esc(o.ph || 'Écris ici au stylo · plusieurs lignes possibles')}</span></div>
     <div class="td-opts">
       <span class="td-pri" role="group" aria-label="Priorité">${['r', 'o', 'g'].map(p => `<button data-tdpri="${p}" class="p-${p}" title="${TD_PRI[p]}" aria-label="${TD_PRI[p]}"></button>`).join('')}</span>
       <button class="chip" data-tddate>${TD_IC.bell}<span>Rappel</span></button>
@@ -9351,22 +9351,29 @@ function tdNewHTML(id, o = {}){
     <div class="td-acts">
       <button class="btn" data-tdundo aria-label="Annuler le dernier trait"><svg class="ic" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
       <button class="btn" data-tdclear>Effacer</button>
+      <button class="btn" data-tdline title="Ajouter une ligne d’écriture (liste de matériel…)"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Ligne</button>
       <span class="spacer"></span>
       ${o.edit ? '<button class="btn danger" data-tddel>Supprimer</button><button class="btn primary" data-tdsave>Enregistrer</button>' : '<button class="btn primary" data-tdadd>Ajouter</button>'}
     </div>
   </div>`;
 }
 function tdPadState(el){ return TD.pads.get(el.id); }
+// nombre de lignes du bloc : les lignes écrites + toujours une ligne libre en dessous (2 au minimum)
+function tdLinesFor(ink, cur = 2){ let y = 0; for (const s of ink || []) for (const p of s.p) y = Math.max(y, p[1]); return Math.min(TD_MAXL, Math.max(2, cur || 2, Math.floor(y / TD_LH) + 2)); }
+function tdPadLines(el, n){ const st = tdPadState(el); if (!st) return; n = Math.min(TD_MAXL, Math.max(2, n)); if (n === st.lines) return; st.lines = n; el._size && el._size(); }
 function tdPadInit(el, st){
   st = Object.assign({ink:[], pri:'g', due:null, rep:0, ln:null, sid:null, edit:null}, st || {});
+  st.lines = tdLinesFor(st.ink, st.lines);
   TD.pads.set(el.id, st);
   const c = el.querySelector('canvas'), pad = el.querySelector('.td-pad');
   const size = () => {
     const w = pad.clientWidth; if (!w) return;
-    const dpr = Math.min(3, devicePixelRatio || 1); c.width = Math.round(w * dpr); c.height = Math.round(w * TH / TW * dpr);
-    c.style.height = Math.round(w * TH / TW) + 'px'; tdPadDraw(el);
+    const s2 = tdPadState(el), h = (s2 ? s2.lines : 2) * TD_LH;
+    const dpr = Math.min(3, devicePixelRatio || 1); c.width = Math.round(w * dpr); c.height = Math.round(w * h / TW * dpr);
+    c.style.height = Math.round(w * h / TW) + 'px'; tdPadDraw(el);
   };
-  if (!el._ro) { el._ro = new ResizeObserver(size); el._ro.observe(pad); bindTdPad(el); }
+  el._size = size;
+  if (!el._ro) { el._ro = new ResizeObserver(() => el._size()); el._ro.observe(pad); bindTdPad(el); }
   size(); tdPadOpts(el);
   return st;
 }
@@ -9376,7 +9383,8 @@ function tdPadDraw(el){
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
   g.setTransform(k, 0, 0, k, 0, 0);
   g.strokeStyle = 'rgba(128,140,155,.45)'; g.lineWidth = 2; g.setLineDash([10, 10]);
-  g.beginPath(); g.moveTo(24, TH * .72); g.lineTo(TW - 24, TH * .72); g.stroke(); g.setLineDash([]);
+  for (let i = 0; i < st.lines; i++) { const y = i * TD_LH + TD_LH * .78; g.beginPath(); g.moveTo(24, y); g.lineTo(TW - 24, y); g.stroke(); }
+  g.setLineDash([]);
   const col = tdInkCol(el.querySelector('.td-pad'));
   for (const s of st.ink) drawStroke(g, {...s, c:col});
   el.querySelector('.td-ph').hidden = st.ink.length > 0;
@@ -9393,7 +9401,7 @@ function tdPadOpts(el){
 function bindTdPad(el){
   const c = el.querySelector('canvas');
   let cur = null;
-  const pt = e => { const r = c.getBoundingClientRect(); return [Math.round((e.clientX - r.left) / r.width * TW * 10) / 10, Math.round((e.clientY - r.top) / r.height * TH * 10) / 10, e.pointerType === 'pen' ? Math.round((e.pressure || .5) * 100) / 100 : .5]; };
+  const pt = e => { const r = c.getBoundingClientRect(); return [Math.round((e.clientX - r.left) / r.width * TW * 10) / 10, Math.round((e.clientY - r.top) / r.height * (tdPadState(el)?.lines || 2) * TD_LH * 10) / 10, e.pointerType === 'pen' ? Math.round((e.pressure || .5) * 100) / 100 : .5]; };
   c.addEventListener('pointerdown', e => {
     if (e.pointerType === 'touch' || cur) return; // le doigt fait défiler, seul le stylet (ou la souris) écrit
     e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch (x) {}
@@ -9410,13 +9418,13 @@ function bindTdPad(el){
       cur.s.p.push(p); drawStroke(g, {c:col, w:cur.s.w, p:[a, p]});
     }
   });
-  const end = e => { if (!cur || e.pointerId !== cur.id) return; const st = tdPadState(el); if (st) st.ink.push(cur.s); cur = null; };
+  const end = e => { if (!cur || e.pointerId !== cur.id) return; const st = tdPadState(el); if (st) { st.ink.push(cur.s); tdPadLines(el, tdLinesFor(st.ink, st.lines)); } cur = null; };
   c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
 }
 function tdPadReset(el, keep){
   const st = tdPadState(el); if (!st) return;
   Object.assign(st, {ink:[], pri:'g', due:null, rep:0, ln:null}, keep || {});
-  tdPadDraw(el); tdPadOpts(el);
+  st.lines = 0; tdPadLines(el, 2); tdPadDraw(el); tdPadOpts(el);
 }
 function tdPadClick(e){
   const el = e.target.closest('.td-new'); if (!el) return false;
@@ -9428,7 +9436,8 @@ function tdPadClick(e){
   if (e.target.closest('[data-tddate]')) { tdDatePick(st.due, st.sid, v => { st.due = v; tdPadOpts(el); if (v) tdAskNotif(); }); return true; }
   if (e.target.closest('[data-tdlink]')) { tdLinkPick(st.sid, st.ln, v => { st.ln = v; tdPadOpts(el); }); return true; }
   if (e.target.closest('[data-tdundo]')) { st.ink.pop(); tdPadDraw(el); return true; }
-  if (e.target.closest('[data-tdclear]')) { st.ink = []; tdPadDraw(el); return true; }
+  if (e.target.closest('[data-tdclear]')) { st.ink = []; st.lines = 0; tdPadLines(el, 2); tdPadDraw(el); return true; }
+  if (e.target.closest('[data-tdline]')) { tdPadLines(el, st.lines + 1); return true; }
   if (e.target.closest('[data-tdadd]')) {
     if (!st.sid || !siteById(st.sid)) { note('Choisis le chantier de la tâche', 2500); return true; }
     if (!st.ink.length) { note('Écris d’abord la tâche au stylo', 2500); return true; }

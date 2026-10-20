@@ -454,6 +454,7 @@ body.bp-split #app{left:var(--bp-w,55%)}
 .tdp-row img{display:block;max-width:100%}
 .tdp-row img.th{width:64px;height:48px;object-fit:cover;border-radius:5px}
 .tdp-row small{color:var(--muted)}
+.tdp-row b{white-space:pre-line}
 .tdp-row small .late{color:var(--bad);font-weight:700}
 .tdp-row small .today{color:var(--warn);font-weight:700}
 </style>
@@ -2848,7 +2849,7 @@ function tdInk(ink){
   for (const s of ink) for (const p of s.p) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
   if (!isFinite(x0)) return '';
   x0 -= 8; y0 -= 8; x1 += 8; y1 += 8;
-  const h = Math.max(y1 - y0, 60), k = Math.min(40 / h, 520 / (x1 - x0)), c = document.createElement('canvas'), dpr = Math.min(3, devicePixelRatio || 1);
+  const h = Math.max(y1 - y0, 60), k = Math.min(0.4, 520 / (x1 - x0)), c = document.createElement('canvas'), dpr = Math.min(3, devicePixelRatio || 1);
   c.width = Math.round((x1 - x0) * k * dpr); c.height = Math.round(h * k * dpr); c.style.width = Math.round((x1 - x0) * k) + 'px'; c.style.height = Math.round(h * k) + 'px';
   const g = c.getContext('2d'), col = getComputedStyle(document.body).color;
   g.setTransform(k * dpr, 0, 0, k * dpr, -x0 * k * dpr, -(y0 - (h - (y1 - y0)) / 2) * k * dpr);
