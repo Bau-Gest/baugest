@@ -887,6 +887,11 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .td-sites .chip{flex:none;min-height:38px;font-size:14px}
 .td-pad{position:relative;border:2px dashed var(--line);border-radius:12px;background:var(--surface);color:var(--text);overflow:hidden}
 .td-pad canvas{display:block;width:100%;touch-action:pan-y;cursor:crosshair}
+.td-tool{position:absolute;z-index:1;top:8px;right:8px;display:flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:600 13.5px var(--body)}
+.td-tool .ic{width:17px;height:17px}
+.td-tool.on{background:#e5312b;border-color:#e5312b;color:#fff}
+.td-pad.erasing{border-color:#e5312b}
+.td-pad.erasing canvas{cursor:cell}
 .td-ph{position:absolute;left:16px;right:16px;top:28px;pointer-events:none;color:var(--muted);font:600 17px var(--body)}
 .td-opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .td-opts .chip{min-height:42px;max-width:100%;font-size:14.5px}
@@ -9341,7 +9346,7 @@ function tdListHTML(tasks, sid){ return `<div class="td-list">${tasks.map(t => t
 function tdNewHTML(id, o = {}){
   return `<div class="td-new" id="${id}">
     ${o.sites ? `<div class="td-sites" data-tdsites></div>` : ''}
-    <div class="td-pad"><canvas></canvas><span class="td-ph">${esc(o.ph || 'Écris ici au stylo · plusieurs lignes possibles')}</span></div>
+    <div class="td-pad"><canvas></canvas><button class="td-tool" data-tdtool title="Double tape au doigt : stylo ⇄ gomme"></button><span class="td-ph">${esc(o.ph || 'Écris ici au stylo · plusieurs lignes · double tape au doigt : gomme')}</span></div>
     <div class="td-opts">
       <span class="td-pri" role="group" aria-label="Priorité">${['r', 'o', 'g'].map(p => `<button data-tdpri="${p}" class="p-${p}" title="${TD_PRI[p]}" aria-label="${TD_PRI[p]}"></button>`).join('')}</span>
       <button class="chip" data-tddate>${TD_IC.bell}<span>Rappel</span></button>
@@ -9362,7 +9367,7 @@ function tdPadState(el){ return TD.pads.get(el.id); }
 function tdLinesFor(ink, cur = 2){ let y = 0; for (const s of ink || []) for (const p of s.p) y = Math.max(y, p[1]); return Math.min(TD_MAXL, Math.max(2, cur || 2, Math.floor(y / TD_LH) + 2)); }
 function tdPadLines(el, n){ const st = tdPadState(el); if (!st) return; n = Math.min(TD_MAXL, Math.max(2, n)); if (n === st.lines) return; st.lines = n; el._size && el._size(); }
 function tdPadInit(el, st){
-  st = Object.assign({ink:[], pri:'g', due:null, rep:0, ln:null, sid:null, edit:null}, st || {});
+  st = Object.assign({ink:[], pri:'g', due:null, rep:0, ln:null, sid:null, edit:null, tool:'pen', ops:[]}, st || {});
   st.lines = tdLinesFor(st.ink, st.lines);
   TD.pads.set(el.id, st);
   const c = el.querySelector('canvas'), pad = el.querySelector('.td-pad');
@@ -9388,6 +9393,23 @@ function tdPadDraw(el){
   const col = tdInkCol(el.querySelector('.td-pad'));
   for (const s of st.ink) drawStroke(g, {...s, c:col});
   el.querySelector('.td-ph').hidden = st.ink.length > 0;
+  tdToolShow(el);
+}
+function tdToolShow(el){
+  const st = tdPadState(el), b = el.querySelector('[data-tdtool]'); if (!st || !b) return;
+  const er = st.tool === 'eraser';
+  b.innerHTML = er ? '<svg class="ic" viewBox="0 0 24 24"><path d="M20 20H9L4 15a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-8 9"/><path d="M8 11l6 6"/></svg>Gomme' : '<svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Stylo';
+  b.classList.toggle('on', er); el.querySelector('.td-pad').classList.toggle('erasing', er);
+}
+function tdToggleTool(el){
+  const st = tdPadState(el); if (!st) return;
+  st.tool = st.tool === 'eraser' ? 'pen' : 'eraser'; tdToolShow(el);
+  note(st.tool === 'eraser' ? 'Gomme · le stylet efface (double tape pour revenir au stylo)' : 'Stylo', 1500);
+}
+function tdEraseAt(el, st, p, op){
+  let hit = false;
+  for (let j = st.ink.length - 1; j >= 0; j--) if (st.ink[j].p.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < 18)) { op.items.push({s:st.ink[j], idx:j}); st.ink.splice(j, 1); hit = true; }
+  if (hit) tdPadDraw(el);
 }
 function tdPadOpts(el){
   const st = tdPadState(el); if (!st) return;
@@ -9402,14 +9424,20 @@ function bindTdPad(el){
   const c = el.querySelector('canvas');
   let cur = null;
   const pt = e => { const r = c.getBoundingClientRect(); return [Math.round((e.clientX - r.left) / r.width * TW * 10) / 10, Math.round((e.clientY - r.top) / r.height * (tdPadState(el)?.lines || 2) * TD_LH * 10) / 10, e.pointerType === 'pen' ? Math.round((e.pressure || .5) * 100) / 100 : .5]; };
+  let tap = null, lastTap = null, er = null;
   c.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'touch' || cur) return; // le doigt fait défiler, seul le stylet (ou la souris) écrit
+    if (e.pointerType === 'touch') { tap = {id:e.pointerId, x:e.clientX, y:e.clientY, t:Date.now()}; return; } // le doigt fait défiler ; double tape = stylo ⇄ gomme
+    if (cur || er) return;
+    const st0 = tdPadState(el);
     e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch (x) {}
+    if (st0 && st0.tool === 'eraser') { er = {id:e.pointerId, op:{t:'erase', items:[]}}; tdEraseAt(el, st0, pt(e), er.op); return; }
     cur = {id:e.pointerId, s:{c:TD_INK, w:2.6, p:[pt(e)]}};
     el.querySelector('.td-ph').hidden = true;
     const g = c.getContext('2d'), k = c.width / TW; g.setTransform(k, 0, 0, k, 0, 0); drawStroke(g, {...cur.s, c:tdInkCol(c.parentElement)});
   });
   c.addEventListener('pointermove', e => {
+    if (tap && e.pointerId === tap.id && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 10) tap = null;
+    if (er && e.pointerId === er.id) { const st0 = tdPadState(el); if (st0) for (const ev of (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]) || [e]) tdEraseAt(el, st0, pt(ev), er.op); return; }
     if (!cur || e.pointerId !== cur.id) return;
     const g = c.getContext('2d'), k = c.width / TW, col = tdInkCol(c.parentElement); g.setTransform(k, 0, 0, k, 0, 0);
     for (const ev of (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]) || [e]) {
@@ -9418,12 +9446,25 @@ function bindTdPad(el){
       cur.s.p.push(p); drawStroke(g, {c:col, w:cur.s.w, p:[a, p]});
     }
   });
-  const end = e => { if (!cur || e.pointerId !== cur.id) return; const st = tdPadState(el); if (st) { st.ink.push(cur.s); tdPadLines(el, tdLinesFor(st.ink, st.lines)); } cur = null; };
+  const end = e => {
+    if (tap && e.pointerId === tap.id) {
+      const t = tap; tap = null;
+      if (e.type === 'pointerup' && Date.now() - t.t < 350) {
+        const now = Date.now();
+        if (lastTap && now - lastTap.t < 380 && Math.hypot(t.x - lastTap.x, t.y - lastTap.y) < 40) { lastTap = null; tdToggleTool(el); }
+        else lastTap = {t:now, x:t.x, y:t.y};
+      }
+      return;
+    }
+    if (er && e.pointerId === er.id) { const st = tdPadState(el); if (st && er.op.items.length) st.ops.push(er.op); er = null; return; }
+    if (!cur || e.pointerId !== cur.id) return;
+    const st = tdPadState(el); if (st) { st.ink.push(cur.s); st.ops.push({t:'add'}); tdPadLines(el, tdLinesFor(st.ink, st.lines)); } cur = null;
+  };
   c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
 }
 function tdPadReset(el, keep){
   const st = tdPadState(el); if (!st) return;
-  Object.assign(st, {ink:[], pri:'g', due:null, rep:0, ln:null}, keep || {});
+  Object.assign(st, {ink:[], ops:[], tool:'pen', pri:'g', due:null, rep:0, ln:null}, keep || {});
   st.lines = 0; tdPadLines(el, 2); tdPadDraw(el); tdPadOpts(el);
 }
 function tdPadClick(e){
@@ -9435,8 +9476,14 @@ function tdPadClick(e){
   if (e.target.closest('[data-tdrep]')) { st.rep = TD_REP[(TD_REP.indexOf(st.rep) + 1) % TD_REP.length]; tdPadOpts(el); return true; }
   if (e.target.closest('[data-tddate]')) { tdDatePick(st.due, st.sid, v => { st.due = v; tdPadOpts(el); if (v) tdAskNotif(); }); return true; }
   if (e.target.closest('[data-tdlink]')) { tdLinkPick(st.sid, st.ln, v => { st.ln = v; tdPadOpts(el); }); return true; }
-  if (e.target.closest('[data-tdundo]')) { st.ink.pop(); tdPadDraw(el); return true; }
-  if (e.target.closest('[data-tdclear]')) { st.ink = []; st.lines = 0; tdPadLines(el, 2); tdPadDraw(el); return true; }
+  if (e.target.closest('[data-tdtool]')) { tdToggleTool(el); return true; }
+  if (e.target.closest('[data-tdundo]')) {
+    const op = st.ops.pop();
+    if (op && op.t === 'erase') for (const it of op.items.slice().reverse()) st.ink.splice(Math.min(it.idx, st.ink.length), 0, it.s);
+    else st.ink.pop();
+    tdPadDraw(el); return true;
+  }
+  if (e.target.closest('[data-tdclear]')) { st.ink = []; st.ops = []; st.lines = 0; tdPadLines(el, 2); tdPadDraw(el); return true; }
   if (e.target.closest('[data-tdline]')) { tdPadLines(el, st.lines + 1); return true; }
   if (e.target.closest('[data-tdadd]')) {
     if (!st.sid || !siteById(st.sid)) { note('Choisis le chantier de la tâche', 2500); return true; }
