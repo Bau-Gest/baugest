@@ -17,6 +17,7 @@
 |---|---|---|
 | `index.html` | ~718 Ko · 8 200 lignes · ~530 fonctions | App téléphone + tablette (un seul fichier) |
 | `pc.html` | ~306 Ko · 4 300 lignes · ~280 fonctions | Webapp PC (complément, la tablette reste la référence) |
+| `pc-nouveau.html` | ~415 Ko | **Préversion** (21.10.2026) = `pc.html` + accueil personnalisable + Courrier (mails Outlook). À valider par Joel puis à recopier dans `pc.html` (même code, blocs « Courrier » et « Accueil PC personnalisable » en fin de script) |
 | `planning.js` | ~1 650 lignes | Module Planning partagé (tablette + PC) : Gantt, chemin critique, ressources, lissage, budget / valeur acquise, exports PDF A3 / Excel / MS Project XML. Chargé par `<script src>` dans les deux HTML |
 | `aide-planning.html` + `aide/*.png` + `aide-planning.pdf` | — | Manuel du Planning (méthode + mode d'emploi), ouvert par le bouton ? du Planning ; PDF A4 généré depuis le HTML (Playwright `page.pdf`). Captures `aide/` faites avec le vrai module et 2 plannings d'exemple : à refaire si l'interface change |
 | `sw.js` | 43 lignes | Service worker : cache `baugest-vNN`, share-target, clic sur notification |
@@ -120,6 +121,10 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 
 **Zoom aux doigts (20.10.2026)** : zoom du navigateur bloqué partout (viewport `user-scalable=no` + `*{touch-action:pan-x pan-y}` en tête du CSS, les zones à zoom propre gardent `none` + `blockPageZoom` : 2 doigts / gestes iOS annulés en capture) → menus, listes, fiches jamais zoomés. Zoom seulement dans ce qu'on ouvre, par le zoom propre à chaque visionneuse : photo, plan, PV DT, éditeur de document, croquis, cartes ; document transcrit et mémo de devis = `bindPageZoom` (1–4×, remis à 1× à chaque ouverture). Bloc « Zoom aux doigts » avant « Démarrage ».
 
+**Accueil PC + Courrier (21.10.2026, préversion `pc-nouveau.html`)** : onglet « Accueil » (écran de démarrage du PC), grille de 12 colonnes, blocs `drop` (Déposer et trier), `today` (aujourd'hui + 7 jours : rappels, séances, visites, PV DT 7 j, jalons), `quick` (tuiles d'actions réglables), `mails` (filtre chantier / importants), `sites` (tuiles chantiers : à faire, retards, mails 7 j, séance, Photos / PV / Planning / Mémoire / infos). Bouton « Modifier l'accueil » : glisser l'en-tête = déplacer, coin = taille, ⚙ = réglage, ✕ = retirer, + Ajouter un bloc. Disposition `{lay:[{id,t,w,h,o}], at}` dans `localStorage['baugest.pcHome']` + « BauGest – accueil PC (ne pas supprimer).json » à la racine (`kind='pchome'`, le plus récent gagne).
+Courrier : on dépose sur l'accueil des mails Outlook `.msg` (lecteur CFB/MAPI maison, mails joints relus) ou `.eml` (MIME) et des fichiers. Pièces jointes typées (PDF lu par pdf.js : PV DT avec n°/date, plan si grand format / échelle / indice, sinon document ; images < 25 ko ou inline = ignorées) ; chantier deviné (n°, nom, abréviations DT, expéditeur déjà classé : `baugest.mailFrom` + recherche Drive `from`) ; doublon = même `mid` (hash Message-ID/sujet/expéditeur/date). Rangement : PV → `PV de chantier` (kind pvdt, remplace même n°), plan → `Plans` (kind plan + uid), photo → `Photos` (taken = date du mail, étiquette Mail), autre → `<Chantier>/Courrier/Documents reçus` (kind `mailatt`), mail d'origine → `<Chantier>/Courrier/AAAA-MM-JJ HHhMM – Expéditeur – Sujet.msg|.eml` (kind `mailsrc`) + `.json` (kind `mail`, appProperties `mid, from, mdate, na`, `td='1'` quand les actions sont dans À faire ; contenu `{v:1, kind, mid, siteId, site, subject, from{name,email}, to, cc, date, body (60 000 car.), atts[{name,type,fid}], src{fid,name}, droppedAt}` ; description = extrait). Sans chantier → `À classer/Courrier`.
+Résumés (tâche « Mails BauGest ») : `<nom du mail> – résumé.json` à côté `{v:1, at, imp:'h'|'n'|'l', t, pts[], actions[{t, due:'AAAA-MM-JJ'|null, pri}], dl[]}` + description du `.json` du mail réécrite « #résumé imp=h act=2\n<résumé> » ; `Courrier – mémoire.json` par chantier `{v:1, siteId, site, updatedAt, synth, open[], events[{d, from, t, mail}]}` (nouvelle version créée, l'ancienne mise à la corbeille). Le connecteur Drive des tâches ne sait pas écrire d'appProperties ni réécrire un fichier → **c'est BauGest PC qui ajoute les actions aux À faire** (`mlSyncTodos`, tâche `t` + `src:{mail, n}`) puis met `td='1'`.
+
 **Mesures d'un plan** : `{v:1, plan:{key,name}, siteId, scales, confirmed, measures:[…], updatedAt}` ; lié à l'ID Drive du plan (renommer/déplacer garde le lien).
 
 ## 3c. Règles métier décidées par Joel (ne pas changer sans lui demander)
@@ -151,6 +156,7 @@ Réglages & synchro (~1868–2130) · GPS/caméra/prise de vue (~2164–2515) ·
 | Plans BauGest | lu–ve 17:17 (11:17 retiré le 19.10.2026) | Renomme les plans d'après le cartouche (« Sujet ind C AAAA-MM-JJ.pdf »), doublons/anciens indices → Plans annulés ; notification si changement |
 | Récap PV BauGest | lu–ve 17:35 | Veille de séance (vendredi pour le lundi) : compare les 2 derniers PV DT du chantier + points cochés, PDF « <PV> – récap.pdf » à côté du PV + notification ; « PV manquant » si aucun nouveau PV |
 | Soumission BauGest | vendredi 17:44 | Word / PDF du dossier « Soumission » → « <nom> – positions.json » à côté (tools/soumission), contrôle des totaux par CAN ; notification si ≥ 1 soumission |
+| Mails BauGest | lu–ve 11:50 et 17:50 | Mails classés par BauGest PC (`<Chantier>/Courrier/*.json` sans « – résumé.json ») → résumé, actions, délais, importance + mémoire du chantier ; notification si mail important (voir 3b « Accueil PC + Courrier ») |
 | Rappel séance BauGest | tous les jours 06:52 | Jour de séance : notification avec le résumé et les liens directs vers le récap (Drive + BauGest tablette `?pvdt=<id>&site=<id>`) |
 
 Les deux tournent sans l'ordinateur de Joel, mais dépendent des connexions Google Drive/GitHub du compte Claude. Dernier passage réussi : 09.10.2026.
@@ -194,6 +200,7 @@ Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_0
 ## 7. Pistes ouvertes (non commencées, à confirmer avec Joel)
 
 - À faire : rappel quand l'app est fermée (serveur push ou tâche planifiée du matin).
+- Courrier : rubrique « Mails » sur la tablette (consultation des résumés et de la mémoire) après validation de la préversion PC ; remplacer `pc.html` par `pc-nouveau.html` une fois validé.
 - Accueil : l'icône BauGest de l'écran d'accueil Android reprend l'app là où elle était (pas de retour à l'accueil BauGest) ; `launch_handler` du manifeste écarté car il risque de casser « Partager → BauGest ». Jalons : seulement les plannings déjà ouverts sur la tablette.
 - Planning : lien des tâches aux positions de la soumission (`positions.json`) comme source de budget ; jalons du planning dans le récap de séance.
 - Outils non faits de la maquette : texte sur plan (tablette), comptage de points, zoom caméra.
