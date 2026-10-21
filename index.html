@@ -9643,6 +9643,7 @@ function initPlanning(){
     sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), folder:siteFolder(s)})),
     api, ensureFolder:parts => ensurePath(parts), online:() => driveReady() && navigator.onLine, loadScript,
     company:id => { const s = siteById(id), c = s && compById(s.comp); return (c && c.name) || ''; },
+    logos:id => { const s = siteById(id), c = s && compById(s.comp); return {comp:(c && c.logo) || '', site:(s && s.logo) || '', lib:[...compList().map(x => x.logo), ...allLogos()].filter(Boolean)}; },
     onToggle:() => { syncRail(); backSchedule(); }
   });
 }

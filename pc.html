@@ -3080,7 +3080,8 @@ if (window.BGPlan) BGPlan.init({
   api:(url, opt) => api(url, opt),
   ensureFolder:async parts => { let id = P.rootId; for (const n of parts) id = await ensureChild(id, n); return id; },
   online:() => !!P.rootId && navigator.onLine, loadScript,
-  company:id => { const s = S.sites.find(x => x.id === id), c = s && compById(s.comp); return (c && c.name) || ''; }
+  company:id => { const s = S.sites.find(x => x.id === id), c = s && compById(s.comp); return (c && c.name) || ''; },
+  logos:id => { const s = S.sites.find(x => x.id === id), c = s && compById(s.comp); return {comp:(c && c.logo) || '', site:(s && s.logo) || '', lib:[...(S.companies || []).map(x => x.logo), ...(S.logoLib || []), ...S.sites.map(x => x.logo)].filter(Boolean)}; }
 });
 /* fichier du dossier Planning ouvert depuis l'explorateur : planning BauGest (.json ou sa copie .xml) → module Planning ; autre .xml MS Project → import */
 async function isMspXml(f){

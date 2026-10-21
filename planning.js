@@ -467,14 +467,14 @@ function css(){ return `
 .bp-row{display:flex;align-items:center;border-bottom:1px solid rgba(128,128,128,.14);cursor:default}
 .bp-row.sel{background:var(--signal-soft,#3b3219)}
 .bp-row.sum .bp-cell{font-weight:700}
-.bp-row .num{text-align:right;font-family:var(--mono,monospace);font-size:13px}
+.bp-row .num{text-align:right;font-family:var(--mono,monospace);font-size:.92em}
 .bp-row .wbs{font-family:var(--mono,monospace);font-size:12px;color:var(--muted,#9da2a8)}
 .bp-row.late .nm::after{content:" ⚠";color:#ff9f43}
 .bp-row.crit .tf{color:#ff7b7b;font-weight:700}
 .bp-tw{display:inline-block;width:14px;color:var(--muted,#9da2a8)}
 .bp-add{display:flex;align-items:center;gap:6px;color:var(--muted,#9da2a8);padding:0 10px;border:0;background:none;width:100%}
 .bp-chart{display:block}
-.bp-chart text{font:12px var(--body,sans-serif);fill:var(--text,#ecebe6)}
+.bp-chart text{font:var(--bp-cfs,12px) var(--body,sans-serif);fill:var(--text,#ecebe6)}
 .bp-chart .mut{fill:var(--muted,#9da2a8)}
 .bp-chart .bar{cursor:grab;touch-action:pan-y}
 .bp-chart .bar .rs,.bp-chart .bar .lk{touch-action:none}
@@ -483,7 +483,6 @@ function css(){ return `
 .bp-chart .lk{cursor:crosshair;fill:var(--surface,#1c1f23);stroke:var(--signal,#f2c230);stroke-width:2;opacity:0}
 .bp-chart .bar:hover .lk,.bp-chart .bar.sel .lk{opacity:1}
 .bp-chart .arr{fill:none;stroke:var(--muted,#9da2a8);stroke-width:1.3}
-.bp-chart .arr.c{stroke:#e5484d}
 .bp-empty{padding:40px 20px;text-align:center;color:var(--muted,#9da2a8)}
 .bp-empty .bp-btn{margin-top:14px}
 .bp-pane{flex:1;min-height:0;overflow:auto;padding:12px;-webkit-overflow-scrolling:touch}
@@ -533,6 +532,7 @@ function css(){ return `
 #bgPlan.bp-n1 .bp-ttl{display:none}#bgPlan.bp-n1 .bp-top [data-a] span{display:none}#bgPlan.bp-n1 .bp-top select{max-width:190px!important}#bgPlan.bp-n1 .bp-state{max-width:130px}
 #bgPlan.bp-n2 .bp-state,#bgPlan.bp-n2 .bp-sum{display:none}#bgPlan.bp-n2 .bp-top select{max-width:150px!important}#bgPlan.bp-n2 .bp-bar .bp-btn span{display:none}
 .bp-hint{font-size:13px;color:var(--muted,#9da2a8)}
+#lyCols td{padding:2px 6px}#lyCols .bp-ib{height:30px;min-width:30px}
 .bp-menu{display:grid;gap:8px}
 .bp-menu .bp-btn{justify-content:flex-start;height:52px}
 .bp-menu .bp-btn small{display:block;color:var(--muted,#9da2a8);font-size:12px;font-weight:400}
@@ -761,6 +761,7 @@ async function open(siteId, planUid){
   if (H.split) setSplit(!!splitPref().on);
   if (H.onToggle) H.onToggle(true);
   await loadSite(planUid);
+  loadCommonLay();
 }
 async function close(){
   const tok = U.openTok;
@@ -821,6 +822,7 @@ async function openRec(rec){
   U.rec = rec; U.plan = normPlan(rec.plan); U.undo = []; U.redo = []; U.sel = null; U.resSel = null;
   try { localStorage.setItem('baugest.plan.' + U.siteId, rec.uid); } catch (e) {}
   U.cal = makeCal(U.plan); U.sch = schedule(U.plan, U.cal, U.statusDn);
+  { const Ly = LAY(); U.zoom = Ly.screen.zoom; U.showBase = Ly.screen.base; }
   setState(rec.dirty ? (online() ? 'Envoi au Drive…' : 'Enregistré sur l’appareil') : rec.driveId ? 'Enregistré sur le Drive' : '');
   if (!rec.dirty && rec.driveId && !rec.xmlId && online()) rec.dirty = true;   /* planning d'avant la copie .xml : la créer */
   if (rec.dirty) pushRec(rec);
@@ -869,11 +871,189 @@ function render(){
   else renderSet();
 }
 
+/* ---------- Mise en page : modèle commun (fichier Drive à la racine, partagé tablette / PC) + mise en page propre à un planning (plan.lay) ---------- */
+const COLDEF = {
+  wbs:{l:'N°', w:46, pw:30}, name:{l:'Tâche', w:230, pw:196}, dur:{l:'Durée', w:62, pw:34, n:1}, start:{l:'Début', w:84, pw:46, n:1}, fin:{l:'Fin', w:84, pw:46, n:1},
+  pred:{l:'Préd.', w:84, pw:62}, pct:{l:'%', w:44, pw:28, n:1}, tf:{l:'Marge', w:64, pw:34, n:1}, aStart:{l:'Début réel', w:90, pw:46, n:1}, aEnd:{l:'Fin réelle', w:90, pw:46, n:1},
+  res:{l:'Ressources', w:170, pw:110}, cost:{l:'Budget CHF', w:96, pw:54, n:1}
+};
+const COL_ORDER = Object.keys(COLDEF);
+const COLOR_LBL = {task:'Tâche', crit:'Chemin critique', done:'Terminée', sum:'Lot', ms:'Jalon', base:'Référence', late:'Retard (contour)', today:'Aujourd’hui'};
+const DEF_LAY = {
+  cols:COL_ORDER.slice(), scr:['wbs', 'name', 'dur', 'start', 'fin', 'pred', 'pct', 'tf'], pdfc:['wbs', 'name', 'dur', 'start', 'fin'],
+  colors:{task:'#3e8ed0', crit:'#e5484d', done:'#4caf7a', sum:'#6b7178', ms:'#6b7178', base:'#8a8f96', late:'#ff9f43', today:'#f2c230'},
+  crit:true, barText:'res',
+  screen:{rh:32, font:13, zoom:'week', links:true, base:true, weekend:true},
+  pdf:{size:'A3', orient:'land', title:'', subtitle:true, legend:true, cart:true, logo:'comp', logoSrc:'', range:'all', from:'', to:'', only:false, font:7.5, rh:13.5, links:true, base:true, zebra:true, note:''}
+};
+const clone = o => JSON.parse(JSON.stringify(o));
+function mergeLay(a, b){
+  const o = clone(a);
+  if (b) for (const k in b) {
+    if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && o[k] && typeof o[k] === 'object') Object.assign(o[k], b[k]);
+    else if (b[k] !== undefined) o[k] = clone(b[k]);
+  }
+  o.cols = (Array.isArray(o.cols) ? o.cols : []).filter(k => COLDEF[k]); for (const k of COL_ORDER) if (!o.cols.includes(k)) o.cols.push(k);
+  for (const k of ['scr', 'pdfc']) { o[k] = (Array.isArray(o[k]) ? o[k] : []).filter(c => COLDEF[c]); if (!o[k].includes('name')) o[k].push('name'); }
+  return o;
+}
+const LAYK = 'baugest.planLay', LAY_NAME = 'BauGest – mise en page des plannings (ne pas supprimer).json';
+const layLocal = () => { try { return JSON.parse(localStorage.getItem(LAYK) || 'null') || {}; } catch (e) { return {}; } };
+const layStore = o => { try { localStorage.setItem(LAYK, JSON.stringify(o)); } catch (e) {} };
+U.common = layLocal().lay || null;
+const LAY = () => mergeLay(DEF_LAY, (U.plan && U.plan.lay) || U.common);
+async function pushCommonLay(){
+  const loc = layLocal(); if (!loc.lay || !online()) return false;
+  const blob = new Blob([JSON.stringify({v:1, lay:loc.lay})], {type:'application/json'});
+  const md = {name:LAY_NAME, mimeType:'application/json', appProperties:{pc:'1', site:'none', kind:'planlay'}};
+  let f = null;
+  if (loc.id) { try { f = await driveUpload(blob, md, loc.id); } catch (e) { if (e.status !== 404) throw e; } }
+  if (!f) { const parent = await H.ensureFolder([]); f = await driveUpload(blob, Object.assign({parents:[parent]}, md)); }
+  layStore({lay:loc.lay, mod:f.modifiedTime, id:f.id, pend:false});
+  return true;
+}
+async function loadCommonLay(){
+  if (!online()) return;
+  try {
+    const loc = layLocal();
+    if (loc.pend) { await pushCommonLay(); return; }
+    const r = await H.api(DRV + '?' + new URLSearchParams({q:"trashed=false and appProperties has { key='kind' and value='planlay' }", orderBy:'modifiedTime desc', pageSize:'1', fields:'files(id,modifiedTime)'}));
+    const f = r && r.files && r.files[0]; if (!f || (loc.id === f.id && loc.mod && loc.mod >= f.modifiedTime)) return;
+    let j = await H.api(`${DRV}/${encodeURIComponent(f.id)}?alt=media`); if (j && typeof j.json === 'function') j = await j.json();
+    U.common = (j && j.lay) || null; layStore({lay:U.common, mod:f.modifiedTime, id:f.id, pend:false});
+    if (U.plan && !U.plan.lay) render();
+  } catch (e) { console.warn('mise en page', e); }
+}
+async function saveCommonLay(lay){
+  U.common = lay; const loc = layLocal();
+  layStore({lay, mod:new Date().toISOString(), id:loc.id || null, pend:true});
+  try { if (await pushCommonLay()) return; } catch (e) { toast('Modèle commun : Drive ' + e.message); return; }
+  toast('Modèle commun enregistré sur cet appareil ; envoi au Drive au retour du réseau');
+}
+/* coût budgété par tâche et par lot (colonne « Budget CHF ») */
+function costMap(){
+  const p = U.plan, s = U.sch, m = new Map();
+  for (let i = s.ol.length - 1; i >= 0; i--) { const o = s.ol[i];
+    if (!o.sum) m.set(o.t.id, taskBudget(p, o.t, s.R.get(o.t.id).dur));
+    else m.set(o.t.id, p.tasks.filter(t => t.parent === o.t.id).reduce((a, t) => a + (m.get(t.id) || 0), 0)); }
+  return m;
+}
+const resTxt = t => t.asg.map(a => { const re = U.plan.res.find(z => z.id === a.r); return re ? re.name + (a.q && a.q !== 1 ? ' ×' + fmtN(a.q, a.q % 1 ? 1 : 0) : '') : ''; }).filter(Boolean).join(', ');
+function cellTxt(k, o, r, cm){
+  const t = o.t;
+  if (k === 'wbs') return o.wbs;
+  if (k === 'name') return t.name;
+  if (k === 'dur') return (t.ms && !o.sum ? 0 : r.dur) + ' j';
+  if (k === 'start') return shortOfDn(r.start);
+  if (k === 'fin') return shortOfDn(r.finish);
+  if (k === 'pred') return o.sum ? '' : predTxt(t);
+  if (k === 'pct') return o.sum ? '' : Math.round(t.pct) + '%';
+  if (k === 'tf') return o.sum ? '' : r.tf + ' j';
+  if (k === 'aStart') return t.aStart ? shortOfDn(dnOfIso(t.aStart)) : '';
+  if (k === 'aEnd') return t.aEnd ? shortOfDn(dnOfIso(t.aEnd)) : '';
+  if (k === 'res') return o.sum ? '' : resTxt(t);
+  if (k === 'cost') return cm ? fmtN(cm.get(t.id) || 0) : '';
+  return '';
+}
+const barLabel = (Ly, o) => { if (o.sum || Ly.barText === 'none') return ''; const rs = resTxt(o.t);
+  return Ly.barText === 'name' ? o.t.name : Ly.barText === 'both' ? o.t.name + (rs ? ' · ' + rs : '') : rs; };
+function logoList(){ const L = H.logos ? (H.logos(U.siteId) || {}) : {}; return {comp:L.comp || '', site:L.site || '', lib:[...new Set((L.lib || []).filter(Boolean))]}; }
+async function logoPng(src){
+  return new Promise(res => { const im = new Image(); im.onload = () => { try { const k = Math.min(1, 400 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k)); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      res(c.toDataURL('image/png')); } catch (e) { res(null); } }; im.onerror = () => res(null); im.src = src; });
+}
+async function layDlg(){
+  const p = U.plan; if (!p) return;
+  const own = !!p.lay, Ly = LAY(), logos = logoList();
+  const ck = (id, on, l) => `<label class="bp-chk"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}>${l}</label>`;
+  const sel = (id, v, opts) => `<select id="${id}">${opts.map(([k, l]) => `<option value="${k}" ${String(v) === String(k) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const colRow = k => `<tr data-col="${k}"><td>${COLDEF[k].l}</td><td style="text-align:center"><input type="checkbox" data-cs ${Ly.scr.includes(k) ? 'checked' : ''} ${k === 'name' ? 'disabled' : ''}></td><td style="text-align:center"><input type="checkbox" data-cp ${Ly.pdfc.includes(k) ? 'checked' : ''} ${k === 'name' ? 'disabled' : ''}></td><td><button class="bp-ib" data-mv="-1" title="Monter">${I.up}</button> <button class="bp-ib" data-mv="1" title="Descendre">${I.dn}</button></td></tr>`;
+  const logoGrid = cur => `<div id="lyLogos" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">${logos.lib.map(src => `<button class="bp-btn ${cur === src ? 'on' : ''}" data-logo="${esc(src)}" style="height:56px;width:90px;padding:4px;background:#fff"><img src="${esc(src)}" alt="" style="max-width:100%;max-height:100%"></button>`).join('')}
+    <button class="bp-btn" id="lyLogoFile" style="height:56px">${I.imp}Image…</button></div>`;
+  let logoCur = Ly.pdf.logoSrc || '';
+  const box = await dlg({title:'Mise en page des plannings', width:860, body:`
+    <label class="bp-f"><span>S’applique à</span><select id="lyScope"><option value="common">Modèle commun : tous les plannings sans mise en page propre (tablette et PC)</option><option value="plan" ${own ? 'selected' : ''}>Ce planning seulement : « ${esc(p.name)} »</option></select></label>
+    <h4>Colonnes du tableau</h4>
+    <table class="bp-tbl" id="lyCols"><thead><tr><th>Colonne</th><th style="text-align:center">Écran</th><th style="text-align:center">PDF</th><th>Ordre</th></tr></thead><tbody>${Ly.cols.map(colRow).join('')}</tbody></table>
+    <p class="bp-hint">Sur l’écran, le bouton Tableau réduit garde seulement N°, Tâche et Durée.</p>
+    <h4>Barres et couleurs</h4>
+    <div class="bp-form">${Object.keys(COLOR_LBL).map(k => `<label class="bp-f"><span>${COLOR_LBL[k]}</span><input type="color" data-color="${k}" value="${esc(Ly.colors[k])}" style="padding:2px;height:38px"></label>`).join('')}
+      <label class="bp-f"><span>Texte à côté des barres</span>${sel('lyBarText', Ly.barText, [['res', 'Ressources'], ['name', 'Nom de la tâche'], ['both', 'Nom + ressources'], ['none', 'Rien']])}</label>
+      ${ck('lyCrit', Ly.crit, 'Chemin critique dans sa couleur')}</div>
+    <h4>Écran</h4>
+    <div class="bp-form">
+      <label class="bp-f"><span>Hauteur des lignes</span>${sel('lyRh', Ly.screen.rh, [[24, 'Compacte'], [32, 'Normale'], [40, 'Grande']])}</label>
+      <label class="bp-f"><span>Taille du texte</span>${sel('lyFont', Ly.screen.font, [[12, 'Petite'], [13, 'Normale'], [15, 'Grande'], [17, 'Très grande']])}</label>
+      <label class="bp-f"><span>Zoom à l’ouverture</span>${sel('lyZoom', Ly.screen.zoom, [['day', 'Jour'], ['week', 'Semaine'], ['month', 'Mois']])}</label>
+      ${ck('lyLinks', Ly.screen.links, 'Flèches des liens')}${ck('lyBase', Ly.screen.base, 'Référence (barres grises)')}${ck('lyWe', Ly.screen.weekend, 'Week-ends et fériés grisés')}</div>
+    <h4>PDF imprimé</h4>
+    <div class="bp-form">
+      <label class="bp-f"><span>Format</span>${sel('lySize', Ly.pdf.size, [['A3', 'A3'], ['A4', 'A4']])}</label>
+      <label class="bp-f"><span>Orientation</span>${sel('lyOrient', Ly.pdf.orient, [['land', 'Paysage'], ['port', 'Portrait']])}</label>
+      <label class="bp-f w"><span>Titre (vide = « Planning – nom du planning »)</span><input id="lyTitle" value="${esc(Ly.pdf.title)}" placeholder="Planning – ${esc(p.name)}"></label>
+      <label class="bp-f"><span>Période</span>${sel('lyRange', Ly.pdf.range, [['all', 'Tout le chantier'], ['custom', 'Du … au …'], ['3w', '3 semaines dès aujourd’hui']])}</label>
+      <label class="bp-f" data-rg><span>Du</span><input type="date" id="lyFrom" value="${esc(Ly.pdf.from)}"></label>
+      <label class="bp-f" data-rg><span>Au</span><input type="date" id="lyTo" value="${esc(Ly.pdf.to)}"></label>
+      <div data-rg2>${ck('lyOnly', Ly.pdf.only, 'Seulement les tâches de la période')}</div>
+      <label class="bp-f"><span>Taille du texte</span>${sel('lyPFont', Ly.pdf.font, [[6.5, 'Petite'], [7.5, 'Normale'], [9, 'Grande'], [10.5, 'Très grande']])}</label>
+      <label class="bp-f"><span>Hauteur des lignes</span>${sel('lyPRh', Ly.pdf.rh, [[11, 'Compacte'], [13.5, 'Normale'], [17, 'Grande']])}</label>
+      ${ck('lySub', Ly.pdf.subtitle, 'Ligne d’infos sous le titre')}${ck('lyLeg', Ly.pdf.legend, 'Légende')}${ck('lyCart', Ly.pdf.cart, 'Cartouche')}
+      ${ck('lyPLinks', Ly.pdf.links, 'Flèches des liens')}${ck('lyPBase', Ly.pdf.base, 'Référence')}${ck('lyZebra', Ly.pdf.zebra, 'Lignes alternées')}
+      <label class="bp-f w"><span>Remarque en bas de page</span><input id="lyNote" value="${esc(Ly.pdf.note)}" placeholder="ex. Document provisoire – sous réserve des intempéries"></label>
+      <label class="bp-f w"><span>Logo du cartouche</span>${sel('lyLogo', Ly.pdf.logo, [['comp', 'Logo de l’entreprise du chantier'], ['site', 'Logo du chantier'], ['pick', 'Logo choisi (ci-dessous)'], ['none', 'Pas de logo']])}</label>
+      <div class="bp-f w" id="lyPick">${logoGrid(logoCur)}</div>
+    </div>`,
+    buttons:[{label:'Valeurs d’origine', value:'reset', left:true}, ...(own ? [{label:'Revenir au modèle commun', value:'common'}] : []), {label:'Aperçu PDF', value:'preview'}, {label:'Annuler', value:null}, {label:'Enregistrer', pri:true}],
+    onOpen:b => {
+      const upd = () => { const rg = b.querySelector('#lyRange').value; b.querySelectorAll('[data-rg]').forEach(e => e.hidden = rg !== 'custom'); b.querySelector('[data-rg2]').hidden = rg === 'all';
+        b.querySelector('#lyPick').hidden = b.querySelector('#lyLogo').value !== 'pick'; };
+      b.addEventListener('change', upd); upd();
+      b.querySelector('#lyCols').addEventListener('click', e => { const m = e.target.closest('[data-mv]'); if (!m) return; const tr = m.closest('tr'), sib = +m.dataset.mv < 0 ? tr.previousElementSibling : tr.nextElementSibling; if (!sib) return; if (+m.dataset.mv < 0) sib.before(tr); else sib.after(tr); });
+      b.querySelector('#lyPick').addEventListener('click', async e => {
+        const lb = e.target.closest('[data-logo]');
+        if (lb) { logoCur = lb.dataset.logo; b.querySelectorAll('[data-logo]').forEach(x => x.classList.toggle('on', x === lb)); return; }
+        if (e.target.closest('#lyLogoFile')) { const f = await pickFile('image/*'); if (!f) return; const src = await logoPng(URL.createObjectURL(f)); if (!src) { toast('Image illisible'); return; }
+          logos.lib.unshift(src); logoCur = src; b.querySelector('#lyPick').innerHTML = logoGrid(logoCur); }
+      });
+      b.readLay = () => {
+        const v = id => b.querySelector('#' + id), rows = [...b.querySelectorAll('#lyCols tr[data-col]')];
+        const o = {cols:rows.map(r => r.dataset.col), scr:rows.filter(r => r.querySelector('[data-cs]').checked).map(r => r.dataset.col), pdfc:rows.filter(r => r.querySelector('[data-cp]').checked).map(r => r.dataset.col),
+          colors:{}, crit:v('lyCrit').checked, barText:v('lyBarText').value,
+          screen:{rh:+v('lyRh').value, font:+v('lyFont').value, zoom:v('lyZoom').value, links:v('lyLinks').checked, base:v('lyBase').checked, weekend:v('lyWe').checked},
+          pdf:{size:v('lySize').value, orient:v('lyOrient').value, title:v('lyTitle').value.trim(), subtitle:v('lySub').checked, legend:v('lyLeg').checked, cart:v('lyCart').checked,
+            logo:v('lyLogo').value, logoSrc:v('lyLogo').value === 'pick' ? logoCur : '', range:v('lyRange').value, from:v('lyFrom').value, to:v('lyTo').value, only:v('lyOnly').checked,
+            font:+v('lyPFont').value, rh:+v('lyPRh').value, links:v('lyPLinks').checked, base:v('lyPBase').checked, zebra:v('lyZebra').checked, note:v('lyNote').value.trim()}};
+        b.querySelectorAll('[data-color]').forEach(c => o.colors[c.dataset.color] = c.value);
+        return mergeLay(DEF_LAY, o);
+      };
+      /* l'aperçu ne ferme pas la fenêtre */
+      const pv = [...b.querySelectorAll('.bp-df button')].find(x => x.textContent === 'Aperçu PDF');
+      if (pv) { const nb = pv.cloneNode(true); pv.replaceWith(nb); nb.addEventListener('click', async () => {
+        try { toast('Préparation de l’aperçu…', 1500); const blob = await makePdf(b.readLay()), url = URL.createObjectURL(blob);
+          if (!window.open(url, '_blank')) download(blob, fileBase() + ' – aperçu.pdf'); } catch (e) { toast('Aperçu impossible : ' + e.message, 5000); } }); }
+    }});
+  if (!box) return;
+  if (box === 'common') { mut(pp => { delete pp.lay; }); toast('Ce planning suit maintenant le modèle commun'); afterLay(); return; }
+  if (box === 'reset') {
+    if (!await confirmDlg('Valeurs d’origine', own ? 'Remettre la mise en page de ce planning aux valeurs d’origine ?' : 'Remettre le modèle commun (tous les plannings) aux valeurs d’origine ?', 'Remettre')) return;
+    if (own) mut(pp => { pp.lay = clone(DEF_LAY); }); else { await saveCommonLay(clone(DEF_LAY)); render(); }
+    afterLay(); return;
+  }
+  const lay = box.readLay(), scope = box.querySelector('#lyScope').value;
+  if (scope === 'plan') mut(pp => { pp.lay = lay; });
+  else { await saveCommonLay(lay); if (own) mut(pp => { delete pp.lay; }); else render(); }
+  afterLay();
+  toast(scope === 'plan' ? 'Mise en page enregistrée pour ce planning' : 'Modèle commun enregistré');
+}
+function afterLay(){ const Ly = LAY(); U.zoom = Ly.screen.zoom; U.showBase = Ly.screen.base; render(); }
+
 /* ---------- Gantt ---------- */
 const ZOOM = {day:26, week:9, month:3.2};
-const RH = 32, HEADH = 46;
-const COLS_FULL = [{k:'wbs', l:'N°', w:46}, {k:'name', l:'Tâche', w:230}, {k:'dur', l:'Durée', w:56, n:1}, {k:'start', l:'Début', w:84, n:1}, {k:'fin', l:'Fin', w:84, n:1}, {k:'pred', l:'Préd.', w:84}, {k:'pct', l:'%', w:44, n:1}, {k:'tf', l:'Marge', w:64, n:1}];
-const COLS_SHORT = [{k:'wbs', l:'N°', w:40}, {k:'name', l:'Tâche', w:190}, {k:'dur', l:'Durée', w:52, n:1}];
+let RH = 32; const HEADH = 46;
+/* colonnes de l'écran : mise en page (tableau complet) ou N° / Tâche / Durée (tableau réduit) */
+const gCols = Ly => { const keys = fullCols() ? Ly.cols.filter(k => Ly.scr.includes(k)) : ['wbs', 'name', 'dur'];
+  return keys.map(k => ({k, l:COLDEF[k].l, w:Math.round(COLDEF[k].w * Ly.screen.font / 13), n:COLDEF[k].n})); };
 function isoWeek(dn){ const d = new Date(dn * DAY), day = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - day + 3); const y = d.getUTCFullYear(), f = new Date(Date.UTC(y, 0, 4)); return 1 + Math.round(((d - f) / DAY - 3 + ((f.getUTCDay() + 6) % 7)) / 7); }
 const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 function range(){
@@ -887,7 +1067,8 @@ function range(){
   return {d0, d1};
 }
 function renderGantt(){
-  const main = $b('#bpMain'), p = U.plan, s = U.sch, cols = fullCols() ? COLS_FULL : COLS_SHORT, tw = cols.reduce((a, c) => a + c.w, 0);
+  const Ly = LAY(), CO = Ly.colors; RH = Ly.screen.rh;
+  const main = $b('#bpMain'), p = U.plan, s = U.sch, cols = gCols(Ly), tw = cols.reduce((a, c) => a + c.w, 0), cm = cols.some(c => c.k === 'cost') ? costMap() : null;
   const dw = ZOOM[U.zoom], {d0, d1} = range(), cw = Math.ceil((d1 - d0 + 1) * dw), rows = s.ol;
   const nRows = rows.length + 1, bh = nRows * RH;
   const x = dn => (dn - d0) * dw;
@@ -908,7 +1089,7 @@ function renderGantt(){
     <button class="bp-btn" data-g="today" title="Aller à aujourd’hui">${I.today}<span>Auj.</span></button>
     <button class="bp-ib ${fullCols() ? 'on' : ''}" data-g="cols" title="Tableau complet / réduit">${I.tbl}</button>
     ${p.baseline ? `<button class="bp-btn ${U.showBase ? 'on' : ''}" data-g="base" title="Afficher le planning de référence (barres grises)">Réf.</button>` : ''}
-    <span class="bp-sum">Fin : <b>${chOfDn(s.end)}</b> · ${s.pEnd} j ouvrés${p.baseline ? ` · réf. ${chOfDn(dnOfIso(p.baseline.end) ?? p.baseline.end)} (${deltaTxt(s.end, dnOfIso(p.baseline.end) ?? p.baseline.end)})` : ''} · <span style="color:#ff7b7b">■</span> critique</span>
+    <span class="bp-sum">Fin : <b>${chOfDn(s.end)}</b> · ${s.pEnd} j ouvrés${p.baseline ? ` · réf. ${chOfDn(dnOfIso(p.baseline.end) ?? p.baseline.end)} (${deltaTxt(s.end, dnOfIso(p.baseline.end) ?? p.baseline.end)})` : ''}${Ly.crit ? ` · <span style="color:${CO.crit}">■</span> critique` : ''}</span>
   </div>`;
   /* tableau */
   const head = cols.map(c => `<div class="bp-hc" style="width:${c.w}px;${c.n ? 'text-align:right' : ''}">${c.l}</div>`).join('');
@@ -916,14 +1097,8 @@ function renderGantt(){
     const t = o.t, r = s.R.get(t.id);
     const cell = c => {
       let v = '';
-      if (c.k === 'wbs') v = o.wbs;
-      else if (c.k === 'name') v = `<span style="padding-left:${o.lvl * 16}px"></span><span class="bp-tw">${o.sum ? '▾' : t.ms ? '◆' : ''}</span><span class="nm">${esc(t.name)}</span>`;
-      else if (c.k === 'dur') v = t.ms && !o.sum ? '0 j' : r.dur + ' j';
-      else if (c.k === 'start') v = shortOfDn(r.start);
-      else if (c.k === 'fin') v = shortOfDn(r.finish);
-      else if (c.k === 'pred') v = o.sum ? '' : esc(predTxt(t));
-      else if (c.k === 'pct') v = o.sum ? '' : Math.round(t.pct) + '%';
-      else if (c.k === 'tf') v = o.sum ? '' : r.tf + ' j';
+      if (c.k === 'name') v = `<span style="padding-left:${o.lvl * 16}px"></span><span class="bp-tw">${o.sum ? '▾' : t.ms ? '◆' : ''}</span><span class="nm">${esc(t.name)}</span>`;
+      else v = esc(cellTxt(c.k, o, r, cm));
       return `<div class="bp-cell ${c.k === 'wbs' ? 'wbs' : c.k === 'name' ? '' : c.k === 'tf' ? 'num tf' : c.n ? 'num' : ''} ${c.k === 'name' ? 'nm-c' : ''}" style="width:${c.w}px">${v}</div>`;
     };
     return `<div class="bp-row ${o.sum ? 'sum' : ''} ${U.sel === t.id ? 'sel' : ''} ${r.late ? 'late' : ''} ${r.crit && !o.sum ? 'crit' : ''}" data-id="${esc(t.id)}" style="height:${RH}px" title="${esc(t.name)}${r.late ? ' — en retard' : ''}">${cols.map(cell).join('')}</div>`;
@@ -938,8 +1113,8 @@ function renderGantt(){
     if (U.zoom === 'day') { th += `<text class="mut" x="${x(d) + dw / 2}" y="${HEADH - 8}" text-anchor="middle">${dd}</text>`; if (wdOf(d) === 1) th += `<line x1="${x(d)}" y1="24" x2="${x(d)}" y2="${HEADH}" stroke="var(--line,#353a41)"/>`; }
     else if (U.zoom === 'week' && wdOf(d) === 1) th += `<line x1="${x(d)}" y1="24" x2="${x(d)}" y2="${HEADH}" stroke="var(--line,#353a41)"/><text class="mut" x="${x(d) + 3.5 * dw}" y="${HEADH - 8}" text-anchor="middle">S${isoWeek(d)}</text>`;
     else if (U.zoom === 'month' && wdOf(d) === 1 && isoWeek(d) % 2 === 0) th += `<text class="mut" x="${x(d) + 3.5 * dw}" y="${HEADH - 8}" text-anchor="middle" style="font-size:10px">${isoWeek(d)}</text>`;
-    if (!s.cal.isWork(d) && dw >= 3) bg += `<rect x="${x(d)}" y="0" width="${dw}" height="${bh}" fill="rgba(128,128,128,${s.cal.off.has(d) ? .2 : .1})"><title>${esc(s.cal.off.get(d) || (wdOf(d) === 0 ? 'Dimanche' : 'Samedi'))}</title></rect>`;
-    else if (U.zoom !== 'day' && wdOf(d) === 1) bg += `<line x1="${x(d)}" y1="0" x2="${x(d)}" y2="${bh}" stroke="rgba(128,128,128,.13)"/>`;
+    if (Ly.screen.weekend && !s.cal.isWork(d) && dw >= 3) bg += `<rect x="${x(d)}" y="0" width="${dw}" height="${bh}" fill="rgba(128,128,128,${s.cal.off.has(d) ? .2 : .1})"><title>${esc(s.cal.off.get(d) || (wdOf(d) === 0 ? 'Dimanche' : 'Samedi'))}</title></rect>`;
+    else if (U.zoom !== 'day' && wdOf(d) === 1 && (s.cal.isWork(d) || !Ly.screen.weekend)) bg += `<line x1="${x(d)}" y1="0" x2="${x(d)}" y2="${bh}" stroke="rgba(128,128,128,.13)"/>`;
   }
   /* barres */
   const rowOf = new Map(rows.map((o, i) => [o.t.id, i]));
@@ -949,23 +1124,23 @@ function renderGantt(){
     const t = o.t, r = s.R.get(t.id), y = i * RH;
     if (U.sel === t.id) bars += `<rect x="0" y="${y}" width="${cw}" height="${RH}" fill="var(--signal-soft,#3b3219)" opacity=".55"/>`;
     const bx = x(r.start), bw = Math.max(dw * .6, x(r.finish + 1) - bx);
-    if (base && base[t.id]) { const b = base[t.id], a = dnOfIso(b.start) ?? b.start, e = dnOfIso(b.finish) ?? b.finish; bars += b.dur > 0 ? `<rect x="${x(a)}" y="${y + RH - 8}" width="${Math.max(2, x(e + 1) - x(a))}" height="4" rx="1" fill="#8a8f96"/>` : `<path d="M${x(b.mx ?? a)} ${y + RH - 10} l4 4 -4 4 -4 -4z" fill="#8a8f96"/>`; }
-    const lbl = (o.sum ? '' : t.asg.map(a => { const re = p.res.find(z => z.id === a.r); return re ? re.name + (a.q && a.q !== 1 ? ' ×' + fmtN(a.q, a.q % 1 ? 1 : 0) : '') : ''; }).filter(Boolean).join(', '));
+    if (base && base[t.id]) { const b = base[t.id], a = dnOfIso(b.start) ?? b.start, e = dnOfIso(b.finish) ?? b.finish; bars += b.dur > 0 ? `<rect x="${x(a)}" y="${y + RH - 8}" width="${Math.max(2, x(e + 1) - x(a))}" height="4" rx="1" fill="${CO.base}"/>` : `<path d="M${x(b.mx ?? a)} ${y + RH - 10} l4 4 -4 4 -4 -4z" fill="${CO.base}"/>`; }
+    const lbl = barLabel(Ly, o), cr = Ly.crit && r.crit;
     if (o.sum) {
-      bars += `<g class="bar sum" data-id="${esc(t.id)}"><path class="b" d="M${bx} ${y + 10}h${bw}v10l-5 -5h${-(bw - 10)}l-5 5z" fill="var(--text,#ecebe6)" opacity=".85"/></g>`;
+      bars += `<g class="bar sum" data-id="${esc(t.id)}"><path class="b" d="M${bx} ${y + RH / 2 - 6}h${bw}v10l-5 -5h${-(bw - 10)}l-5 5z" fill="${CO.sum}"/></g>`;
     } else if (t.ms || r.dur === 0) {
       const cx = x(r.mx), cy = y + RH / 2;
-      bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><path class="b" d="M${cx} ${cy - 8} l8 8 -8 8 -8 -8z" fill="${r.crit ? '#e5484d' : r.done ? '#4caf7a' : 'var(--text,#ecebe6)'}"/><circle class="lk" cx="${cx + 15}" cy="${cy}" r="5"/></g>`
+      bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><path class="b" d="M${cx} ${cy - 8} l8 8 -8 8 -8 -8z" fill="${r.done ? CO.done : cr ? CO.crit : CO.ms}"/><circle class="lk" cx="${cx + 15}" cy="${cy}" r="5"/></g>`
         + `<text x="${cx + 24}" y="${cy + 4}">${esc(t.name)} · ${shortOfDn(r.start)}</text>`;
     } else {
-      const col = r.done ? '#4caf7a' : r.crit ? '#e5484d' : '#3e8ed0', pw = bw * Math.min(100, t.pct) / 100;
-      bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><rect class="b" x="${bx}" y="${y + 7}" width="${bw}" height="${RH - 16}" rx="3" fill="${col}" ${r.late ? 'stroke="#ff9f43" stroke-width="2" stroke-dasharray="4 2"' : ''}/>`
-        + (pw > 0 ? `<rect x="${bx}" y="${y + 7 + (RH - 16) / 2 - 2}" width="${pw}" height="4" fill="rgba(0,0,0,.45)" pointer-events="none"/>` : '')
+      const col = r.done ? CO.done : cr ? CO.crit : CO.task, pw = bw * Math.min(100, t.pct) / 100, bh = Math.max(6, RH - 16);
+      bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><rect class="b" x="${bx}" y="${y + (RH - bh) / 2}" width="${bw}" height="${bh}" rx="3" fill="${col}" ${r.late ? `stroke="${CO.late}" stroke-width="2" stroke-dasharray="4 2"` : ''}/>`
+        + (pw > 0 ? `<rect x="${bx}" y="${y + RH / 2 - 2}" width="${pw}" height="4" fill="rgba(0,0,0,.45)" pointer-events="none"/>` : '')
         + `<rect class="rs" x="${bx + bw - 6}" y="${y + 5}" width="10" height="${RH - 12}"/><circle class="lk" cx="${bx + bw + 9}" cy="${y + RH / 2}" r="5"/></g>`
         + (lbl ? `<text class="mut" x="${bx + bw + 18}" y="${y + RH / 2 + 4}">${esc(lbl)}</text>` : '');
     }
   });
-  for (const l of s.links) {
+  if (Ly.screen.links) for (const l of s.links) {
     const ip = rowOf.get(l.p), is = rowOf.get(l.s); if (ip == null || is == null) continue;
     const rp = s.R.get(l.p), rs = s.R.get(l.s);
     const pStart = rp.dur > 0 ? x(rp.start) : x(rp.mx), pEnd = rp.dur > 0 ? x(rp.finish + 1) : x(rp.mx), sStart = rs.dur > 0 ? x(rs.start) : x(rs.mx), sEnd = rs.dur > 0 ? x(rs.finish + 1) : x(rs.mx);
@@ -976,17 +1151,18 @@ function renderGantt(){
     let d;
     if (toStart && fromEnd && x2 - 7 >= a) d = `M${x1} ${y1}H${x2 - 7 > x1 + 7 ? x2 - 7 : a}V${y2}H${x2}`;
     else { const ym = y2 > y1 ? is * RH + 2 : is * RH + RH - 2; d = `M${x1} ${y1}H${a}V${ym}H${b}V${y2}H${x2}`; }
-    arrows += `<path class="arr ${rp.crit && rs.crit ? 'c' : ''}" d="${d}" marker-end="url(#bpAh${rp.crit && rs.crit ? 'c' : ''})"/>`;
+    const ac = Ly.crit && rp.crit && rs.crit;
+    arrows += `<path class="arr" d="${d}" style="stroke:${ac ? CO.crit : 'var(--muted,#9da2a8)'}" marker-end="url(#bpAh${ac ? 'c' : ''})"/>`;
   }
-  const tdn = todayDn(), today = tdn >= d0 && tdn <= d1 ? `<line x1="${x(tdn) + dw / 2}" y1="0" x2="${x(tdn) + dw / 2}" y2="${bh}" stroke="var(--signal,#f2c230)" stroke-width="2" stroke-dasharray="5 4"/>` : '';
+  const tdn = todayDn(), today = tdn >= d0 && tdn <= d1 ? `<line x1="${x(tdn) + dw / 2}" y1="0" x2="${x(tdn) + dw / 2}" y2="${bh}" stroke="${CO.today}" stroke-width="2" stroke-dasharray="5 4"/>` : '';
   const wrapOld = $b('.bp-gwrap'), sl = wrapOld ? wrapOld.scrollLeft : null, stp = wrapOld ? wrapOld.scrollTop : null, oldZoom = wrapOld && wrapOld.dataset.z;
-  main.innerHTML = bar + `<div class="bp-gwrap" data-z="${U.zoom}"><div class="bp-grid" style="grid-template-columns:${tw}px ${cw}px;grid-template-rows:${HEADH}px ${bh}px">
+  main.innerHTML = bar + `<div class="bp-gwrap" data-z="${U.zoom}" style="font-size:${Ly.screen.font}px;--bp-cfs:${Ly.screen.font - 1}px"><div class="bp-grid" style="grid-template-columns:${tw}px ${cw}px;grid-template-rows:${HEADH}px ${bh}px">
     <div class="bp-c00">${head}</div>
     <div class="bp-c01"><svg class="bp-chart" width="${cw}" height="${HEADH}">${th}</svg></div>
     <div class="bp-c10" id="bpRows">${body}</div>
     <div><svg class="bp-chart" id="bpChart" width="${cw}" height="${bh}"><defs>
       <marker id="bpAh" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="var(--muted,#9da2a8)"/></marker>
-      <marker id="bpAhc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#e5484d"/></marker></defs>
+      <marker id="bpAhc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="${CO.crit}"/></marker></defs>
       ${bg}${today}<g>${arrows}</g>${bars}</svg></div>
   </div></div>`;
   const wrap = $b('.bp-gwrap');
@@ -997,7 +1173,7 @@ const fullCols = () => U.full === null ? !U.narrow : U.full;
 function deltaTxt(a, b){ if (a == null || b == null) return ''; const d = U.cal.idx(a) - U.cal.idx(b); return d === 0 ? 'à l’heure' : d > 0 ? '+' + d + ' j' : d + ' j'; }
 function scrollToday(){
   const w = $b('.bp-gwrap'); if (!w || !U.gx) return;
-  const cols = fullCols() ? COLS_FULL : COLS_SHORT, tw = cols.reduce((a, c) => a + c.w, 0);
+  const cols = gCols(LAY()), tw = cols.reduce((a, c) => a + c.w, 0);
   const sel = U.sel && U.sch.R.get(U.sel), tdn = todayDn();
   const target = sel ? sel.start : (tdn >= U.sch.cal.start - 7 && tdn <= U.sch.end ? tdn - 7 : U.sch.cal.start - 3);
   w.scrollLeft = Math.max(0, U.gx.x(target) - 20);
@@ -1426,6 +1602,8 @@ function renderSet(){
       <div class="bp-hols">${hols.map(h => `<label>${esc(h.label)}<small>${chOfDn(h.dn)}</small></label>`).join('') || '<p class="bp-hint">Aucun.</p>'}</div>
       ${p.vac.length ? `<p class="bp-hint">+ vacances : ${p.vac.map(v => `${esc(v.label || 'vacances')} ${v.from ? chOfDn(dnOfIso(v.from)) : '?'} – ${v.to ? chOfDn(dnOfIso(v.to)) : '?'}`).join(' · ')}</p>` : ''}
     </div>
+    <div class="bp-card"><h3>Mise en page <button class="bp-btn" data-a="layout">${I.edit}Modifier la mise en page…</button></h3>
+      <p class="bp-hint">${p.lay ? 'Ce planning a sa <b>propre mise en page</b>.' : 'Ce planning suit le <b>modèle commun</b> (le même pour tous les plannings, sur la tablette et le PC).'} Colonnes du tableau, couleurs des barres, affichage à l’écran, PDF imprimé (format, cartouche, logo, période, légende).</p></div>
     <div class="bp-card"><h3>Fichier</h3>
       <p class="bp-hint">Enregistré sur l’appareil et dans le Drive : « ${esc(site(U.siteId) ? site(U.siteId).folder : '')} / Planning / ${esc(cleanName(p.name))}.json », avec une copie MS Project à jour « ${esc(cleanName(p.name))}.xml » (à ouvrir dans Project : Fichier › Ouvrir). Exports dans « Planning / Exports ».</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="bp-btn" data-dup>Dupliquer ce planning</button><button class="bp-btn" data-a="import">${I.imp}Importer MS Project (XML)</button><button class="bp-btn dang" data-delplan>${I.del}Supprimer ce planning</button></div>
@@ -1474,11 +1652,13 @@ async function exportMenu(){
     <button class="bp-btn" data-x="pdf">${I.exp}<span>PDF A3 paysage<small>Gantt imprimable avec cartouche</small></span></button>
     <button class="bp-btn" data-x="xlsx">${I.tbl}<span>Excel<small>Tâches, ressources, budget, réalisé, fériés</small></span></button>
     <button class="bp-btn" data-x="xml">${I.cal}<span>MS Project (XML)<small>À ouvrir dans Project : Fichier › Ouvrir › XML</small></span></button>
+    <button class="bp-btn" data-x="layout">${I.edit}<span>Mise en page…<small>Colonnes, couleurs, format, cartouche, logo, période</small></span></button>
     <button class="bp-btn" data-x="import">${I.imp}<span>Importer MS Project (XML)<small>Crée un nouveau planning dans ce chantier</small></span></button>
   </div><p class="bp-hint">Le fichier est téléchargé et copié dans le Drive (Planning / Exports).</p>`,
     buttons:[{label:'Fermer', value:null}], onOpen:(b, done) => b.querySelectorAll('[data-x]').forEach(x => x.addEventListener('click', () => done(x.dataset.x)))});
   if (!v) return;
   if (v === 'import') return importXml();
+  if (v === 'layout') return layDlg();
   try {
     toast('Préparation de l’export…', 1500);
     const stamp = isoOfDn(todayDn());
@@ -1500,82 +1680,105 @@ async function importXml(){
   } catch (e) { toast('Import impossible : ' + e.message, 5000); }
 }
 const winAnsi = s => String(s ?? '').replace(/[^\x20-\x7E\xA0-\xFF–—‘’“”•…€œŒ]/g, c => ({'→':'>', '≥':'>=', '≤':'<=', '×':'x', '◆':'*', '⚠':'!', '\t':' ', '\n':' '})[c] || '?');
-async function makePdf(){
+async function makePdf(layOv){
   await loadScript(PDFLIB_URL);
   const {PDFDocument, StandardFonts, rgb} = window.PDFLib;
-  const p = U.plan, s = U.sch, cal = s.cal, st = site(U.siteId);
+  const p = U.plan, s = U.sch, cal = s.cal, st = site(U.siteId), Ly = layOv || LAY(), Pp = Ly.pdf, cm = costMap();
+  const hex = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); const n = m ? parseInt(m[1], 16) : 0x888888; return rgb((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255); };
   const doc = await PDFDocument.create(); doc.setTitle(winAnsi(p.name)); doc.setCreator('BauGest');
   const F = await doc.embedFont(StandardFonts.Helvetica), FB = await doc.embedFont(StandardFonts.HelveticaBold);
-  const W = 1190.55, Hp = 841.89, M = 22, RHp = 13.5;
-  const cols = [{l:'N°', w:30}, {l:'Tâche', w:196}, {l:'Durée', w:34, r:1}, {l:'Début', w:46, r:1}, {l:'Fin', w:46, r:1}];
-  const tw = cols.reduce((a, c) => a + c.w, 0), cx0 = M + tw + 6, cw = W - M - cx0;
-  const top = Hp - M - 44, tlH = 26, rowsTop = top - tlH, foot = M + 64, per = Math.floor((rowsTop - foot) / RHp);
-  const C = {txt:rgb(.1, .11, .13), mut:rgb(.42, .45, .48), line:rgb(.8, .8, .8), crit:rgb(.85, .2, .22), norm:rgb(.24, .52, .78), done:rgb(.3, .65, .45), base:rgb(.6, .62, .65), off:rgb(.93, .93, .93), sig:rgb(.85, .64, 0), zebra:rgb(.97, .97, .97)};
-  const base = p.baseline ? p.baseline.tasks : null;
-  let d0 = cal.start, d1 = s.end;
-  if (base) for (const k in base) { const b = base[k]; d0 = Math.min(d0, b.start); d1 = Math.max(d1, b.finish); }
-  for (const r of s.R.values()) { d0 = Math.min(d0, r.start); d1 = Math.max(d1, r.finish); }
-  d0 -= 2; d1 += 3;
-  const sc = cw / (d1 - d0 + 1), X = dn => cx0 + (dn - d0) * sc;
-  const text = (pg, t, x, y, o = {}) => { const f = o.b ? FB : F, sz = o.s || 8; let str = winAnsi(t); if (o.w) { while (str.length > 1 && f.widthOfTextAtSize(str, sz) > o.w) str = str.slice(0, -2) + '…'; }
+  let [W, Hp] = Pp.size === 'A4' ? [841.89, 595.28] : [1190.55, 841.89]; if (Pp.orient === 'port') [W, Hp] = [Hp, W];
+  const M = 22, RHp = +Pp.rh || 13.5, FS = +Pp.font || 7.5;
+  /* colonnes : réduites si elles prennent plus de 55 % de la largeur */
+  let cols = Ly.cols.filter(k => Ly.pdfc.includes(k)).map(k => ({k, l:COLDEF[k].l, w:COLDEF[k].pw * FS / 7.5, r:COLDEF[k].n}));
+  let tw = cols.reduce((a, c) => a + c.w, 0); const maxTw = (W - 2 * M) * .55; if (tw > maxTw) { const k = maxTw / tw; cols.forEach(c => c.w *= k); tw = maxTw; }
+  const cx0 = M + tw + 6, cw = W - M - cx0;
+  const titleH = Pp.subtitle ? 44 : 30, top = Hp - M - titleH, tlH = 26, rowsTop = top - tlH;
+  const foot = M + (Pp.cart ? 64 : Pp.legend || Pp.note ? 30 : 14), per = Math.max(1, Math.floor((rowsTop - foot) / RHp));
+  const C = {txt:rgb(.1, .11, .13), mut:rgb(.42, .45, .48), line:rgb(.8, .8, .8), off:rgb(.93, .93, .93), zebra:rgb(.97, .97, .97),
+    task:hex(Ly.colors.task), crit:hex(Ly.colors.crit), done:hex(Ly.colors.done), sum:hex(Ly.colors.sum), ms:hex(Ly.colors.ms), base:hex(Ly.colors.base), late:hex(Ly.colors.late), today:hex(Ly.colors.today)};
+  const base = p.baseline && Pp.base ? p.baseline.tasks : null;
+  /* période */
+  let d0 = cal.start, d1 = s.end, rowsAll = s.ol;
+  if (Pp.range === 'custom' && dnOfIso(Pp.from) != null && dnOfIso(Pp.to) != null && dnOfIso(Pp.to) >= dnOfIso(Pp.from)) { d0 = dnOfIso(Pp.from); d1 = dnOfIso(Pp.to); }
+  else if (Pp.range === '3w') { d0 = todayDn(); while (wdOf(d0) !== 1) d0--; d1 = d0 + 20; }
+  else { if (base) for (const k in base) { const b = base[k]; d0 = Math.min(d0, b.start); d1 = Math.max(d1, b.finish); } for (const r of s.R.values()) { d0 = Math.min(d0, r.start); d1 = Math.max(d1, r.finish); } d0 -= 2; d1 += 3; }
+  if (Pp.range !== 'all' && Pp.only) rowsAll = s.ol.filter(o => { const r = s.R.get(o.t.id); return r.start <= d1 && r.finish >= d0; });
+  const sc = cw / (d1 - d0 + 1), X = dn => cx0 + (Math.max(d0, Math.min(d1 + 1, dn)) - d0) * sc, inR = dn => dn >= d0 && dn <= d1 + 1;
+  const text = (pg, t, x, y, o = {}) => { const f = o.b ? FB : F, sz = o.s || FS; let str = winAnsi(t); if (o.w) { while (str.length > 1 && f.widthOfTextAtSize(str, sz) > o.w) str = str.slice(0, -2) + '…'; }
     const tx = o.r ? x - f.widthOfTextAtSize(str, sz) : o.c ? x - f.widthOfTextAtSize(str, sz) / 2 : x; pg.drawText(str, {x:tx, y, size:sz, font:f, color:o.col || C.txt}); };
-  const pages = Math.max(1, Math.ceil(s.ol.length / per)), comp = H.company ? H.company(U.siteId) : '';
+  const pages = Math.max(1, Math.ceil(rowsAll.length / per)), comp = H.company ? H.company(U.siteId) : '';
+  /* logo du cartouche */
+  let logo = null;
+  if (Pp.cart && Pp.logo !== 'none') {
+    const L = logoList(), src = Pp.logo === 'comp' ? L.comp : Pp.logo === 'site' ? L.site : Pp.logoSrc;
+    if (src) try { const png = await logoPng(src); if (png) logo = await doc.embedPng(png); } catch (e) {}
+  }
   for (let pi = 0; pi < pages; pi++) {
-    const pg = doc.addPage([W, Hp]), rows = s.ol.slice(pi * per, (pi + 1) * per), y0 = rowsTop;
-    text(pg, 'Planning – ' + p.name, M, Hp - M - 16, {b:1, s:16});
-    text(pg, `${st ? st.label : ''}   ·   Début ${chOfDn(cal.start)}   ·   Fin ${chOfDn(s.end)}   ·   ${s.pEnd} jours ouvrés${p.baseline ? '   ·   Référence : fin ' + chOfDn(p.baseline.end) : ''}`, M, Hp - M - 32, {s:9, col:C.mut});
-    /* en-tête du tableau et échelle */
-    let hx = M; for (const c of cols) { text(pg, c.l, c.r ? hx + c.w - 3 : hx + 2, rowsTop + 8, {b:1, s:7.5, r:c.r, col:C.mut}); hx += c.w; }
+    const pg = doc.addPage([W, Hp]), rows = rowsAll.slice(pi * per, (pi + 1) * per), y0 = rowsTop;
+    text(pg, Pp.title || 'Planning – ' + p.name, M, Hp - M - 16, {b:1, s:16, w:W - 2 * M});
+    if (Pp.subtitle) text(pg, `${st ? st.label : ''}   ·   Début ${chOfDn(cal.start)}   ·   Fin ${chOfDn(s.end)}   ·   ${s.pEnd} jours ouvrés${p.baseline ? '   ·   Référence : fin ' + chOfDn(p.baseline.end) : ''}${Pp.range !== 'all' ? '   ·   Période ' + chOfDn(d0) + ' – ' + chOfDn(d1) : ''}`, M, Hp - M - 32, {s:9, col:C.mut, w:W - 2 * M});
+    let hx = M; for (const c of cols) { text(pg, c.l, c.r ? hx + c.w - 3 : hx + 2, rowsTop + 8, {b:1, s:FS, r:c.r, col:C.mut, w:c.w - 3}); hx += c.w; }
     pg.drawLine({start:{x:M, y:rowsTop}, end:{x:W - M, y:rowsTop}, thickness:.8, color:C.txt});
     const nRows = rows.length, yb = y0 - nRows * RHp;
     if (sc >= 1.6) for (let d = d0; d <= d1; d++) if (!cal.isWork(d)) pg.drawRectangle({x:X(d), y:yb, width:sc, height:nRows * RHp, color:C.off});
     for (let d = d0; d <= d1; d++) {
       const dt = new Date(d * DAY);
-      if (dt.getUTCDate() === 1 || d === d0) { pg.drawLine({start:{x:X(d), y:top}, end:{x:X(d), y:rowsTop}, thickness:.5, color:C.line}); const lab = MONTHS[dt.getUTCMonth()] + ' ' + String(dt.getUTCFullYear()).slice(2); if (sc * 28 > F.widthOfTextAtSize(lab, 7.5) + 6) text(pg, lab, X(d) + 3, top - 10, {s:7.5, b:1}); }
-      if (wdOf(d) === 1) { pg.drawLine({start:{x:X(d), y:rowsTop + 12}, end:{x:X(d), y:yb}, thickness:.25, color:C.line}); if (sc * 7 >= 13) text(pg, String(isoWeek(d)), X(d) + sc * 3.5, rowsTop + 3, {s:6.5, c:1, col:C.mut}); }
+      if (dt.getUTCDate() === 1 || d === d0) { pg.drawLine({start:{x:X(d), y:top}, end:{x:X(d), y:rowsTop}, thickness:.5, color:C.line}); const lab = MONTHS[dt.getUTCMonth()] + ' ' + String(dt.getUTCFullYear()).slice(2); if (sc * 28 > F.widthOfTextAtSize(lab, 7.5) + 6 || d1 - d0 < 40) text(pg, lab, X(d) + 3, top - 10, {s:7.5, b:1}); }
+      if (sc >= 12) text(pg, String(dt.getUTCDate()), X(d) + sc / 2, rowsTop + 3, {s:6.5, c:1, col:C.mut});
+      if (wdOf(d) === 1) { pg.drawLine({start:{x:X(d), y:rowsTop + 12}, end:{x:X(d), y:yb}, thickness:.25, color:C.line}); if (sc * 7 >= 13 && sc < 12) text(pg, String(isoWeek(d)), X(d) + sc * 3.5, rowsTop + 3, {s:6.5, c:1, col:C.mut}); }
     }
     pg.drawLine({start:{x:M, y:top}, end:{x:W - M, y:top}, thickness:.5, color:C.line});
-    const tdn = todayDn(); if (tdn > d0 && tdn < d1) pg.drawLine({start:{x:X(tdn) + sc / 2, y:rowsTop}, end:{x:X(tdn) + sc / 2, y:yb}, thickness:1, color:C.sig, dashArray:[3, 2]});
+    const tdn = todayDn(); if (tdn >= d0 && tdn <= d1) pg.drawLine({start:{x:X(tdn) + sc / 2, y:rowsTop}, end:{x:X(tdn) + sc / 2, y:yb}, thickness:1, color:C.today, dashArray:[3, 2]});
     const rowY = new Map();
     rows.forEach((o, i) => {
       const t = o.t, r = s.R.get(t.id), y = y0 - (i + 1) * RHp; rowY.set(t.id, y + RHp / 2);
-      if (i % 2) pg.drawRectangle({x:M, y, width:tw, height:RHp, color:C.zebra});
-      let x = M; const v = [o.wbs, t.name, t.ms && !o.sum ? '0 j' : r.dur + ' j', shortOfDn(r.start), shortOfDn(r.finish)];
-      cols.forEach((c, k) => { const ind = k === 1 ? o.lvl * 8 : 0; text(pg, v[k], c.r ? x + c.w - 3 : x + 2 + ind, y + 4, {s:7.5, b:o.sum, r:c.r, w:c.w - 4 - ind, col:r.late && k === 1 ? C.crit : C.txt}); x += c.w; });
-      const bx = X(r.start), bw = Math.max(1.5, X(r.finish + 1) - bx);
-      if (base && base[t.id]) { const b = base[t.id]; if (b.dur > 0) pg.drawRectangle({x:X(b.start), y:y + 1.2, width:Math.max(1, X(b.finish + 1) - X(b.start)), height:2.2, color:C.base}); }
-      if (o.sum) { pg.drawRectangle({x:bx, y:y + 6, width:bw, height:3.5, color:C.txt}); pg.drawSvgPath(`M0 0 L4 0 L0 5 Z`, {x:bx, y:y + 9.5, color:C.txt}); pg.drawSvgPath(`M0 0 L-4 0 L0 5 Z`, {x:bx + bw, y:y + 9.5, color:C.txt}); }
-      else if (t.ms || r.dur === 0) { pg.drawSvgPath('M0 -4.5 L4.5 0 L0 4.5 L-4.5 0 Z', {x:X(r.mx), y:y + RHp / 2, color:r.crit ? C.crit : C.txt}); text(pg, shortOfDn(r.start), X(r.mx) + 7, y + 4, {s:6.5, col:C.mut}); }
+      if (Pp.zebra && i % 2) pg.drawRectangle({x:M, y, width:tw, height:RHp, color:C.zebra});
+      let x = M;
+      cols.forEach(c => { const ind = c.k === 'name' ? o.lvl * 8 : 0; text(pg, cellTxt(c.k, o, r, cm), c.r ? x + c.w - 3 : x + 2 + ind, y + (RHp - FS) / 2 + 1, {s:FS, b:o.sum, r:c.r, w:c.w - 4 - ind, col:r.late && c.k === 'name' ? C.late : C.txt}); x += c.w; });
+      const vis = r.start <= d1 && r.finish >= d0, bx = X(r.start), bw = Math.max(1.5, X(r.finish + 1) - bx), bh = Math.max(3, RHp - 6);
+      if (base && base[t.id]) { const b = base[t.id]; if (b.dur > 0 && b.start <= d1 && b.finish >= d0) pg.drawRectangle({x:X(b.start), y:y + 1.2, width:Math.max(1, X(b.finish + 1) - X(b.start)), height:2.2, color:C.base}); }
+      if (!vis) return;
+      if (o.sum) { pg.drawRectangle({x:bx, y:y + RHp / 2 - 1, width:bw, height:3.5, color:C.sum}); if (inR(r.start)) pg.drawSvgPath('M0 0 L4 0 L0 5 Z', {x:bx, y:y + RHp / 2 + 2.5, color:C.sum}); if (inR(r.finish + 1)) pg.drawSvgPath('M0 0 L-4 0 L0 5 Z', {x:bx + bw, y:y + RHp / 2 + 2.5, color:C.sum}); }
+      else if (t.ms || r.dur === 0) { if (inR(r.mx)) { pg.drawSvgPath('M0 -4.5 L4.5 0 L0 4.5 L-4.5 0 Z', {x:X(r.mx), y:y + RHp / 2, color:r.done ? C.done : Ly.crit && r.crit ? C.crit : C.ms}); text(pg, shortOfDn(r.start), X(r.mx) + 7, y + (RHp - 6.5) / 2 + 1, {s:6.5, col:C.mut}); } }
       else {
-        pg.drawRectangle({x:bx, y:y + 3, width:bw, height:RHp - 6, color:r.done ? C.done : r.crit ? C.crit : C.norm, borderColor:r.late ? C.sig : undefined, borderWidth:r.late ? 1 : 0});
+        pg.drawRectangle({x:bx, y:y + (RHp - bh) / 2, width:bw, height:bh, color:r.done ? C.done : Ly.crit && r.crit ? C.crit : C.task, borderColor:r.late ? C.late : undefined, borderWidth:r.late ? 1 : 0});
         if (t.pct > 0 && t.pct < 100) pg.drawRectangle({x:bx, y:y + RHp / 2 - 1, width:bw * t.pct / 100, height:2, color:rgb(0, 0, 0), opacity:.45});
-        const lbl = t.asg.map(a => { const re = p.res.find(z => z.id === a.r); return re ? re.name : ''; }).filter(Boolean).join(', ');
-        if (lbl && bx + bw + 4 < W - M - 30) text(pg, lbl, bx + bw + 3, y + 4, {s:6.5, col:C.mut, w:W - M - (bx + bw + 3)});
+        const lbl = barLabel(Ly, o);
+        if (lbl && bx + bw + 4 < W - M - 30) text(pg, lbl, bx + bw + 3, y + (RHp - 6.5) / 2 + 1, {s:6.5, col:C.mut, w:W - M - (bx + bw + 3)});
       }
     });
-    for (const l of s.links) {
+    if (Pp.links) for (const l of s.links) {
       const ya = rowY.get(l.p), yz = rowY.get(l.s); if (ya == null || yz == null) continue;
       const rp = s.R.get(l.p), rs = s.R.get(l.s), fromEnd = l.type === 'FS' || l.type === 'FF', toStart = l.type === 'FS' || l.type === 'SS';
-      const x1 = rp.dur > 0 ? (fromEnd ? X(rp.finish + 1) : X(rp.start)) : X(rp.mx), x2 = rs.dur > 0 ? (toStart ? X(rs.start) : X(rs.finish + 1)) : X(rs.mx);
-      const col = rp.crit && rs.crit ? C.crit : C.mut, xm = fromEnd ? x1 + 3 : x1 - 3;
+      const a1 = rp.dur > 0 ? (fromEnd ? rp.finish + 1 : rp.start) : rp.mx, a2 = rs.dur > 0 ? (toStart ? rs.start : rs.finish + 1) : rs.mx;
+      if (!inR(a1) || !inR(a2)) continue;
+      const x1 = X(a1), x2 = X(a2), col = Ly.crit && rp.crit && rs.crit ? C.crit : C.mut, xm = fromEnd ? x1 + 3 : x1 - 3;
       const seg = (a, b) => pg.drawLine({start:a, end:b, thickness:.5, color:col});
       seg({x:x1, y:ya}, {x:xm, y:ya}); seg({x:xm, y:ya}, {x:xm, y:yz}); seg({x:xm, y:yz}, {x:x2 + (toStart ? -1.5 : 1.5), y:yz});
       pg.drawSvgPath(toStart ? 'M0 0 L-3 -1.8 L-3 1.8 Z' : 'M0 0 L3 -1.8 L3 1.8 Z', {x:x2, y:yz, color:col});
     }
     pg.drawLine({start:{x:cx0 - 3, y:top}, end:{x:cx0 - 3, y:yb}, thickness:.5, color:C.line});
-    /* légende + cartouche */
-    const ly = M + 46;
-    const leg = [[C.crit, 'Chemin critique'], [C.norm, 'Tâche'], [C.done, 'Terminée'], [C.base, 'Référence'], [C.sig, 'Aujourd’hui / retard']];
-    let lx = M; for (const [c, l] of leg) { pg.drawRectangle({x:lx, y:ly, width:12, height:6, color:c}); text(pg, l, lx + 16, ly, {s:7.5}); lx += 26 + F.widthOfTextAtSize(winAnsi(l), 7.5) + 12; }
-    pg.drawSvgPath('M0 -4 L4 0 L0 4 L-4 0 Z', {x:lx + 4, y:ly + 3, color:C.txt}); text(pg, 'Jalon', lx + 12, ly, {s:7.5});
-    const bwc = 330, bxc = W - M - bwc, byc = M, bhc = 56;
-    pg.drawRectangle({x:bxc, y:byc, width:bwc, height:bhc, borderColor:C.txt, borderWidth:.8});
-    pg.drawLine({start:{x:bxc, y:byc + 28}, end:{x:bxc + bwc, y:byc + 28}, thickness:.5, color:C.txt});
-    pg.drawLine({start:{x:bxc + 230, y:byc}, end:{x:bxc + 230, y:byc + bhc}, thickness:.5, color:C.txt});
-    text(pg, comp || 'BauGest', bxc + 5, byc + 44, {b:1, s:9, w:220}); text(pg, st ? st.label : '', bxc + 5, byc + 33, {s:8, w:220});
-    text(pg, p.name, bxc + 5, byc + 16, {b:1, s:9, w:220}); text(pg, 'Imprimé le ' + chOfDn(todayDn()), bxc + 5, byc + 5, {s:7.5, col:C.mut});
-    text(pg, 'Indice', bxc + 236, byc + 44, {s:7, col:C.mut}); text(pg, p.indice || '–', bxc + 236, byc + 32, {b:1, s:11});
-    text(pg, 'Page', bxc + 236, byc + 16, {s:7, col:C.mut}); text(pg, `${pi + 1} / ${pages}`, bxc + 236, byc + 5, {b:1, s:9});
+    /* légende, remarque, cartouche */
+    const ly = M + (Pp.cart ? 46 : 8);
+    if (Pp.legend) {
+      const leg = [...(Ly.crit ? [[C.crit, 'Chemin critique']] : []), [C.task, 'Tâche'], [C.done, 'Terminée'], ...(base ? [[C.base, 'Référence']] : []), [C.late, 'Retard'], [C.today, 'Aujourd’hui']];
+      let lx = M; for (const [c, l] of leg) { pg.drawRectangle({x:lx, y:ly, width:12, height:6, color:c}); text(pg, l, lx + 16, ly, {s:7.5}); lx += 26 + F.widthOfTextAtSize(winAnsi(l), 7.5) + 12; }
+      pg.drawSvgPath('M0 -4 L4 0 L0 4 L-4 0 Z', {x:lx + 4, y:ly + 3, color:C.ms}); text(pg, 'Jalon', lx + 12, ly, {s:7.5});
+    }
+    if (Pp.note) text(pg, Pp.note, M, ly + (Pp.legend ? -14 : 0), {s:8, b:1, col:C.mut, w:W - 2 * M - (Pp.cart ? 340 : 0)});
+    if (Pp.cart) {
+      const lw = logo ? 70 : 0, bwc = 330 + lw, bxc = W - M - bwc, byc = M, bhc = 56, tx0 = bxc + lw;
+      pg.drawRectangle({x:bxc, y:byc, width:bwc, height:bhc, borderColor:C.txt, borderWidth:.8});
+      if (logo) { const k = Math.min((lw - 10) / logo.width, (bhc - 10) / logo.height); pg.drawImage(logo, {x:bxc + (lw - logo.width * k) / 2, y:byc + (bhc - logo.height * k) / 2, width:logo.width * k, height:logo.height * k});
+        pg.drawLine({start:{x:tx0, y:byc}, end:{x:tx0, y:byc + bhc}, thickness:.5, color:C.txt}); }
+      pg.drawLine({start:{x:tx0, y:byc + 28}, end:{x:bxc + bwc, y:byc + 28}, thickness:.5, color:C.txt});
+      pg.drawLine({start:{x:tx0 + 230, y:byc}, end:{x:tx0 + 230, y:byc + bhc}, thickness:.5, color:C.txt});
+      text(pg, comp || 'BauGest', tx0 + 5, byc + 44, {b:1, s:9, w:220}); text(pg, st ? st.label : '', tx0 + 5, byc + 33, {s:8, w:220});
+      text(pg, p.name, tx0 + 5, byc + 16, {b:1, s:9, w:220}); text(pg, 'Imprimé le ' + chOfDn(todayDn()), tx0 + 5, byc + 5, {s:7.5, col:C.mut});
+      text(pg, 'Indice', tx0 + 236, byc + 44, {s:7, col:C.mut}); text(pg, p.indice || '–', tx0 + 236, byc + 32, {b:1, s:11});
+      text(pg, 'Page', tx0 + 236, byc + 16, {s:7, col:C.mut}); text(pg, `${pi + 1} / ${pages}`, tx0 + 236, byc + 5, {b:1, s:9});
+    } else text(pg, `${pi + 1} / ${pages}`, W - M, M, {s:7.5, r:1, col:C.mut});
   }
   return new Blob([await doc.save()], {type:'application/pdf'});
 }
@@ -1619,6 +1822,7 @@ function bind(el){
       if (k === 'close') close();
       else if (k === 'split') setSplit(!U.split);
       else if (k === 'help') help();
+      else if (k === 'layout') layDlg();
       else if (k === 'popout') popout();
       else if (k === 'new') newPlanDlg();
       else if (k === 'undo') undo();
