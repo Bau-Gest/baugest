@@ -880,6 +880,31 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .so-can em{font-style:normal;font-weight:700;white-space:nowrap}
 @media (max-width:760px){.so-r{grid-template-columns:64px minmax(0,1fr) 84px}.so-r>.so-u,.so-r>.so-n:not(.so-m){display:none}.so-h{grid-template-columns:64px minmax(0,1fr)}}
 
+/* ---------- Courrier : rubrique Mails (tablette) ---------- */
+.mlt-mem{display:grid;gap:8px;padding:14px 16px;border:1px solid var(--line);border-left:4px solid #5b8fd6;border-radius:12px;background:var(--surface)}
+.mlt-mem h3{margin:0;font:700 17px var(--display);text-transform:uppercase;letter-spacing:.04em}
+.mlt-mem p{margin:0;line-height:1.45}
+.mlt-mem ul{margin:0;padding-left:20px}
+.mlt-mf{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted)}
+.mlt-tl{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:8px}
+.mlt-tl>div{display:grid;grid-template-columns:96px 1fr;gap:8px}
+.mlt-tl span{font:500 13px var(--mono);color:var(--muted)}
+.mlt-tl p{margin:0}
+.mlt-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line);border-left:4px solid #5b8fd6;cursor:pointer}
+.mlt-row:first-child{border-top:0}
+.mlt-row.hi{border-left-color:var(--bad)}
+.mlt-row.wait{border-left-color:var(--line)}
+.mlt-t{display:grid;gap:3px;min-width:0}
+.mlt-t b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}
+.mlt-t small{color:var(--muted)}
+.mlt-s{font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mlt-s i{color:var(--muted)}
+.mlt-imp{padding:3px 10px;border-radius:99px;background:var(--bad);color:#fff;font-weight:600;font-size:13px}
+.mlt-sum{display:grid;gap:6px;padding:12px 14px;border-radius:12px;background:var(--surface2);border-left:4px solid #5b8fd6;margin-bottom:12px}
+.mlt-sum.hi{border-left-color:var(--bad)}.mlt-sum.wait{border-left-color:var(--line)}
+.mlt-sum p{margin:0}.mlt-sum ul{margin:0;padding-left:20px}.mlt-sum small{color:var(--muted)}
+.mlt-atts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.mlt-full pre{white-space:pre-wrap;font:14px/1.45 var(--body, inherit);background:var(--surface2);padding:10px;border-radius:8px;max-height:50vh;overflow:auto}
 /* ---------- Accueil (tablette) : journée, semaine, À faire par chantier en colonnes ---------- */
 body.tabshell #desk.hm-mode .dk-sitebtn{display:none!important}
 #desk.hm-mode #dkList{display:grid;gap:22px;min-width:0}
@@ -1425,6 +1450,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <button data-rail="plans"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg>Plans</button>
   <button data-rail="docs"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5"/></svg>Documents</button>
   <button data-rail="pvdt"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/></svg>PV DT</button>
+  <button data-rail="mails"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Mails</button>
   <button data-rail="soum"><svg class="ic" viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5M15 15h1M15 18h1M8 18h5"/></svg>Soumission</button>
   <button data-rail="plan"><svg class="ic" viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/></svg>Planning</button>
   <button data-rail="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button>
@@ -1705,7 +1731,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <h1 id="dkTitle" class="sr">Documents</h1>
     <button id="dkGps" class="dk-gps" aria-label="Aller au chantier détecté"><span id="dkGpsDot" class="dot"></span><span class="t"><b id="dkGpsName">À classer</b><small id="dkGpsSub">Recherche GPS…</small></span></button>
     <button id="dkSiteBtn" class="dk-gps dk-sitebtn" aria-haspopup="true" aria-expanded="false"><span class="t"><b id="dkSiteName">Chantier</b><small>Changer de chantier</small></span><svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
-    <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button><button data-dmode="pvdt">PV DT</button><button data-dmode="soum">Soumission</button><button data-dmode="todo">À faire</button><button data-dmode="devis">Devis</button></div>
+    <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button><button data-dmode="pvdt">PV DT</button><button data-dmode="mails">Mails</button><button data-dmode="soum">Soumission</button><button data-dmode="todo">À faire</button><button data-dmode="devis">Devis</button></div>
     <span class="spacer"></span>
     <button class="icon-btn hd-contrast contrast-btn" aria-label="Fort contraste" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
     <button class="icon-btn todo-btn" data-todo aria-label="À faire" title="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span class="badge red" data-tdbadge hidden>0</span></button>
@@ -1920,7 +1946,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <header class="panel-head">
     <button id="dzBack" class="icon-btn" aria-label="Retour"><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <h1 id="dzTitle">Devis</h1>
-    <div id="dzModes" class="dk-modes" hidden><button data-zmode="plans">Plans</button><button data-zmode="docs">Documents</button><button data-zmode="pvdt">PV DT</button><button data-zmode="soum">Soumission</button><button data-zmode="devis" class="on" aria-pressed="true">Devis</button></div>
+    <div id="dzModes" class="dk-modes" hidden><button data-zmode="plans">Plans</button><button data-zmode="docs">Documents</button><button data-zmode="pvdt">PV DT</button><button data-zmode="mails">Mails</button><button data-zmode="soum">Soumission</button><button data-zmode="devis" class="on" aria-pressed="true">Devis</button></div>
     <span class="spacer"></span>
     <button class="icon-btn hd-contrast contrast-btn" aria-label="Fort contraste" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
     <button class="icon-btn todo-btn" data-todo aria-label="À faire" title="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span class="badge red" data-tdbadge hidden>0</span></button>
@@ -2010,6 +2036,10 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
 </div>
 
 <!-- À faire par chantier (v2.3) -->
+<div id="sheetMail" class="sheet" hidden role="dialog" aria-labelledby="mltTitle">
+  <div class="sheet-head"><h3><span id="mltTitle">Mail</span><small id="mltSub" class="td-sub"></small></h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body" id="mltBody"></div>
+</div>
 <div id="sheetTodo" class="sheet" hidden role="dialog" aria-labelledby="tdPanelTitle">
   <div class="sheet-head"><h3 id="tdPanelTitle">À faire<small id="tdPanelSub" class="td-sub"></small></h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <div class="sheet-body" id="tdPanel"><div id="tdPanelNew"></div><div id="tdPanelList"></div></div>
@@ -4650,7 +4680,7 @@ async function seedDemo(){
     hw(g, 'Maçon', 80, 486, 26); hw(g, 'CFC', 480, 486, 26); hw(g, '3.5', 780, 486, 26); hw(g, 'Mini-pelle 3 t', 80, 756, 26); hw(g, '2', 780, 756, 26);
     hw(g, 'Béton C25/30', 80, 940, 26); hw(g, '0.4', 600, 940, 26); hw(g, 'm³', 780, 940, 26); });
 }
-function loadDocs(){ return desk.mode === 'home' ? loadHome() : desk.mode === 'plans' ? loadPlans() : desk.mode === 'pvdt' ? loadPvdt() : desk.mode === 'soum' ? loadSoum() : desk.mode === 'todo' ? loadTodo() : loadDocsRaw(); }
+function loadDocs(){ return desk.mode === 'home' ? loadHome() : desk.mode === 'plans' ? loadPlans() : desk.mode === 'pvdt' ? loadPvdt() : desk.mode === 'mails' ? loadMails() : desk.mode === 'soum' ? loadSoum() : desk.mode === 'todo' ? loadTodo() : loadDocsRaw(); }
 async function loadDocsRaw(){
   const tok = ++desk.token, sid = desk.site === '__none' ? 'none' : desk.site;
   desk.loading = true; desk.err = null;
@@ -4685,6 +4715,7 @@ function renderDesk(){
   if (desk.mode === 'home') return renderHome();
   if (desk.mode === 'plans') return renderPlans();
   if (desk.mode === 'pvdt') return renderPvdt();
+  if (desk.mode === 'mails') return renderMails();
   if (desk.mode === 'soum') return renderSoum();
   if (desk.mode === 'todo') return renderTodo();
   const s = desk.site === '__none' ? null : siteById(desk.site);
@@ -6132,7 +6163,7 @@ function renderDeskModes(){
   const show = isTabletScreen();
   $('#dkModes').hidden = !show;
   $$('#dkModes [data-dmode]').forEach(b => { const on = b.dataset.dmode === desk.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
-  $('#dkTitle').textContent = desk.mode === 'home' ? 'Accueil' : desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV DT' : desk.mode === 'soum' ? 'Soumission' : desk.mode === 'todo' ? 'À faire' : 'Documents';
+  $('#dkTitle').textContent = desk.mode === 'home' ? 'Accueil' : desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV DT' : desk.mode === 'mails' ? 'Mails' : desk.mode === 'soum' ? 'Soumission' : desk.mode === 'todo' ? 'À faire' : 'Documents';
   $('#desk').classList.toggle('td-mode', desk.mode === 'todo');
   $('#desk').classList.toggle('hm-mode', desk.mode === 'home');
   syncRail(); backSchedule();
@@ -10262,6 +10293,108 @@ function tdStartup(){
   if (late.length) tdBanner(late.length === 1 ? '1 tâche en retard' : late.length + ' tâches en retard', late.length === 1 ? late[0].id : '');
 }
 
+/* ---------- Courrier : rubrique « Mails » de la tablette (lecture des mails classés par BauGest PC) ----------
+   « <Chantier>/Courrier/*.json » (kind='mail') ; résumé « <mail> – résumé.json » et « Courrier – mémoire.json » écrits par la tâche « Mails BauGest ».
+   Description du mail : 1re ligne « #résumé imp=h act=2 » quand le résumé est fait. Les actions vont dans À faire par BauGest PC. */
+const MLT = {items:[], mem:null, err:null, loading:false, tl:false};
+const MLT_TYPEN = {pv:'PV DT', plan:'Plan', photo:'Photo', doc:'Document'};
+const MLT_FILES = 'https://www.googleapis.com/drive/v3/files';
+function mltHead(f){
+  const d = String(f.description || ''), m = /^#\s*r\S*sum\S*([^\n]*)\n?/i.exec(d);
+  if (!m) return {_sum:false, _txt:d, _imp:'', _act:0};
+  return {_sum:true, _txt:d.slice(m[0].length).trim(), _imp:(/imp=(\w)/.exec(m[1]) || [])[1] || 'n', _act:+((/act=(\d+)/.exec(m[1]) || [])[1] || 0)};
+}
+async function mltJson(id){ const r = await api(`${MLT_FILES}/${encodeURIComponent(id)}?alt=media`); return r && typeof r.json === 'function' ? r.json() : r; }
+async function mltFind(par, name){
+  const r = await api(MLT_FILES + '?' + new URLSearchParams({q:`'${qEsc(par)}' in parents and trashed=false and name='${qEsc(name)}'`, orderBy:'modifiedTime desc', pageSize:'1', fields:'files(id)'}));
+  return r.files && r.files[0] ? r.files[0].id : null;
+}
+const mltWhen = s => { const d = new Date(s); return isNaN(d) ? '' : pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); };
+const mltSplit = f => { const p = f.name.replace(/\.json$/i, '').split(' – '); return {from:p[1] || '', subj:p.slice(2).join(' – ') || f.name}; };
+async function loadMails(){
+  const tok = ++desk.token, sid = desk.site === '__none' ? 'none' : desk.site;
+  MLT.loading = true; MLT.err = null; MLT.items = []; MLT.mem = null; MLT.tl = false;
+  renderMails();
+  if (DEMO && !tokenValid()) MLT.err = 'Aperçu : dans l’app, la liste montre les mails classés depuis BauGest PC.';
+  else if (!driveReady()) MLT.err = 'Connecte Google Drive pour voir les mails classés depuis BauGest PC.';
+  else if (!navigator.onLine) MLT.err = 'Hors ligne · les mails se lisent sur le Drive.';
+  else {
+    try {
+      const q = `trashed=false and appProperties has { key='kind' and value='mail' } and ${siteClause(sid)}`;
+      const r = await api(MLT_FILES + '?' + new URLSearchParams({q, pageSize:'300', fields:'files(id,name,description,appProperties,createdTime,parents)'}));
+      const items = (r.files || []).map(f => Object.assign(f, mltHead(f)));
+      items.sort((a, b) => String((b.appProperties || {}).mdate || b.createdTime).localeCompare(String((a.appProperties || {}).mdate || a.createdTime)));
+      if (tok !== desk.token) return;
+      MLT.items = items;
+      const par = items[0] && items[0].parents && items[0].parents[0];
+      if (par && sid !== 'none') { const id = await mltFind(par, 'Courrier – mémoire.json'); if (id) MLT.mem = await mltJson(id); }
+    } catch (e) { MLT.err = 'Lecture du Drive impossible : ' + e.message; }
+  }
+  if (tok !== desk.token) return;
+  MLT.loading = false; renderMails();
+}
+function mltRow(f){
+  const a = f.appProperties || {}, {from, subj} = mltSplit(f);
+  return `<div class="mlt-row${f._imp === 'h' ? ' hi' : ''}${f._sum ? '' : ' wait'}" role="button" tabindex="0" data-mlt="${esc(f.id)}">
+    <span class="mlt-t"><b>${esc(subj)}</b><small>${esc([from, mltWhen(a.mdate || f.createdTime).slice(0, 10), +a.na ? '📎 ' + a.na : '', f._act ? f._act + ' action' + (f._act > 1 ? 's' : '') + (a.td === '1' ? ' → À faire' : '') : ''].filter(Boolean).join(' · '))}</small>
+    <span class="mlt-s">${f._sum ? '' : '<i>Résumé en attente · </i>'}${esc(f._txt || '')}</span></span>
+    ${f._imp === 'h' ? '<span class="mlt-imp">Important</span>' : ''}</div>`;
+}
+function renderMails(){
+  if (desk.mode !== 'mails') return;
+  const s = desk.site === '__none' ? null : siteById(desk.site);
+  renderDeskSites();
+  $('#dkHead').innerHTML = `${s ? logoHTML(s) : ''}<div class="t"><small>${s ? esc(s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(s ? s.name : 'À classer')}</h2></div>
+    <div class="dk-acts"><button class="btn" id="dkGalSite">${PL_IC.photos}Photos</button></div>`;
+  $('#dkInfo').hidden = !MLT.err; $('#dkInfo').textContent = MLT.err || '';
+  const n = MLT.items.length, imp = MLT.items.filter(f => f._imp === 'h').length, m = MLT.mem;
+  const ev = m && Array.isArray(m.events) ? m.events.slice().sort((x, y) => String(y.d).localeCompare(String(x.d))) : [];
+  $('#dkList').innerHTML = `${m ? `<section class="mlt-mem"><h3>Où on en est</h3>${m.synth ? `<p>${esc(m.synth)}</p>` : ''}
+      ${m.open && m.open.length ? `<b>Points ouverts</b><ul>${m.open.map(x => `<li>${esc(typeof x === 'string' ? x : x.t || '')}</li>`).join('')}</ul>` : ''}
+      <div class="mlt-mf"><small>Mémoire du chantier · mise à jour le ${esc(mltWhen(m.updatedAt) || '–')}</small>${ev.length ? `<button class="btn" id="mltTl">${MLT.tl ? 'Masquer' : 'Chronologie'} (${ev.length})</button>` : ''}</div>
+      ${MLT.tl ? `<div class="mlt-tl">${ev.map(x => `<div><span>${esc(x.d ? fmtISO(String(x.d).slice(0, 10)) : '')}</span><p><b>${esc(x.from || '')}</b> ${esc(x.t || '')}</p></div>`).join('')}</div>` : ''}</section>` : ''}
+    <section class="dk-sec"><div class="dk-sep"><h3>Mails</h3><span class="n">${n}</span><span class="p">Classés depuis BauGest PC · résumés par la tâche « Mails BauGest » (11:50 et 17:50)${imp ? ` · ${imp} important${imp > 1 ? 's' : ''}` : ''}</span></div>
+      ${n ? `<div class="pd-list">${MLT.items.map(mltRow).join('')}</div>` : `<p class="dk-empty">${MLT.loading ? 'Chargement…' : 'Aucun mail pour ce chantier. Glisse les mails Outlook sur l’accueil de BauGest PC.'}</p>`}</section>`;
+  renderDeskModes();
+}
+async function openMailT(id){
+  const f = MLT.items.find(x => x.id === id); if (!f) return;
+  const {from, subj} = mltSplit(f), sid = desk.site;
+  $('#mltTitle').textContent = subj; $('#mltSub').textContent = [from, mltWhen((f.appProperties || {}).mdate || f.createdTime)].filter(Boolean).join(' · ');
+  $('#mltBody').innerHTML = '<p class="dk-empty">Chargement…</p>';
+  openSheet('#sheetMail');
+  let j = null, s = null;
+  try {
+    j = await mltJson(f.id);
+    if (f._sum && f.parents && f.parents[0]) { const rid = await mltFind(f.parents[0], f.name.replace(/\.json$/i, '') + ' – résumé.json'); if (rid) s = await mltJson(rid); }
+  } catch (e) { $('#mltBody').innerHTML = `<p class="dk-empty">Lecture impossible : ${esc(e.message)}</p>`; return; }
+  if ($('#sheetMail').hidden) return;
+  const li = arr => (arr || []).map(x => `<li>${esc(typeof x === 'string' ? x : x.t || '')}${x && x.due ? ` <small>· pour le ${esc(fmtISO(x.due))}</small>` : ''}</li>`).join('');
+  const atts = ((j && j.atts) || []).filter(a => a.type !== 'skip' && a.fid);
+  $('#mltBody').innerHTML = `${s ? `<div class="mlt-sum${s.imp === 'h' ? ' hi' : ''}"><b>Résumé${s.imp === 'h' ? ' · important' : ''}</b><p>${esc(s.t || '')}</p>
+      ${s.pts && s.pts.length ? `<ul>${li(s.pts)}</ul>` : ''}${s.actions && s.actions.length ? `<b>À faire</b><ul>${li(s.actions)}</ul>${(f.appProperties || {}).td === '1' ? '<small>Déjà dans les tâches À faire du chantier.</small>' : '<small>Seront ajoutées aux tâches À faire à la prochaine ouverture de BauGest PC.</small>'}` : ''}
+      ${s.dl && s.dl.length ? `<b>Délais</b><ul>${li(s.dl)}</ul>` : ''}</div>`
+      : '<div class="mlt-sum wait"><b>Résumé en attente</b><p>La tâche « Mails BauGest » le fera au prochain passage (lu–ve 11:50 et 17:50).</p></div>'}
+    ${atts.length ? `<b>Pièces jointes classées</b><div class="mlt-atts">${atts.map(a => `<button class="btn" data-mlta="${esc(a.fid)}" data-t="${esc(a.type)}" data-n="${esc(a.name)}">${esc((MLT_TYPEN[a.type] || 'Fichier') + ' · ' + a.name)}</button>`).join('')}</div>` : ''}
+    <details class="mlt-full"><summary>Texte complet du mail</summary><pre>${esc((j && j.body) || '')}</pre></details>`;
+  $('#mltBody').dataset.sid = sid;
+}
+function bindMailsT(){
+  $('#dkMain').addEventListener('click', e => {
+    if (desk.mode !== 'mails') return;
+    if (e.target.closest('#mltTl')) { MLT.tl = !MLT.tl; renderMails(); return; }
+    const r = e.target.closest('[data-mlt]'); if (r) openMailT(r.dataset.mlt);
+  });
+  $('#dkMain').addEventListener('keydown', e => { if (desk.mode === 'mails' && (e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-mlt]')) { e.preventDefault(); e.target.click(); } });
+  $('#mltBody').addEventListener('click', e => {
+    const b = e.target.closest('[data-mlta]'); if (!b) return;
+    const sid = $('#mltBody').dataset.sid, t = b.dataset.t;
+    closeSheet($('#sheetMail'));
+    if (t === 'pv' || t === 'plan') tdOpenLink({ln:{t, id:b.dataset.mlta, name:b.dataset.n}}, sid);
+    else window.open('https://drive.google.com/file/d/' + encodeURIComponent(b.dataset.mlta) + '/view', '_blank', 'noopener');
+  });
+}
+
 /* ---------- Accueil (tablette) : journée, semaine, À faire par chantier en colonnes ----------
    Mode 'home' du bureau ; le logo BauGest de la barre de gauche y ramène toujours. Écran de démarrage de la tablette (S.home 'auto').
    Sources : séances (s.meet), visites devis (S.devis[].visit), PV DT non lus (Drive kind='pvdt' des 14 derniers jours, baugest.pvdt.seen),
@@ -10641,7 +10774,7 @@ async function init(){
   const todoParam = new URLSearchParams(location.search).get('todo');
   if (shareParam !== null || pvParam || todoParam) history.replaceState(null, '', location.pathname + location.hash);
   await DB.open();
-  bind(); bindDocs(); bindPlans(); bindPvdt(); bindSoum(); bindDevis(); bindSketch(); bindDzSel(); bindDzMap(); bindMemoView(); bindCalc(); bindTodo(); initPlanning(); applyBrand(); renderSiteChip(); renderActiveTag();
+  bind(); bindDocs(); bindPlans(); bindPvdt(); bindMailsT(); bindSoum(); bindDevis(); bindSketch(); bindDzSel(); bindDzMap(); bindMemoView(); bindCalc(); bindTodo(); initPlanning(); applyBrand(); renderSiteChip(); renderActiveTag();
   startGeo();
   if (isTabletScreen()) { keepAwake(); document.addEventListener('pointerdown', keepAwake, {passive:true}); }
   if (auth === 'cid') note('Client ID enregistré. Ouvre Paramètres › Google Drive › Connecter.', 4500);

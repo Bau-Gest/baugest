@@ -460,6 +460,140 @@ body.bp-split #app{left:var(--bp-w,55%)}
 .tdp-row b{white-space:pre-line}
 .tdp-row small .late{color:var(--bad);font-weight:700}
 .tdp-row small .today{color:var(--warn);font-weight:700}
+/* ---------- Accueil PC personnalisable + Courrier (mails et fichiers à classer) ---------- */
+#home{position:absolute;inset:0;grid-column:1/-1;grid-row:2;z-index:25;background:var(--bg);overflow:auto;min-height:0}
+.hm-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:10px;padding:12px 20px 10px;background:var(--bg);border-bottom:1px solid var(--line)}
+.hm-day small{display:block;color:var(--muted);font:500 12px var(--mono)}
+.hm-day h1{margin:0;font:700 26px/1.05 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.hm-day h1::first-letter{color:var(--signal)}
+.hm-editbar{display:flex;align-items:center;gap:8px}
+.hm-editbar .hint{color:var(--muted);font-size:13px;margin-right:6px}
+.hm-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:64px;grid-auto-flow:row dense;gap:12px;padding:14px 20px 28px}
+.hw{position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hw-h{display:flex;align-items:center;gap:6px;padding:8px 8px 8px 14px;border-bottom:1px solid var(--line);min-height:42px}
+.hw-h b{font:700 15px var(--display);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hw-h .ibtn{width:30px;height:30px}
+.hw-b{flex:1;min-height:0;overflow:auto;padding:12px 14px}
+#home.editing .hw{outline:2px dashed var(--line);outline-offset:-2px}
+#home.editing .hw-h{cursor:grab;background:var(--signal-soft)}
+#home.editing .hw-b{pointer-events:none;opacity:.55}
+.hw .grip{color:var(--signal);font-size:18px;line-height:1}
+.hw.moving{opacity:.35}
+.hw.before{box-shadow:-5px 0 0 var(--signal)}
+.hw.after{box-shadow:5px 0 0 var(--signal)}
+.hw-rs{position:absolute;right:0;bottom:0;width:22px;height:22px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,var(--signal) 50%);border-bottom-right-radius:11px;z-index:2}
+.hw-sz{position:absolute;right:28px;bottom:6px;font:500 11px var(--mono);color:var(--muted);z-index:2}
+.hm-empty{color:var(--muted);margin:6px 0}
+.hm-lbl{margin:14px 0 6px;font:700 13px var(--display);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+/* barre du haut : onglets sur une ligne (onglet Accueil en plus) */
+.navtabs button{white-space:nowrap;padding:0 10px}
+@media (max-width:1700px){.gsearch input{width:200px}}
+@media (max-width:1450px){.navtabs button{padding:0 7px}.navtabs button .ic{display:none}.gsearch input{width:150px}}
+/* dépôt et tri */
+.ml-drop{display:grid;justify-items:center;gap:6px;padding:20px 14px;border:2px dashed var(--line);border-radius:12px;background:var(--surface2);text-align:center;cursor:pointer;transition:border-color .12s,background .12s}
+.ml-drop:hover{border-color:var(--muted)}
+.ml-drop.drop,#home.drop .ml-drop{border-color:var(--signal);background:var(--signal-soft)}
+.ml-drop .big{width:40px;height:40px;color:var(--signal)}
+.ml-drop.mini{grid-auto-flow:column;justify-content:start;align-items:center;gap:12px;padding:10px 14px;text-align:left}
+.ml-drop.mini .big{width:24px;height:24px}
+.ml-drop.mini span:not(.btn){display:none}
+.ml-drop.mini .btn{margin-left:auto}
+.ml-drop b{font-size:16px}
+.ml-drop span:not(.btn){color:var(--muted);font-size:13px;max-width:520px}
+.ml-q{display:grid;gap:8px;margin-top:12px}
+.ml-row{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg)}
+.ml-row.ok{border-color:var(--ok)}
+.ml-row.err{border-color:var(--bad)}
+.ml-row.dup{opacity:.6}
+.ml-h{display:flex;align-items:center;gap:8px;min-width:0}
+.ml-h>.ic{flex:none;color:var(--signal)}
+.ml-row .nm{flex:1;min-width:0;display:grid}
+.ml-row .nm b,.ml-it .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ml-row .nm small,.ml-it .nm small{color:var(--muted);font-size:12px;margin-left:6px}
+.ml-site{display:flex;align-items:center;gap:6px;flex:none}
+.ml-site select{max-width:220px}
+.ml-st{margin:6px 0 0 30px;font-size:13px;color:var(--muted)}
+.ml-st.ok{color:var(--ok)}
+.ml-st.err{color:var(--bad)}
+.ml-ex{margin:4px 0 0 30px;color:var(--muted);font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ml-its{display:grid;gap:4px;margin:8px 0 0 30px}
+.ml-it{display:flex;align-items:center;gap:8px;min-width:0;font-size:13px}
+.ml-it .ic{flex:none;width:16px;height:16px;color:var(--muted)}
+.ml-it .nm{flex:1;min-width:0}
+.ml-it.skip .nm{text-decoration:line-through;color:var(--muted)}
+.ml-it select{width:110px}
+.ml-it input{width:70px}
+.ml-it input[type=date]{width:140px}
+.ml-foot{display:flex;align-items:center;gap:8px;margin-top:10px;position:sticky;bottom:-12px;background:var(--surface);padding:8px 0}
+.ml-foot .hint{flex:1;color:var(--muted);font-size:13px}
+/* aujourd'hui et semaine */
+.hm-evs{display:grid;gap:8px}
+.hm-ev{display:flex;align-items:center;gap:12px;text-align:left;padding:8px 12px;border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;cursor:pointer}
+.hm-ev:hover{background:var(--surface2)}
+.hm-ev .t{font:700 20px var(--display);min-width:52px;color:var(--text)}
+.hm-ev b{display:block}
+.hm-ev small{color:var(--muted)}
+.hm-ev.al{border-left-color:var(--bad)}.hm-ev.al .t{color:var(--bad)}
+.hm-ev.ok{border-left-color:var(--ok)}
+.hm-ev.se{border-left-color:#5b8fd6}
+.hm-ev.dv{border-left-color:var(--signal)}
+.hm-ev.pv{border-left-color:var(--warn)}
+.hm-week{display:grid;gap:4px}
+.hm-wd{display:grid;grid-template-columns:62px 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.hm-wd>b{font:700 14px var(--display);text-transform:uppercase;color:var(--muted)}
+.hm-wd.now>b{color:var(--signal)}
+.hm-wd>div{display:grid;gap:2px}
+.hm-it{display:flex;align-items:center;gap:6px;text-align:left;background:none;border:0;padding:2px 0;color:var(--text);font:inherit;font-size:13px;cursor:pointer}
+.hm-it i{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.hm-it.se i{background:#5b8fd6}.hm-it.dv i{background:var(--signal)}.hm-it.ms i{background:var(--ok)}.hm-it.td i{background:var(--bad)}
+.hm-it.e{color:var(--muted);cursor:default}
+/* actions rapides */
+.hm-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.hm-tile{display:grid;justify-items:center;align-content:center;gap:6px;min-height:76px;padding:10px 6px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--text);font:600 13px var(--body);cursor:pointer;text-align:center}
+.hm-tile:hover{border-color:var(--signal);background:var(--signal-soft)}
+.hm-tile .ic{width:26px;height:26px;color:var(--signal)}
+/* mails */
+.hm-mtop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.hm-mails{display:grid;gap:6px}
+.hm-mail{display:grid;gap:2px;text-align:left;padding:8px 10px;border:1px solid var(--line);border-left:4px solid #5b8fd6;border-radius:10px;background:var(--bg);color:var(--text);font:inherit;cursor:pointer}
+.hm-mail:hover{background:var(--surface2)}
+.hm-mail.hi{border-left-color:var(--bad)}
+.hm-mail.wait{border-left-color:var(--line)}
+.hm-mail .h{display:flex;align-items:center;gap:8px;min-width:0}
+.hm-mail .h b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hm-mail .h small,.hm-mail .f{color:var(--muted);font-size:12px}
+.hm-mail .f em{color:var(--bad);font-style:normal;font-weight:600}
+.hm-mail .s{font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hm-mail .s i{color:var(--muted)}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;background:var(--surface3);font:600 11.5px var(--body);white-space:nowrap}
+.pill.red{background:var(--bad);color:#fff}.pill.blue{background:#5b8fd6;color:#fff}
+/* chantiers */
+.hm-sites{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.hm-site{display:grid;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.hm-site .hd{display:grid;text-align:left;background:none;border:0;color:var(--text);padding:0;cursor:pointer;font:inherit}
+.hm-site .hd b{font:700 13px var(--mono);color:var(--signal)}
+.hm-site .hd span{font:700 18px/1.1 var(--display);text-transform:uppercase}
+.hm-site .hd:hover span{text-decoration:underline}
+.hm-site .pills{display:flex;flex-wrap:wrap;gap:4px}
+.hm-site .acts{display:flex;flex-wrap:wrap;gap:4px}
+.hm-site .acts button{padding:3px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface2);color:var(--text);font:500 12px var(--body);cursor:pointer}
+.hm-site .acts button:hover{border-color:var(--signal)}
+/* dialogues */
+.hm-addl{display:grid;gap:6px}.hm-addl .btn{justify-content:flex-start}
+.hm-f{display:grid;gap:6px;margin-bottom:10px}
+.hm-chks{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+.hm-chk{display:flex;align-items:center;gap:6px}
+.ml-dlg{display:grid;gap:10px}
+.ml-sum{padding:10px 12px;border-radius:10px;background:var(--surface2);border-left:4px solid #5b8fd6}
+.ml-sum.hi{border-left-color:var(--bad)}.ml-sum.wait{border-left-color:var(--line)}
+.ml-sum p{margin:4px 0}.ml-sum ul{margin:4px 0 6px;padding-left:20px}
+.ml-atts{display:flex;flex-wrap:wrap;gap:6px}
+.ml-body{white-space:pre-wrap;max-height:320px;overflow:auto;font:13px/1.45 var(--body);background:var(--bg);padding:10px;border-radius:8px}
+.ml-tl{display:grid;gap:6px;max-height:340px;overflow:auto}
+.ml-tl>div{display:grid;grid-template-columns:90px 1fr;gap:8px}
+.ml-tl span{font:500 12px var(--mono);color:var(--muted)}
+.ml-tl p{margin:0}
+@media (max-width:1100px){.hm-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.hw{grid-column:span 6!important}}
 </style>
 </head>
 <body>
@@ -478,7 +612,7 @@ body.bp-split #app{left:var(--bp-w,55%)}
     <div class="brand">Bau<b>Gest</b><small>PC</small></div>
     <button id="btnBack" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Plans &amp; documents</button>
     <button id="btnViewerShow" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Visionneuse</button>
-    <div class="navtabs" id="navtabs"><button data-nav="photos"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M9 8.5h.01"/></svg>Photos</button><button data-nav="files" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg>Plans &amp; documents</button><button data-nav="pvdt"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/></svg>PV DT</button><button data-nav="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button><button data-nav="plan"><svg class="ic" viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/></svg>Planning</button></div>
+    <div class="navtabs" id="navtabs"><button data-nav="home"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</button><button data-nav="photos"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M9 8.5h.01"/></svg>Photos</button><button data-nav="files" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg>Plans &amp; documents</button><button data-nav="pvdt"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/></svg>PV DT</button><button data-nav="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button><button data-nav="plan"><svg class="ic" viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/></svg>Planning</button></div>
     <div class="gsearch"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="gSearch" placeholder="Rechercher dans tous les chantiers" title="Nom, date (2026-09), indice (ind C)… puis Entrée"></div>
     <div class="grow"></div>
     <button id="btnSync" class="btn syncbtn" hidden title="Zoom et défilement liés entre les deux volets"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Lier les vues</button>
@@ -535,6 +669,15 @@ body.bp-split #app{left:var(--bp-w,55%)}
     <div id="dropzone" class="dropzone" hidden><span id="dropText">Dépose ici pour envoyer dans ce dossier</span></div>
   </section>
 
+  <section id="home" hidden>
+    <div class="hm-top">
+      <div class="hm-day"><small id="hmWeek"></small><h1 id="hmDate"></h1></div>
+      <div class="grow"></div>
+      <span class="hm-editbar" id="hmEditBar" hidden><span class="hint">Glisse les en-têtes pour déplacer, tire le coin pour agrandir.</span><button class="btn" id="hmAdd">+ Ajouter un bloc</button><button class="btn" id="hmReset">Disposition de départ</button><button class="btn primary" id="hmDone">Terminé</button></span>
+      <button class="btn" id="hmEdit"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Modifier l’accueil</button>
+    </div>
+    <div class="hm-grid" id="hmGrid"></div>
+  </section>
   <section id="pvdt" hidden>
     <div class="pq-main">
       <div class="pq-drop" id="pqDrop">
@@ -1602,6 +1745,12 @@ document.addEventListener('dragover', e => {
   const internal = hasType(e, 'application/x-baugest'), ext = hasType(e, 'Files');
   if (!internal && !ext) return;
   if (!$('#viewer').hidden) { if (ext) { e.preventDefault(); e.dataTransfer.dropEffect = 'none'; } return; }
+  if (!$('#home').hidden) {
+    if (!ext) return;
+    e.preventDefault(); const inH = e.target.closest && e.target.closest('#home');
+    e.dataTransfer.dropEffect = inH ? 'copy' : 'none'; setDropHL(inH ? $('#mlDrop') || $('#home') : null);
+    clearTimeout(dzTimer); dzTimer = setTimeout(() => setDropHL(null), 250); return;
+  }
   if (!$('#pvdt').hidden) {
     if (!ext) return;
     e.preventDefault(); const inPq = e.target.closest && e.target.closest('#pvdt');
@@ -1634,6 +1783,13 @@ document.addEventListener('drop', async e => {
   e.preventDefault();
   $('#dropzone').hidden = true; const t = dropTarget(e); setDropHL(null);
   if (!$('#viewer').hidden) return;
+  if (!$('#home').hidden) {
+    if (!ext || !(e.target.closest && e.target.closest('#home'))) return;
+    const ents = [...e.dataTransfer.items].filter(i => i.kind === 'file').map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+    const fl = [...e.dataTransfer.files];
+    mlAdd(ents.length && ents.some(x => x.isDirectory) ? (await readEntries(ents)).filter(x => x.file).map(x => x.file) : fl);
+    return;
+  }
   if (!$('#pvdt').hidden) { if (ext && e.target.closest && e.target.closest('#pvdt')) pqAdd(e.dataTransfer.files); return; }
   if (!$('#devis').hidden) { if (ext && e.target.closest && e.target.closest('#dzPhotos')) dzImport(e.dataTransfer.files); return; }
   if (E.mode !== 'folder' && ext) return;
@@ -2645,7 +2801,7 @@ function openPq(){
   if (!PQ.site || !sites.some(s => s.id === PQ.site)) { try { PQ.site = localStorage.getItem('baugest.pc.pqSite') || ''; } catch (e) {} if (!sites.some(s => s.id === PQ.site)) PQ.site = sites[0]?.id || ''; }
   renderPq(); pqLoadList();
 }
-function closePq(){ if ($('#pvdt').hidden) return; $('#pvdt').hidden = true; syncNav(); }
+function closePq(){ closeHome(); if ($('#pvdt').hidden) return; $('#pvdt').hidden = true; syncNav(); }
 async function pqAdd(files){
   files = [...files].filter(f => /pdf/i.test(f.type || '') || /\.pdf$/i.test(f.name || ''));
   if (!files.length) { toast('Seuls les fichiers PDF sont acceptés ici', 'err'); return; }
@@ -2806,7 +2962,7 @@ function modeCrumbs(){
 }
 function refreshMode(){ if (E.mode === 'photos') loadPhotos(); else if (E.mode === 'search') runSearch(SR.q, true); else navigate(E.cur, true); }
 function syncNav(){
-  const cur = !$('#devis').hidden ? 'devis' : !$('#pvdt').hidden ? 'pvdt' : E.mode === 'photos' ? 'photos' : 'files';
+  const cur = !$('#home').hidden ? 'home' : !$('#devis').hidden ? 'devis' : !$('#pvdt').hidden ? 'pvdt' : E.mode === 'photos' ? 'photos' : 'files';
   $$('#navtabs [data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === cur));
 }
 /* ---------- À faire par chantier (v2.3) : consultation et case à cocher (l'écriture se fait au stylo sur la tablette) ----------
@@ -2952,6 +3108,7 @@ $('#navtabs').addEventListener('click', e => {
   const b = e.target.closest('[data-nav]'); if (!b) return;
   const n = b.dataset.nav;
   if (n === 'plan') { openPlanning(); return; }
+  if (n === 'home') { openHome(); return; }
   if (!$('#viewer').hidden) hideViewer();
   if (n === 'devis') { openDevis(); return; }
   if (n === 'pvdt') { openPq(); return; }
@@ -3139,6 +3296,7 @@ async function allFolders(){
 }
 function folderPath(map, id){ const out = []; let n = map.get(id), g = 0; while (n && n.parent && g++ < 20) { out.unshift(n.name); n = map.get(n.parent); } return out.join(' › '); }
 async function runSearch(q, keep){
+  closeHome();
   q = String(q || '').trim(); if (!q) return;
   closeDevis(); if (!$('#viewer').hidden) hideViewer();
   if (E.mode === 'photos') { $('#phbar').hidden = true; $('#phMap').hidden = true; filesEl.hidden = false; }
@@ -4670,7 +4828,7 @@ async function start(){
       } catch (e) { toast('Fichier introuvable : ' + e.message, 'err'); }
     }
     await navigate(start);
-    filesEl.focus();
+    if (!PLAN_WIN) openHome(); else filesEl.focus();
   } catch (e) {
     $('#files').innerHTML = `<div class="empty">Google Drive inaccessible : ${esc(e.message)}<br><br><button class="btn" id="retry">Réessayer</button></div>`;
     $('#retry').addEventListener('click', () => start());
@@ -4686,7 +4844,801 @@ window.addEventListener('hashchange', () => {
   meta(decodeURIComponent(hf)).then(m => { m._k = kindOf(m); openIn(0, m, [m]); }).catch(() => {});
 });
 
-window.BauGestPC = {V, E, P, PHO, DV, S: () => S};
+/* ---------- Courrier : lecture des mails Outlook (.msg) et des mails exportés (.eml) ----------
+   .msg = fichier composé Microsoft (CFB) : propriétés MAPI dans les flux __substg1.0_XXXXTTTT, pièces jointes dans
+   __attach_version1.0_#n (un mail joint est relu lui-même). .eml = MIME (multipart, base64, quoted-printable, en-têtes =?…?=). */
+function mlDec(bytes, cs){
+  try { return new TextDecoder(String(cs || 'utf-8').trim().toLowerCase().replace(/^(us-ascii|ascii)$/, 'windows-1252').replace(/^cp(\d+)$/, 'windows-$1')).decode(bytes); }
+  catch (e) { return new TextDecoder('windows-1252').decode(bytes); }
+}
+const ML_CP = {65001:'utf-8', 932:'shift_jis', 936:'gbk', 949:'euc-kr', 950:'big5', 28591:'iso-8859-1', 28592:'iso-8859-2', 28605:'iso-8859-15', 20127:'windows-1252', 50220:'shift_jis', 50221:'shift_jis', 50222:'shift_jis', 51932:'euc-jp'};
+const mlCp = cp => ML_CP[cp] || (cp >= 1250 && cp <= 1258 ? 'windows-' + cp : 'windows-1252');
+function cfbRead(buf){
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  if (u8.length < 512 || dv.getUint32(0, true) !== 0xE011CFD0 || dv.getUint32(4, true) !== 0xE11AB1A1) throw new Error('pas un fichier Outlook .msg');
+  const ss = 1 << dv.getUint16(30, true), mss = 1 << dv.getUint16(32, true), nFat = dv.getUint32(44, true);
+  const dir0 = dv.getUint32(48, true), cutoff = dv.getUint32(56, true), mf0 = dv.getUint32(60, true);
+  let difat0 = dv.getUint32(68, true);
+  const off = s => 512 + s * ss, fatSecs = [];
+  for (let i = 0; i < 109 && fatSecs.length < nFat; i++) fatSecs.push(dv.getUint32(76 + i * 4, true));
+  for (let guard = 0; fatSecs.length < nFat && difat0 < 0xFFFFFFFA && guard < 1e5; guard++) {
+    const o = off(difat0), per = ss / 4 - 1;
+    for (let i = 0; i < per && fatSecs.length < nFat; i++) fatSecs.push(dv.getUint32(o + i * 4, true));
+    difat0 = dv.getUint32(o + per * 4, true);
+  }
+  const fat = new Uint32Array(fatSecs.length * ss / 4);
+  fatSecs.forEach((s, i) => { const o = off(s); for (let k = 0; k < ss / 4 && o + k * 4 + 4 <= u8.length; k++) fat[i * ss / 4 + k] = dv.getUint32(o + k * 4, true); });
+  const chain = (s, tbl) => { const out = [], seen = new Set(); while (s < 0xFFFFFFFA && s < tbl.length && !seen.has(s)) { seen.add(s); out.push(s); s = tbl[s]; } return out; };
+  const big = (s, size) => {
+    const secs = chain(s, fat), out = new Uint8Array(size == null ? secs.length * ss : size); let p = 0;
+    for (const x of secs) { if (p >= out.length) break; const o = off(x), n = Math.min(ss, out.length - p, Math.max(0, u8.length - o)); out.set(u8.subarray(o, o + n), p); p += n; }
+    return out;
+  };
+  const dirB = big(dir0), ddv = new DataView(dirB.buffer), ents = [];
+  for (let o = 0; o + 128 <= dirB.length; o += 128) {
+    const nl = ddv.getUint16(o + 64, true), name = nl > 2 ? new TextDecoder('utf-16le').decode(dirB.subarray(o, o + Math.min(nl, 64) - 2)) : '';
+    ents.push({name, type:dirB[o + 66], l:ddv.getUint32(o + 68, true), r:ddv.getUint32(o + 72, true), c:ddv.getUint32(o + 76, true), start:ddv.getUint32(o + 116, true), size:ddv.getUint32(o + 120, true)});
+  }
+  const root = ents[0]; if (!root || root.type !== 5) throw new Error('fichier Outlook illisible');
+  const mfB = mf0 < 0xFFFFFFFA ? big(mf0) : new Uint8Array(0), mdv = new DataView(mfB.buffer), minifat = new Uint32Array(mfB.length / 4);
+  for (let i = 0; i < minifat.length; i++) minifat[i] = mdv.getUint32(i * 4, true);
+  const ministream = big(root.start, root.size);
+  const data = e => {
+    if (e.size < cutoff) {
+      const out = new Uint8Array(e.size); let p = 0;
+      for (const x of chain(e.start, minifat)) { if (p >= out.length) break; const n = Math.min(mss, out.length - p); out.set(ministream.subarray(x * mss, x * mss + n), p); p += n; }
+      return out;
+    }
+    return big(e.start, e.size);
+  };
+  const kids = e => { const out = [], seen = new Set(), walk = i => { if (i >= ents.length || seen.has(i)) return; seen.add(i); const x = ents[i]; walk(x.l); out.push(x); walk(x.r); }; walk(e.c); return out; };
+  return {root, kids, data};
+}
+const ML_PT = {subject:0x0037, fromName:0x0C1A, fromMail:0x0C1F, sendSmtp:0x5D01, reprSmtp:0x5D02, reprName:0x0042, reprMail:0x0065, to:0x0E04, cc:0x0E03,
+  body:0x1000, html:0x1013, cp:0x3FFD, cpid:0x3FDE, sent:0x0039, recv:0x0E06, msgId:0x1035, aLong:0x3707, aShort:0x3704, aDisp:0x3001, aData:0x3701, aMime:0x370E, aCid:0x3712, aHidden:0x7FFE, aFlags:0x3714};
+function msgNode(cf, node, hdr){
+  const ch = cf.kids(node), str = {}, bin = {}, fix = {};
+  let cp = 0;
+  for (const e of ch) {
+    if (e.type !== 2) continue;
+    const m = /^__substg1\.0_([0-9A-F]{4})([0-9A-F]{4})$/i.exec(e.name);
+    if (m) { const id = parseInt(m[1], 16), t = parseInt(m[2], 16); if (t === 0x1F || t === 0x1E) str[id] = {t, b:cf.data(e)}; else if (t === 0x102) bin[id] = cf.data(e); continue; }
+    if (e.name === '__properties_version1.0') {
+      const b = cf.data(e), dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+      for (let o = hdr; o + 16 <= b.length; o += 16) {
+        const tag = dv.getUint32(o, true), t = tag & 0xFFFF, id = tag >>> 16;
+        if (t === 0x40) { const lo = dv.getUint32(o + 8, true), hi = dv.getUint32(o + 12, true); fix[id] = new Date((hi * 4294967296 + lo) / 1e4 - 11644473600000); }
+        else if (t === 0x03 || t === 0x0B) fix[id] = dv.getUint32(o + 8, true);
+      }
+    }
+  }
+  cp = fix[ML_PT.cp] || fix[ML_PT.cpid];
+  const S = id => { const x = str[id]; if (!x) return ''; return (x.t === 0x1F ? new TextDecoder('utf-16le').decode(x.b) : mlDec(x.b, mlCp(cp))).replace(/\0+$/, ''); };
+  return {ch, S, bin, fix, cp};
+}
+function msgParse(buf, cf, node, depth = 0){
+  cf = cf || cfbRead(buf); node = node || cf.root;
+  const n = msgNode(cf, node, depth === 0 ? 32 : 24);
+  const smtp = [n.S(ML_PT.sendSmtp), n.S(ML_PT.reprSmtp), n.S(ML_PT.fromMail), n.S(ML_PT.reprMail)].find(x => /@/.test(x)) || '';
+  let body = n.S(ML_PT.body);
+  if (!body.trim() && n.bin[ML_PT.html]) body = mlHtmlText(mlDec(n.bin[ML_PT.html], n.cp ? mlCp(n.cp) : 'utf-8'));
+  if (!body.trim() && n.S(ML_PT.html)) body = mlHtmlText(n.S(ML_PT.html));
+  const mail = {subject:n.S(ML_PT.subject), from:{name:n.S(ML_PT.fromName) || n.S(ML_PT.reprName), email:smtp.toLowerCase()}, to:n.S(ML_PT.to), cc:n.S(ML_PT.cc),
+    date:(n.fix[ML_PT.sent] || n.fix[ML_PT.recv] || null), msgId:n.S(ML_PT.msgId), body:body.replace(/\r\n?/g, '\n'), atts:[]};
+  for (const e of n.ch) {
+    if (e.type !== 1 || !/^__attach_version1\.0_/i.test(e.name)) continue;
+    const a = msgNode(cf, e, 8);
+    const emb = a.ch.find(x => x.type === 1 && /^__substg1\.0_3701000D$/i.test(x.name));
+    if (emb && depth < 3) {
+      try { const sub = msgParse(null, cf, emb, depth + 1); mail.atts.push({name:(clean(sub.subject || 'Mail joint') || 'Mail joint') + '.msg', mail:sub, size:0}); } catch (err) {}
+      continue;
+    }
+    const d = a.bin[ML_PT.aData]; if (!d) continue;
+    const name = a.S(ML_PT.aLong) || a.S(ML_PT.aDisp) || a.S(ML_PT.aShort) || 'piece-jointe';
+    mail.atts.push({name, mime:a.S(ML_PT.aMime), bytes:d, size:d.length, cid:a.S(ML_PT.aCid), hidden:!!a.fix[ML_PT.aHidden]});
+  }
+  return mail;
+}
+function mlHtmlText(h){
+  const doc = new DOMParser().parseFromString(String(h).replace(/<(br|\/p|\/div|\/tr|\/li|\/h\d)\b[^>]*>/gi, '$&\n'), 'text/html');
+  doc.querySelectorAll('style,script,head').forEach(x => x.remove());
+  return (doc.body ? doc.body.textContent : '').replace(/ /g, ' ').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+const b64Bytes = s => { const t = atob(String(s).replace(/[^A-Za-z0-9+/=]/g, '').replace(/=+$/, '')); const u = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u; };
+function qpBytes(s){
+  s = String(s).replace(/=\r?\n/g, ''); const out = [];
+  for (let i = 0; i < s.length; i++) { const c = s[i]; if (c === '=' && /^[0-9A-F]{2}$/i.test(s.substr(i + 1, 2))) { out.push(parseInt(s.substr(i + 1, 2), 16)); i += 2; } else out.push(s.charCodeAt(i) & 255); }
+  return new Uint8Array(out);
+}
+const latin1 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 8192) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return s; };
+function mimeWords(s){
+  return String(s || '').replace(/\?=\s+=\?/g, '?==?').replace(/=\?([^?]+)\?([bq])\?([^?]*)\?=/gi, (m, cs, enc, txt) => {
+    try { return mlDec(enc.toUpperCase() === 'B' ? b64Bytes(txt) : qpBytes(txt.replace(/_/g, ' ')), cs.replace(/\*.*$/, '')); } catch (e) { return m; }
+  });
+}
+/* en-têtes en UTF-8 brut (sans =?…?=) : lus en latin1, remis en UTF-8 */
+const mlU8 = s => { if (!/[\x80-\xff]/.test(s)) return s; try { return new TextDecoder('utf-8', {fatal:true}).decode(Uint8Array.from(s, c => c.charCodeAt(0) & 255)); } catch (e) { return s; } };
+function mimeHead(raw){
+  const h = {}, lines = mlU8(raw).replace(/\r\n?/g, '\n').replace(/\n[ \t]+/g, ' ').split('\n');
+  for (const l of lines) { const i = l.indexOf(':'); if (i > 0) { const k = l.slice(0, i).trim().toLowerCase(); if (!(k in h)) h[k] = l.slice(i + 1).trim(); } }
+  return h;
+}
+function mimeParam(v, k){
+  const m = new RegExp('(?:^|;)\\s*' + k + '\\*?(\\*0\\*?)?\\s*=\\s*("([^"]*)"|[^;]+)', 'i').exec(v || ''); if (!m) return '';
+  let r = (m[3] != null ? m[3] : m[2]).trim();
+  const ext = /^([\w-]+)'[^']*'(.*)$/.exec(r);
+  if (ext) { const by = []; ext[2].replace(/%([0-9a-f]{2})|[^%]/gi, (m, h) => { by.push(h ? parseInt(h, 16) : m.charCodeAt(0) & 255); return ''; }); r = mlDec(new Uint8Array(by), ext[1]); }
+  return mimeWords(r);
+}
+function emlPart(raw, out, depth){
+  const cut = raw.search(/\r?\n\r?\n/), head = mimeHead(cut < 0 ? raw : raw.slice(0, cut)), body = cut < 0 ? '' : raw.slice(cut).replace(/^\r?\n\r?\n/, '');
+  const ct = head['content-type'] || 'text/plain', type = ct.split(';')[0].trim().toLowerCase(), cte = (head['content-transfer-encoding'] || '').toLowerCase();
+  const disp = head['content-disposition'] || '', fname = mimeParam(disp, 'filename') || mimeParam(ct, 'name');
+  if (type.startsWith('multipart/') && depth < 8) {
+    const b = mimeParam(ct, 'boundary'); if (!b) return;
+    const parts = body.split(new RegExp('\\r?\\n?--' + pdReEsc(b) + '(?:--)?[ \\t]*(?:\\r?\\n|$)'));
+    parts.slice(1).forEach(p => { if (p.trim()) emlPart(p, out, depth + 1); });
+    return;
+  }
+  const bytes = cte === 'base64' ? b64Bytes(body) : cte === 'quoted-printable' ? qpBytes(body) : Uint8Array.from(body, c => c.charCodeAt(0) & 255);
+  if (type === 'message/rfc822' && depth < 4) { const sub = emlParse(latin1(bytes), depth + 1); out.atts.push({name:(clean(sub.subject || 'Mail joint') || 'Mail joint') + '.eml', mail:sub, size:bytes.length}); return; }
+  const isAtt = /^attachment/i.test(disp) || (fname && !/^text\/(plain|html)$/.test(type));
+  if (!isAtt && type === 'text/plain' && !out.text) { out.text = mlDec(bytes, mimeParam(ct, 'charset') || 'utf-8'); return; }
+  if (!isAtt && type === 'text/html' && !out.html) { out.html = mlDec(bytes, mimeParam(ct, 'charset') || 'utf-8'); return; }
+  if (!isAtt && !fname) return;
+  out.atts.push({name:fname || 'piece-jointe', mime:type, bytes, size:bytes.length, cid:(head['content-id'] || '').replace(/[<>]/g, ''), hidden:/^inline/i.test(disp) && !!head['content-id']});
+}
+function emlParse(raw, depth = 0){
+  const cut = raw.search(/\r?\n\r?\n/), h = mimeHead(cut < 0 ? raw : raw.slice(0, cut)), out = {text:'', html:'', atts:[]};
+  emlPart(raw, out, depth);
+  const from = mimeWords(h.from || ''), em = (from.match(/<([^>]+)>/) || from.match(/([\w.+-]+@[\w.-]+)/) || [])[1] || '';
+  const d = h.date ? new Date(h.date.replace(/\s*\([^)]*\)\s*$/, '')) : null;
+  return {subject:mimeWords(h.subject || ''), from:{name:from.replace(/<[^>]*>/, '').replace(/"/g, '').trim() || em, email:em.toLowerCase()}, to:mimeWords(h.to || ''), cc:mimeWords(h.cc || ''),
+    date:d && !isNaN(d) ? d : null, msgId:(h['message-id'] || '').replace(/[<>]/g, ''), body:(out.text || (out.html ? mlHtmlText(out.html) : '')).replace(/\r\n?/g, '\n'), atts:out.atts};
+}
+
+/* =====================================================================
+   Courrier : mails Outlook (.msg / .eml) et fichiers déposés sur l'accueil → classés par chantier
+   PV DT → « PV de chantier » (comme l'onglet PV DT), plans → « Plans » (renommés par la tâche Plans), photos → « Photos »,
+   autres pièces jointes → « Courrier / Documents reçus », le mail lui-même → « Courrier » (.msg/.eml d'origine + « .json » kind='mail').
+   Tâche planifiée « Mails BauGest » (connecteur Drive : ne peut ni écrire d'appProperties ni réécrire un fichier) :
+   « <mail> – résumé.json » à côté du mail, description du « .json » du mail = « #résumé imp=h act=2 » + résumé, « Courrier – mémoire.json » (remplacé à chaque passage).
+   Les actions du résumé sont ajoutées aux À faire du chantier par BauGest PC (appProperty td='1' sur le mail une fois fait).
+   ===================================================================== */
+const ML_DIR = 'Courrier', ML_ATT = 'Documents reçus', ML_MEM = 'Courrier – mémoire.json';
+const ML = {q:[], busy:false};
+const ML_TYPES = {pv:'PV DT', plan:'Plan', photo:'Photo', doc:'Document', skip:'Ignorer'};
+const mlUid = () => 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const mlIsMail = f => /\.(msg|eml)$/i.test(f.name || '') || /^message\/rfc822$/i.test(f.type || '');
+function mlHash(s){ let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
+function mlSenders(){ try { return JSON.parse(localStorage.getItem('baugest.mailFrom') || '{}'); } catch (e) { return {}; } }
+function mlRemember(email, sid){ if (!email || !sid || sid === 'none') return; const m = mlSenders(); m[email] = sid; try { localStorage.setItem('baugest.mailFrom', JSON.stringify(m)); } catch (e) {} }
+const mlStamp = d => { d = d instanceof Date && !isNaN(d) ? d : new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + 'h' + pad2(d.getMinutes()); };
+const mlWhen = d => d instanceof Date && !isNaN(d) ? pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) : '';
+/* chantier le plus probable : n° et nom du chantier, abréviations DT, expéditeur déjà classé */
+function mlGuessSite(text, email){
+  const T = ' ' + pdNorm(text).replace(/\s+/g, ' ') + ' ', snd = mlSenders(), sc = [];
+  for (const s of pqSites()) {
+    let n = 0;
+    const num = pdNorm(s.number).trim(), nm = pdNorm(s.name).trim();
+    if (num.length >= 3 && new RegExp('[^0-9a-z]' + pdReEsc(num) + '[^0-9a-z]').test(T)) n += 10;
+    if (nm.length >= 4 && T.includes(nm)) n += 8;
+    for (const w of nm.split(/[^a-z0-9]+/)) if (w.length >= 4 && new RegExp('[^a-z0-9]' + pdReEsc(w) + '[^a-z0-9]').test(T)) n += 2;
+    for (const a of String(s.abbr || '').split(',').map(x => pdNorm(x).trim()).filter(x => x.length >= 2)) if (new RegExp('[^a-z0-9]' + pdReEsc(a) + '[^a-z0-9]').test(T)) n += 3;
+    if (email && snd[email] === s.id) n += 6;
+    sc.push([n, s]);
+  }
+  sc.sort((a, b) => b[0] - a[0]);
+  return sc[0] && sc[0][0] >= 4 && !(sc[1] && sc[1][0] === sc[0][0]) ? sc[0][1] : null;
+}
+/* type d'une pièce jointe ou d'un fichier déposé ; PDF : PV DT (n°, date), plan (grand format, échelle, indice) ou document */
+async function mlKind(it){
+  const x = extOf(it.name), m = String(it.mime || '').toLowerCase();
+  if (/^(p7s|p7m|ics|vcf|dat|url|lnk|exe|bat|cmd|js|vbs)$/.test(x) || /^winmail\.dat$/i.test(it.name)) return 'skip';
+  if (IMG_EXT.test(x) || /^image\/(jpeg|png|webp|gif|bmp)$/.test(m)) return it.hidden || (it.fromMail && it.size < 25e3) ? 'skip' : 'photo';
+  if (x !== 'pdf' && m !== 'application/pdf') return 'doc';
+  const nm = it.name.replace(/[_]+/g, ' ');
+  try {
+    const lib = await needPdfJs();
+    const doc = await lib.getDocument({data:new Uint8Array(await it.blob.arrayBuffer()), isEvalSupported:false, ...PDFJS_RES}).promise;
+    const pg = await doc.getPage(1), vp = pg.getViewport({scale:1}), lines = await pdLines(doc, 3); doc.destroy();
+    it.lines = lines.slice(0, 120).map(l => l.text);
+    const top = it.lines.slice(0, 40).join('\n');
+    if (/proc[eè]s[- ]verbal|s[ée]ance de chantier|\bp\.?v\.?\b[^\n]{0,50}(s[ée]ance|chantier)/i.test(top) || /(^|[^a-z])pv([^a-z]|$)|proc[eè]s[- ]verbal/i.test(nm)) {
+      const md = pdMeta(lines, it.name); it.num = md.num; it.date = md.date; return 'pv';
+    }
+    if (Math.max(vp.width, vp.height) > 1000 || /(^|[^a-z])plan([^a-z]|$)|\bind(?:ice)?\.?\s?[a-z]\b|\b1\s?[:_]\s?(20|50|100|200|500)\b/i.test(nm) || /[ée]chelle\s*:?\s*1\s*[:\/]\s*\d+/i.test(it.lines.join(' '))) return 'plan';
+  } catch (e) {}
+  return 'doc';
+}
+function mlFlatten(mail, out = [], depth = 0){
+  for (const a of mail.atts) {
+    if (a.mail) {
+      mail.body += `\n\n---------- Mail joint : ${a.mail.subject || '(sans objet)'} ----------\nDe : ${a.mail.from.name || ''} ${a.mail.from.email ? '<' + a.mail.from.email + '>' : ''}\nDate : ${mlWhen(a.mail.date)}\n\n${a.mail.body || ''}`;
+      if (depth < 3) mlFlatten(a.mail, out, depth + 1);
+      continue;
+    }
+    out.push({id:mlUid(), name:clean(a.name) || 'piece-jointe', mime:a.mime, size:a.size, hidden:a.hidden, fromMail:true, blob:new Blob([a.bytes], {type:a.mime || ''}), type:'', num:'', date:''});
+  }
+  return out;
+}
+async function mlAdd(files){
+  files = [...files].filter(f => f && f.size !== undefined);
+  if (!files.length) return;
+  const rows = files.map(f => mlIsMail(f) ? {id:mlUid(), kind:'mail', file:f, name:f.name, st:'read', siteId:'', auto:false, items:[], msg:'Lecture du mail…'}
+    : {id:mlUid(), kind:'file', file:f, name:clean(f.name) || 'fichier', st:'read', siteId:'', auto:false, items:[{id:mlUid(), name:clean(f.name) || 'fichier', mime:f.type, size:f.size, blob:f, type:'', num:'', date:''}], msg:'Analyse…'});
+  ML.q.unshift(...rows); hmRenderType('drop');
+  if (!hmShown()) openHome();
+  for (const r of rows) {
+    try {
+      if (r.kind === 'mail') {
+        const buf = await r.file.arrayBuffer();
+        r.mail = /\.msg$/i.test(r.file.name) || new Uint8Array(buf, 0, 4).join() === '208,207,17,224' ? msgParse(buf) : emlParse(latin1(new Uint8Array(buf)));
+        r.items = mlFlatten(r.mail);
+        r.mid = mlHash([r.mail.msgId || '', r.mail.subject, r.mail.from.email, r.mail.date ? r.mail.date.getTime() : r.file.size].join('|'));
+      }
+      for (const it of r.items) { it.type = await mlKind(it); if (it.type === 'pv' && !it.date && r.mail && r.mail.date) it.date = hmIso(r.mail.date.getTime()); }
+      const txt = [r.mail ? r.mail.subject + '\n' + r.mail.body.slice(0, 6000) : '', ...r.items.map(i => i.name + '\n' + (i.lines || []).join('\n'))].join('\n');
+      let s = mlGuessSite(txt, r.mail && r.mail.from.email);
+      if (!s && r.mail && r.mail.from.email) s = await mlSiteOfSender(r.mail.from.email);
+      if (s) { r.siteId = s.id; r.auto = true; }
+      if (r.mid && (ML.q.some(o => o !== r && o.mid === r.mid && o.st !== 'dup') || await mlKnown(r.mid))) { r.st = 'dup'; r.msg = 'Déjà classé (même mail)'; }
+      else { r.st = 'wait'; r.msg = ''; }
+    } catch (e) { r.st = 'err'; r.msg = 'Lecture impossible : ' + (e.message || e); }
+    hmRenderType('drop');
+  }
+}
+async function mlSiteOfSender(email){
+  try {
+    const fs = await listAll(`trashed=false and appProperties has { key='kind' and value='mail' } and appProperties has { key='from' and value='${qEsc(email.slice(0, 90))}' }`, 'id,appProperties,createdTime', 'createdTime desc');
+    const sid = fs.map(f => (f.appProperties || {}).site).find(x => x && x !== 'none');
+    return sid ? S.sites.find(s => s.id === sid) || null : null;
+  } catch (e) { return null; }
+}
+async function mlKnown(mid){
+  try { return (await listAll(`trashed=false and appProperties has { key='kind' and value='mail' } and appProperties has { key='mid' and value='${qEsc(mid)}' }`, 'id')).length > 0; } catch (e) { return false; }
+}
+const mlReady = r => (r.st === 'wait' || r.st === 'err') && r.siteId && (r.mail || r.items.length);
+async function mlGo(){
+  if (ML.busy) return;
+  const rows = ML.q.filter(mlReady); if (!rows.length) return;
+  ML.busy = true; hmRenderType('drop');
+  const cnt = {pv:0, plan:0, photo:0, doc:0, mail:0};
+  for (const r of rows) {
+    r.st = 'up'; r.msg = ''; hmRenderType('drop');
+    const site = r.siteId === 'none' ? null : S.sites.find(s => s.id === r.siteId), sid = site ? site.id : 'none', when = r.mail && r.mail.date || new Date(r.file.lastModified || Date.now());
+    const j = job((r.mail ? 'Mail · ' + (r.mail.subject || r.name) : r.name));
+    try {
+      const sf = await ensureChild(P.rootId, site ? siteFolderName(site) : 'À classer');
+      let mdir = null, adir = null;
+      const mailDir = async () => mdir || (mdir = await ensureChild(sf, ML_DIR));
+      const attDir = async () => adir || (adir = await ensureChild(await mailDir(), ML_ATT));
+      const from = r.mail ? (r.mail.from.name || r.mail.from.email || '') : '', via = r.mail ? `\nReçu par mail de ${from} le ${mlWhen(when)} : « ${r.mail.subject || ''} »` : '\nDéposé avec BauGest PC';
+      const done = [];
+      for (const it of r.items) {
+        if (it.type === 'skip') { done.push({name:it.name, type:'skip'}); continue; }
+        let md, blob = it.blob, type = it.type;
+        if ((type === 'pv' || type === 'plan') && !site) type = 'doc';
+        if (type === 'pv') {
+          const dirs = await pqDirs(site), num = String(it.num || '').replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+          md = {name:it.name.replace(/\.pdf$/i, '').slice(0, 120) + '.pdf', parents:[dirs.dir], mimeType:'application/pdf',
+            description:`Chantier : ${siteLabel(site)}\nPV de chantier de la DT${num ? ' n° ' + num : ''}${it.date ? ' du ' + fmtISO(it.date) : ''}${via}`,
+            appProperties:{pc:'1', kind:'pvdt', site:sid, pvn:num, pvdate:it.date || '', taken:new Date().toISOString()}};
+          const f = await putFile({md, blob:new Blob([blob], {type:'application/pdf'})});
+          await pqSupersede(dirs, num, f.id); done.push({name:md.name, type, fid:f.id}); cnt.pv++; continue;
+        }
+        if (type === 'plan') {
+          md = {name:it.name, parents:[await ensureChild(sf, 'Plans')], mimeType:'application/pdf', description:`Chantier : ${siteLabel(site)}\nPlan ajouté avec BauGest PC${via}`,
+            appProperties:{pc:'1', kind:'plan', uid:newUid(), site:sid, taken:new Date().toISOString()}};
+          blob = new Blob([blob], {type:'application/pdf'});
+        } else if (type === 'photo') {
+          if (!/^jpe?g$/.test(extOf(it.name)) && blob.type !== 'image/jpeg') blob = await toJpeg(blob);
+          md = {name:clean(mlStamp(when).replace(' ', '_') + '_' + (site ? siteFolderName(site) : 'À classer') + (r.mail ? '_Mail_' : '_') + it.name.replace(/\.[^.]+$/, '')).slice(0, 140) + '.jpg', parents:[site ? await ensureChild(sf, 'Photos') : sf], mimeType:'image/jpeg',
+            description:`Chantier : ${siteLabel(site)}${via}`, appProperties:{pc:'1', site:sid, taken:when.toISOString(), tags:r.mail ? 'Mail' : '', imp:'1'}};
+          blob = new Blob([blob], {type:'image/jpeg'});
+        } else {
+          md = {name:it.name, parents:[await attDir()], description:`Chantier : ${siteLabel(site)}${via}`, appProperties:{pc:'1', site:sid, kind:'mailatt', ...(r.mid ? {mid:r.mid} : {})}};
+          if (it.mime) md.mimeType = it.mime;
+        }
+        const f = await putFile({md, blob}); done.push({name:md.name, type, fid:f.id}); cnt[type]++;
+      }
+      if (r.mail) {
+        const m = r.mail, base = clean(`${mlStamp(when)} – ${(from || 'Inconnu').slice(0, 40)} – ${(m.subject || 'Sans objet').slice(0, 70)}`), ext = /\.eml$/i.test(r.file.name) ? '.eml' : '.msg';
+        const dir = await mailDir();
+        const src = await putFile({md:{name:base + ext, parents:[dir], mimeType:ext === '.eml' ? 'message/rfc822' : 'application/vnd.ms-outlook', appProperties:{pc:'1', site:sid, kind:'mailsrc', mid:r.mid}}, blob:r.file});
+        const body = m.body.replace(/\n{3,}/g, '\n\n').trim();
+        const json = {v:1, kind:'mail', mid:r.mid, siteId:sid, site:site ? siteLabel(site) : 'À classer', subject:m.subject, from:m.from, to:m.to, cc:m.cc, date:when.toISOString(),
+          body:body.slice(0, 60000), atts:done, src:{fid:src.id, name:base + ext}, droppedAt:new Date().toISOString()};
+        const ex = body.replace(/\s+/g, ' ').slice(0, 400);
+        await putFile({md:{name:base + '.json', parents:[dir], mimeType:'application/json', description:ex,
+          appProperties:{pc:'1', site:sid, kind:'mail', mid:r.mid, from:(m.from.email || '').slice(0, 90), mdate:when.toISOString(), na:String(done.filter(d => d.type !== 'skip').length)}},
+          blob:new Blob([JSON.stringify(json)], {type:'application/json'})});
+        mlRemember(m.from.email, sid); cnt.mail++;
+      }
+      r.st = 'ok'; r.msg = r.mail ? `Rangé dans ${site ? siteLabel(site) : 'À classer'}` : `Rangé (${ML_TYPES[done[0] && done[0].type] || 'fichier'})`;
+      j.done('Classé · ' + (r.mail ? r.mail.subject || r.name : r.name));
+    } catch (e) { r.st = 'err'; r.msg = e.message || String(e); j.done('Erreur · ' + r.name + ' : ' + r.msg, true); }
+    hmRenderType('drop');
+  }
+  ML.busy = false; hmRenderType('drop');
+  const parts = [cnt.mail && cnt.mail + ' mail' + (cnt.mail > 1 ? 's' : ''), cnt.pv && cnt.pv + ' PV', cnt.plan && cnt.plan + ' plan' + (cnt.plan > 1 ? 's' : ''), cnt.photo && cnt.photo + ' photo' + (cnt.photo > 1 ? 's' : ''), cnt.doc && cnt.doc + ' document' + (cnt.doc > 1 ? 's' : '')].filter(Boolean);
+  if (parts.length) toast('Classé : ' + parts.join(' · ') + (cnt.mail ? '. Résumé par la tâche « Mails BauGest » (11:50 et 17:50).' : ''), 'ok', 6000);
+  hmLoadMails().then(() => { hmRenderType('mails'); hmRenderType('sites'); });
+}
+const ML_IC = {mail:'<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>', pdf:IC.pdf, img:IC.img, file:IC.file};
+function mlItemRow(r, it){
+  const dis = r.st === 'up' || r.st === 'ok' || r.st === 'dup' ? 'disabled' : '', ic = /\.pdf$/i.test(it.name) ? ML_IC.pdf : IMG_EXT.test(extOf(it.name)) ? ML_IC.img : ML_IC.file;
+  return `<div class="ml-it${it.type === 'skip' ? ' skip' : ''}" data-mli="${esc(it.id)}">${ic}<span class="nm" title="${esc(it.name)}">${esc(it.name)}<small>${esc(fmtSize(it.size))}</small></span>
+    <select data-f="type" ${dis}>${it.type ? Object.entries(ML_TYPES).map(([k, v]) => `<option value="${k}" ${k === it.type ? 'selected' : ''}>${v}</option>`).join('') : '<option>Analyse…</option>'}</select>
+    ${it.type === 'pv' ? `<input data-f="num" value="${esc(it.num)}" placeholder="n°" title="N° du PV" ${dis}><input data-f="date" type="date" value="${esc(it.date)}" title="Date de séance" ${dis}>` : ''}</div>`;
+}
+function mlRow(r){
+  const dis = r.st === 'up' || r.st === 'ok' || r.st === 'dup' ? 'disabled' : '', m = r.mail;
+  const st = r.st === 'read' ? 'Lecture…' : r.st === 'up' ? 'Envoi…' : r.st === 'ok' ? '✓ ' + r.msg : r.st === 'dup' ? r.msg : r.st === 'err' ? 'Erreur : ' + r.msg : '';
+  const tag = r.st === 'read' ? '' : r.siteId ? (r.auto ? '<span class="pq-tag ok">détecté</span>' : '') : '<span class="pq-tag bad">à choisir</span>';
+  const sel = `<select data-f="siteId" ${dis}><option value="">Chantier…</option>${pqSites().map(s => `<option value="${esc(s.id)}" ${s.id === r.siteId ? 'selected' : ''}>${esc(siteLabel(s))}</option>`).join('')}<option value="none" ${r.siteId === 'none' ? 'selected' : ''}>À classer (sans chantier)</option></select>`;
+  const head = m ? `${ML_IC.mail}<span class="nm"><b>${esc(m.subject || '(sans objet)')}</b><small>${esc([m.from.name || m.from.email, mlWhen(m.date), r.items.length ? r.items.length + ' pièce' + (r.items.length > 1 ? 's' : '') + ' jointe' + (r.items.length > 1 ? 's' : '') : 'sans pièce jointe'].filter(Boolean).join(' · '))}</small></span>`
+    : `${r.kind === 'mail' ? ML_IC.mail : ML_IC.file}<span class="nm"><b>${esc(r.name)}</b><small>${esc(fmtSize(r.file.size))}</small></span>`;
+  return `<div class="ml-row ${r.st}" data-ml="${esc(r.id)}"><div class="ml-h">${head}<span class="ml-site">${sel}${tag}</span>
+    <button class="ibtn" data-x="rm" title="Retirer de la liste" ${r.st === 'up' ? 'disabled' : ''}>${IC.x}</button></div>
+    ${st ? `<div class="ml-st ${r.st}">${esc(st)}</div>` : ''}
+    ${m && m.body ? `<p class="ml-ex">${esc(m.body.replace(/\s+/g, ' ').slice(0, 220))}</p>` : ''}
+    ${(m || r.st !== 'read') && r.items.length ? `<div class="ml-its">${r.items.map(it => mlItemRow(r, it)).join('')}</div>` : ''}</div>`;
+}
+function mlDropBody(){
+  const ready = ML.q.filter(mlReady).length, miss = ML.q.filter(r => r.st === 'wait' && !r.siteId).length;
+  return `<label class="ml-drop${ML.q.length ? ' mini' : ''}" id="mlDrop"><svg class="ic big" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <b>Glisse ici tes mails Outlook et tes fichiers</b><span>PV DT, plans, photos, documents : les pièces jointes sont extraites et rangées dans le bon chantier.</span>
+      <input type="file" id="mlFile" multiple hidden><span class="btn">Choisir des fichiers…</span></label>
+    ${ML.q.length ? `<div class="ml-q">${ML.q.map(mlRow).join('')}</div>
+    <div class="ml-foot"><span class="hint">${miss ? miss + ' élément' + (miss > 1 ? 's' : '') + ' sans chantier : choisis-le.' : ready ? 'Vérifie le chantier et le type de chaque pièce jointe.' : 'Rien à classer.'}</span>
+      <button class="btn" id="mlClear">Vider</button><button class="btn primary" id="mlGo" ${!ready || ML.busy ? 'disabled' : ''}>Classer ${ready || ''}</button></div>` : ''}`;
+}
+function mlBind(root){
+  root.addEventListener('change', e => {
+    if (e.target.id === 'mlFile') { const f = [...e.target.files]; e.target.value = ''; mlAdd(f); return; }
+    const row = e.target.closest('[data-ml]'), f = e.target.dataset.f; if (!row || !f) return;
+    const r = ML.q.find(x => x.id === row.dataset.ml); if (!r) return;
+    const ir = e.target.closest('[data-mli]'), it = ir && r.items.find(x => x.id === ir.dataset.mli);
+    if (it) it[f] = e.target.value.trim(); else { r[f] = e.target.value; if (f === 'siteId') r.auto = false; }
+    hmRenderType('drop');
+  });
+  root.addEventListener('click', e => {
+    if (e.target.closest('#mlGo')) { mlGo(); return; }
+    if (e.target.closest('#mlClear')) { ML.q = ML.q.filter(r => r.st === 'up' || r.st === 'read'); hmRenderType('drop'); return; }
+    const b = e.target.closest('[data-x="rm"]'); if (b) { const id = b.closest('[data-ml]').dataset.ml; ML.q = ML.q.filter(r => r.id !== id || r.st === 'up'); hmRenderType('drop'); }
+  });
+}
+
+/* ---------- mails résumés (Drive kind='mail') et mémoire du chantier ---------- */
+const HMD = {mails:[], pvs:[], ms:[], at:0};
+async function hmLoadMails(){
+  try {
+    const r = await api(DRV + '?' + new URLSearchParams({q:"trashed=false and appProperties has { key='kind' and value='mail' }", orderBy:'createdTime desc', pageSize:'80', fields:'files(id,name,description,appProperties,createdTime,modifiedTime,parents)'}));
+    HMD.mails = (r.files || []).map(f => Object.assign(f, mlSumHead(f))).sort((a, b) => String((b.appProperties || {}).mdate || b.createdTime).localeCompare(String((a.appProperties || {}).mdate || a.createdTime)));
+  } catch (e) { HMD.err = e.message; }
+}
+/* description écrite par la tâche : 1re ligne « #résumé imp=h act=2 », puis le résumé */
+function mlSumHead(f){
+  const d = String(f.description || ''), m = /^#\s*r\S*sum\S*([^\n]*)\n?/i.exec(d);
+  if (!m) return {_sum:false, _txt:d, _imp:'', _act:0};
+  return {_sum:true, _txt:d.slice(m[0].length).trim(), _imp:(/imp=(\w)/.exec(m[1]) || [])[1] || 'n', _act:+((/act=(\d+)/.exec(m[1]) || [])[1] || 0)};
+}
+async function mlSumFile(f){
+  try {
+    const nm = f.name.replace(/\.json$/i, '') + ' – résumé.json', par = (f.parents || [])[0]; if (!par) return null;
+    const fs = await listAll(`'${qEsc(par)}' in parents and trashed=false and name='${qEsc(nm)}'`, 'id,modifiedTime', 'modifiedTime desc');
+    return fs[0] ? await (await api(`${DRV}/${encodeURIComponent(fs[0].id)}?alt=media`, {}, true)).json() : null;
+  } catch (e) { return null; }
+}
+/* actions des résumés → tâches À faire du chantier (une seule fois par mail) */
+let mlTdBusy = false;
+async function mlSyncTodos(){
+  if (mlTdBusy) return; mlTdBusy = true;
+  try {
+    for (const f of HMD.mails) {
+      const a = f.appProperties || {}, s = S.sites.find(x => x.id === a.site);
+      if (!f._sum || a.td === '1' || !s) continue;
+      const sum = await mlSumFile(f); if (!sum) continue;
+      const acts = (sum.actions || []).filter(x => x && (x.t || typeof x === 'string'));
+      if (acts.length) {
+        await tdLoad().catch(() => {});
+        let tf = TDP.files[s.id], j = {v:1, siteId:s.id, site:siteLabel(s), tasks:[]};
+        if (tf) j = await (await api(`${DRV}/${encodeURIComponent(tf.id)}?alt=media`, {}, true)).json();
+        j.tasks = Array.isArray(j.tasks) ? j.tasks : [];
+        const now = Date.now(), subj = f.name.replace(/\.json$/i, '').split(' – ').slice(2).join(' – ');
+        acts.forEach((x, i) => {
+          const t = typeof x === 'string' ? x : x.t, due = x.due && /^\d{4}-\d{2}-\d{2}$/.test(x.due) ? new Date(x.due + 'T07:00:00').getTime() : null;
+          if (j.tasks.some(o => o.src && o.src.mail === f.id && o.src.n === i)) return;
+          j.tasks.push({id:now.toString(36) + i + Math.random().toString(36).slice(2, 6), c:now, m:now, ink:[], iv:0, t:String(t).slice(0, 300) + (subj ? ' (mail : ' + subj.slice(0, 60) + ')' : ''),
+            pri:x.pri === 'r' || x.pri === 'g' ? x.pri : 'o', due, rep:0, ln:null, done:null, del:null, src:{mail:f.id, n:i}});
+        });
+        j.updatedAt = new Date().toISOString();
+        const blob = new Blob([JSON.stringify(j)], {type:'application/json'}), n = String(j.tasks.filter(tdOpen).length);
+        if (tf) await putFile({id:tf.id, md:{appProperties:{n}}, blob});
+        else await putFile({md:{name:'À faire (ne pas supprimer).json', parents:[await ensureChild(P.rootId, siteFolderName(s))], mimeType:'application/json', appProperties:{pc:'1', kind:'todo', site:s.id, n}}, blob});
+      }
+      await api(`${DRV}/${encodeURIComponent(f.id)}?fields=id`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({appProperties:{td:'1'}})});
+      a.td = '1'; f.appProperties = a;
+    }
+    await tdLoad().catch(() => {});
+  } catch (e) { console.warn('mails → À faire', e); }
+  finally { mlTdBusy = false; }
+}
+async function mlOpen(id){
+  const f = HMD.mails.find(x => x.id === id);
+  let j;
+  try { j = await (await api(`${DRV}/${encodeURIComponent(id)}?alt=media`, {}, true)).json(); } catch (e) { toast('Mail illisible : ' + e.message, 'err'); return; }
+  const s = f && f._sum ? await mlSumFile(f) : null, site = S.sites.find(x => x.id === j.siteId), d = new Date(j.date), inTd = f && (f.appProperties || {}).td === '1';
+  const li = a => (a || []).map(x => `<li>${esc(typeof x === 'string' ? x : x.t || '')}${x && x.due ? ` <small>· pour le ${esc(fmtISO(x.due))}</small>` : ''}${x && x.t && inTd ? ' <span class="pq-tag ok">dans À faire</span>' : ''}</li>`).join('');
+  const atts = (j.atts || []).filter(a => a.type !== 'skip');
+  dialog({title:j.subject || 'Mail', width:760, body:`<div class="ml-dlg">
+    <p class="muted">${esc([j.from && (j.from.name || j.from.email), j.from && j.from.email && j.from.name ? '<' + j.from.email + '>' : '', mlWhen(d), site ? siteLabel(site) : 'À classer'].filter(Boolean).join(' · '))}</p>
+    ${s ? `<div class="ml-sum${s.imp === 'h' ? ' hi' : ''}"><b>Résumé${s.imp === 'h' ? ' · important' : ''}</b><p>${esc(s.t || '')}</p>${s.pts && s.pts.length ? `<ul>${li(s.pts)}</ul>` : ''}${s.actions && s.actions.length ? `<b>À faire</b><ul>${li(s.actions)}</ul>` : ''}${s.dl && s.dl.length ? `<b>Délais</b><ul>${li(s.dl)}</ul>` : ''}</div>`
+      : '<div class="ml-sum wait"><b>Résumé en attente</b><p>La tâche « Mails BauGest » le fera au prochain passage (lu–ve 11:50 et 17:50).</p></div>'}
+    ${atts.length ? `<b>Pièces jointes classées</b><div class="ml-atts">${atts.map(a => `<button class="btn" data-mlf="${esc(a.fid || '')}">${esc((ML_TYPES[a.type] || 'Fichier') + ' · ' + a.name)}</button>`).join('')}</div>` : ''}
+    <details><summary>Texte complet du mail</summary><pre class="ml-body">${esc(j.body || '')}</pre></details></div>`,
+    buttons:[...(j.src && j.src.fid ? [{label:'Télécharger le mail d’origine', value:'src'}] : []), {label:'Fermer', value:null, primary:true}],
+    onOpen:(dlg, done) => dlg.addEventListener('click', async e => {
+      const b = e.target.closest('[data-mlf]'); if (!b || !b.dataset.mlf) return;
+      done(null);
+      try { const m = await meta(b.dataset.mlf); m._k = kindOf(m); openIn(0, m, [m]); } catch (x) { toast('Fichier introuvable : ' + x.message, 'err'); }
+    })}).then(async v => {
+      if (v !== 'src') return;
+      try { const m = await meta(j.src.fid); downloadBlob(await blobOf(m), m.name); } catch (e) { toast('Téléchargement impossible : ' + e.message, 'err'); }
+    });
+  if (f && f.appProperties) f._seen = true;
+}
+async function mlMemory(sid){
+  const site = S.sites.find(s => s.id === sid); if (!site) return;
+  let j = null;
+  try {
+    const sf = await listAll(`'${qEsc(P.rootId)}' in parents and trashed=false and mimeType='${FOLD}' and name='${qEsc(siteFolderName(site))}'`, 'id');
+    const cf = sf[0] ? await listAll(`'${qEsc(sf[0].id)}' in parents and trashed=false and mimeType='${FOLD}' and name='${qEsc(ML_DIR)}'`, 'id') : [];
+    const fs = cf[0] ? await listAll(`'${qEsc(cf[0].id)}' in parents and trashed=false and name='${qEsc(ML_MEM)}'`, 'id,modifiedTime', 'modifiedTime desc') : [];
+    if (fs[0]) j = await (await api(`${DRV}/${encodeURIComponent(fs[0].id)}?alt=media`, {}, true)).json();
+  } catch (e) {}
+  const ev = j && Array.isArray(j.events) ? j.events.slice().sort((a, b) => String(b.d).localeCompare(String(a.d))) : [];
+  dialog({title:'Mémoire du chantier · ' + siteLabel(site), width:760, body: j ? `<div class="ml-dlg">
+      ${j.synth ? `<div class="ml-sum"><b>Où on en est</b><p>${esc(j.synth)}</p></div>` : ''}
+      ${j.open && j.open.length ? `<b>Points ouverts</b><ul>${j.open.map(x => `<li>${esc(typeof x === 'string' ? x : x.t)}</li>`).join('')}</ul>` : ''}
+      ${ev.length ? `<b>Chronologie</b><div class="ml-tl">${ev.map(x => `<div><span>${esc(x.d ? fmtISO(String(x.d).slice(0, 10)) : '')}</span><p><b>${esc(x.from || '')}</b> ${esc(x.t || '')}</p></div>`).join('')}</div>` : ''}
+      <p class="muted">Mis à jour le ${esc(j.updatedAt ? mlWhen(new Date(j.updatedAt)) : '–')} par la tâche « Mails BauGest ».</p></div>`
+    : '<p>Pas encore de mémoire pour ce chantier. Elle se crée au premier passage de la tâche « Mails BauGest » après le classement d’un mail.</p>',
+    buttons:[{label:'Fermer', value:null, primary:true}]});
+}
+
+/* =====================================================================
+   Accueil PC personnalisable : blocs à déplacer, agrandir, ajouter ou retirer (bouton « Modifier l'accueil »)
+   Disposition gardée sur le PC (baugest.pcHome) et dans le Drive (« BauGest – accueil PC (ne pas supprimer).json ») → même accueil sur tous les PC.
+   ===================================================================== */
+const HM_FILE = 'BauGest – accueil PC (ne pas supprimer).json', HM_KEY = 'baugest.pcHome';
+const HM_TYPES = {
+  drop:{name:'Déposer et trier', w:7, h:6, mw:4, mh:3},
+  today:{name:'Aujourd’hui et semaine', w:5, h:9, mw:3, mh:4},
+  quick:{name:'Actions rapides', w:7, h:3, mw:3, mh:2},
+  mails:{name:'Derniers mails résumés', w:7, h:6, mw:4, mh:3},
+  sites:{name:'Chantiers', w:12, h:5, mw:4, mh:3}
+};
+const HM_TILES = {
+  newplan:{l:'Nouveau planning', ic:'<path d="M3 4h18M3 20h18M5 8h7M8 12h9"/><path d="M18 14v6M15 17h6"/>'},
+  plan:{l:'Ouvrir un planning', ic:'<path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/>'},
+  pvdt:{l:'PV DT', ic:'<path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/>'},
+  newdevis:{l:'Nouveau devis', ic:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h3"/><path d="M15 12v6M12 15h6"/>'},
+  devis:{l:'Devis', ic:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/>'},
+  photos:{l:'Photos', ic:'<path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M9 8.5h.01"/>'},
+  files:{l:'Plans et documents', ic:'<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/>'},
+  todo:{l:'À faire', ic:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/>'},
+  search:{l:'Rechercher', ic:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>'},
+  mails:{l:'Choisir des mails', ic:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'},
+  site:{l:'Infos chantier', ic:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'}
+};
+const HM_DEF = () => [
+  {id:'b1', t:'drop', w:7, h:6}, {id:'b2', t:'today', w:5, h:9}, {id:'b3', t:'quick', w:7, h:3, o:{tiles:['newplan', 'plan', 'pvdt', 'newdevis', 'photos', 'todo']}},
+  {id:'b4', t:'mails', w:7, h:6, o:{site:'', imp:false}}, {id:'b5', t:'sites', w:5, h:6, o:{sites:[]}}];
+const HMS = {lay:null, at:0, edit:false, fid:'', loaded:false, timer:0, saveT:0, drag:null};
+function hmRead(){
+  try { const j = JSON.parse(localStorage.getItem(HM_KEY) || 'null'); if (j && Array.isArray(j.lay)) { HMS.lay = j.lay.filter(b => HM_TYPES[b.t]); HMS.at = j.at || 0; } } catch (e) {}
+  if (!HMS.lay || !HMS.lay.length) { HMS.lay = HM_DEF(); HMS.at = 0; }
+}
+function hmSave(){
+  HMS.at = Date.now();
+  try { localStorage.setItem(HM_KEY, JSON.stringify({lay:HMS.lay, at:HMS.at})); } catch (e) {}
+  clearTimeout(HMS.saveT);
+  HMS.saveT = setTimeout(async () => {
+    try {
+      const blob = new Blob([JSON.stringify({v:1, lay:HMS.lay, at:HMS.at})], {type:'application/json'});
+      const f = await putFile(HMS.fid ? {id:HMS.fid, blob} : {md:{name:HM_FILE, parents:[P.rootId], mimeType:'application/json', appProperties:{pc:'1', kind:'pchome'}}, blob});
+      HMS.fid = f.id || HMS.fid;
+    } catch (e) { console.warn('accueil', e); }
+  }, 1500);
+}
+async function hmPull(){
+  if (HMS.loaded) return; HMS.loaded = true;
+  try {
+    const fs = await listAll(`'${qEsc(P.rootId)}' in parents and trashed=false and appProperties has { key='kind' and value='pchome' }`, 'id,modifiedTime', 'modifiedTime desc');
+    if (!fs[0]) return;
+    HMS.fid = fs[0].id;
+    const j = await (await api(`${DRV}/${encodeURIComponent(fs[0].id)}?alt=media`, {}, true)).json();
+    if (j && Array.isArray(j.lay) && (j.at || 0) > HMS.at) {
+      HMS.lay = j.lay.filter(b => HM_TYPES[b.t]); HMS.at = j.at;
+      try { localStorage.setItem(HM_KEY, JSON.stringify({lay:HMS.lay, at:HMS.at})); } catch (e) {}
+      hmRender();
+    }
+  } catch (e) {}
+}
+const hmShown = () => !$('#home').hidden;
+const hmDay0 = (d = new Date()) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
+const hmIso = ms => { const d = new Date(ms); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+const hmHM = ms => { const d = new Date(ms); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); };
+function openHome(){
+  if (!$('#viewer').hidden) hideViewer();
+  if (window.BGPlan) { const bp = document.getElementById('bgPlan'); if (bp && !bp.hidden && !document.body.classList.contains('bp-split')) BGPlan.close(); }
+  closeDevis();
+  if (E.mode !== 'folder') leaveMode();
+  $('#home').hidden = false; syncNav();
+  if (!HMS.lay) hmRead();
+  hmRender(); hmLoad(); hmPull();
+}
+function closeHome(){ if ($('#home').hidden) return; $('#home').hidden = true; if (HMS.edit) hmSetEdit(false); syncNav(); }
+async function hmLoad(){
+  const t0 = hmDay0();
+  await Promise.all([
+    tdLoad().catch(() => {}),
+    hmLoadMails(),
+    (async () => { if (window.BGPlan && BGPlan.milestones) { try { HMD.ms = await BGPlan.milestones(hmIso(t0), hmIso(t0 + 7 * 864e5)); } catch (e) { HMD.ms = []; } } })(),
+    (async () => {
+      try {
+        const since = new Date(Date.now() - 7 * 864e5).toISOString();
+        const r = await api(DRV + '?' + new URLSearchParams({q:`trashed=false and appProperties has { key='kind' and value='pvdt' } and createdTime > '${since}'`, orderBy:'createdTime desc', pageSize:'30', fields:'files(id,name,createdTime,appProperties,mimeType,modifiedTime,size,parents)'}));
+        HMD.pvs = (r.files || []).filter(f => !PQ_RECAP.test(f.name || ''));
+      } catch (e) {}
+    })()
+  ]);
+  HMD.at = Date.now();
+  if (hmShown()) hmRender();
+  if (HMD.mails.some(f => f._sum && (f.appProperties || {}).td !== '1')) mlSyncTodos().then(() => { if (hmShown()) { hmRenderType('mails'); hmRenderType('today'); hmRenderType('sites'); } });
+}
+function hmSeances(t0, t1){
+  const out = [];
+  for (const s of pqSites()) {
+    const m = s.meet; if (!m || !/^\d{4}-\d{2}-\d{2}$/.test(m.from || '')) continue;
+    const [hh, mm] = String(m.time || '08:00').split(':').map(Number), every = Math.max(1, +m.every || 1);
+    const d = new Date(m.from + 'T00:00:00'); d.setHours(hh || 0, mm || 0, 0, 0); if (isNaN(d)) continue;
+    for (let i = 0; i < 800 && d.getTime() < t1; i++) { if (d.getTime() >= t0) out.push({s, at:d.getTime(), m}); d.setDate(d.getDate() + 7 * every); }
+  }
+  return out.sort((a, b) => a.at - b.at);
+}
+const hmVisits = (t0, t1) => (S.devis || []).map(d => ({d, at:new Date(d.visit || '').getTime()})).filter(o => o.d.visit && isFinite(o.at) && o.at >= t0 && o.at < t1).sort((a, b) => a.at - b.at);
+const hmOpenTasks = () => pqSites().map(s => ({s, tasks:(TDP.lists[s.id] || []).filter(tdOpen)}));
+
+/* ---------- contenu des blocs ---------- */
+function hmToday(){
+  const now = new Date(), t0 = hmDay0(now), t1 = t0 + 864e5, all = hmOpenTasks();
+  const late = all.reduce((n, b) => n + b.tasks.filter(t => t.due && t.due < Date.now()).length, 0), today = all.reduce((n, b) => n + b.tasks.filter(tdUrgent).length, 0) - late;
+  const c = [];
+  c.push(`<button class="hm-ev ${late + today ? 'al' : 'ok'}" data-hm="todo"><span class="t">${late + today}</span><span><b>${late + today ? [late && late + ' en retard', today && today + ' pour aujourd’hui'].filter(Boolean).join(', ') : 'Rien en retard'}</b><small>Rappels À faire</small></span></button>`);
+  for (const o of hmSeances(t0, t1)) c.push(`<button class="hm-ev se" data-hmpv="${esc(o.s.id)}"><span class="t">${hmHM(o.at)}</span><span><b>Séance · ${esc(siteLabel(o.s))}</b><small>${esc(o.m.place || 'Lieu non indiqué')} · PV DT et récap</small></span></button>`);
+  for (const o of hmVisits(t0, t1)) c.push(`<button class="hm-ev dv" data-hmdv="${esc(o.d.id)}"><span class="t">${hmHM(o.at)}</span><span><b>Visite devis · ${esc(devName(o.d) + (devCity(o.d) ? ' – ' + devCity(o.d) : ''))}</b><small>${esc([o.d.addr?.street, o.d.client?.tel].filter(Boolean).join(' · ') || 'Ouvrir la fiche')}</small></span></button>`);
+  const pv = HMD.pvs[0];
+  if (pv) { const a = pv.appProperties || {}, s = S.sites.find(x => x.id === a.site); c.push(`<button class="hm-ev pv" data-hmpvf="${esc(pv.id)}"><span class="t">${HMD.pvs.length}</span><span><b>${HMD.pvs.length > 1 ? 'PV DT reçus (7 j)' : 'PV DT reçu'}</b><small>Dernier : ${esc((s ? (s.number || s.name) + ' · ' : '') + (a.pvn ? 'PV n° ' + a.pvn : pv.name))}</small></span></button>`); }
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const a = new Date(t0); a.setDate(a.getDate() + i); const b = new Date(a); b.setDate(b.getDate() + 1);
+    const A = a.getTime(), B = b.getTime(), it = [];
+    for (const o of hmSeances(A, B)) it.push([o.at, `<button class="hm-it se" data-hmpv="${esc(o.s.id)}"><i></i>${hmHM(o.at)} Séance ${esc(o.s.number || o.s.name)}</button>`]);
+    for (const o of hmVisits(A, B)) it.push([o.at, `<button class="hm-it dv" data-hmdv="${esc(o.d.id)}"><i></i>${hmHM(o.at)} Visite ${esc(devName(o.d))}</button>`]);
+    for (const m of HMD.ms.filter(m => m.iso === hmIso(A))) { const s = S.sites.find(x => x.id === m.siteId); it.push([A + 1, `<button class="hm-it ms" data-hmplan="${esc(m.siteId || '')}" data-uid="${esc(m.uid || '')}"><i></i>◆ ${esc(m.name)}${s ? ' · ' + esc(s.number || s.name) : ''}</button>`]); }
+    const due = []; for (const b2 of all) for (const t of b2.tasks) if (t.due && t.due >= A && t.due < B) due.push({s:b2.s, t});
+    due.sort((x, y) => x.t.due - y.t.due);
+    for (const o of due.slice(0, 3)) it.push([o.t.due, `<button class="hm-it td" data-hm="todo"><i></i>${esc((tdText(o.t) || 'Tâche au stylo').slice(0, 50))} · ${esc(o.s.number || o.s.name)}</button>`]);
+    if (due.length > 3) it.push([B, `<span class="hm-it e">+ ${due.length - 3} tâches</span>`]);
+    if ((a.getDay() === 0 || a.getDay() === 6) && !it.length) continue;
+    days.push(`<div class="hm-wd${i === 0 ? ' now' : ''}"><b>${esc(a.toLocaleDateString('fr-CH', {weekday:'short'}).replace('.', ''))} ${a.getDate()}</b><div>${it.length ? it.sort((x, y) => x[0] - y[0]).map(x => x[1]).join('') : '<span class="hm-it e">Rien de prévu</span>'}</div></div>`);
+  }
+  return `<div class="hm-evs">${c.join('')}</div><h4 class="hm-lbl">Cette semaine</h4><div class="hm-week">${days.join('')}</div>`;
+}
+function hmQuick(b){
+  const tiles = (b.o && b.o.tiles && b.o.tiles.length ? b.o.tiles : HM_DEF()[2].o.tiles).filter(k => HM_TILES[k]);
+  return `<div class="hm-tiles">${tiles.map(k => `<button class="hm-tile" data-hmq="${k}"><svg class="ic" viewBox="0 0 24 24">${HM_TILES[k].ic}</svg><span>${esc(HM_TILES[k].l)}</span></button>`).join('')}</div>`;
+}
+function hmMails(b){
+  const o = b.o || {};
+  let list = HMD.mails.filter(f => { const a = f.appProperties || {}; return (!o.site || a.site === o.site) && (!o.imp || f._imp === 'h'); });
+  const site = o.site && S.sites.find(s => s.id === o.site);
+  const top = site ? `<div class="hm-mtop"><b>${esc(siteLabel(site))}</b><button class="btn" data-hmmem="${esc(site.id)}">Mémoire du chantier</button></div>` : '';
+  if (!list.length) return top + `<p class="hm-empty">${HMD.at ? 'Aucun mail classé' + (site ? ' pour ce chantier' : '') + '. Glisse un mail Outlook dans « Déposer et trier ».' : 'Lecture du Drive…'}</p>`;
+  return top + `<div class="hm-mails">${list.slice(0, 30).map(f => {
+    const a = f.appProperties || {}, s = S.sites.find(x => x.id === a.site), d = new Date(a.mdate || f.createdTime);
+    const nm = f.name.replace(/\.json$/i, '').split(' – '), from = nm[1] || '', subj = nm.slice(2).join(' – ') || f.name;
+    return `<button class="hm-mail${f._imp === 'h' ? ' hi' : ''}${f._sum ? '' : ' wait'}" data-hmm="${esc(f.id)}">
+      <span class="h">${s && !o.site ? `<span class="pill">${esc(s.number || s.name)}</span>` : ''}<b>${esc(subj)}</b><small>${esc(mlWhen(d).slice(0, 10))}</small></span>
+      <span class="f">${esc(from)}${+a.na ? ` · 📎 ${esc(a.na)}` : ''}${f._act ? ` · ${f._act} action${f._act > 1 ? 's' : ''}${a.td === '1' ? ' → À faire' : ''}` : ''}${f._imp === 'h' ? ' · <em>important</em>' : ''}</span>
+      <span class="s">${f._sum ? '' : '<i>Résumé en attente · </i>'}${esc(f._txt || '')}</span></button>`;
+  }).join('')}</div>`;
+}
+function hmSites(b){
+  const sel = b.o && b.o.sites && b.o.sites.length ? b.o.sites : null, now = Date.now(), wk = now - 7 * 864e5;
+  const sites = pqSites().filter(s => !sel || sel.includes(s.id));
+  if (!sites.length) return '<p class="hm-empty">Aucun chantier.</p>';
+  return `<div class="hm-sites">${sites.map(s => {
+    const tasks = (TDP.lists[s.id] || []).filter(tdOpen), late = tasks.filter(t => t.due && t.due < now).length;
+    const mails = HMD.mails.filter(f => (f.appProperties || {}).site === s.id && new Date((f.appProperties || {}).mdate || f.createdTime).getTime() > wk).length;
+    const se = hmSeances(hmDay0(), hmDay0() + 35 * 864e5)[0] && hmSeances(hmDay0(), hmDay0() + 35 * 864e5).find(x => x.s.id === s.id);
+    return `<div class="hm-site"><button class="hd" data-hmdir="${esc(s.id)}" title="Ouvrir le dossier du chantier"><b>${esc(s.number || '')}</b><span>${esc(s.name)}</span></button>
+      <div class="pills">${late ? `<span class="pill red">${late} en retard</span>` : ''}<span class="pill">${tasks.length} à faire</span>${mails ? `<span class="pill blue">${mails} mail${mails > 1 ? 's' : ''} 7 j</span>` : ''}${se ? `<span class="pill">Séance ${esc(se.at - hmDay0() < 864e5 ? 'aujourd’hui ' + hmHM(se.at) : new Date(se.at).toLocaleDateString('fr-CH', {weekday:'short', day:'numeric', month:'numeric'}))}</span>` : ''}</div>
+      <div class="acts"><button data-hmph="${esc(s.id)}">Photos</button><button data-hmpv="${esc(s.id)}">PV DT</button><button data-hmplan="${esc(s.id)}">Planning</button><button data-hmmem="${esc(s.id)}">Mémoire</button><button data-hmsi="${esc(s.id)}" title="Infos et séances">ⓘ</button></div></div>`;
+  }).join('')}</div>`;
+}
+function hmBody(b){
+  try {
+    if (b.t === 'drop') return mlDropBody();
+    if (b.t === 'today') return hmToday();
+    if (b.t === 'quick') return hmQuick(b);
+    if (b.t === 'mails') return hmMails(b);
+    if (b.t === 'sites') return hmSites(b);
+  } catch (e) { console.warn(e); return `<p class="hm-empty">Erreur : ${esc(e.message)}</p>`; }
+  return '';
+}
+function hmTitle(b){
+  if (b.t === 'mails' && b.o && b.o.site) { const s = S.sites.find(x => x.id === b.o.site); if (s) return 'Mails · ' + (s.number || s.name); }
+  if (b.t === 'mails' && b.o && b.o.imp) return 'Mails importants';
+  return HM_TYPES[b.t].name;
+}
+function hmRender(){
+  if (!HMS.lay) hmRead();
+  const now = new Date(), d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())), dd = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() + 4 - dd);
+  const wk = Math.ceil(((d - Date.UTC(d.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7);
+  $('#hmDate').textContent = now.toLocaleDateString('fr-CH', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  $('#hmWeek').textContent = 'Semaine ' + wk + ' · ' + hmHM(now.getTime());
+  $('#home').classList.toggle('editing', HMS.edit);
+  $('#hmEditBar').hidden = !HMS.edit; $('#hmEdit').hidden = HMS.edit;
+  const g = $('#hmGrid');
+  g.innerHTML = HMS.lay.map(b => `<section class="hw hw-${b.t}" data-hw="${esc(b.id)}" style="grid-column:span ${Math.min(12, b.w)};grid-row:span ${b.h}">
+    <header class="hw-h" ${HMS.edit ? 'draggable="true"' : ''}>${HMS.edit ? '<span class="grip" title="Glisser pour déplacer">⠿</span>' : ''}<b>${esc(hmTitle(b))}</b><span class="grow"></span>
+      ${b.t === 'mails' || b.t === 'quick' || b.t === 'sites' ? `<button class="ibtn" data-hwset="${esc(b.id)}" title="Régler ce bloc"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>` : ''}
+      ${b.t !== 'drop' && !HMS.edit ? `<button class="ibtn" data-hwref title="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>` : ''}
+      ${HMS.edit ? `<button class="ibtn" data-hwrm="${esc(b.id)}" title="Retirer ce bloc">${IC.x}</button>` : ''}</header>
+    <div class="hw-b">${hmBody(b)}</div>${HMS.edit ? `<i class="hw-rs" data-hwrs="${esc(b.id)}" title="Tirer pour changer la taille"></i><span class="hw-sz">${b.w} × ${b.h}</span>` : ''}</section>`).join('')
+    || '<p class="hm-empty" style="grid-column:1/-1">Accueil vide : clique « + Ajouter un bloc ».</p>';
+  clearTimeout(HMS.timer); HMS.timer = setTimeout(() => { if (hmShown() && !HMS.edit && !HMS.drag) hmRender(); }, 60000 - Date.now() % 60000 + 50);
+}
+function hmRenderType(t){
+  if (!hmShown()) return;
+  for (const b of HMS.lay || []) {
+    if (b.t !== t) continue;
+    const el = $(`#hmGrid [data-hw="${CSS.escape(b.id)}"] .hw-b`); if (!el) continue;
+    const st = el.scrollTop; el.innerHTML = hmBody(b); el.scrollTop = st;
+  }
+}
+function hmSetEdit(on){ HMS.edit = on; hmRender(); }
+async function hmAddDlg(){
+  const v = await dialog({title:'Ajouter un bloc', width:460, body:`<div class="hm-addl">${Object.entries(HM_TYPES).map(([k, t]) => `<button class="btn" data-k="${k}">${esc(t.name)}${HMS.lay.some(b => b.t === k) ? ' <small class="muted">(déjà affiché : en ajouter un autre)</small>' : ''}</button>`).join('')}</div>`,
+    buttons:[{label:'Annuler', value:null}], onOpen:(dlg, done) => dlg.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) done(b.dataset.k); })});
+  if (!v) return;
+  const T = HM_TYPES[v];
+  HMS.lay.unshift({id:'b' + Date.now().toString(36), t:v, w:T.w, h:T.h, o:v === 'quick' ? {tiles:HM_DEF()[2].o.tiles.slice()} : {}});
+  hmSave(); hmRender();
+}
+async function hmSetDlg(id){
+  const b = HMS.lay.find(x => x.id === id); if (!b) return;
+  b.o = b.o || {};
+  const sites = pqSites();
+  let body = '';
+  if (b.t === 'mails') body = `<label class="hm-f">Chantier<select id="hsSite"><option value="">Tous les chantiers</option>${sites.map(s => `<option value="${esc(s.id)}" ${s.id === b.o.site ? 'selected' : ''}>${esc(siteLabel(s))}</option>`).join('')}</select></label>
+    <label class="hm-chk"><input type="checkbox" id="hsImp" ${b.o.imp ? 'checked' : ''}> Seulement les mails importants</label><p class="muted">Astuce : ajoute plusieurs blocs « mails », un par chantier suivi de près.</p>`;
+  if (b.t === 'quick') { const on = b.o.tiles && b.o.tiles.length ? b.o.tiles : HM_DEF()[2].o.tiles; body = `<p class="muted">Coche les boutons à afficher (dans l’ordre de la liste).</p><div class="hm-chks">${Object.entries(HM_TILES).map(([k, t]) => `<label class="hm-chk"><input type="checkbox" value="${k}" ${on.includes(k) ? 'checked' : ''}> ${esc(t.l)}</label>`).join('')}</div>`; }
+  if (b.t === 'sites') { const on = b.o.sites || []; body = `<p class="muted">Chantiers affichés (aucun coché = tous).</p><div class="hm-chks">${sites.map(s => `<label class="hm-chk"><input type="checkbox" value="${esc(s.id)}" ${on.includes(s.id) ? 'checked' : ''}> ${esc(siteLabel(s))}</label>`).join('')}</div>`; }
+  const dlg = await dialog({title:'Régler · ' + HM_TYPES[b.t].name, width:480, body, buttons:[{label:'Annuler', value:null}, {label:'Enregistrer', primary:true}]});
+  if (!dlg) return;
+  if (b.t === 'mails') { b.o.site = dlg.querySelector('#hsSite').value; b.o.imp = dlg.querySelector('#hsImp').checked; }
+  else { const v = $$('.hm-chks input:checked', dlg).map(i => i.value); if (b.t === 'quick') b.o.tiles = v; else b.o.sites = v; }
+  hmSave(); hmRender();
+}
+async function hmPickSite(title){
+  const sites = pqSites(); if (!sites.length) { toast('Aucun chantier', 'err'); return null; }
+  let def = ''; try { def = localStorage.getItem('baugest.pc.pqSite') || ''; } catch (e) {}
+  return dialog({title, width:440, body:`<div class="hm-addl">${sites.map(s => `<button class="btn${s.id === def ? ' primary' : ''}" data-k="${esc(s.id)}">${esc(siteLabel(s))}</button>`).join('')}</div>`,
+    buttons:[{label:'Annuler', value:null}], onOpen:(dlg, done) => dlg.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) done(b.dataset.k); })});
+}
+async function hmPlan(sid, uid, isNew){
+  if (!window.BGPlan) { toast('Module Planning non chargé : recharge la page', 'err'); return; }
+  try {
+    await BGPlan.open(sid, uid || null);
+    if (isNew) { const b = document.querySelector('#bgPlan [data-a="new"]'); if (b) b.click(); }
+  } catch (e) { toast('Planning : ' + e.message, 'err'); }
+}
+async function hmSiteDir(sid){
+  const s = S.sites.find(x => x.id === sid); if (!s) return;
+  try { const id = await ensureChild(P.rootId, siteFolderName(s)); closeHome(); await ensureChain(id).catch(() => {}); navigate(id); } catch (e) { toast('Dossier introuvable : ' + e.message, 'err'); }
+}
+async function hmQuickAct(k){
+  if (k === 'newplan') { const sid = await hmPickSite('Nouveau planning : quel chantier ?'); if (sid) hmPlan(sid, null, true); return; }
+  if (k === 'plan') { const sid = await hmPickSite('Ouvrir le planning de quel chantier ?'); if (sid) hmPlan(sid); return; }
+  if (k === 'pvdt') { openPq(); return; }
+  if (k === 'devis') { openDevis(); return; }
+  if (k === 'newdevis') { await openDevis(); const b = $('#dzNew'); if (b) b.click(); return; }
+  if (k === 'photos') { openPhotos('__all'); return; }
+  if (k === 'files') { closeHome(); navigate(E.cur || P.rootId); return; }
+  if (k === 'todo') { openTodoPc(); return; }
+  if (k === 'search') { $('#gSearch').focus(); return; }
+  if (k === 'mails') { const i = $('#mlFile'); if (i) i.click(); else toast('Ajoute le bloc « Déposer et trier » à l’accueil', 'err'); return; }
+  if (k === 'site') { const sid = await hmPickSite('Infos de quel chantier ?'); if (sid) editSiteDlg(sid); }
+}
+function hmClick(e){
+  let b;
+  if ((b = e.target.closest('[data-hwrm]'))) { HMS.lay = HMS.lay.filter(x => x.id !== b.dataset.hwrm); hmSave(); hmRender(); return; }
+  if ((b = e.target.closest('[data-hwset]'))) { hmSetDlg(b.dataset.hwset); return; }
+  if (e.target.closest('[data-hwref]')) { hmLoad(); toast('Accueil actualisé', '', 1500); return; }
+  if (HMS.edit) return;
+  if ((b = e.target.closest('[data-hmq]'))) { hmQuickAct(b.dataset.hmq); return; }
+  if ((b = e.target.closest('[data-hmm]'))) { mlOpen(b.dataset.hmm); return; }
+  if ((b = e.target.closest('[data-hmmem]'))) { mlMemory(b.dataset.hmmem); return; }
+  if ((b = e.target.closest('[data-hm="todo"]'))) { openTodoPc(); return; }
+  if ((b = e.target.closest('[data-hmpv]'))) { PQ.site = b.dataset.hmpv; try { localStorage.setItem('baugest.pc.pqSite', PQ.site); } catch (x) {} openPq(); return; }
+  if ((b = e.target.closest('[data-hmpvf]'))) { const f = HMD.pvs.find(x => x.id === b.dataset.hmpvf); if (f) { f._k = kindOf(f); openIn(0, f, HMD.pvs); } return; }
+  if ((b = e.target.closest('[data-hmdv]'))) { openDevis(b.dataset.hmdv); return; }
+  if ((b = e.target.closest('[data-hmplan]'))) { hmPlan(b.dataset.hmplan || null, b.dataset.uid); return; }
+  if ((b = e.target.closest('[data-hmph]'))) { openPhotos(b.dataset.hmph); return; }
+  if ((b = e.target.closest('[data-hmsi]'))) { editSiteDlg(b.dataset.hmsi); return; }
+  if ((b = e.target.closest('[data-hmdir]'))) { hmSiteDir(b.dataset.hmdir); }
+}
+/* mode Modifier : glisser l'en-tête d'un bloc pour le déplacer, tirer le coin pour la taille (12 colonnes, lignes de 64 px) */
+function hmBindEdit(){
+  const g = $('#hmGrid');
+  g.addEventListener('dragstart', e => {
+    const h = e.target.closest && e.target.closest('.hw-h'); if (!HMS.edit || !h) return;
+    const id = h.closest('[data-hw]').dataset.hw; HMS.drag = id;
+    e.dataTransfer.setData('application/x-bghome', id); e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => { const el = g.querySelector(`[data-hw="${CSS.escape(id)}"]`); if (el) el.classList.add('moving'); }, 0);
+  });
+  g.addEventListener('dragover', e => {
+    if (!HMS.drag || !hasType(e, 'application/x-bghome')) return;
+    const t = e.target.closest('[data-hw]'); e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    $$('.hw.before, .hw.after', g).forEach(x => x.classList.remove('before', 'after'));
+    if (t && t.dataset.hw !== HMS.drag) { const r = t.getBoundingClientRect(); t.classList.add(e.clientX > r.left + r.width / 2 ? 'after' : 'before'); }
+  });
+  g.addEventListener('drop', e => {
+    if (!HMS.drag || !hasType(e, 'application/x-bghome')) return;
+    e.preventDefault(); e.stopPropagation();
+    const t = e.target.closest('[data-hw]'), id = HMS.drag;
+    if (t && t.dataset.hw !== id) {
+      const after = t.classList.contains('after'), mv = HMS.lay.find(x => x.id === id);
+      HMS.lay = HMS.lay.filter(x => x.id !== id);
+      const k = HMS.lay.findIndex(x => x.id === t.dataset.hw);
+      HMS.lay.splice(after ? k + 1 : k, 0, mv); hmSave();
+    }
+    HMS.drag = null; hmRender();
+  });
+  g.addEventListener('dragend', () => { if (HMS.drag) { HMS.drag = null; hmRender(); } });
+  g.addEventListener('pointerdown', e => {
+    const h = e.target.closest('[data-hwrs]'); if (!h || !HMS.edit) return;
+    e.preventDefault();
+    const b = HMS.lay.find(x => x.id === h.dataset.hwrs), el = h.closest('.hw'), gs = getComputedStyle(g);
+    const gap = parseFloat(gs.columnGap) || 12, colW = (g.clientWidth - parseFloat(gs.paddingLeft) - parseFloat(gs.paddingRight) - 11 * gap) / 12, rowH = parseFloat(gs.gridAutoRows) || 64;
+    const r0 = el.getBoundingClientRect(), T = HM_TYPES[b.t];
+    h.setPointerCapture(e.pointerId);
+    const mv = ev => {
+      const w = Math.max(T.mw, Math.min(12, Math.round((ev.clientX - r0.left + gap) / (colW + gap)))), hh = Math.max(T.mh, Math.min(16, Math.round((ev.clientY - r0.top + gap) / (rowH + gap))));
+      if (w !== b.w || hh !== b.h) { b.w = w; b.h = hh; el.style.gridColumn = 'span ' + w; el.style.gridRow = 'span ' + hh; el.querySelector('.hw-sz').textContent = w + ' × ' + hh; }
+    };
+    const up = () => { h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); hmSave(); };
+    h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+  });
+}
+function bindHome(){
+  $('#home').addEventListener('click', hmClick);
+  mlBind($('#hmGrid'));
+  hmBindEdit();
+  $('#hmEdit').addEventListener('click', () => hmSetEdit(true));
+  $('#hmDone').addEventListener('click', () => hmSetEdit(false));
+  $('#hmAdd').addEventListener('click', hmAddDlg);
+  $('#hmReset').addEventListener('click', async () => { if (await confirmDlg('Disposition de départ', 'Remettre l’accueil comme au départ ? Tes réglages de blocs seront perdus.', 'Remettre')) { HMS.lay = HM_DEF(); hmSave(); hmRender(); } });
+  setInterval(() => { if (!document.hidden && hmShown() && !HMS.edit && Date.now() - HMD.at > 170000) hmLoad(); }, 60000);
+}
+bindHome();
+
+window.BauGestPC = {V, E, P, PHO, DV, ML, HMS, HMD, S: () => S};
 applyTheme(); syncViewBtns(); syncTopBtns();
 adoptShared();
 if (tokenValid()) start();
