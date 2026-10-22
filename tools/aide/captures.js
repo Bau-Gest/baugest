@@ -56,6 +56,10 @@ await p.evaluate(()=>document.querySelector('.bp-scrim').classList.add('capfull'
 await p.setViewportSize({width:1280,height:1200});await shot('fiche-tache','.bp-dlg');await p.keyboard.press('Escape');await p.setViewportSize({width:1280,height:720});await p.waitForTimeout(300);
 await p.evaluate(()=>{});
 await p.evaluate(()=>BGPlan.close());await p.waitForTimeout(300);await p.evaluate(()=>BGPlan.open('s1','gc'));await p.waitForTimeout(600);
+// fenêtre Style de 2 tâches (non appliquée)
+await p.click('#bpRows .bp-row[data-id="a22"]');await p.click('#bpRows .bp-row[data-id="a25"]',{modifiers:['Control']});await p.click('[data-g="style"]');await p.waitForTimeout(300);
+await p.click('#stCol [data-c="#9b6fd6"]');await p.selectOption('[data-st="pos"]','t');await p.selectOption('[data-st="txt"]','name');await p.selectOption('[data-st="b"]','1');await p.selectOption('[data-st="pat"]','h');
+await shot('style','.bp-dlg');await p.keyboard.press('Escape');await p.waitForTimeout(200);await p.keyboard.press('Escape');await p.waitForTimeout(200);await p.evaluate(()=>BGPlan.close());await p.waitForTimeout(300);await p.evaluate(()=>BGPlan.open('s1','gc'));await p.waitForTimeout(600);
 // ressources + lissage
 await p.setViewportSize({width:1280,height:620});await tab('res');await p.click('tr[data-r="r2"]');await shot('ressources');
 await p.click('.bp-card [data-a="level"]');await p.waitForTimeout(400);await shot('lissage','.bp-dlg');

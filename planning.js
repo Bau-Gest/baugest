@@ -390,7 +390,7 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = CORE; re
 /* ---------- Interface ---------- */
 let H = null;
 const U = {siteId:null, recs:[], rec:null, plan:null, cal:null, sch:null, tab:'gantt', zoom:'week', sel:null, undo:[], redo:[], saveT:0, pushT:0,
-  resSel:null, statusDn:null, full:null, openTok:0, showBase:true, tap:{id:null, t:0}, drag:null, dlgs:[], listTok:0, pushing:null};
+  resSel:null, statusDn:null, full:null, openTok:0, showBase:true, tap:{id:null, t:0}, msel:new Set(), selMode:false, drag:null, dlgs:[], listTok:0, pushing:null};
 const PDFLIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
 const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
 const DRV = 'https://www.googleapis.com/drive/v3/files', UPL = 'https://www.googleapis.com/upload/drive/v3/files';
@@ -410,6 +410,7 @@ const I = {
   link:ic('<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>'),
   del:ic('<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/>'), edit:ic('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
   undo:ic('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'), redo:ic('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
+  chk:ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3 3 7-7"/>'), pal:ic('<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.9 1.5-1.7 0-1.3-1-1.6-1-2.8 0-1 .8-1.5 1.8-1.5H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>'),
   base:ic('<path d="M4 20h16M6 16h12M8 12h8M10 8h4"/>'), lvl:ic('<path d="M3 20h18M6 16V9M10 16V5M14 16v-6M18 16v-3"/>'),
   exp:ic('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'), print:ic('<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/>'), today:ic('<path d="M12 2v20M5 7h14"/>'), cal:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
   imp:ic('<path d="M12 15V3M7 8l5-5 5 5M5 21h14"/>'), split:ic('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>'),
@@ -478,6 +479,10 @@ function css(){ return `
 .bp-add{display:flex;align-items:center;gap:6px;color:var(--muted,#9da2a8);padding:0 10px;border:0;background:none;width:100%}
 .bp-chart{display:block}
 .bp-chart text{font:var(--bp-cfs,12px) var(--body,sans-serif);fill:var(--text,#ecebe6)}
+.bp-chart text.sm{font-size:calc(var(--bp-cfs,12px) - 1px)}.bp-chart text.bd{font-weight:700}
+.bp-ck{display:inline-block;width:18px;height:18px;margin-right:6px;border:2px solid var(--muted,#9da2a8);border-radius:4px;vertical-align:-3px;flex:none}.bp-row.msel .bp-ck{background:var(--signal,#f2c230);border-color:var(--signal,#f2c230);box-shadow:inset 0 0 0 2px var(--surface,#1c1f23)}
+.bp-row.msel{background:var(--signal-soft,#3b3219)}
+.bp-msn{font-size:13.5px;font-weight:600;white-space:nowrap}
 .bp-chart .mut{fill:var(--muted,#9da2a8)}
 .bp-chart .bar{cursor:grab;touch-action:pan-y}
 .bp-chart .bar .rs,.bp-chart .bar .lk{touch-action:none}
@@ -827,7 +832,7 @@ async function openRec(rec){
   await flush();
   try { await loadRec(rec); }
   catch (e) { U.rec = null; U.plan = null; info('Ouverture impossible : ' + e.message, true); render(); return; }
-  U.rec = rec; U.plan = normPlan(rec.plan); U.undo = []; U.redo = []; U.sel = null; U.resSel = null;
+  U.rec = rec; U.plan = normPlan(rec.plan); U.undo = []; U.redo = []; U.sel = null; U.msel.clear(); U.selMode = false; U.resSel = null;
   try { localStorage.setItem('baugest.plan.' + U.siteId, rec.uid); } catch (e) {}
   U.cal = makeCal(U.plan); U.sch = schedule(U.plan, U.cal, U.statusDn);
   { const Ly = LAY(); U.zoom = Ly.screen.zoom; U.showBase = Ly.screen.base; }
@@ -963,8 +968,15 @@ function cellTxt(k, o, r, cm){
   if (k === 'cost') return cm ? fmtN(cm.get(t.id) || 0) : '';
   return '';
 }
-const barLabel = (Ly, o) => { if (o.sum || Ly.barText === 'none') return ''; const rs = resTxt(o.t);
-  return Ly.barText === 'name' ? o.t.name : Ly.barText === 'both' ? o.t.name + (rs ? ' · ' + rs : '') : rs; };
+/* texte à côté d'une barre : réglage de la tâche (t.st.txt) sinon de la mise en page ; lots : seulement si réglé sur le lot */
+const barLabel = (Ly, o, r) => { const k = (o.t.st && o.t.st.txt) || (o.sum ? 'none' : Ly.barText); if (k === 'none') return ''; const rs = o.sum ? '' : resTxt(o.t);
+  r = r || (U.sch && U.sch.R.get(o.t.id));
+  if (k === 'dates') return r ? `${shortOfDn(r.start)} → ${shortOfDn(r.finish)}` : '';
+  if (k === 'dur') return r ? `${r.dur} j` : '';
+  if (k === 'nd') return r ? `${o.t.name} · ${shortOfDn(r.start)} → ${shortOfDn(r.finish)}` : o.t.name;
+  return k === 'name' ? o.t.name : k === 'both' ? o.t.name + (rs ? ' · ' + rs : '') : rs; };
+/* encre lisible sur une couleur de barre */
+const inkOn = c => { const m = /^#?([0-9a-f]{6})$/i.exec(c || ''); if (!m) return '#ffffff'; const n = parseInt(m[1], 16), l = (.299 * (n >> 16 & 255) + .587 * (n >> 8 & 255) + .114 * (n & 255)) / 255; return l > .62 ? '#1b1d21' : '#ffffff'; };
 function logoList(){ const L = H.logos ? (H.logos(U.siteId) || {}) : {}; return {comp:L.comp || '', site:L.site || '', lib:[...new Set((L.lib || []).filter(Boolean))]}; }
 async function logoPng(src){
   return new Promise(res => { const im = new Image(); im.onload = () => { try { const k = Math.min(1, 400 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
@@ -1081,6 +1093,8 @@ function renderGantt(){
   const nRows = rows.length + 1, bh = nRows * RH;
   const x = dn => (dn - d0) * dw;
   const sel = U.sel && T(U.sel);
+  for (const id of U.msel) if (!T(id)) U.msel.delete(id);
+  const nSel = U.msel.size;
   const canLot = maxDepth(p) > 1;
   const bar = `<div class="bp-bar">
     <button class="bp-btn" data-g="addT" title="Nouvelle tâche (après la sélection)">${I.plus}<span>Tâche</span></button>
@@ -1092,6 +1106,10 @@ function renderGantt(){
     <button class="bp-ib" data-g="link" title="Lier à la tâche au-dessus (fin → début)" ${sel ? '' : 'disabled'}>${I.link}</button>
     <button class="bp-ib" data-g="edit" title="Modifier (double clic)" ${sel ? '' : 'disabled'}>${I.edit}</button>
     <button class="bp-ib" data-g="del" title="Supprimer (Suppr)" ${sel ? '' : 'disabled'}>${I.del}</button>
+    <span class="bp-sep"></span>
+    <button class="bp-ib ${U.selMode ? 'on' : ''}" data-g="selm" title="Sélection multiple : cases à cocher (PC : Ctrl+clic, Maj+clic, Ctrl+A)">${I.chk}</button>
+    <button class="bp-btn" data-g="style" title="Couleur, texte et style des barres sélectionnées" ${sel || nSel ? '' : 'disabled'}>${I.pal}<span>Style</span></button>
+    ${nSel > 1 ? `<span class="bp-msn">${nSel} tâches</span><button class="bp-ib" data-g="unsel" title="Tout désélectionner (Échap)">${I.x}</button>` : ''}
     <span class="bp-sep"></span>
     <span class="bp-seg">${[['day', 'Jour'], ['week', 'Semaine'], ['month', 'Mois']].map(([k, l]) => `<button data-zoom="${k}" class="${U.zoom === k ? 'on' : ''}">${l}</button>`).join('')}</span>
     <button class="bp-btn" data-g="today" title="Aller à aujourd’hui">${I.today}<span>Auj.</span></button>
@@ -1105,11 +1123,11 @@ function renderGantt(){
     const t = o.t, r = s.R.get(t.id);
     const cell = c => {
       let v = '';
-      if (c.k === 'name') v = `<span style="padding-left:${o.lvl * 16}px"></span><span class="bp-tw">${o.sum ? '▾' : t.ms ? '◆' : ''}</span><span class="nm">${esc(t.name)}</span>`;
+      if (c.k === 'name') v = `${U.selMode ? '<span class="bp-ck"></span>' : ''}<span style="padding-left:${o.lvl * 16}px"></span><span class="bp-tw">${o.sum ? '▾' : t.ms ? '◆' : ''}</span><span class="nm">${esc(t.name)}</span>`;
       else v = esc(cellTxt(c.k, o, r, cm));
       return `<div class="bp-cell ${c.k === 'wbs' ? 'wbs' : c.k === 'name' ? '' : c.k === 'tf' ? 'num tf' : c.n ? 'num' : ''} ${c.k === 'name' ? 'nm-c' : ''}" style="width:${c.w}px">${v}</div>`;
     };
-    return `<div class="bp-row ${o.sum ? 'sum' : ''} ${U.sel === t.id ? 'sel' : ''} ${r.late ? 'late' : ''} ${r.crit && !o.sum ? 'crit' : ''}" data-id="${esc(t.id)}" style="height:${RH}px" title="${esc(t.name)}${r.late ? ' — en retard' : ''}">${cols.map(cell).join('')}</div>`;
+    return `<div class="bp-row ${o.sum ? 'sum' : ''} ${U.sel === t.id || U.msel.has(t.id) ? 'sel' : ''} ${U.msel.has(t.id) ? 'msel' : ''} ${r.late ? 'late' : ''} ${r.crit && !o.sum ? 'crit' : ''}" data-id="${esc(t.id)}" style="height:${RH}px" title="${esc(t.name)}${r.late ? ' — en retard' : ''}">${cols.map(cell).join('')}</div>`;
   }).join('') + `<div class="bp-row" style="height:${RH}px"><button class="bp-add" data-g="addT">${I.plus}Ajouter une tâche</button></div>`;
   /* échelle de temps */
   let th = '', bg = '';
@@ -1133,19 +1151,38 @@ function renderGantt(){
     if (U.sel === t.id) bars += `<rect x="0" y="${y}" width="${cw}" height="${RH}" fill="var(--signal-soft,#3b3219)" opacity=".55"/>`;
     const bx = x(r.start), bw = Math.max(dw * .6, x(r.finish + 1) - bx);
     if (base && base[t.id]) { const b = base[t.id], a = dnOfIso(b.start) ?? b.start, e = dnOfIso(b.finish) ?? b.finish; bars += b.dur > 0 ? `<rect x="${x(a)}" y="${y + RH - 8}" width="${Math.max(2, x(e + 1) - x(a))}" height="4" rx="1" fill="${CO.base}"/>` : `<path d="M${x(b.mx ?? a)} ${y + RH - 10} l4 4 -4 4 -4 -4z" fill="${CO.base}"/>`; }
-    const lbl = barLabel(Ly, o), cr = Ly.crit && r.crit;
+    const lbl = barLabel(Ly, o, r), cr = Ly.crit && r.crit, st = t.st || {}, on = U.sel === t.id || U.msel.has(t.id);
+    const tcls = `${st.tc ? '' : 'mut'} ${st.b ? 'bd' : ''}`, tfill = st.tc ? ` style="fill:${esc(st.tc)}"` : '';
+    /* texte de la barre : à droite (défaut), gauche, dessus, dessous, dans la barre */
+    const txt = (str, x0, x1, ym, top, bot, fill, inside) => {
+      if (!str) return '';
+      const pos = st.pos || 'r';
+      if (pos === 'i' && inside) { const n = Math.floor((x1 - x0 - 8) / (Ly.screen.font * .55)); if (n < 2) return ''; const v = str.length > n ? str.slice(0, n - 1) + '…' : str;
+        return `<text class="${st.b ? 'bd' : ''}" x="${x0 + 4}" y="${ym + 4}" style="fill:${esc(st.tc || fill)}" pointer-events="none">${esc(v)}</text>`; }
+      if (pos === 'l') return `<text class="${tcls}" x="${x0 - 8}" y="${ym + 4}" text-anchor="end"${tfill}>${esc(str)}</text>`;
+      if (pos === 't') return `<text class="${tcls} sm" x="${x0}" y="${top - 3}"${tfill}>${esc(str)}</text>`;
+      if (pos === 'b') return `<text class="${tcls} sm" x="${x0}" y="${bot + Ly.screen.font - 1}"${tfill}>${esc(str)}</text>`;
+      return `<text class="${tcls}" x="${x1 + 18}" y="${ym + 4}"${tfill}>${esc(str)}</text>`;
+    };
+    const vert = st.pos === 't' || st.pos === 'b';
     if (o.sum) {
-      bars += `<g class="bar sum" data-id="${esc(t.id)}"><path class="b" d="M${bx} ${y + RH / 2 - 6}h${bw}v10l-5 -5h${-(bw - 10)}l-5 5z" fill="${t.col || CO.sum}"/></g>`;
+      const sy = vert ? (st.pos === 't' ? y + RH - 14 : y + 6) : y + RH / 2 - 6;
+      bars += `<g class="bar sum" data-id="${esc(t.id)}"><path class="b" d="M${bx} ${sy}h${bw}v10l-5 -5h${-(bw - 10)}l-5 5z" fill="${t.col || CO.sum}"/></g>` + txt(lbl, bx, bx + bw, sy + 5, sy, sy + 10, '#fff', false);
     } else if (t.ms || r.dur === 0) {
-      const cx = x(r.mx), cy = y + RH / 2;
-      bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><path class="b" d="M${cx} ${cy - 8} l8 8 -8 8 -8 -8z" fill="${t.col || (r.done ? CO.done : cr ? CO.crit : CO.ms)}" ${t.col && cr ? `stroke="${CO.crit}" stroke-width="2"` : ''}/><circle class="lk" cx="${cx + 15}" cy="${cy}" r="5"/></g>`
-        + `<text x="${cx + 24}" y="${cy + 4}">${esc(t.name)} · ${shortOfDn(r.start)}</text>`;
+      const cx = x(r.mx), cy = vert ? (st.pos === 't' ? y + RH - 11 : y + 11) : y + RH / 2;
+      const mt = st.txt ? lbl : `${t.name} · ${shortOfDn(r.start)}`;
+      bars += `<g class="bar ${on ? 'sel' : ''}" data-id="${esc(t.id)}"><path class="b" d="M${cx} ${cy - 8} l8 8 -8 8 -8 -8z" fill="${t.col || (r.done ? CO.done : cr ? CO.crit : CO.ms)}" ${t.col && cr ? `stroke="${CO.crit}" stroke-width="2"` : ''}/><circle class="lk" cx="${cx + 15}" cy="${cy}" r="5"/></g>`
+        + (st.pos && st.pos !== 'i' ? txt(mt, st.pos === 'l' ? cx - 8 : cx - 8, cx + 6, cy, cy - 8, cy + 8, '', false) : `<text class="${st.b ? 'bd' : ''}" x="${cx + 24}" y="${cy + 4}"${tfill}>${esc(mt)}</text>`);
     } else {
-      const col = t.col || (r.done ? CO.done : cr ? CO.crit : CO.task), pw = bw * Math.min(100, t.pct) / 100, bh = Math.max(6, RH - 16);
-      bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><rect class="b" x="${bx}" y="${y + (RH - bh) / 2}" width="${bw}" height="${bh}" rx="3" fill="${col}" ${r.late ? `stroke="${CO.late}" stroke-width="2" stroke-dasharray="4 2"` : t.col && cr ? `stroke="${CO.crit}" stroke-width="2"` : ''}/>`
-        + (pw > 0 ? `<rect x="${bx}" y="${y + RH / 2 - 2}" width="${pw}" height="4" fill="rgba(0,0,0,.45)" pointer-events="none"/>` : '')
-        + `<rect class="rs" x="${bx + bw - 6}" y="${y + 5}" width="10" height="${RH - 12}"/><circle class="lk" cx="${bx + bw + 9}" cy="${y + RH / 2}" r="5"/></g>`
-        + (lbl ? `<text class="mut" x="${bx + bw + 18}" y="${y + RH / 2 + 4}">${esc(lbl)}</text>` : '');
+      const col = t.col || (r.done ? CO.done : cr ? CO.crit : CO.task), pw = bw * Math.min(100, t.pct) / 100;
+      let bh = Math.max(6, RH - 16); if (st.h === 's') bh = Math.max(4, Math.round(bh * .5)); else if (st.h === 'l') bh = RH - 8;
+      if (vert) bh = Math.min(bh, Math.round(RH * .42));
+      const by = vert ? (st.pos === 't' ? y + RH - bh - 4 : y + 4) : y + (RH - bh) / 2, ym = by + bh / 2;
+      bars += `<g class="bar ${on ? 'sel' : ''}" data-id="${esc(t.id)}"><rect class="b" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="3" fill="${col}" ${r.late ? `stroke="${CO.late}" stroke-width="2" stroke-dasharray="4 2"` : t.col && cr ? `stroke="${CO.crit}" stroke-width="2"` : ''}/>`
+        + (st.pat === 'h' ? `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="3" fill="url(#bpHatch)" pointer-events="none"/>` : '')
+        + (pw > 0 ? `<rect x="${bx}" y="${ym - 2}" width="${pw}" height="4" fill="rgba(0,0,0,.45)" pointer-events="none"/>` : '')
+        + `<rect class="rs" x="${bx + bw - 6}" y="${by - 3}" width="10" height="${bh + 6}"/><circle class="lk" cx="${bx + bw + 9}" cy="${ym}" r="5"/></g>`
+        + txt(lbl, bx, bx + bw, ym, by, by + bh, inkOn(col), true);
     }
   });
   if (Ly.screen.links) for (const l of s.links) {
@@ -1170,7 +1207,8 @@ function renderGantt(){
     <div class="bp-brow"><div class="bp-c10" id="bpRows" style="width:${tw}px">${body}</div>
     <div style="flex:none"><svg class="bp-chart" id="bpChart" width="${cw}" height="${bh}"><defs>
       <marker id="bpAh" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="var(--muted,#9da2a8)"/></marker>
-      <marker id="bpAhc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="${CO.crit}"/></marker></defs>
+      <marker id="bpAhc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="${CO.crit}"/></marker>
+      <pattern id="bpHatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><rect width="3" height="7" fill="rgba(255,255,255,.55)"/></pattern></defs>
       ${bg}${today}<g>${arrows}</g>${bars}</svg></div></div>
   </div></div>`;
   const wrap = $b('.bp-gwrap');
@@ -1259,6 +1297,12 @@ function tryLink(pid, sid, type, lag){
   U.undo.push(before); U.redo = []; commit(); return true;
 }
 async function delTask(){
+  if (U.msel.size > 1) {
+    const ids = [...U.msel].filter(id => T(id)), gone = new Set(ids); for (const id of ids) for (const d of descendants(id)) gone.add(d);
+    if (!await confirmDlg('Supprimer', `Supprimer les ${ids.length} tâches sélectionnées${gone.size > ids.length ? ` (et ${gone.size - ids.length} tâche(s) de leurs lots)` : ''} ?`, 'Supprimer', true)) return;
+    mut(p => { p.tasks = p.tasks.filter(t => !gone.has(t.id)); for (const t of p.tasks) t.deps = t.deps.filter(x => !gone.has(x.id)); });
+    U.msel.clear(); U.sel = null; render(); toast(`${gone.size} tâche(s) supprimée(s)`); return;
+  }
   const s = U.sel && T(U.sel); if (!s) return;
   const d = descendants(s.id);
   if (d.size && !await confirmDlg('Supprimer le lot', `Supprimer « ${esc(s.name)} » et ses ${d.size} tâche(s) ?`, 'Supprimer', true)) return;
@@ -1354,6 +1398,49 @@ async function editTask(id, isNew){
   U.undo.push(before); U.redo = []; commit();
 }
 
+/* style des barres (une ou plusieurs tâches) : t.col + t.st = {pos, txt, b, tc, h, pat} ; valeur commune affichée, « inchangé » si elles diffèrent */
+const ST_F = {
+  pos:['Position du texte', [['', 'À droite (défaut)'], ['l', 'À gauche'], ['t', 'Au-dessus'], ['b', 'En dessous'], ['i', 'Dans la barre']]],
+  txt:['Texte affiché', [['', 'Comme la mise en page'], ['name', 'Nom de la tâche'], ['res', 'Ressources'], ['both', 'Nom + ressources'], ['nd', 'Nom + dates'], ['dates', 'Dates'], ['dur', 'Durée'], ['none', 'Rien']]],
+  b:['Texte', [['', 'Normal'], ['1', 'Gras']]],
+  h:['Hauteur de la barre', [['', 'Normale'], ['s', 'Fine'], ['l', 'Épaisse']]],
+  pat:['Remplissage', [['', 'Plein'], ['h', 'Hachuré']]]};
+const TXT_COLS = ['#1b1d21', '#6b7178', '#e5484d', '#3e8ed0', '#4caf7a', '#e8a33d', '#9b6fd6', '#ffffff'];
+async function styleDlg(ids){
+  ids = ids.filter(id => T(id)); if (!ids.length) return;
+  const ts = ids.map(T), MIX = '*';
+  const com = f => { const v = ts.map(f); return v.every(x => x === v[0]) ? v[0] : MIX; };
+  const vCol = com(t => t.col || ''), vTc = com(t => (t.st && t.st.tc) || ''), vs = {};
+  for (const k in ST_F) vs[k] = com(t => String((t.st && t.st[k]) || ''));
+  const sw = (id, v, cols, auto) => `<div class="bp-swl" id="${id}" data-v="${esc(v)}">${v === MIX ? '<button type="button" class="bp-btn" data-c="*">Inchangé</button>' : ''}<button type="button" class="bp-btn" data-c="">${auto}</button>${cols.map(c => `<button type="button" class="bp-sw" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}<label class="bp-sw bp-swc" title="Autre couleur"><input type="color" value="${esc(v && v !== MIX ? v : '#3e8ed0')}"></label></div>`;
+  const selF = k => `<label class="bp-f"><span>${ST_F[k][0]}</span><select data-st="${k}">${vs[k] === MIX ? '<option value="*" selected>— inchangé (différent) —</option>' : ''}${ST_F[k][1].map(([v, l]) => `<option value="${v}" ${vs[k] === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
+  const body = `<p class="bp-hint">${ids.length > 1 ? `${ids.length} tâches sélectionnées. ` : ''}Ces réglages s’affichent à l’écran, dans le PDF et à l’impression. « Inchangé » garde la valeur propre à chaque tâche.</p>
+    <div class="bp-f w"><span>Couleur de la barre</span>${sw('stCol', vCol, COLORS.concat(['#e5484d', '#6b7178']), 'Auto')}</div>
+    <div class="bp-form">${selF('pos')}${selF('txt')}${selF('b')}${selF('h')}${selF('pat')}</div>
+    <div class="bp-f w"><span>Couleur du texte</span>${sw('stTc', vTc, TXT_COLS, 'Auto')}</div>`;
+  const b = await dlg({title:ids.length > 1 ? 'Style de ' + ids.length + ' tâches' : 'Style · ' + T(ids[0]).name, width:620, body,
+    buttons:[{label:'Tout par défaut', value:'reset', left:true}, {label:'Annuler', value:null}, {label:'Appliquer', pri:true}],
+    onOpen:bx => bx.querySelectorAll('.bp-swl').forEach(cb => {
+      const cSet = v => { cb.dataset.v = v; cb.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('on', x.dataset.c === v)); const ci = cb.querySelector('input'), cu = !!v && v !== MIX && !cb.querySelector(`[data-c="${v}"]`); ci.parentElement.classList.toggle('on', cu); ci.parentElement.style.background = cu ? v : ''; };
+      cSet(cb.dataset.v); cb.addEventListener('click', e => { const x = e.target.closest('[data-c]'); if (x) cSet(x.dataset.c); });
+      cb.querySelector('input').addEventListener('input', e => cSet(e.target.value));
+    })});
+  if (!b) return;
+  mut(() => {
+    for (const t of ts) {
+      if (b === 'reset') { delete t.col; delete t.st; continue; }
+      const st = Object.assign({}, t.st || {}), c = b.querySelector('#stCol').dataset.v, tc = b.querySelector('#stTc').dataset.v;
+      if (c !== MIX) { if (c) t.col = c; else delete t.col; }
+      if (tc !== MIX) st.tc = tc;
+      b.querySelectorAll('[data-st]').forEach(x => { if (x.value !== MIX) st[x.dataset.st] = x.value; });
+      for (const k in st) if (!st[k]) delete st[k];
+      if (st.b) st.b = 1;
+      if (Object.keys(st).length) t.st = st; else delete t.st;
+    }
+  });
+  toast(b === 'reset' ? 'Style remis par défaut' : ids.length > 1 ? `Style appliqué à ${ids.length} tâches` : 'Style appliqué');
+}
+
 /* glisser les barres : souris et stylet (le doigt fait défiler) */
 function chartDown(e){
   const g = e.target.closest('.bar'); if (!g) return;
@@ -1401,6 +1488,15 @@ function chartUp(e){
   }
 }
 function tapRow(id, e){
+  const add = e && (e.ctrlKey || e.metaKey), rng = e && e.shiftKey && U.sel && U.sel !== id;
+  if (U.selMode || add) {
+    if (!U.msel.size && U.sel && U.sel !== id && add) U.msel.add(U.sel);
+    if (U.msel.has(id)) { U.msel.delete(id); if (U.sel === id) U.sel = [...U.msel].pop() || null; } else { U.msel.add(id); U.sel = id; }
+    render(); return;
+  }
+  if (rng) { const ol = U.sch.ol, a = ol.findIndex(o => o.t.id === U.sel), b = ol.findIndex(o => o.t.id === id);
+    U.msel = new Set(ol.slice(Math.min(a, b), Math.max(a, b) + 1).map(o => o.t.id)); U.sel = id; render(); return; }
+  if (U.msel.size) { U.msel.clear(); U.sel = id; render(); return; }
   const now = Date.now(), dbl = U.tap.id === id && now - U.tap.t < 450;
   U.tap = {id, t:now};
   if (U.sel === id && (dbl || (e && e.pointerType !== 'mouse'))) { editTask(id); return; }
@@ -1762,14 +1858,34 @@ async function makePdf(layOv){
       const vis = r.start <= d1 && r.finish >= d0, bx = X(r.start), bw = Math.max(1.5, X(r.finish + 1) - bx), bh = Math.max(3, RHp - 6);
       if (base && base[t.id]) { const b = base[t.id]; if (b.dur > 0 && b.start <= d1 && b.finish >= d0) pg.drawRectangle({x:X(b.start), y:y + 1.2, width:Math.max(1, X(b.finish + 1) - X(b.start)), height:2.2, color:C.base}); }
       if (!vis) return;
-      const tc = t.col ? hex(t.col) : null, cc = tc && Ly.crit && r.crit;
-      if (o.sum) { const sco = tc || C.sum; pg.drawRectangle({x:bx, y:y + RHp / 2 - 1, width:bw, height:3.5, color:sco}); if (inR(r.start)) pg.drawSvgPath('M0 0 L4 0 L0 5 Z', {x:bx, y:y + RHp / 2 + 2.5, color:sco}); if (inR(r.finish + 1)) pg.drawSvgPath('M0 0 L-4 0 L0 5 Z', {x:bx + bw, y:y + RHp / 2 + 2.5, color:sco}); }
-      else if (t.ms || r.dur === 0) { if (inR(r.mx)) { pg.drawSvgPath('M0 -4.5 L4.5 0 L0 4.5 L-4.5 0 Z', {x:X(r.mx), y:y + RHp / 2, color:tc || (r.done ? C.done : Ly.crit && r.crit ? C.crit : C.ms), borderColor:cc ? C.crit : undefined, borderWidth:cc ? 1 : 0}); text(pg, shortOfDn(r.start), X(r.mx) + 7, y + (RHp - 6.5) / 2 + 1, {s:6.5, col:C.mut}); } }
+      const tc = t.col ? hex(t.col) : null, cc = tc && Ly.crit && r.crit, st = t.st || {}, vert = st.pos === 't' || st.pos === 'b';
+      const LS = 6.5, lcol = st.tc ? hex(st.tc) : C.mut, lim = W - M;
+      /* texte de la barre (même règles qu'à l'écran) */
+      const ptxt = (str, x0, x1, ym, top, bot, ink, inside) => {
+        if (!str) return; const pos = st.pos || 'r', o2 = {s:LS, b:st.b, col:lcol};
+        if (pos === 'i' && inside) { if (x1 - x0 > 10) text(pg, str, x0 + 2, ym - LS / 2 + 1, {...o2, col:st.tc ? lcol : ink, w:x1 - x0 - 4}); return; }
+        if (pos === 'l') { if (x0 - 4 > cx0) text(pg, str, x0 - 4, ym - LS / 2 + 1, {...o2, r:1, w:x0 - 4 - cx0}); return; }
+        if (pos === 't') { text(pg, str, x0, top + 1, {...o2, s:LS - .5, w:lim - x0}); return; }
+        if (pos === 'b') { text(pg, str, x0, bot - LS + .5, {...o2, s:LS - .5, w:lim - x0}); return; }
+        if (x1 + 4 < lim - 30) text(pg, str, x1 + 3, ym - LS / 2 + 1, {...o2, w:lim - (x1 + 3)});
+      };
+      const lbl = barLabel(Ly, o, r);
+      if (o.sum) { const sco = tc || C.sum, sy = vert ? (st.pos === 't' ? y + 2.5 : y + RHp - 6) : y + RHp / 2 - 1;
+        pg.drawRectangle({x:bx, y:sy, width:bw, height:3.5, color:sco}); if (inR(r.start)) pg.drawSvgPath('M0 0 L4 0 L0 5 Z', {x:bx, y:sy + 3.5, color:sco}); if (inR(r.finish + 1)) pg.drawSvgPath('M0 0 L-4 0 L0 5 Z', {x:bx + bw, y:sy + 3.5, color:sco});
+        ptxt(lbl, bx, bx + bw, sy + 2, sy + 3.5, sy - 2, rgb(1, 1, 1), false); }
+      else if (t.ms || r.dur === 0) { if (inR(r.mx)) { const my = vert ? (st.pos === 't' ? y + 5 : y + RHp - 5) : y + RHp / 2;
+        pg.drawSvgPath('M0 -4.5 L4.5 0 L0 4.5 L-4.5 0 Z', {x:X(r.mx), y:my, color:tc || (r.done ? C.done : Ly.crit && r.crit ? C.crit : C.ms), borderColor:cc ? C.crit : undefined, borderWidth:cc ? 1 : 0});
+        if (st.txt || (st.pos && st.pos !== 'i')) ptxt(st.txt ? lbl : shortOfDn(r.start), X(r.mx) - 5, X(r.mx) + 4, my, my + 4.5, my - 4.5, C.txt, false);
+        else text(pg, shortOfDn(r.start), X(r.mx) + 7, y + (RHp - LS) / 2 + 1, {s:LS, col:lcol, b:st.b}); } }
       else {
-        pg.drawRectangle({x:bx, y:y + (RHp - bh) / 2, width:bw, height:bh, color:tc || (r.done ? C.done : Ly.crit && r.crit ? C.crit : C.task), borderColor:r.late ? C.late : cc ? C.crit : undefined, borderWidth:r.late || cc ? 1 : 0});
-        if (t.pct > 0 && t.pct < 100) pg.drawRectangle({x:bx, y:y + RHp / 2 - 1, width:bw * t.pct / 100, height:2, color:rgb(0, 0, 0), opacity:.45});
-        const lbl = barLabel(Ly, o);
-        if (lbl && bx + bw + 4 < W - M - 30) text(pg, lbl, bx + bw + 3, y + (RHp - 6.5) / 2 + 1, {s:6.5, col:C.mut, w:W - M - (bx + bw + 3)});
+        let bh = Math.max(3, RHp - 6); if (st.h === 's') bh = Math.max(1.5, bh * .5); else if (st.h === 'l') bh = RHp - 2.5;
+        if (vert) bh = Math.min(bh, RHp * .35);
+        const by = vert ? (st.pos === 't' ? y + 1 : y + RHp - bh - 1) : y + (RHp - bh) / 2, ym = by + bh / 2, fill = tc || (r.done ? C.done : Ly.crit && r.crit ? C.crit : C.task);
+        pg.drawRectangle({x:bx, y:by, width:bw, height:bh, color:fill, borderColor:r.late ? C.late : cc ? C.crit : undefined, borderWidth:r.late || cc ? 1 : 0});
+        if (st.pat === 'h') { const g = 3.2; for (let k = -bh; k < bw; k += g) { const xa = Math.max(0, k), xb = Math.min(bw, k + bh); if (xb > xa) pg.drawLine({start:{x:bx + xa, y:by + xa - k}, end:{x:bx + xb, y:by + xb - k}, thickness:.9, color:rgb(1, 1, 1), opacity:.6}); } }
+        if (t.pct > 0 && t.pct < 100) pg.drawRectangle({x:bx, y:ym - 1, width:bw * t.pct / 100, height:2, color:rgb(0, 0, 0), opacity:.45});
+        const ink = inkOn(t.col || (r.done ? Ly.colors.done : Ly.crit && r.crit ? Ly.colors.crit : Ly.colors.task)) === '#ffffff' ? rgb(1, 1, 1) : C.txt;
+        ptxt(lbl, bx, bx + bw, ym, by + bh, by, ink, true);
       }
     });
     if (Pp.links) for (const l of s.links) {
@@ -1935,12 +2051,16 @@ function bind(el){
       if (k === 'addT') insertTask('T'); else if (k === 'addM') insertTask('M'); else if (k === 'addL') insertTask('L');
       else if (k === 'ind') indent(1); else if (k === 'out') indent(-1); else if (k === 'up') move(-1); else if (k === 'down') move(1);
       else if (k === 'link') linkPrev(); else if (k === 'del') delTask(); else if (k === 'edit') editTask(U.sel);
+      else if (k === 'selm') { U.selMode = !U.selMode; if (U.selMode && U.sel && !U.msel.size) U.msel.add(U.sel); if (!U.selMode) U.msel.clear(); render(); }
+      else if (k === 'unsel') { U.msel.clear(); U.selMode = false; render(); }
+      else if (k === 'style') styleDlg(U.msel.size ? [...U.msel] : [U.sel]);
       else if (k === 'today') scrollToday(); else if (k === 'cols') { U.full = !fullCols(); render(); } else if (k === 'base') { U.showBase = !U.showBase; render(); }
       return;
     }
     const z = e.target.closest('button[data-zoom]'); if (z) { U.zoom = z.dataset.zoom; render(); return; }
-    const row = e.target.closest('#bpRows .bp-row[data-id]'); if (row) { tapRow(row.dataset.id, e.pointerType ? e : {pointerType:U.lastPt || 'mouse'}); return; }
-    const sb = e.target.closest('#bpChart .bar'); if (sb && (sb.classList.contains('sum') || U.lastPt === 'touch')) { tapRow(sb.dataset.id, {pointerType:U.lastPt || 'mouse'}); return; }
+    const kf = {pointerType:e.pointerType || U.lastPt || 'mouse', ctrlKey:e.ctrlKey, metaKey:e.metaKey, shiftKey:e.shiftKey};
+    const row = e.target.closest('#bpRows .bp-row[data-id]'); if (row) { tapRow(row.dataset.id, kf); return; }
+    const sb = e.target.closest('#bpChart .bar'); if (sb && (sb.classList.contains('sum') || U.lastPt === 'touch')) { tapRow(sb.dataset.id, {...kf, pointerType:U.lastPt || 'mouse'}); return; }
     const rr = e.target.closest('[data-redit]'); if (rr) { editRes(rr.dataset.redit); return; }
     if (e.target.closest('[data-rnew]')) { editRes(null); return; }
     const tr = e.target.closest('tr[data-r]'); if (tr) { U.resSel = tr.dataset.r; render(); return; }
@@ -1986,12 +2106,13 @@ function bind(el){
     if (!root || root.hidden) return;
     if (U.split && !U.inPlan) return;
     e.stopPropagation();
-    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); if (U.msel.size || U.selMode) { U.msel.clear(); U.selMode = false; render(); return; } close(); return; }
     if (!U.plan || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
     const k = e.key, ctl = e.ctrlKey || e.metaKey;
     if (ctl && k.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
     if (ctl && k.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
     if (U.tab !== 'gantt') return;
+    if (ctl && k.toLowerCase() === 'a') { e.preventDefault(); U.msel = new Set(U.sch.ol.map(o => o.t.id)); render(); return; }
     const ol = U.sch.ol, i = ol.findIndex(o => o.t.id === U.sel);
     if (k === 'ArrowDown' || k === 'ArrowUp') { e.preventDefault(); const j = Math.max(0, Math.min(ol.length - 1, i + (k === 'ArrowDown' ? 1 : -1))); if (ol[j]) select(ol[j].t.id); }
     else if (k === 'Enter' && U.sel) { e.preventDefault(); editTask(U.sel); }
