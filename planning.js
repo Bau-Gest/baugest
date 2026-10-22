@@ -1809,17 +1809,6 @@ async function printPlan(){
   try {
     toast('Préparation de l’impression…', 2000);
     const Ly = LAY(), blob = await makePdf(Ly);
-    if (H.split) {
-      const url = URL.createObjectURL(blob), fr = document.createElement('iframe');
-      fr.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';
-      fr.src = url; document.body.appendChild(fr);
-      await new Promise(r => { fr.onload = r; setTimeout(r, 4000); });
-      await new Promise(r => setTimeout(r, 300));
-      try { fr.contentWindow.focus(); fr.contentWindow.print(); }
-      catch (e) { if (!window.open(url, '_blank')) download(blob, fileBase() + '.pdf'); }
-      setTimeout(() => { fr.remove(); URL.revokeObjectURL(url); }, 120000);
-      return;
-    }
     if (!window.pdfjsLib) await loadScript(PDFJS_URL + 'pdf.min.js');
     if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_URL + 'pdf.worker.min.js';
     const pdf = await window.pdfjsLib.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise, urls = [];
