@@ -892,7 +892,7 @@ const DEF_LAY = {
   colors:{task:'#3e8ed0', crit:'#e5484d', done:'#4caf7a', sum:'#6b7178', ms:'#6b7178', base:'#8a8f96', late:'#ff9f43', today:'#f2c230'},
   crit:true, barText:'res',
   screen:{rh:32, font:13, zoom:'week', links:true, base:true, weekend:true},
-  pdf:{size:'A3', orient:'land', title:'', subtitle:true, legend:true, cart:true, logo:'comp', logoSrc:'', range:'all', from:'', to:'', only:false, font:7.5, rh:13.5, links:true, base:true, zebra:true, note:''}
+  pdf:{size:'A3', orient:'land', title:'', subtitle:true, legend:true, cart:true, logo:'comp', logoSrc:'', range:'all', from:'', to:'', only:false, fit:false, font:7.5, rh:13.5, links:true, base:true, zebra:true, note:''}
 };
 const clone = o => JSON.parse(JSON.stringify(o));
 function mergeLay(a, b){
@@ -1007,7 +1007,7 @@ async function layDlg(){
       <label class="bp-f"><span>Taille du texte</span>${sel('lyPFont', Ly.pdf.font, [[6.5, 'Petite'], [7.5, 'Normale'], [9, 'Grande'], [10.5, 'Très grande']])}</label>
       <label class="bp-f"><span>Hauteur des lignes</span>${sel('lyPRh', Ly.pdf.rh, [[11, 'Compacte'], [13.5, 'Normale'], [17, 'Grande']])}</label>
       ${ck('lySub', Ly.pdf.subtitle, 'Ligne d’infos sous le titre')}${ck('lyLeg', Ly.pdf.legend, 'Légende')}${ck('lyCart', Ly.pdf.cart, 'Cartouche')}
-      ${ck('lyPLinks', Ly.pdf.links, 'Flèches des liens')}${ck('lyPBase', Ly.pdf.base, 'Référence')}${ck('lyZebra', Ly.pdf.zebra, 'Lignes alternées')}
+      ${ck('lyPLinks', Ly.pdf.links, 'Flèches des liens')}${ck('lyPBase', Ly.pdf.base, 'Référence')}${ck('lyZebra', Ly.pdf.zebra, 'Lignes alternées')}${ck('lyFit', Ly.pdf.fit, 'Ajuster à la page (tout sur 1 page)')}
       <label class="bp-f w"><span>Remarque en bas de page</span><input id="lyNote" value="${esc(Ly.pdf.note)}" placeholder="ex. Document provisoire – sous réserve des intempéries"></label>
       <label class="bp-f w"><span>Logo du cartouche</span>${sel('lyLogo', Ly.pdf.logo, [['comp', 'Logo de l’entreprise du chantier'], ['site', 'Logo du chantier'], ['pick', 'Logo choisi (ci-dessous)'], ['none', 'Pas de logo']])}</label>
       <div class="bp-f w" id="lyPick">${logoGrid(logoCur)}</div>
@@ -1031,7 +1031,7 @@ async function layDlg(){
           screen:{rh:+v('lyRh').value, font:+v('lyFont').value, zoom:v('lyZoom').value, links:v('lyLinks').checked, base:v('lyBase').checked, weekend:v('lyWe').checked},
           pdf:{size:v('lySize').value, orient:v('lyOrient').value, title:v('lyTitle').value.trim(), subtitle:v('lySub').checked, legend:v('lyLeg').checked, cart:v('lyCart').checked,
             logo:v('lyLogo').value, logoSrc:v('lyLogo').value === 'pick' ? logoCur : '', range:v('lyRange').value, from:v('lyFrom').value, to:v('lyTo').value, only:v('lyOnly').checked,
-            font:+v('lyPFont').value, rh:+v('lyPRh').value, links:v('lyPLinks').checked, base:v('lyPBase').checked, zebra:v('lyZebra').checked, note:v('lyNote').value.trim()}};
+            font:+v('lyPFont').value, rh:+v('lyPRh').value, links:v('lyPLinks').checked, base:v('lyPBase').checked, zebra:v('lyZebra').checked, fit:v('lyFit').checked, note:v('lyNote').value.trim()}};
         b.querySelectorAll('[data-color]').forEach(c => o.colors[c.dataset.color] = c.value);
         return mergeLay(DEF_LAY, o);
       };
@@ -1673,18 +1673,19 @@ async function exportMenu(){
     <button class="bp-btn" data-x="layout">${I.edit}<span>Mise en page…<small>Colonnes, couleurs, format, cartouche, logo, période</small></span></button>
     <button class="bp-btn" data-x="import">${I.imp}<span>Importer MS Project (XML)<small>Crée un nouveau planning dans ce chantier</small></span></button>
   </div><p class="bp-hint">Le fichier est téléchargé et copié dans le Drive (Planning / Exports).</p>`,
-    buttons:[{label:'Fermer', value:null}], onOpen:(b, done) => b.querySelectorAll('[data-x]').forEach(x => x.addEventListener('click', () => done({x:x.dataset.x, size:b.querySelector('#exSize').value, orient:b.querySelector('#exOr').value})))});
+    buttons:[{label:'Fermer', value:null}], onOpen:(b, done) => b.querySelectorAll('[data-x]').forEach(x => x.addEventListener('click', () => done({x:x.dataset.x, lo:fmtRead(b, LAY())})))});
   if (!r) return;
-  const v = r.x, Lx = LAY(), lo = {...Lx, pdf:{...Lx.pdf, size:r.size, orient:r.orient}};
+  const v = r.x, lo = r.lo;
   if (v === 'import') return importXml();
   if (v === 'layout') return layDlg();
   if (v === 'print') return printPlan(lo);
   try {
     toast('Préparation de l’export…', 1500);
     const stamp = isoOfDn(todayDn());
-    const out = v === 'pdf' ? {blob:await makePdf(lo), name:`${fileBase()} – Gantt ${r.size} ${stamp}.pdf`}
+    const out = v === 'pdf' ? {blob:await makePdf(lo), name:`${fileBase()} – Gantt ${lo.pdf.size} ${stamp}.pdf`}
       : v === 'xlsx' ? {blob:await makeXlsx(), name:`${fileBase()} – planning ${stamp}.xlsx`}
       : {blob:new Blob([toMSPDI(U.plan, U.sch)], {type:'application/xml'}), name:`${fileBase()} – MS Project ${stamp}.xml`};
+    if (v === 'pdf') fitNote(out.blob);
     download(out.blob, out.name);
     const up = await exportToDrive(out.blob, out.name);
     toast(up ? 'Exporté : téléchargé + Drive › Planning › Exports' : 'Exporté (téléchargé)');
@@ -1708,6 +1709,7 @@ async function makePdf(layOv){
   const doc = await PDFDocument.create(); doc.setTitle(winAnsi(p.name)); doc.setCreator('BauGest');
   const F = await doc.embedFont(StandardFonts.Helvetica), FB = await doc.embedFont(StandardFonts.HelveticaBold);
   let [W, Hp] = PAPER[Pp.size] || PAPER.A3; if (Pp.orient === 'port') [W, Hp] = [Hp, W];
+  const W0 = W, H0 = Hp, kf = Pp._k > 1 ? Pp._k : 1; W *= kf; Hp *= kf;   /* ajuster à la page : dessin sur une page agrandie (même proportions), réduite à la fin */
   const M = 22, RHp = +Pp.rh || 13.5, FS = +Pp.font || 7.5;
   /* colonnes : réduites si elles prennent plus de 55 % de la largeur */
   let cols = Ly.cols.filter(k => Ly.pdfc.includes(k)).map(k => ({k, l:COLDEF[k].l, w:COLDEF[k].pw * FS / 7.5, r:COLDEF[k].n}));
@@ -1727,6 +1729,7 @@ async function makePdf(layOv){
   const sc = cw / (d1 - d0 + 1), X = dn => cx0 + (Math.max(d0, Math.min(d1 + 1, dn)) - d0) * sc, inR = dn => dn >= d0 && dn <= d1 + 1;
   const text = (pg, t, x, y, o = {}) => { const f = o.b ? FB : F, sz = o.s || FS; let str = winAnsi(t); if (o.w) { while (str.length > 1 && f.widthOfTextAtSize(str, sz) > o.w) str = str.slice(0, -2) + '…'; }
     const tx = o.r ? x - f.widthOfTextAtSize(str, sz) : o.c ? x - f.widthOfTextAtSize(str, sz) / 2 : x; pg.drawText(str, {x:tx, y, size:sz, font:f, color:o.col || C.txt}); };
+  if (Pp.fit && kf === 1 && rowsAll.length > per) { const k = (rowsAll.length * RHp + Hp - (rowsTop - foot) + 1) / Hp; return makePdf({...Ly, pdf:{...Pp, _k:k}}); }
   const pages = Math.max(1, Math.ceil(rowsAll.length / per)), comp = H.company ? H.company(U.siteId) : '';
   /* logo du cartouche */
   let logo = null;
@@ -1801,7 +1804,9 @@ async function makePdf(layOv){
       text(pg, 'Page', tx0 + 236, byc + 16, {s:7, col:C.mut}); text(pg, `${pi + 1} / ${pages}`, tx0 + 236, byc + 5, {b:1, s:9});
     } else text(pg, `${pi + 1} / ${pages}`, W - M, M, {s:7.5, r:1, col:C.mut});
   }
-  return new Blob([await doc.save()], {type:'application/pdf'});
+  if (kf > 1) for (const pg of doc.getPages()) { pg.scaleContent(1 / kf, 1 / kf); pg.setSize(W0, H0); }
+  const blob = new Blob([await doc.save()], {type:'application/pdf'}); blob.fitPct = Math.round(100 / kf);
+  return blob;
 }
 /* impression : le PDF de la mise en page. PC = PDF dans un cadre caché (qualité vectorielle) ;
    tablette = pages rendues en images (pdf.js) puis impression de la page (Android n'imprime pas un PDF dans un cadre) */
@@ -1825,7 +1830,10 @@ function printPreview(blob){
 }
 const PAPER = {A4:[841.89, 595.28], A3:[1190.55, 841.89], A2:[1683.78, 1190.55], A1:[2383.94, 1683.78], A0:[3370.39, 2383.94]};
 const fmtFields = P0 => `<div class="bp-form"><label class="bp-f"><span>Format du papier</span><select id="exSize">${Object.keys(PAPER).map(k => `<option value="${k}" ${P0.size === k ? 'selected' : ''}>${k}${k === 'A2' || k === 'A1' || k === 'A0' ? ' – grand format' : ''}</option>`).join('')}</select></label>
-    <label class="bp-f"><span>Orientation</span><select id="exOr"><option value="land">Paysage</option><option value="port" ${P0.orient === 'port' ? 'selected' : ''}>Portrait</option></select></label></div>`;
+    <label class="bp-f"><span>Orientation</span><select id="exOr"><option value="land">Paysage</option><option value="port" ${P0.orient === 'port' ? 'selected' : ''}>Portrait</option></select></label>
+    <label class="bp-f w" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="exFit" ${P0.fit ? 'checked' : ''}><span style="font-size:14.5px;color:inherit">Ajuster à la page : tout le planning sur 1 page (réduit si besoin)</span></label></div>`;
+const fmtRead = (b, Lx) => ({...Lx, pdf:{...Lx.pdf, size:b.querySelector('#exSize').value, orient:b.querySelector('#exOr').value, fit:b.querySelector('#exFit').checked}});
+const fitNote = blob => { if (blob.fitPct && blob.fitPct < 100) toast(`Ajusté à la page : réduit à ${blob.fitPct} %`, 3500); };
 /* bouton Imprimer : format choisi pour cette impression (défaut = mise en page) ; A2 / A1 / A0 pour les plannings longs (traceur) */
 const mmOf = P => { const [a, b] = (PAPER[P.size] || PAPER.A3).map(v => Math.round(v * 25.4 / 72)); return P.orient === 'port' ? [b, a] : [a, b]; };
 async function printDlg(){
@@ -1833,14 +1841,14 @@ async function printDlg(){
   const Lx = LAY(), b = await dlg({title:'Imprimer', width:460, body:fmtFields(Lx.pdf) + `<p class="bp-hint">A2 / A1 / A0 : plus de jours sur une page, pour les plannings longs (traceur ou imprimerie). Le format par défaut se règle dans Mise en page.</p>`,
     buttons:[{label:'Annuler', value:null}, {label:'Imprimer', pri:true}]});
   if (!b) return;
-  printPlan({...Lx, pdf:{...Lx.pdf, size:b.querySelector('#exSize').value, orient:b.querySelector('#exOr').value}});
+  printPlan(fmtRead(b, Lx));
 }
 async function printPlan(layOv){
   if (!U.plan || U.printing) return;
   U.printing = true;
   try {
     toast('Préparation de l’impression…', 2000);
-    const Ly = layOv || LAY(), blob = await makePdf(Ly);
+    const Ly = layOv || LAY(), blob = await makePdf(Ly); fitNote(blob);
     if (H.split) { printPreview(blob); return; }
     if (!window.pdfjsLib) await loadScript(PDFJS_URL + 'pdf.min.js');
     if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_URL + 'pdf.worker.min.js';
