@@ -1803,12 +1803,30 @@ async function makePdf(layOv){
 /* impression : le PDF de la mise en page. PC = PDF dans un cadre caché (qualité vectorielle) ;
    tablette = pages rendues en images (pdf.js) puis impression de la page (Android n'imprime pas un PDF dans un cadre) */
 const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+/* PC : aperçu = le PDF vectoriel dans la visionneuse PDF du navigateur (Chrome / Edge), imprimé avec son bouton 🖨 */
+function printPreview(blob){
+  const url = URL.createObjectURL(blob), sc = document.createElement('div'); sc.className = 'bp-scrim'; sc.style.padding = '0';
+  sc.innerHTML = `<div class="bp-dlg" style="width:100%;height:100%;max-width:none;max-height:none;border-radius:0">
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line,#353a41)">
+      <button class="bp-ib" data-x title="Fermer">${I.x}</button><b style="font:700 18px var(--display,sans-serif);text-transform:uppercase">Aperçu avant impression</b>
+      <span class="bp-hint" style="flex:1">Imprimer avec l’icône imprimante en haut à droite de l’aperçu (ou Ctrl+P après un clic dans l’aperçu).</span>
+      <button class="bp-btn" data-tab>Ouvrir dans un onglet</button><button class="bp-btn" data-dl>${I.exp}Télécharger</button></div>
+    <iframe src="${url}" title="Aperçu du planning" style="flex:1;border:0;width:100%;background:#525659"></iframe></div>`;
+  document.body.appendChild(sc);
+  const done = () => { const k = U.dlgs.indexOf(entry); if (k >= 0) U.dlgs.splice(k, 1); sc.remove(); setTimeout(() => URL.revokeObjectURL(url), 600000); };
+  const entry = {close:done, key:e => { if (e.key === 'Escape') { e.preventDefault(); done(); } }};
+  U.dlgs.push(entry);
+  sc.querySelector('[data-x]').addEventListener('click', done);
+  sc.querySelector('[data-tab]').addEventListener('click', () => { if (!window.open(url, '_blank')) toast('Fenêtre bloquée : autorise les fenêtres pop-up pour ce site', 4000); });
+  sc.querySelector('[data-dl]').addEventListener('click', () => download(blob, fileBase() + '.pdf'));
+}
 async function printPlan(){
   if (!U.plan || U.printing) return;
   U.printing = true;
   try {
     toast('Préparation de l’impression…', 2000);
     const Ly = LAY(), blob = await makePdf(Ly);
+    if (H.split) { printPreview(blob); return; }
     if (!window.pdfjsLib) await loadScript(PDFJS_URL + 'pdf.min.js');
     if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_URL + 'pdf.worker.min.js';
     const pdf = await window.pdfjsLib.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise, urls = [];
