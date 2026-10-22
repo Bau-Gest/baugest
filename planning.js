@@ -411,7 +411,7 @@ const I = {
   del:ic('<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/>'), edit:ic('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
   undo:ic('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'), redo:ic('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
   base:ic('<path d="M4 20h16M6 16h12M8 12h8M10 8h4"/>'), lvl:ic('<path d="M3 20h18M6 16V9M10 16V5M14 16v-6M18 16v-3"/>'),
-  exp:ic('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'), today:ic('<path d="M12 2v20M5 7h14"/>'), cal:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+  exp:ic('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'), print:ic('<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/>'), today:ic('<path d="M12 2v20M5 7h14"/>'), cal:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
   imp:ic('<path d="M12 15V3M7 8l5-5 5 5M5 21h14"/>'), split:ic('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>'),
   win:ic('<path d="M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>'), tbl:ic('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/>'), money:ic('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>')
 };
@@ -724,6 +724,7 @@ function build(){
     <button class="bp-ib" data-a="redo" title="Rétablir (Ctrl+Y)">${I.redo}</button>
     <button class="bp-btn" data-a="baseline" title="Figer le planning de référence (dates et budget initiaux)">${I.base}<span>Référence</span></button>
     <button class="bp-btn" data-a="level" title="Surcharges des ressources : proposition de décalage">${I.lvl}<span>Lisser</span></button>
+    <button class="bp-btn" data-a="print" title="Imprimer le planning (mise en page du PDF : format, colonnes, période, cartouche)">${I.print}<span>Imprimer</span></button>
     <button class="bp-btn" data-a="export" title="PDF A3, Excel, MS Project">${I.exp}<span>Exporter</span></button>
     <button class="bp-ib" data-a="help" title="Manuel du planning" style="font-weight:800;font-size:18px">?</button>
     ${H.split ? `<button class="bp-ib" data-a="split" title="Double vue : planning à gauche, explorateur et fichiers du chantier à droite">${I.split}</button>` : ''}
@@ -860,7 +861,7 @@ function render(){
   if (!document.getElementById('bgPlan')) return;
   $$b('.bp-tabs [data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === U.tab));
   const has = !!U.plan;
-  ['undo', 'redo', 'baseline', 'level', 'export'].forEach(a => { const b = $b(`[data-a="${a}"]`); if (b) b.disabled = !has || (a === 'undo' && !U.undo.length) || (a === 'redo' && !U.redo.length); });
+  ['undo', 'redo', 'baseline', 'level', 'export', 'print'].forEach(a => { const b = $b(`[data-a="${a}"]`); if (b) b.disabled = !has || (a === 'undo' && !U.undo.length) || (a === 'redo' && !U.redo.length); });
   const bb = $b('[data-a="baseline"]'); if (bb) bb.classList.toggle('on', !!(U.plan && U.plan.baseline));
   const main = $b('#bpMain');
   if (!has) {
@@ -1652,6 +1653,7 @@ async function baselineDlg(){
 const fileBase = () => { const s = site(U.siteId); return cleanName((s ? s.label + ' – ' : '') + U.plan.name); };
 async function exportMenu(){
   const v = await dlg({title:'Exporter', width:480, body:`<div class="bp-menu">
+    <button class="bp-btn" data-x="print">${I.print}<span>Imprimer<small>Directement sur l’imprimante, avec la mise en page du PDF</small></span></button>
     <button class="bp-btn" data-x="pdf">${I.exp}<span>PDF A3 paysage<small>Gantt imprimable avec cartouche</small></span></button>
     <button class="bp-btn" data-x="xlsx">${I.tbl}<span>Excel<small>Tâches, ressources, budget, réalisé, fériés</small></span></button>
     <button class="bp-btn" data-x="xml">${I.cal}<span>MS Project (XML)<small>À ouvrir dans Project : Fichier › Ouvrir › XML</small></span></button>
@@ -1662,6 +1664,7 @@ async function exportMenu(){
   if (!v) return;
   if (v === 'import') return importXml();
   if (v === 'layout') return layDlg();
+  if (v === 'print') return printPlan();
   try {
     toast('Préparation de l’export…', 1500);
     const stamp = isoOfDn(todayDn());
@@ -1785,6 +1788,51 @@ async function makePdf(layOv){
   }
   return new Blob([await doc.save()], {type:'application/pdf'});
 }
+/* impression : le PDF de la mise en page. PC = PDF dans un cadre caché (qualité vectorielle) ;
+   tablette = pages rendues en images (pdf.js) puis impression de la page (Android n'imprime pas un PDF dans un cadre) */
+const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+async function printPlan(){
+  if (!U.plan || U.printing) return;
+  U.printing = true;
+  try {
+    toast('Préparation de l’impression…', 2000);
+    const Ly = LAY(), blob = await makePdf(Ly);
+    if (H.split) {
+      const url = URL.createObjectURL(blob), fr = document.createElement('iframe');
+      fr.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';
+      fr.src = url; document.body.appendChild(fr);
+      await new Promise(r => { fr.onload = r; setTimeout(r, 4000); });
+      await new Promise(r => setTimeout(r, 300));
+      try { fr.contentWindow.focus(); fr.contentWindow.print(); }
+      catch (e) { if (!window.open(url, '_blank')) download(blob, fileBase() + '.pdf'); }
+      setTimeout(() => { fr.remove(); URL.revokeObjectURL(url); }, 120000);
+      return;
+    }
+    if (!window.pdfjsLib) await loadScript(PDFJS_URL + 'pdf.min.js');
+    if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_URL + 'pdf.worker.min.js';
+    const pdf = await window.pdfjsLib.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise, urls = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pg = await pdf.getPage(i), vp = pg.getViewport({scale:Math.min(3, 3600 / Math.max(pg.view[2], pg.view[3]))}), c = document.createElement('canvas');
+      c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+      await pg.render({canvasContext:g, viewport:vp}).promise;
+      urls.push(URL.createObjectURL(await new Promise(r => c.toBlob(r, 'image/png'))));
+    }
+    const box = document.createElement('div'); box.id = 'bpPrint';
+    box.innerHTML = `<style>@media screen{#bpPrint{display:none}}
+      @media print{@page{size:${Ly.pdf.size} ${Ly.pdf.orient === 'port' ? 'portrait' : 'landscape'};margin:0}
+      body>*:not(#bpPrint){display:none!important}html,body{margin:0!important;padding:0!important;background:#fff!important;height:auto!important;overflow:visible!important}
+      #bpPrint{display:block}#bpPrint img{display:block;width:100%;height:auto;break-after:page;page-break-after:always}#bpPrint img:last-of-type{break-after:auto;page-break-after:auto}}</style>`
+      + urls.map(u => `<img src="${u}" alt="">`).join('');
+    document.body.appendChild(box);
+    await Promise.all([...box.querySelectorAll('img')].map(im => im.decode ? im.decode().catch(() => {}) : null));
+    const clean = () => { if (!box.isConnected) return; box.remove(); urls.forEach(u => URL.revokeObjectURL(u)); };
+    addEventListener('afterprint', () => setTimeout(clean, 60000), {once:true});
+    window.print();
+    setTimeout(clean, 300000);
+  } catch (e) { toast('Impression impossible : ' + ((e && e.message) || e), 5000); }
+  finally { U.printing = false; }
+}
 async function makeXlsx(){
   await loadScript(XLSX_URL);
   const X = window.XLSX, p = U.plan, s = U.sch, E = evm(p, s), ev = new Map(E.rows.map(r => [r.id, r]));
@@ -1833,6 +1881,7 @@ function bind(el){
       else if (k === 'baseline') baselineDlg();
       else if (k === 'level') levelDlg();
       else if (k === 'export') exportMenu();
+      else if (k === 'print') printPlan();
       else if (k === 'import') importXml();
       return;
     }
