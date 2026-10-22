@@ -419,7 +419,7 @@ Meilleures salutations
 <h3>Exports</h3>
 <table>
   <tr><th>Export</th><th>Pour</th></tr>
-  <tr><td><b>PDF A3 paysage</b></td><td>Séances, affichage dans la baraque, envoi à la DT. Cartouche : entreprise, chantier, planning, indice, date d’impression, page.</td></tr>
+  <tr><td><b>PDF (A4 à A0)</b></td><td>Séances, affichage dans la baraque, envoi à la DT. Format et orientation choisis en haut du menu Exporter (A3 paysage par défaut ; A2, A1, A0 pour les plannings longs). Cartouche : entreprise, chantier, planning, indice, date d’impression, page.</td></tr>
   <tr><td><b>Excel</b></td><td>Analyses, tableaux de coûts. Feuilles : Tâches, Ressources, Budget, Réalisé, Fériés et vacances.</td></tr>
   <tr><td><b>MS Project (XML)</b></td><td>Envoyer à un bureau qui utilise MS Project (Fichier › Ouvrir › XML). L’import XML crée un nouveau planning dans BauGest.</td></tr>
 </table>
@@ -448,8 +448,8 @@ Meilleures salutations
   <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></span> <span class="ico"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></span></td><td>Annuler / Rétablir</td><td>Toutes les modifications (PC : Ctrl+Z / Ctrl+Y).</td></tr>
   <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 20h16M6 16h12M8 12h8M10 8h4"/></svg></span></td><td>Référence</td><td>Figer, remplacer ou supprimer le planning de référence.</td></tr>
   <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 20h18M6 16V9M10 16V5M14 16v-6M18 16v-3"/></svg></span></td><td>Lisser</td><td>Proposition de lissage des surcharges.</td></tr>
-  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg></span></td><td>Imprimer</td><td>Imprime directement le planning avec la mise en page du PDF (format, colonnes, période, cartouche) : choisis l’imprimante dans la fenêtre qui s’ouvre.</td></tr>
-  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span></td><td>Exporter</td><td>PDF A3, Excel, MS Project XML, import XML.</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg></span></td><td>Imprimer</td><td>Demande le format (A4 à A0) et l’orientation, puis imprime le planning avec la mise en page du PDF (colonnes, période, cartouche). Voir « Imprimer » plus bas.</td></tr>
+  <tr><td><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span></td><td>Exporter</td><td>PDF (A4 à A0), Excel, MS Project XML, import XML.</td></tr>
   <tr><td><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg></span> <span class="ico"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span></td><td>Double vue / Fenêtre (PC)</td><td>Planning à gauche et explorateur à droite (largeur réglable au bord) / planning dans une fenêtre séparée pour le 2<sup>e</sup> écran.</td></tr>
   <tr><td><span class="ico" style="font-weight:700">?</span></td><td>Manuel</td><td>Ce manuel.</td></tr>
 </table>
@@ -475,6 +475,7 @@ Meilleures salutations
   <li><b>Lot</b> pour chaque grande partie, puis sélectionne le lot et ajoute ses <b>Tâches</b>.</li>
   <li>Dans la fiche : nom, type (tâche / jalon), <b>durée en jours ouvrés</b>, début au plus tôt (seulement si vraie contrainte).</li>
   <li>Une nouvelle tâche est liée automatiquement (FS) à la tâche sélectionnée : vérifie le lien.</li>
+  <li><b>Couleur de la barre</b> (en bas de la fiche, aussi pour un jalon ou un lot) : <b>Auto</b> = couleurs normales (bleu, rouge critique, vert terminée) ; sinon une des 10 couleurs ou la pastille arc-en-ciel pour une couleur libre. Pratique pour repérer un corps de métier ou une entreprise. Une tâche colorée qui est critique garde un <b>contour rouge</b>.</li>
 </ol>
 <figure class="fig"><img src="aide/fiche-tache.png" alt="Fiche d’une tâche" style="max-width:600px"><figcaption>Fiche d’une tâche : deux liens vers la même fouille (SS+2 et FF+1), deux ressources avec leur coût.</figcaption></figure>
 <h3>3. Lier</h3>
@@ -506,8 +507,15 @@ Meilleures salutations
 <figure class="fig"><img src="aide/budget.png" alt="Onglet Budget"><figcaption>Onglet Budget : indicateurs à la date choisie et tableau par tâche (budget de référence, actuel, avancement, valeur acquise, réel, écart).</figcaption></figure>
 
 <h3>Mise en page</h3>
-<p><b>Réglages › Mise en page › Modifier la mise en page…</b> (ou Exporter › Mise en page) : colonnes du tableau (affichées à l’écran et/ou dans le PDF, ordre), couleurs des barres, texte à côté des barres, hauteur des lignes, taille du texte, zoom à l’ouverture, liens / référence / week-ends ; pour le PDF : A3 ou A4, paysage ou portrait, titre, période (tout le chantier, du … au …, 3 semaines dès aujourd’hui), légende, cartouche, logo (entreprise du chantier, logo du chantier, logo choisi ou image importée), remarque en bas de page. <b>Aperçu PDF</b> montre le résultat sans enregistrer.</p>
+<p><b>Réglages › Mise en page › Modifier la mise en page…</b> (ou Exporter › Mise en page) : colonnes du tableau (affichées à l’écran et/ou dans le PDF, ordre), couleurs des barres, texte à côté des barres, hauteur des lignes, taille du texte, zoom à l’ouverture, liens / référence / week-ends ; pour le PDF : A4, A3, A2, A1 ou A0 (format proposé par défaut à l’impression), paysage ou portrait, titre, période (tout le chantier, du … au …, 3 semaines dès aujourd’hui), légende, cartouche, logo (entreprise du chantier, logo du chantier, logo choisi ou image importée), remarque en bas de page. <b>Aperçu PDF</b> montre le résultat sans enregistrer.</p>
 <p>« S’applique à » : <b>modèle commun</b> (tous les plannings, tablette et PC) ou <b>ce planning seulement</b>. « Revenir au modèle commun » supprime la mise en page propre d’un planning.</p>
+<h3>Imprimer</h3>
+<ol>
+  <li>Bouton <b>Imprimer</b> (barre du haut) : choisis le <b>format</b> et l’<b>orientation</b> pour cette impression (proposés d’après la mise en page), puis <b>Imprimer</b>.</li>
+  <li><b>PC</b> : une fenêtre « Aperçu avant impression » montre le PDF. Imprime avec l’icône imprimante en haut à droite de l’aperçu (ou clic dans l’aperçu puis Ctrl+P). Boutons <b>Ouvrir dans un onglet</b> et <b>Télécharger</b> (pour l’envoyer à une imprimerie).</li>
+  <li><b>Tablette</b> : la fenêtre d’impression d’Android s’ouvre directement.</li>
+</ol>
+<div class="box"><b>Planning trop long ?</b> Choisis <b>A2, A1 ou A0</b> : le texte garde sa taille, la page montre beaucoup plus de jours. Il faut une imprimante qui prend ce format (traceur, imprimerie) ; sur une imprimante A4 le navigateur réduit la page. Autre solution : Mise en page › Période « du … au … » pour imprimer une partie seulement.</div>
 <h3>Couleurs du Gantt</h3>
 <table>
   <tr><td><span class="lg" style="background:#d93b3f"></span> rouge</td><td>Tâche critique (marge 0) ; flèches rouges = liens critiques</td></tr>
@@ -517,6 +525,7 @@ Meilleures salutations
   <tr><td><span class="lg" style="border:2px dashed #e8902c;background:none"></span> contour orange</td><td>Tâche en retard (⚠ dans le tableau)</td></tr>
   <tr><td><span class="lg" style="border-top:2px dashed #d9a400;height:0"></span> pointillé jaune</td><td>Aujourd’hui</td></tr>
   <tr><td><span class="lg" style="background:#1d2023;height:5px"></span> noir</td><td>Lot</td></tr>
+  <tr><td><span class="lg" style="background:#9b6fd6"></span> couleur choisie</td><td>Couleur propre de la tâche (fiche › Couleur de la barre) ; contour rouge si elle est critique</td></tr>
   <tr><td>◆</td><td>Jalon (affiché en fin de journée, comme dans MS Project)</td></tr>
   <tr><td>colonnes grises</td><td>Week-ends, fériés, vacances (survoler pour voir le nom)</td></tr>
 </table>
@@ -674,6 +683,7 @@ Meilleures salutations
   <tr><td><span class="lg" style="background:#3f9e66"></span></td><td>Terminée</td></tr>
   <tr><td><span class="lg" style="background:#8a8f96;height:4px"></span></td><td>Référence</td></tr>
   <tr><td><span class="lg" style="border:2px dashed #e8902c"></span></td><td>En retard</td></tr>
+  <tr><td><span class="lg" style="background:#9b6fd6;outline:2px solid #d93b3f"></span></td><td>Couleur choisie (contour rouge = critique)</td></tr>
 </table>
 <h3>Gestes (tablette)</h3>
 <table>
