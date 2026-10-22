@@ -997,7 +997,7 @@ async function layDlg(){
       ${ck('lyLinks', Ly.screen.links, 'Flèches des liens')}${ck('lyBase', Ly.screen.base, 'Référence (barres grises)')}${ck('lyWe', Ly.screen.weekend, 'Week-ends et fériés grisés')}</div>
     <h4>PDF imprimé</h4>
     <div class="bp-form">
-      <label class="bp-f"><span>Format</span>${sel('lySize', Ly.pdf.size, [['A3', 'A3'], ['A4', 'A4']])}</label>
+      <label class="bp-f"><span>Format</span>${sel('lySize', Ly.pdf.size, [['A4', 'A4'], ['A3', 'A3'], ['A2', 'A2 (grand format)'], ['A1', 'A1 (grand format)'], ['A0', 'A0 (grand format)']])}</label>
       <label class="bp-f"><span>Orientation</span>${sel('lyOrient', Ly.pdf.orient, [['land', 'Paysage'], ['port', 'Portrait']])}</label>
       <label class="bp-f w"><span>Titre (vide = « Planning – nom du planning »)</span><input id="lyTitle" value="${esc(Ly.pdf.title)}" placeholder="Planning – ${esc(p.name)}"></label>
       <label class="bp-f"><span>Période</span>${sel('lyRange', Ly.pdf.range, [['all', 'Tout le chantier'], ['custom', 'Du … au …'], ['3w', '3 semaines dès aujourd’hui']])}</label>
@@ -1663,23 +1663,26 @@ async function baselineDlg(){
 /* ---------- Exports ---------- */
 const fileBase = () => { const s = site(U.siteId); return cleanName((s ? s.label + ' – ' : '') + U.plan.name); };
 async function exportMenu(){
-  const v = await dlg({title:'Exporter', width:480, body:`<div class="bp-menu">
+  const L0 = LAY().pdf;
+  const r = await dlg({title:'Exporter', width:480, body:`${fmtFields(L0)}<div style="height:10px"></div>
+    <div class="bp-menu">
     <button class="bp-btn" data-x="print">${I.print}<span>Imprimer<small>Directement sur l’imprimante, avec la mise en page du PDF</small></span></button>
-    <button class="bp-btn" data-x="pdf">${I.exp}<span>PDF A3 paysage<small>Gantt imprimable avec cartouche</small></span></button>
+    <button class="bp-btn" data-x="pdf">${I.exp}<span>PDF<small>Gantt imprimable avec cartouche, au format choisi ci-dessus</small></span></button>
     <button class="bp-btn" data-x="xlsx">${I.tbl}<span>Excel<small>Tâches, ressources, budget, réalisé, fériés</small></span></button>
     <button class="bp-btn" data-x="xml">${I.cal}<span>MS Project (XML)<small>À ouvrir dans Project : Fichier › Ouvrir › XML</small></span></button>
     <button class="bp-btn" data-x="layout">${I.edit}<span>Mise en page…<small>Colonnes, couleurs, format, cartouche, logo, période</small></span></button>
     <button class="bp-btn" data-x="import">${I.imp}<span>Importer MS Project (XML)<small>Crée un nouveau planning dans ce chantier</small></span></button>
   </div><p class="bp-hint">Le fichier est téléchargé et copié dans le Drive (Planning / Exports).</p>`,
-    buttons:[{label:'Fermer', value:null}], onOpen:(b, done) => b.querySelectorAll('[data-x]').forEach(x => x.addEventListener('click', () => done(x.dataset.x)))});
-  if (!v) return;
+    buttons:[{label:'Fermer', value:null}], onOpen:(b, done) => b.querySelectorAll('[data-x]').forEach(x => x.addEventListener('click', () => done({x:x.dataset.x, size:b.querySelector('#exSize').value, orient:b.querySelector('#exOr').value})))});
+  if (!r) return;
+  const v = r.x, Lx = LAY(), lo = {...Lx, pdf:{...Lx.pdf, size:r.size, orient:r.orient}};
   if (v === 'import') return importXml();
   if (v === 'layout') return layDlg();
-  if (v === 'print') return printPlan();
+  if (v === 'print') return printPlan(lo);
   try {
     toast('Préparation de l’export…', 1500);
     const stamp = isoOfDn(todayDn());
-    const out = v === 'pdf' ? {blob:await makePdf(), name:`${fileBase()} – Gantt ${stamp}.pdf`}
+    const out = v === 'pdf' ? {blob:await makePdf(lo), name:`${fileBase()} – Gantt ${r.size} ${stamp}.pdf`}
       : v === 'xlsx' ? {blob:await makeXlsx(), name:`${fileBase()} – planning ${stamp}.xlsx`}
       : {blob:new Blob([toMSPDI(U.plan, U.sch)], {type:'application/xml'}), name:`${fileBase()} – MS Project ${stamp}.xml`};
     download(out.blob, out.name);
@@ -1704,7 +1707,7 @@ async function makePdf(layOv){
   const hex = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); const n = m ? parseInt(m[1], 16) : 0x888888; return rgb((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255); };
   const doc = await PDFDocument.create(); doc.setTitle(winAnsi(p.name)); doc.setCreator('BauGest');
   const F = await doc.embedFont(StandardFonts.Helvetica), FB = await doc.embedFont(StandardFonts.HelveticaBold);
-  let [W, Hp] = Pp.size === 'A4' ? [841.89, 595.28] : [1190.55, 841.89]; if (Pp.orient === 'port') [W, Hp] = [Hp, W];
+  let [W, Hp] = PAPER[Pp.size] || PAPER.A3; if (Pp.orient === 'port') [W, Hp] = [Hp, W];
   const M = 22, RHp = +Pp.rh || 13.5, FS = +Pp.font || 7.5;
   /* colonnes : réduites si elles prennent plus de 55 % de la largeur */
   let cols = Ly.cols.filter(k => Ly.pdfc.includes(k)).map(k => ({k, l:COLDEF[k].l, w:COLDEF[k].pw * FS / 7.5, r:COLDEF[k].n}));
@@ -1820,18 +1823,30 @@ function printPreview(blob){
   sc.querySelector('[data-tab]').addEventListener('click', () => { if (!window.open(url, '_blank')) toast('Fenêtre bloquée : autorise les fenêtres pop-up pour ce site', 4000); });
   sc.querySelector('[data-dl]').addEventListener('click', () => download(blob, fileBase() + '.pdf'));
 }
-async function printPlan(){
+const PAPER = {A4:[841.89, 595.28], A3:[1190.55, 841.89], A2:[1683.78, 1190.55], A1:[2383.94, 1683.78], A0:[3370.39, 2383.94]};
+const fmtFields = P0 => `<div class="bp-form"><label class="bp-f"><span>Format du papier</span><select id="exSize">${Object.keys(PAPER).map(k => `<option value="${k}" ${P0.size === k ? 'selected' : ''}>${k}${k === 'A2' || k === 'A1' || k === 'A0' ? ' – grand format' : ''}</option>`).join('')}</select></label>
+    <label class="bp-f"><span>Orientation</span><select id="exOr"><option value="land">Paysage</option><option value="port" ${P0.orient === 'port' ? 'selected' : ''}>Portrait</option></select></label></div>`;
+/* bouton Imprimer : format choisi pour cette impression (défaut = mise en page) ; A2 / A1 / A0 pour les plannings longs (traceur) */
+const mmOf = P => { const [a, b] = (PAPER[P.size] || PAPER.A3).map(v => Math.round(v * 25.4 / 72)); return P.orient === 'port' ? [b, a] : [a, b]; };
+async function printDlg(){
+  if (!U.plan) return;
+  const Lx = LAY(), b = await dlg({title:'Imprimer', width:460, body:fmtFields(Lx.pdf) + `<p class="bp-hint">A2 / A1 / A0 : plus de jours sur une page, pour les plannings longs (traceur ou imprimerie). Le format par défaut se règle dans Mise en page.</p>`,
+    buttons:[{label:'Annuler', value:null}, {label:'Imprimer', pri:true}]});
+  if (!b) return;
+  printPlan({...Lx, pdf:{...Lx.pdf, size:b.querySelector('#exSize').value, orient:b.querySelector('#exOr').value}});
+}
+async function printPlan(layOv){
   if (!U.plan || U.printing) return;
   U.printing = true;
   try {
     toast('Préparation de l’impression…', 2000);
-    const Ly = LAY(), blob = await makePdf(Ly);
+    const Ly = layOv || LAY(), blob = await makePdf(Ly);
     if (H.split) { printPreview(blob); return; }
     if (!window.pdfjsLib) await loadScript(PDFJS_URL + 'pdf.min.js');
     if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_URL + 'pdf.worker.min.js';
     const pdf = await window.pdfjsLib.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise, urls = [];
     for (let i = 1; i <= pdf.numPages; i++) {
-      const pg = await pdf.getPage(i), vp = pg.getViewport({scale:Math.min(3, 3600 / Math.max(pg.view[2], pg.view[3]))}), c = document.createElement('canvas');
+      const pg = await pdf.getPage(i), vp = pg.getViewport({scale:Math.min(3, 6000 / Math.max(pg.view[2], pg.view[3]))}), c = document.createElement('canvas');
       c.width = Math.round(vp.width); c.height = Math.round(vp.height);
       const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
       await pg.render({canvasContext:g, viewport:vp}).promise;
@@ -1839,7 +1854,7 @@ async function printPlan(){
     }
     const box = document.createElement('div'); box.id = 'bpPrint';
     box.innerHTML = `<style>@media screen{#bpPrint{display:none}}
-      @media print{@page{size:${Ly.pdf.size} ${Ly.pdf.orient === 'port' ? 'portrait' : 'landscape'};margin:0}
+      @media print{@page{size:${mmOf(Ly.pdf).join('mm ')}mm;margin:0}
       body>*:not(#bpPrint){display:none!important}html,body{margin:0!important;padding:0!important;background:#fff!important;height:auto!important;overflow:visible!important}
       #bpPrint{display:block}#bpPrint img{display:block;width:100%;height:auto;break-after:page;page-break-after:always}#bpPrint img:last-of-type{break-after:auto;page-break-after:auto}}</style>`
       + urls.map(u => `<img src="${u}" alt="">`).join('');
@@ -1900,7 +1915,7 @@ function bind(el){
       else if (k === 'baseline') baselineDlg();
       else if (k === 'level') levelDlg();
       else if (k === 'export') exportMenu();
-      else if (k === 'print') printPlan();
+      else if (k === 'print') printDlg();
       else if (k === 'import') importXml();
       return;
     }
