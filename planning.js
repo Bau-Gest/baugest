@@ -1774,7 +1774,7 @@ async function makePdf(layOv){
         pg.drawLine({start:{x:tx0, y:byc}, end:{x:tx0, y:byc + bhc}, thickness:.5, color:C.txt}); }
       pg.drawLine({start:{x:tx0, y:byc + 28}, end:{x:bxc + bwc, y:byc + 28}, thickness:.5, color:C.txt});
       pg.drawLine({start:{x:tx0 + 230, y:byc}, end:{x:tx0 + 230, y:byc + bhc}, thickness:.5, color:C.txt});
-      text(pg, comp || 'BauGest', tx0 + 5, byc + 44, {b:1, s:9, w:220}); text(pg, st ? st.label : '', tx0 + 5, byc + 33, {s:8, w:220});
+      if (comp) text(pg, comp, tx0 + 5, byc + 44, {b:1, s:9, w:220}); text(pg, st ? st.label : '', tx0 + 5, byc + 33, {s:8, w:220});
       text(pg, p.name, tx0 + 5, byc + 16, {b:1, s:9, w:220}); text(pg, 'Imprimé le ' + chOfDn(todayDn()), tx0 + 5, byc + 5, {s:7.5, col:C.mut});
       text(pg, 'Indice', tx0 + 236, byc + 44, {s:7, col:C.mut}); text(pg, p.indice || '–', tx0 + 236, byc + 32, {b:1, s:11});
       text(pg, 'Page', tx0 + 236, byc + 16, {s:7, col:C.mut}); text(pg, `${pi + 1} / ${pages}`, tx0 + 236, byc + 5, {b:1, s:9});
