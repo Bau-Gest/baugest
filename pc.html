@@ -594,9 +594,65 @@ body.bp-split #app{left:var(--bp-w,55%)}
 .ml-tl span{font:500 12px var(--mono);color:var(--muted)}
 .ml-tl p{margin:0}
 @media (max-width:1100px){.hm-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.hw{grid-column:span 6!important}}
+#pinLock{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;background:var(--bg)}
+#pinLock .pin-card{display:flex;flex-direction:column;align-items:center;gap:14px;padding:28px 32px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+#pinLock .brand{font:600 30px/1 var(--display);color:var(--text)}#pinLock .brand b{color:var(--signal)}
+#pinLock .pin-msg{color:var(--muted);min-height:20px}#pinLock .pin-msg.bad{color:var(--bad)}
+#pinLock .pin-dots{display:flex;gap:12px}
+#pinLock .pin-dots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--muted)}
+#pinLock .pin-dots i.on{background:var(--signal);border-color:var(--signal)}
+#pinLock .pin-pad{display:grid;grid-template-columns:repeat(3,64px);gap:10px}
+#pinLock .pin-pad button{height:52px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:600 20px var(--body);cursor:pointer}
+#pinLock .pin-pad button:hover{background:var(--surface3)}
+#pinLock.shake .pin-dots{animation:pinShake .3s}
+@keyframes pinShake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 </style>
 </head>
 <body>
+
+<!-- ---------- Code PIN d'ouverture (PC) ---------- -->
+<div id="pinLock">
+  <div class="pin-card">
+    <div class="brand">Bau<b>Gest</b></div>
+    <div class="pin-msg">Code PIN</div>
+    <div class="pin-dots"><i></i><i></i><i></i><i></i></div>
+    <div class="pin-pad"><button>1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button><button>7</button><button>8</button><button>9</button><button data-k="C">C</button><button>0</button><button data-k="B">⌫</button></div>
+  </div>
+</div>
+<script>
+(function(){
+  var PIN_HASH='56d5f315cf3312f1e33f250993515e272210f45eab5f60d84c892b70abfbfcfd',KEY='baugest.pinOk';
+  var box=document.getElementById('pinLock');
+  try{if(sessionStorage.getItem(KEY)===PIN_HASH){box.remove();return;}}catch(e){}
+  var v='',busy=false,msg=box.querySelector('.pin-msg'),dots=box.querySelectorAll('.pin-dots i');
+  function show(){dots.forEach(function(d,i){d.classList.toggle('on',i<v.length);});}
+  function sha(t){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)).then(function(b){return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');});}
+  function check(){
+    busy=true;
+    sha(v).then(function(h){
+      if(h===PIN_HASH){
+        try{sessionStorage.setItem(KEY,h);}catch(e){}
+        document.removeEventListener('keydown',onKey,true);box.remove();return;
+      }
+      msg.textContent='Code faux';msg.classList.add('bad');box.classList.add('shake');
+      setTimeout(function(){box.classList.remove('shake');v='';show();busy=false;},350);
+    });
+  }
+  function press(k){
+    if(busy)return;
+    if(k==='C')v='';else if(k==='B')v=v.slice(0,-1);else if(v.length<4)v+=k;
+    msg.textContent='Code PIN';msg.classList.remove('bad');show();
+    if(v.length===4)check();
+  }
+  function onKey(e){
+    var k=e.key;
+    if(/^[0-9]$/.test(k))press(k);else if(k==='Backspace')press('B');else if(k==='Escape')press('C');else return;
+    e.preventDefault();e.stopPropagation();
+  }
+  document.addEventListener('keydown',onKey,true);
+  box.querySelector('.pin-pad').addEventListener('click',function(e){var b=e.target.closest('button');if(b)press(b.dataset.k||b.textContent);});
+})();
+</script>
 
 <div id="login">
   <div class="login-card">
