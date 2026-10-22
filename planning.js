@@ -458,10 +458,13 @@ function css(){ return `
 .bp-sum{font-size:13.5px;color:var(--muted,#9da2a8);margin-left:auto}
 .bp-sum b{color:var(--text,#ecebe6)}
 .bp-gwrap{flex:1;min-height:0;overflow:auto;position:relative;-webkit-overflow-scrolling:touch}
-.bp-grid{display:grid;position:relative}
-.bp-c00{position:sticky;top:0;left:0;z-index:4;background:var(--surface,#1c1f23);border-bottom:1px solid var(--line,#353a41);border-right:2px solid var(--line,#353a41);display:flex;align-items:flex-end}
-.bp-c01{position:sticky;top:0;z-index:3;background:var(--surface,#1c1f23);border-bottom:1px solid var(--line,#353a41)}
-.bp-c10{position:sticky;left:0;z-index:2;background:var(--asphalt,var(--bg,#131518));border-right:2px solid var(--line,#353a41)}
+/* lignes en flex (pas de grille) : un élément collant d'une grille reste prisonnier de sa case → le tableau des tâches partait avec le défilement horizontal */
+.bp-grid{position:relative}
+.bp-hrow{display:flex;position:sticky;top:0;z-index:4}
+.bp-brow{display:flex}
+.bp-c00{flex:none;position:sticky;left:0;z-index:2;background:var(--surface,#1c1f23);border-bottom:1px solid var(--line,#353a41);border-right:2px solid var(--line,#353a41);display:flex;align-items:flex-end}
+.bp-c01{flex:none;background:var(--surface,#1c1f23);border-bottom:1px solid var(--line,#353a41)}
+.bp-c10{flex:none;position:sticky;left:0;z-index:2;background:var(--asphalt,var(--bg,#131518));border-right:2px solid var(--line,#353a41)}
 .bp-hc,.bp-cell{padding:0 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:none}
 .bp-hc{font:700 12px var(--body,sans-serif);text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#9da2a8);padding-bottom:6px}
 .bp-row{display:flex;align-items:center;border-bottom:1px solid rgba(128,128,128,.14);cursor:default}
@@ -1156,14 +1159,14 @@ function renderGantt(){
   }
   const tdn = todayDn(), today = tdn >= d0 && tdn <= d1 ? `<line x1="${x(tdn) + dw / 2}" y1="0" x2="${x(tdn) + dw / 2}" y2="${bh}" stroke="${CO.today}" stroke-width="2" stroke-dasharray="5 4"/>` : '';
   const wrapOld = $b('.bp-gwrap'), sl = wrapOld ? wrapOld.scrollLeft : null, stp = wrapOld ? wrapOld.scrollTop : null, oldZoom = wrapOld && wrapOld.dataset.z;
-  main.innerHTML = bar + `<div class="bp-gwrap" data-z="${U.zoom}" style="font-size:${Ly.screen.font}px;--bp-cfs:${Ly.screen.font - 1}px"><div class="bp-grid" style="grid-template-columns:${tw}px ${cw}px;grid-template-rows:${HEADH}px ${bh}px">
-    <div class="bp-c00">${head}</div>
-    <div class="bp-c01"><svg class="bp-chart" width="${cw}" height="${HEADH}">${th}</svg></div>
-    <div class="bp-c10" id="bpRows">${body}</div>
-    <div><svg class="bp-chart" id="bpChart" width="${cw}" height="${bh}"><defs>
+  main.innerHTML = bar + `<div class="bp-gwrap" data-z="${U.zoom}" style="font-size:${Ly.screen.font}px;--bp-cfs:${Ly.screen.font - 1}px"><div class="bp-grid" style="width:${tw + cw}px">
+    <div class="bp-hrow" style="height:${HEADH}px"><div class="bp-c00" style="width:${tw}px">${head}</div>
+    <div class="bp-c01" style="width:${cw}px"><svg class="bp-chart" width="${cw}" height="${HEADH}">${th}</svg></div></div>
+    <div class="bp-brow"><div class="bp-c10" id="bpRows" style="width:${tw}px">${body}</div>
+    <div style="flex:none"><svg class="bp-chart" id="bpChart" width="${cw}" height="${bh}"><defs>
       <marker id="bpAh" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="var(--muted,#9da2a8)"/></marker>
       <marker id="bpAhc" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="${CO.crit}"/></marker></defs>
-      ${bg}${today}<g>${arrows}</g>${bars}</svg></div>
+      ${bg}${today}<g>${arrows}</g>${bars}</svg></div></div>
   </div></div>`;
   const wrap = $b('.bp-gwrap');
   U.gx = {d0, dw, x};
