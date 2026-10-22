@@ -481,6 +481,10 @@ function css(){ return `
 .bp-chart .mut{fill:var(--muted,#9da2a8)}
 .bp-chart .bar{cursor:grab;touch-action:pan-y}
 .bp-chart .bar .rs,.bp-chart .bar .lk{touch-action:none}
+.bp-swl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.bp-swl .bp-btn{height:32px}
+.bp-sw{width:32px;height:32px;border-radius:7px;border:2px solid var(--line,#353a41);padding:0;cursor:pointer;position:relative;overflow:hidden}
+.bp-sw.on,.bp-swl .bp-btn.on{outline:3px solid var(--signal,#f2c230);outline-offset:1px}
+.bp-swc{background:conic-gradient(#e5484d,#f2c230,#4caf7a,#3e8ed0,#9b6fd6,#e5484d)}.bp-swc input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .bp-chart .bar.sel rect.b,.bp-chart .bar.sel path.b{stroke:var(--signal,#f2c230);stroke-width:2.5}
 .bp-chart .rs{cursor:ew-resize;fill:transparent}
 .bp-chart .lk{cursor:crosshair;fill:var(--surface,#1c1f23);stroke:var(--signal,#f2c230);stroke-width:2;opacity:0}
@@ -1131,14 +1135,14 @@ function renderGantt(){
     if (base && base[t.id]) { const b = base[t.id], a = dnOfIso(b.start) ?? b.start, e = dnOfIso(b.finish) ?? b.finish; bars += b.dur > 0 ? `<rect x="${x(a)}" y="${y + RH - 8}" width="${Math.max(2, x(e + 1) - x(a))}" height="4" rx="1" fill="${CO.base}"/>` : `<path d="M${x(b.mx ?? a)} ${y + RH - 10} l4 4 -4 4 -4 -4z" fill="${CO.base}"/>`; }
     const lbl = barLabel(Ly, o), cr = Ly.crit && r.crit;
     if (o.sum) {
-      bars += `<g class="bar sum" data-id="${esc(t.id)}"><path class="b" d="M${bx} ${y + RH / 2 - 6}h${bw}v10l-5 -5h${-(bw - 10)}l-5 5z" fill="${CO.sum}"/></g>`;
+      bars += `<g class="bar sum" data-id="${esc(t.id)}"><path class="b" d="M${bx} ${y + RH / 2 - 6}h${bw}v10l-5 -5h${-(bw - 10)}l-5 5z" fill="${t.col || CO.sum}"/></g>`;
     } else if (t.ms || r.dur === 0) {
       const cx = x(r.mx), cy = y + RH / 2;
-      bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><path class="b" d="M${cx} ${cy - 8} l8 8 -8 8 -8 -8z" fill="${r.done ? CO.done : cr ? CO.crit : CO.ms}"/><circle class="lk" cx="${cx + 15}" cy="${cy}" r="5"/></g>`
+      bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><path class="b" d="M${cx} ${cy - 8} l8 8 -8 8 -8 -8z" fill="${t.col || (r.done ? CO.done : cr ? CO.crit : CO.ms)}" ${t.col && cr ? `stroke="${CO.crit}" stroke-width="2"` : ''}/><circle class="lk" cx="${cx + 15}" cy="${cy}" r="5"/></g>`
         + `<text x="${cx + 24}" y="${cy + 4}">${esc(t.name)} · ${shortOfDn(r.start)}</text>`;
     } else {
-      const col = r.done ? CO.done : cr ? CO.crit : CO.task, pw = bw * Math.min(100, t.pct) / 100, bh = Math.max(6, RH - 16);
-      bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><rect class="b" x="${bx}" y="${y + (RH - bh) / 2}" width="${bw}" height="${bh}" rx="3" fill="${col}" ${r.late ? `stroke="${CO.late}" stroke-width="2" stroke-dasharray="4 2"` : ''}/>`
+      const col = t.col || (r.done ? CO.done : cr ? CO.crit : CO.task), pw = bw * Math.min(100, t.pct) / 100, bh = Math.max(6, RH - 16);
+      bars += `<g class="bar ${U.sel === t.id ? 'sel' : ''}" data-id="${esc(t.id)}"><rect class="b" x="${bx}" y="${y + (RH - bh) / 2}" width="${bw}" height="${bh}" rx="3" fill="${col}" ${r.late ? `stroke="${CO.late}" stroke-width="2" stroke-dasharray="4 2"` : t.col && cr ? `stroke="${CO.crit}" stroke-width="2"` : ''}/>`
         + (pw > 0 ? `<rect x="${bx}" y="${y + RH / 2 - 2}" width="${pw}" height="4" fill="rgba(0,0,0,.45)" pointer-events="none"/>` : '')
         + `<rect class="rs" x="${bx + bw - 6}" y="${y + 5}" width="10" height="${RH - 12}"/><circle class="lk" cx="${bx + bw + 9}" cy="${y + RH / 2}" r="5"/></g>`
         + (lbl ? `<text class="mut" x="${bx + bw + 18}" y="${y + RH / 2 + 4}">${esc(lbl)}</text>` : '');
@@ -1271,10 +1275,12 @@ async function editTask(id, isNew){
   const leafOpts = except => U.sch.ol.filter(o => !o.sum && o.t.id !== id && !except.has(o.t.id)).map(o => `<option value="${esc(o.t.id)}">${o.wbs} ${esc(o.t.name)}</option>`).join('');
   const resOpts = p.res.map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
   const depRow = d => `<div class="bp-li" data-dep><select data-k="id">${leafOpts(new Set())}</select><select data-k="type" style="flex:0 0 140px">${Object.entries(LINK).map(([k, v]) => `<option value="${k}" ${d.type === k ? 'selected' : ''}>${k} · ${v}</option>`).join('')}</select><input data-k="lag" class="n" type="number" step="1" value="${+d.lag || 0}" title="Décalage en jours ouvrés (négatif = avance)"><span class="bp-hint">j</span><button class="bp-ib" data-rm title="Retirer">${I.x}</button></div>`;
+  const colRow = `<div class="bp-f w"><span>Couleur de la barre</span><div class="bp-swl" id="tkCol" data-v="${esc(t.col || '')}"><button type="button" class="bp-btn" data-c="">Auto</button>${COLORS.concat(['#e5484d', '#6b7178']).map(c => `<button type="button" class="bp-sw" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}<label class="bp-sw bp-swc" title="Autre couleur"><input type="color" value="${esc(t.col || '#3e8ed0')}"></label></div></div>`;
   const asgRow = a => `<div class="bp-li" data-asg><select data-k="r">${resOpts}</select><input data-k="q" class="n" type="number" step="any" min="0" value="${+a.q || 1}"><span class="bp-hint" data-u></span><span class="cost" data-c></span><button class="bp-ib" data-rm title="Retirer">${I.x}</button></div>`;
   const body = sum ? `
     <label class="bp-f"><span>Nom du lot</span><input id="tkName" value="${esc(t.name)}" ${isNew ? 'autofocus' : ''}></label>
     <p class="bp-hint">Lot : ses dates (${shortOfDn(r.start)} → ${shortOfDn(r.finish)}, ${r.dur} j) et son coût sont la somme de ses tâches.</p>
+    ${colRow}
     <label class="bp-f"><span>Remarque</span><textarea id="tkNote" rows="2">${esc(t.note || '')}</textarea></label>` : `
     <div class="bp-form">
       <label class="bp-f w"><span>Nom</span><input id="tkName" value="${esc(t.name)}" ${isNew ? 'autofocus' : ''}></label>
@@ -1291,12 +1297,16 @@ async function editTask(id, isNew){
       <label class="bp-f"><span>Avancement : <b id="tkPctV">${Math.round(t.pct)}</b> %</span><input id="tkPct" type="range" min="0" max="100" step="5" value="${Math.round(t.pct)}"></label>
       <label class="bp-f"><span>Début réel</span><input id="tkAS" type="date" value="${esc(t.aStart || '')}"></label>
       <label class="bp-f"><span>Fin réelle</span><input id="tkAE" type="date" value="${esc(t.aEnd || '')}"></label>
+      ${colRow}
       <label class="bp-f w"><span>Remarque</span><textarea id="tkNote" rows="2">${esc(t.note || '')}</textarea></label>
     </div>
     <p class="bp-hint" id="tkInfo"></p>`;
   const box = await dlg({title:sum ? 'Lot' : isNew ? 'Nouvelle tâche' : 'Tâche ' + wbsOf(id), width:sum ? 520 : 760, body,
     buttons:[{label:'Supprimer', value:'del', dang:true, left:true}, {label:'Annuler', value:null}, {label:'Enregistrer', pri:true}],
     onOpen:b => {
+      const cb = b.querySelector('#tkCol'), cSet = v => { cb.dataset.v = v; cb.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('on', x.dataset.c === v)); const ci = cb.querySelector('input'), cu = !!v && !cb.querySelector(`[data-c="${v}"]`); ci.parentElement.classList.toggle('on', cu); ci.parentElement.style.background = cu ? v : ''; };
+      cSet(cb.dataset.v); cb.addEventListener('click', e => { const x = e.target.closest('[data-c]'); if (x) cSet(x.dataset.c); });
+      cb.querySelector('input').addEventListener('input', e => cSet(e.target.value));
       if (sum) return;
       const deps = b.querySelector('#tkDeps'), asg = b.querySelector('#tkAsg');
       const addDep = d => { deps.insertAdjacentHTML('beforeend', depRow(d)); const row = deps.lastElementChild; if (d.id) row.querySelector('[data-k=id]').value = d.id; };
@@ -1325,6 +1335,7 @@ async function editTask(id, isNew){
   const before = JSON.stringify(U.plan);
   t.name = box.querySelector('#tkName').value.trim() || t.name;
   t.note = box.querySelector('#tkNote').value.trim();
+  const tc = box.querySelector('#tkCol').dataset.v; if (tc) t.col = tc; else delete t.col;
   if (!sum) {
     t.ms = box.querySelector('#tkMs').value === '1';
     t.dur = t.ms ? 0 : Math.max(0, Math.round(+box.querySelector('#tkDur').value || 0));
@@ -1745,10 +1756,11 @@ async function makePdf(layOv){
       const vis = r.start <= d1 && r.finish >= d0, bx = X(r.start), bw = Math.max(1.5, X(r.finish + 1) - bx), bh = Math.max(3, RHp - 6);
       if (base && base[t.id]) { const b = base[t.id]; if (b.dur > 0 && b.start <= d1 && b.finish >= d0) pg.drawRectangle({x:X(b.start), y:y + 1.2, width:Math.max(1, X(b.finish + 1) - X(b.start)), height:2.2, color:C.base}); }
       if (!vis) return;
-      if (o.sum) { pg.drawRectangle({x:bx, y:y + RHp / 2 - 1, width:bw, height:3.5, color:C.sum}); if (inR(r.start)) pg.drawSvgPath('M0 0 L4 0 L0 5 Z', {x:bx, y:y + RHp / 2 + 2.5, color:C.sum}); if (inR(r.finish + 1)) pg.drawSvgPath('M0 0 L-4 0 L0 5 Z', {x:bx + bw, y:y + RHp / 2 + 2.5, color:C.sum}); }
-      else if (t.ms || r.dur === 0) { if (inR(r.mx)) { pg.drawSvgPath('M0 -4.5 L4.5 0 L0 4.5 L-4.5 0 Z', {x:X(r.mx), y:y + RHp / 2, color:r.done ? C.done : Ly.crit && r.crit ? C.crit : C.ms}); text(pg, shortOfDn(r.start), X(r.mx) + 7, y + (RHp - 6.5) / 2 + 1, {s:6.5, col:C.mut}); } }
+      const tc = t.col ? hex(t.col) : null, cc = tc && Ly.crit && r.crit;
+      if (o.sum) { const sco = tc || C.sum; pg.drawRectangle({x:bx, y:y + RHp / 2 - 1, width:bw, height:3.5, color:sco}); if (inR(r.start)) pg.drawSvgPath('M0 0 L4 0 L0 5 Z', {x:bx, y:y + RHp / 2 + 2.5, color:sco}); if (inR(r.finish + 1)) pg.drawSvgPath('M0 0 L-4 0 L0 5 Z', {x:bx + bw, y:y + RHp / 2 + 2.5, color:sco}); }
+      else if (t.ms || r.dur === 0) { if (inR(r.mx)) { pg.drawSvgPath('M0 -4.5 L4.5 0 L0 4.5 L-4.5 0 Z', {x:X(r.mx), y:y + RHp / 2, color:tc || (r.done ? C.done : Ly.crit && r.crit ? C.crit : C.ms), borderColor:cc ? C.crit : undefined, borderWidth:cc ? 1 : 0}); text(pg, shortOfDn(r.start), X(r.mx) + 7, y + (RHp - 6.5) / 2 + 1, {s:6.5, col:C.mut}); } }
       else {
-        pg.drawRectangle({x:bx, y:y + (RHp - bh) / 2, width:bw, height:bh, color:r.done ? C.done : Ly.crit && r.crit ? C.crit : C.task, borderColor:r.late ? C.late : undefined, borderWidth:r.late ? 1 : 0});
+        pg.drawRectangle({x:bx, y:y + (RHp - bh) / 2, width:bw, height:bh, color:tc || (r.done ? C.done : Ly.crit && r.crit ? C.crit : C.task), borderColor:r.late ? C.late : cc ? C.crit : undefined, borderWidth:r.late || cc ? 1 : 0});
         if (t.pct > 0 && t.pct < 100) pg.drawRectangle({x:bx, y:y + RHp / 2 - 1, width:bw * t.pct / 100, height:2, color:rgb(0, 0, 0), opacity:.45});
         const lbl = barLabel(Ly, o);
         if (lbl && bx + bw + 4 < W - M - 30) text(pg, lbl, bx + bw + 3, y + (RHp - 6.5) / 2 + 1, {s:6.5, col:C.mut, w:W - M - (bx + bw + 3)});
