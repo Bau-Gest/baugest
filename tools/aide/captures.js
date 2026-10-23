@@ -50,7 +50,7 @@ await shot('gantt-gc');
 await tab('set');await shot('reglages');
 // fiche tâche : couleur choisie pour la capture seulement
 await tab('gantt');await p.dblclick('.bp-chart .bar[data-id="a23"] rect.b');await p.waitForTimeout(400);
-await p.click('#tkCol [data-c="#3fb0b0"]');await p.fill('#tkNote','Lit de pose et enrobage en gravier 3/16');
+await p.click('#tkCol [data-c="#3fb0b0"]');await p.fill('#tkNote','Lit de pose et enrobage en gravier 3/16');await p.fill('#tkZone','Tronçon 1');
 await p.addStyleTag({content:'.bp-scrim.capfull{align-items:flex-start!important;padding:0!important}.bp-scrim.capfull .bp-dlg{max-height:none!important}'});
 await p.evaluate(()=>document.querySelector('.bp-scrim').classList.add('capfull'));
 await p.setViewportSize({width:1280,height:1200});await shot('fiche-tache','.bp-dlg');await p.keyboard.press('Escape');await p.setViewportSize({width:1280,height:720});await p.waitForTimeout(300);

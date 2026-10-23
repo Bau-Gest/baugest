@@ -476,7 +476,7 @@ Meilleures salutations
 <h3>2. Saisir les tâches</h3>
 <ol>
   <li><b>Lot</b> pour chaque grande partie, puis sélectionne le lot et ajoute ses <b>Tâches</b>.</li>
-  <li>Dans la fiche : nom, type (tâche / jalon), <b>durée en jours ouvrés</b>, début au plus tôt (seulement si vraie contrainte).</li>
+  <li>Dans la fiche : nom, type (tâche / jalon), <b>durée en jours ouvrés</b>, début au plus tôt (seulement si vraie contrainte), <b>zone</b> (facultatif, pour imprimer par zone).</li>
   <li>Une nouvelle tâche est liée automatiquement (FS) à la tâche sélectionnée : vérifie le lien.</li>
   <li><b>Couleur de la barre</b> (en bas de la fiche, aussi pour un jalon ou un lot) : <b>Auto</b> = couleurs normales (bleu, rouge critique, vert terminée) ; sinon une des 10 couleurs ou la pastille arc-en-ciel pour une couleur libre. Pratique pour repérer un corps de métier ou une entreprise. Une tâche colorée qui est critique garde un <b>contour rouge</b>. Pour plusieurs tâches d’un coup, et pour le texte à côté de la barre : bouton <b>Style</b> (voir plus bas).</li>
 </ol>
@@ -537,6 +537,14 @@ Meilleures salutations
   <li><b>PC</b> : une fenêtre « Aperçu avant impression » montre le PDF. Imprime avec l’icône imprimante en haut à droite de l’aperçu (ou clic dans l’aperçu puis Ctrl+P). Boutons <b>Ouvrir dans un onglet</b> et <b>Télécharger</b> (pour l’envoyer à une imprimerie).</li>
   <li><b>Tablette</b> : la fenêtre d’impression d’Android s’ouvre directement.</li>
 </ol>
+<h3>Imprimer une partie du planning</h3>
+<p>Dans la fenêtre <b>Imprimer</b> (et en haut du menu <b>Exporter</b> pour le PDF) :</p>
+<ul>
+  <li><b>Période</b> : comme la mise en page, tout le chantier, <b>du … au …</b>, <b>semaines dès ce lundi</b> (1 à 8, pratique pour la séance de chantier) ou <b>un mois</b>. « Seulement les tâches de la période » enlève les lignes hors de ces dates.</li>
+  <li><b>Tâches</b> : toutes, <b>lots choisis</b> (cases à cocher), <b>zones choisies</b> ou <b>tâches sélectionnées</b> (proposé d’office si plusieurs tâches sont cochées dans le Gantt). Les lots parents restent affichés comme titres.</li>
+  <li><b>Zones</b> : champ <b>Zone</b> dans la fiche d’une tâche (ex. Bâtiment A, Tronçon 2, Secteur nord) ; la zone d’un lot vaut pour ses tâches. Pour plusieurs tâches d’un coup : sélection puis bouton <b>Style</b> › Zone. Colonne « Zone » disponible dans la mise en page.</li>
+</ul>
+<p>Le choix vaut pour cette impression seulement ; il est rappelé dans le sous-titre du PDF (ex. « Période 01.04.2027 – 30.04.2027 · Zone : Tronçon 2 »).</p>
 <div class="box"><b>Planning trop long ?</b> Choisis <b>A2, A1 ou A0</b> : le texte garde sa taille, la page montre beaucoup plus de jours. Il faut une imprimante qui prend ce format (traceur, imprimerie) ; sur une imprimante A4 le navigateur réduit la page. Ou coche <b>Ajuster à la page</b> : tout le planning tient sur une seule feuille du format choisi, réduit autant qu’il faut (le pourcentage s’affiche ; en dessous de 50 % le texte devient petit, prends alors un format plus grand). Autre solution : Mise en page › Période « du … au … » pour imprimer une partie seulement.</div>
 <h3>Couleurs du Gantt</h3>
 <table>

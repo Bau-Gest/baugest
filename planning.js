@@ -421,6 +421,7 @@ const COLORS = ['#3e8ed0', '#e8a33d', '#4caf7a', '#9b6fd6', '#d65f8f', '#3fb0b0'
 function css(){ return `
 #bgPlan{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;background:var(--asphalt,var(--bg,#131518));color:var(--text,#ecebe6);font:15px/1.35 var(--body,system-ui,sans-serif);-webkit-user-select:none;user-select:none}
 #bgPlan[hidden]{display:none}
+.bp-scrim [hidden],#bgPlan [hidden]{display:none!important}
 #bgPlan.bp-split{right:auto;width:var(--bp-w,55%);border-right:2px solid var(--line,#353a41)}
 .bp-splitter{display:none;position:absolute;top:0;bottom:0;right:-6px;width:10px;cursor:col-resize;z-index:5}
 #bgPlan.bp-split .bp-splitter{display:block}
@@ -888,7 +889,7 @@ function render(){
 const COLDEF = {
   wbs:{l:'N°', w:46, pw:30}, name:{l:'Tâche', w:230, pw:196}, dur:{l:'Durée', w:62, pw:34, n:1}, start:{l:'Début', w:84, pw:46, n:1}, fin:{l:'Fin', w:84, pw:46, n:1},
   pred:{l:'Préd.', w:84, pw:62}, pct:{l:'%', w:44, pw:28, n:1}, tf:{l:'Marge', w:64, pw:34, n:1}, aStart:{l:'Début réel', w:90, pw:46, n:1}, aEnd:{l:'Fin réelle', w:90, pw:46, n:1},
-  res:{l:'Ressources', w:170, pw:110}, cost:{l:'Budget CHF', w:96, pw:54, n:1}
+  res:{l:'Ressources', w:170, pw:110}, cost:{l:'Budget CHF', w:96, pw:54, n:1}, zone:{l:'Zone', w:110, pw:60}
 };
 const COL_ORDER = Object.keys(COLDEF);
 const COLOR_LBL = {task:'Tâche', crit:'Chemin critique', done:'Terminée', sum:'Lot', ms:'Jalon', base:'Référence', late:'Retard (contour)', today:'Aujourd’hui'};
@@ -952,9 +953,13 @@ function costMap(){
   return m;
 }
 const resTxt = t => t.asg.map(a => { const re = U.plan.res.find(z => z.id === a.r); return re ? re.name + (a.q && a.q !== 1 ? ' ×' + fmtN(a.q, a.q % 1 ? 1 : 0) : '') : ''; }).filter(Boolean).join(', ');
+/* zone d'une tâche (secteur, bâtiment…) : la sienne, sinon celle du lot parent */
+function zoneOf(t, p){ p = p || U.plan; let x = t, g = 0; while (x && g++ < 30) { if (x.zone) return x.zone; x = x.parent ? p.tasks.find(y => y.id === x.parent) : null; } return ''; }
+const zonesOf = p => [...new Set(p.tasks.map(t => (t.zone || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr', {numeric:true}));
 function cellTxt(k, o, r, cm){
   const t = o.t;
   if (k === 'wbs') return o.wbs;
+  if (k === 'zone') return t.zone || (o.sum ? '' : zoneOf(t));
   if (k === 'name') return t.name;
   if (k === 'dur') return (t.ms && !o.sum ? 0 : r.dur) + ' j';
   if (k === 'start') return shortOfDn(r.start);
@@ -1324,6 +1329,7 @@ async function editTask(id, isNew){
   const body = sum ? `
     <label class="bp-f"><span>Nom du lot</span><input id="tkName" value="${esc(t.name)}" ${isNew ? 'autofocus' : ''}></label>
     <p class="bp-hint">Lot : ses dates (${shortOfDn(r.start)} → ${shortOfDn(r.finish)}, ${r.dur} j) et son coût sont la somme de ses tâches.</p>
+    <label class="bp-f"><span>Zone (secteur, bâtiment… ; reprise par ses tâches)</span><input id="tkZone" list="tkZones" value="${esc(t.zone || '')}"><datalist id="tkZones">${zonesOf(p).map(z => `<option value="${esc(z)}">`).join('')}</datalist></label>
     ${colRow}
     <label class="bp-f"><span>Remarque</span><textarea id="tkNote" rows="2">${esc(t.note || '')}</textarea></label>` : `
     <div class="bp-form">
@@ -1331,6 +1337,7 @@ async function editTask(id, isNew){
       <label class="bp-f"><span>Type</span><select id="tkMs"><option value="0">Tâche</option><option value="1" ${t.ms ? 'selected' : ''}>Jalon (durée 0)</option></select></label>
       <label class="bp-f" id="tkDurF"><span>Durée (jours ouvrés)</span><input id="tkDur" type="number" min="0" step="1" value="${t.dur}"></label>
       <label class="bp-f"><span>Début au plus tôt (vide = dès que possible)</span><input id="tkSnet" type="date" value="${esc(t.snet || '')}"></label>
+      <label class="bp-f"><span>Zone (secteur, bâtiment… ; vide = celle du lot)</span><input id="tkZone" list="tkZones" value="${esc(t.zone || '')}"><datalist id="tkZones">${zonesOf(p).map(z => `<option value="${esc(z)}">`).join('')}</datalist></label>
     </div>
     <h4>Prédécesseurs</h4><div class="bp-lst" id="tkDeps"></div>
     <div><button class="bp-btn" id="tkDepAdd">${I.plus}Lien</button> <span class="bp-hint">FS = commence à la fin · SS = commence avec · FF = finit avec · SF = finit au début. Décalage : ex. +3 j séchage.</span></div>
@@ -1379,6 +1386,7 @@ async function editTask(id, isNew){
   const before = JSON.stringify(U.plan);
   t.name = box.querySelector('#tkName').value.trim() || t.name;
   t.note = box.querySelector('#tkNote').value.trim();
+  { const z = box.querySelector('#tkZone').value.trim(); if (z) t.zone = z; else delete t.zone; }
   const tc = box.querySelector('#tkCol').dataset.v; if (tc) t.col = tc; else delete t.col;
   if (!sum) {
     t.ms = box.querySelector('#tkMs').value === '1';
@@ -1410,14 +1418,15 @@ async function styleDlg(ids){
   ids = ids.filter(id => T(id)); if (!ids.length) return;
   const ts = ids.map(T), MIX = '*';
   const com = f => { const v = ts.map(f); return v.every(x => x === v[0]) ? v[0] : MIX; };
-  const vCol = com(t => t.col || ''), vTc = com(t => (t.st && t.st.tc) || ''), vs = {};
+  const vCol = com(t => t.col || ''), vTc = com(t => (t.st && t.st.tc) || ''), vZn = com(t => t.zone || ''), vs = {};
   for (const k in ST_F) vs[k] = com(t => String((t.st && t.st[k]) || ''));
   const sw = (id, v, cols, auto) => `<div class="bp-swl" id="${id}" data-v="${esc(v)}">${v === MIX ? '<button type="button" class="bp-btn" data-c="*">Inchangé</button>' : ''}<button type="button" class="bp-btn" data-c="">${auto}</button>${cols.map(c => `<button type="button" class="bp-sw" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}<label class="bp-sw bp-swc" title="Autre couleur"><input type="color" value="${esc(v && v !== MIX ? v : '#3e8ed0')}"></label></div>`;
   const selF = k => `<label class="bp-f"><span>${ST_F[k][0]}</span><select data-st="${k}">${vs[k] === MIX ? '<option value="*" selected>— inchangé (différent) —</option>' : ''}${ST_F[k][1].map(([v, l]) => `<option value="${v}" ${vs[k] === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
   const body = `<p class="bp-hint">${ids.length > 1 ? `${ids.length} tâches sélectionnées. ` : ''}Ces réglages s’affichent à l’écran, dans le PDF et à l’impression. « Inchangé » garde la valeur propre à chaque tâche.</p>
     <div class="bp-f w"><span>Couleur de la barre</span>${sw('stCol', vCol, COLORS.concat(['#e5484d', '#6b7178']), 'Auto')}</div>
     <div class="bp-form">${selF('pos')}${selF('txt')}${selF('b')}${selF('h')}${selF('pat')}</div>
-    <div class="bp-f w"><span>Couleur du texte</span>${sw('stTc', vTc, TXT_COLS, 'Auto')}</div>`;
+    <div class="bp-f w"><span>Couleur du texte</span>${sw('stTc', vTc, TXT_COLS, 'Auto')}</div>
+    <label class="bp-f"><span>Zone (impression par zone)</span><input id="stZone" list="stZones" value="${esc(vZn === MIX ? '' : vZn)}" placeholder="${vZn === MIX ? '— inchangé (différent) —' : 'aucune'}"><datalist id="stZones">${zonesOf(U.plan).map(z => `<option value="${esc(z)}">`).join('')}</datalist></label>`;
   const b = await dlg({title:ids.length > 1 ? 'Style de ' + ids.length + ' tâches' : 'Style · ' + T(ids[0]).name, width:620, body,
     buttons:[{label:'Tout par défaut', value:'reset', left:true}, {label:'Annuler', value:null}, {label:'Appliquer', pri:true}],
     onOpen:bx => bx.querySelectorAll('.bp-swl').forEach(cb => {
@@ -1428,6 +1437,8 @@ async function styleDlg(ids){
   if (!b) return;
   mut(() => {
     for (const t of ts) {
+      const zn = b !== 'reset' && b.querySelector('#stZone').value.trim();
+      if (b !== 'reset' && (zn || vZn !== MIX)) { if (zn) t.zone = zn; else delete t.zone; }
       if (b === 'reset') { delete t.col; delete t.st; continue; }
       const st = Object.assign({}, t.st || {}), c = b.querySelector('#stCol').dataset.v, tc = b.querySelector('#stTc').dataset.v;
       if (c !== MIX) { if (c) t.col = c; else delete t.col; }
@@ -1760,7 +1771,7 @@ async function baselineDlg(){
 const fileBase = () => { const s = site(U.siteId); return cleanName((s ? s.label + ' – ' : '') + U.plan.name); };
 async function exportMenu(){
   const L0 = LAY().pdf;
-  const r = await dlg({title:'Exporter', width:480, body:`${fmtFields(L0)}<div style="height:10px"></div>
+  const r = await dlg({title:'Exporter', width:560, body:`${fmtFields(L0)}${pickFields(L0)}<div style="height:10px"></div>
     <div class="bp-menu">
     <button class="bp-btn" data-x="print">${I.print}<span>Imprimer<small>Directement sur l’imprimante, avec la mise en page du PDF</small></span></button>
     <button class="bp-btn" data-x="pdf">${I.exp}<span>PDF<small>Gantt imprimable avec cartouche, au format choisi ci-dessus</small></span></button>
@@ -1769,7 +1780,7 @@ async function exportMenu(){
     <button class="bp-btn" data-x="layout">${I.edit}<span>Mise en page…<small>Colonnes, couleurs, format, cartouche, logo, période</small></span></button>
     <button class="bp-btn" data-x="import">${I.imp}<span>Importer MS Project (XML)<small>Crée un nouveau planning dans ce chantier</small></span></button>
   </div><p class="bp-hint">Le fichier est téléchargé et copié dans le Drive (Planning / Exports).</p>`,
-    buttons:[{label:'Fermer', value:null}], onOpen:(b, done) => b.querySelectorAll('[data-x]').forEach(x => x.addEventListener('click', () => done({x:x.dataset.x, lo:fmtRead(b, LAY())})))});
+    buttons:[{label:'Fermer', value:null}], onOpen:(b, done) => pickBind(b) || b.querySelectorAll('[data-x]').forEach(x => x.addEventListener('click', () => done({x:x.dataset.x, lo:fmtRead(b, LAY())})))});
   if (!r) return;
   const v = r.x, lo = r.lo;
   if (v === 'import') return importXml();
@@ -1817,11 +1828,21 @@ async function makePdf(layOv){
     task:hex(Ly.colors.task), crit:hex(Ly.colors.crit), done:hex(Ly.colors.done), sum:hex(Ly.colors.sum), ms:hex(Ly.colors.ms), base:hex(Ly.colors.base), late:hex(Ly.colors.late), today:hex(Ly.colors.today)};
   const base = p.baseline && Pp.base ? p.baseline.tasks : null;
   /* période */
-  let d0 = cal.start, d1 = s.end, rowsAll = s.ol;
+  let d0 = cal.start, d1 = s.end, rowsAll = s.ol, ftxt = '';
+  const Fl = Pp.filter;
+  if (Fl && Fl.k && Fl.ids && Fl.ids.length) {
+    const set = new Set(Fl.ids), byId = new Map(p.tasks.map(t => [t.id, t])), anc = t => { const a = []; let x = t, g = 0; while (x && g++ < 30) { a.push(x); x = x.parent ? byId.get(x.parent) : null; } return a; };
+    const kept = new Set(s.ol.filter(o => Fl.k === 'zones' ? !o.sum && set.has(zoneOf(o.t, p)) : anc(o.t).some(x => set.has(x.id))).map(o => o.t.id));
+    for (const id of [...kept]) for (const x of anc(byId.get(id)).slice(1)) kept.add(x.id);
+    rowsAll = s.ol.filter(o => kept.has(o.t.id));
+    if (!rowsAll.length) throw new Error('aucune tâche dans cette sélection');
+    ftxt = Fl.k === 'zones' ? (Fl.ids.length > 1 ? 'Zones : ' : 'Zone : ') + Fl.ids.join(', ') : Fl.k === 'lots' ? (Fl.ids.length > 1 ? 'Lots : ' : 'Lot : ') + Fl.ids.map(id => (byId.get(id) || {}).name).filter(Boolean).join(', ') : 'Sélection : ' + rowsAll.filter(o => !o.sum).length + ' tâche(s)';
+  }
   if (Pp.range === 'custom' && dnOfIso(Pp.from) != null && dnOfIso(Pp.to) != null && dnOfIso(Pp.to) >= dnOfIso(Pp.from)) { d0 = dnOfIso(Pp.from); d1 = dnOfIso(Pp.to); }
   else if (Pp.range === '3w') { d0 = todayDn(); while (wdOf(d0) !== 1) d0--; d1 = d0 + 20; }
-  else { if (base) for (const k in base) { const b = base[k]; d0 = Math.min(d0, b.start); d1 = Math.max(d1, b.finish); } for (const r of s.R.values()) { d0 = Math.min(d0, r.start); d1 = Math.max(d1, r.finish); } d0 -= 2; d1 += 3; }
-  if (Pp.range !== 'all' && Pp.only) rowsAll = s.ol.filter(o => { const r = s.R.get(o.t.id); return r.start <= d1 && r.finish >= d0; });
+  else { if (base) for (const k in base) { const b = base[k]; d0 = Math.min(d0, b.start); d1 = Math.max(d1, b.finish); } if (ftxt) { d0 = Infinity; d1 = -Infinity; } for (const o of rowsAll) { const r = s.R.get(o.t.id); d0 = Math.min(d0, r.start); d1 = Math.max(d1, r.finish); } d0 -= 2; d1 += 3; }
+  if (Pp.range !== 'all' && Pp.only) rowsAll = rowsAll.filter(o => { const r = s.R.get(o.t.id); return r.start <= d1 && r.finish >= d0; });
+  if (!rowsAll.length) throw new Error('aucune tâche dans cette période');
   const sc = cw / (d1 - d0 + 1), X = dn => cx0 + (Math.max(d0, Math.min(d1 + 1, dn)) - d0) * sc, inR = dn => dn >= d0 && dn <= d1 + 1;
   const text = (pg, t, x, y, o = {}) => { const f = o.b ? FB : F, sz = o.s || FS; let str = winAnsi(t); if (o.w) { while (str.length > 1 && f.widthOfTextAtSize(str, sz) > o.w) str = str.slice(0, -2) + '…'; }
     const tx = o.r ? x - f.widthOfTextAtSize(str, sz) : o.c ? x - f.widthOfTextAtSize(str, sz) / 2 : x; pg.drawText(str, {x:tx, y, size:sz, font:f, color:o.col || C.txt}); };
@@ -1836,7 +1857,7 @@ async function makePdf(layOv){
   for (let pi = 0; pi < pages; pi++) {
     const pg = doc.addPage([W, Hp]), rows = rowsAll.slice(pi * per, (pi + 1) * per), y0 = rowsTop;
     text(pg, Pp.title || 'Planning – ' + p.name, M, Hp - M - 16, {b:1, s:16, w:W - 2 * M});
-    if (Pp.subtitle) text(pg, `${st ? st.label : ''}   ·   Début ${chOfDn(cal.start)}   ·   Fin ${chOfDn(s.end)}   ·   ${s.pEnd} jours ouvrés${p.baseline ? '   ·   Référence : fin ' + chOfDn(p.baseline.end) : ''}${Pp.range !== 'all' ? '   ·   Période ' + chOfDn(d0) + ' – ' + chOfDn(d1) : ''}`, M, Hp - M - 32, {s:9, col:C.mut, w:W - 2 * M});
+    if (Pp.subtitle) text(pg, `${st ? st.label : ''}   ·   Début ${chOfDn(cal.start)}   ·   Fin ${chOfDn(s.end)}   ·   ${s.pEnd} jours ouvrés${p.baseline ? '   ·   Référence : fin ' + chOfDn(p.baseline.end) : ''}${Pp.range !== 'all' ? '   ·   Période ' + chOfDn(d0) + ' – ' + chOfDn(d1) : ''}${ftxt ? '   ·   ' + ftxt : ''}`, M, Hp - M - 32, {s:9, col:C.mut, w:W - 2 * M});
     let hx = M; for (const c of cols) { text(pg, c.l, c.r ? hx + c.w - 3 : hx + 2, rowsTop + 8, {b:1, s:FS, r:c.r, col:C.mut, w:c.w - 3}); hx += c.w; }
     pg.drawLine({start:{x:M, y:rowsTop}, end:{x:W - M, y:rowsTop}, thickness:.8, color:C.txt});
     const nRows = rows.length, yb = y0 - nRows * RHp;
@@ -1948,14 +1969,48 @@ const PAPER = {A4:[841.89, 595.28], A3:[1190.55, 841.89], A2:[1683.78, 1190.55],
 const fmtFields = P0 => `<div class="bp-form"><label class="bp-f"><span>Format du papier</span><select id="exSize">${Object.keys(PAPER).map(k => `<option value="${k}" ${P0.size === k ? 'selected' : ''}>${k}${k === 'A2' || k === 'A1' || k === 'A0' ? ' – grand format' : ''}</option>`).join('')}</select></label>
     <label class="bp-f"><span>Orientation</span><select id="exOr"><option value="land">Paysage</option><option value="port" ${P0.orient === 'port' ? 'selected' : ''}>Portrait</option></select></label>
     <label class="bp-f w" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="exFit" ${P0.fit ? 'checked' : ''}><span style="font-size:14.5px;color:inherit">Ajuster à la page : tout le planning sur 1 page (réduit si besoin)</span></label></div>`;
-const fmtRead = (b, Lx) => ({...Lx, pdf:{...Lx.pdf, size:b.querySelector('#exSize').value, orient:b.querySelector('#exOr').value, fit:b.querySelector('#exFit').checked}});
+/* quoi imprimer : période (mise en page, tout, du … au …, N semaines dès ce lundi, un mois) et tâches (toutes, lots, zones, sélection) */
+const selIds = () => U.msel.size ? [...U.msel] : U.sel ? [U.sel] : [];
+const pickFields = P0 => {
+  const p = U.plan, lots = U.sch.ol.filter(o => o.sum), zones = zonesOf(p), ns = selIds().length, td = isoOfDn(todayDn());
+  const rgL = P0.range === 'custom' ? `du ${chOfDn(dnOfIso(P0.from))} au ${chOfDn(dnOfIso(P0.to))}` : P0.range === '3w' ? '3 semaines' : 'tout';
+  const ck = (name, v, l, on) => `<label class="bp-hol"><input type="checkbox" data-${name} value="${esc(v)}" ${on ? 'checked' : ''}><span>${esc(l)}</span></label>`;
+  return `<h4>Période</h4><div class="bp-form">
+    <label class="bp-f"><span>Dates</span><select id="exRg"><option value="lay">Comme la mise en page (${rgL})</option><option value="all">Tout le chantier</option><option value="custom">Du … au …</option><option value="w">Semaines dès ce lundi</option><option value="m">Un mois</option></select></label>
+    <label class="bp-f" data-rg="custom"><span>Du</span><input type="date" id="exFrom" value="${esc(P0.from || td)}"></label>
+    <label class="bp-f" data-rg="custom"><span>Au</span><input type="date" id="exTo" value="${esc(P0.to || isoOfDn(todayDn() + 27))}"></label>
+    <label class="bp-f" data-rg="w"><span>Nombre de semaines</span><select id="exW">${[1, 2, 3, 4, 6, 8].map(n => `<option value="${n}" ${n === 3 ? 'selected' : ''}>${n} semaine${n > 1 ? 's' : ''}</option>`).join('')}</select></label>
+    <label class="bp-f" data-rg="m"><span>Mois</span><input type="month" id="exM" value="${td.slice(0, 7)}"></label>
+    <label class="bp-f w" data-rg="custom w m" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="exOnly" checked><span style="font-size:14.5px;color:inherit">Seulement les tâches de la période</span></label></div>
+    <h4>Tâches</h4><div class="bp-form"><label class="bp-f"><span>Imprimer</span><select id="exTk"><option value="all">Toutes les tâches</option>${lots.length ? '<option value="lots">Lots choisis</option>' : ''}${zones.length ? '<option value="zones">Zones choisies</option>' : ''}${ns ? `<option value="sel" ${ns > 1 ? 'selected' : ''}>Tâches sélectionnées (${ns})</option>` : ''}</select></label></div>
+    ${lots.length ? `<div class="bp-hols" data-tk="lots">${lots.map(o => ck('lot', o.t.id, o.wbs + ' ' + o.t.name, false)).join('')}</div>` : ''}
+    ${zones.length ? `<div class="bp-hols" data-tk="zones">${zones.map(z => ck('zn', z, z, false)).join('')}</div>` : '<p class="bp-hint" data-tk="all">Zones : à saisir dans la fiche des tâches (ou Style pour plusieurs tâches) pour imprimer par zone.</p>'}`;
+};
+const pickBind = b => { const up = () => { const rg = b.querySelector('#exRg').value, tk = b.querySelector('#exTk').value;
+  b.querySelectorAll('[data-rg]').forEach(x => x.hidden = !x.dataset.rg.split(' ').includes(rg)); b.querySelectorAll('[data-tk]').forEach(x => x.hidden = x.dataset.tk !== tk); };
+  b.querySelector('#exRg').addEventListener('change', up); b.querySelector('#exTk').addEventListener('change', up); up(); };
+const fmtRead = (b, Lx) => {
+  const P = {...Lx.pdf, size:b.querySelector('#exSize').value, orient:b.querySelector('#exOr').value, fit:b.querySelector('#exFit').checked};
+  const rg = b.querySelector('#exRg'), tk = b.querySelector('#exTk');
+  if (rg) {
+    const v = rg.value, only = b.querySelector('#exOnly').checked;
+    if (v === 'all') Object.assign(P, {range:'all'});
+    else if (v === 'custom') Object.assign(P, {range:'custom', from:b.querySelector('#exFrom').value, to:b.querySelector('#exTo').value, only});
+    else if (v === 'w') { let d = todayDn(); while (wdOf(d) !== 1) d--; Object.assign(P, {range:'custom', from:isoOfDn(d), to:isoOfDn(d + 7 * +b.querySelector('#exW').value - 1), only}); }
+    else if (v === 'm') { const m = b.querySelector('#exM').value || isoOfDn(todayDn()).slice(0, 7), [y, mo] = m.split('-').map(Number); Object.assign(P, {range:'custom', from:`${m}-01`, to:isoOfDn(Date.UTC(y, mo, 0) / DAY), only}); }
+    const k = tk.value, ids = k === 'lots' ? [...b.querySelectorAll('[data-lot]:checked')].map(x => x.value) : k === 'zones' ? [...b.querySelectorAll('[data-zn]:checked')].map(x => x.value) : k === 'sel' ? selIds() : [];
+    P.filter = k !== 'all' && ids.length ? {k, ids} : null;
+  }
+  return {...Lx, pdf:P};
+};
 const fitNote = blob => { if (blob.fitPct && blob.fitPct < 100) toast(`Ajusté à la page : réduit à ${blob.fitPct} %`, 3500); };
 /* bouton Imprimer : format choisi pour cette impression (défaut = mise en page) ; A2 / A1 / A0 pour les plannings longs (traceur) */
 const mmOf = P => { const [a, b] = (PAPER[P.size] || PAPER.A3).map(v => Math.round(v * 25.4 / 72)); return P.orient === 'port' ? [b, a] : [a, b]; };
 async function printDlg(){
   if (!U.plan) return;
-  const Lx = LAY(), b = await dlg({title:'Imprimer', width:460, body:fmtFields(Lx.pdf) + `<p class="bp-hint">A2 / A1 / A0 : plus de jours sur une page, pour les plannings longs (traceur ou imprimerie). Le format par défaut se règle dans Mise en page.</p>`,
-    buttons:[{label:'Annuler', value:null}, {label:'Imprimer', pri:true}]});
+  const Lx = LAY(), b = await dlg({title:'Imprimer', width:560, body:fmtFields(Lx.pdf) + `<p class="bp-hint">A2 / A1 / A0 : plus de jours sur une page, pour les plannings longs (traceur ou imprimerie). Le format par défaut se règle dans Mise en page.</p>` + pickFields(Lx.pdf),
+    buttons:[{label:'Annuler', value:null}, {label:'Imprimer', pri:true, check:bx => { const k = bx.querySelector('#exTk').value; if ((k === 'lots' || k === 'zones') && !bx.querySelector(k === 'lots' ? '[data-lot]:checked' : '[data-zn]:checked')) { toast(k === 'lots' ? 'Coche au moins un lot' : 'Coche au moins une zone'); return false; } return true; }}],
+    onOpen:pickBind});
   if (!b) return;
   printPlan(fmtRead(b, Lx));
 }
