@@ -898,7 +898,7 @@ const DEF_LAY = {
   colors:{task:'#3e8ed0', crit:'#e5484d', done:'#4caf7a', sum:'#6b7178', ms:'#6b7178', base:'#8a8f96', late:'#ff9f43', today:'#f2c230'},
   crit:true, barText:'res',
   screen:{rh:32, font:13, zoom:'week', links:true, base:true, weekend:true},
-  pdf:{size:'A3', orient:'land', title:'', subtitle:true, legend:true, cart:true, logo:'comp', logoSrc:'', range:'all', from:'', to:'', only:false, fit:false, font:7.5, rh:13.5, links:true, base:true, zebra:true, note:''}
+  pdf:{size:'A3', orient:'land', title:'', subtitle:true, legend:true, cart:true, logo:'comp', logoSrc:'', logoPos:'tl', logoH:15, range:'all', from:'', to:'', only:false, fit:false, font:7.5, rh:13.5, links:true, base:true, zebra:true, note:''}
 };
 const clone = o => JSON.parse(JSON.stringify(o));
 function mergeLay(a, b){
@@ -1026,11 +1026,14 @@ async function layDlg(){
       ${ck('lySub', Ly.pdf.subtitle, 'Ligne d’infos sous le titre')}${ck('lyLeg', Ly.pdf.legend, 'Légende')}${ck('lyCart', Ly.pdf.cart, 'Cartouche')}
       ${ck('lyPLinks', Ly.pdf.links, 'Flèches des liens')}${ck('lyPBase', Ly.pdf.base, 'Référence')}${ck('lyZebra', Ly.pdf.zebra, 'Lignes alternées')}${ck('lyFit', Ly.pdf.fit, 'Ajuster à la page (tout sur 1 page)')}
       <label class="bp-f w"><span>Remarque en bas de page</span><input id="lyNote" value="${esc(Ly.pdf.note)}" placeholder="ex. Document provisoire – sous réserve des intempéries"></label>
-      <label class="bp-f w"><span>Logo du cartouche</span>${sel('lyLogo', Ly.pdf.logo, [['comp', 'Logo de l’entreprise du chantier'], ['site', 'Logo du chantier'], ['pick', 'Logo choisi (ci-dessous)'], ['none', 'Pas de logo']])}</label>
+      <label class="bp-f"><span>Logo</span>${sel('lyLogo', Ly.pdf.logo, [['comp', 'Logo de l’entreprise du chantier'], ['site', 'Logo du chantier'], ['pick', 'Logo choisi (ci-dessous)'], ['none', 'Pas de logo']])}</label>
+      <label class="bp-f"><span>Place du logo</span>${sel('lyLogoPos', Ly.pdf.logoPos || 'tl', [['tl', 'En haut à gauche'], ['cart', 'Dans le cartouche'], ['both', 'En haut à gauche + cartouche']])}</label>
+      <label class="bp-f"><span>Hauteur du logo en haut : <b id="lyLogoHV">${+Ly.pdf.logoH || 15}</b> mm</span><input id="lyLogoH" type="range" min="8" max="60" step="1" value="${+Ly.pdf.logoH || 15}"></label>
       <div class="bp-f w" id="lyPick">${logoGrid(logoCur)}</div>
     </div>`,
     buttons:[{label:'Valeurs d’origine', value:'reset', left:true}, ...(own ? [{label:'Revenir au modèle commun', value:'common'}] : []), {label:'Aperçu PDF', value:'preview'}, {label:'Annuler', value:null}, {label:'Enregistrer', pri:true}],
     onOpen:b => {
+      b.querySelector('#lyLogoH').addEventListener('input', e => { b.querySelector('#lyLogoHV').textContent = e.target.value; });
       const upd = () => { const rg = b.querySelector('#lyRange').value; b.querySelectorAll('[data-rg]').forEach(e => e.hidden = rg !== 'custom'); b.querySelector('[data-rg2]').hidden = rg === 'all';
         b.querySelector('#lyPick').hidden = b.querySelector('#lyLogo').value !== 'pick'; };
       b.addEventListener('change', upd); upd();
@@ -1047,7 +1050,7 @@ async function layDlg(){
           colors:{}, crit:v('lyCrit').checked, barText:v('lyBarText').value,
           screen:{rh:+v('lyRh').value, font:+v('lyFont').value, zoom:v('lyZoom').value, links:v('lyLinks').checked, base:v('lyBase').checked, weekend:v('lyWe').checked},
           pdf:{size:v('lySize').value, orient:v('lyOrient').value, title:v('lyTitle').value.trim(), subtitle:v('lySub').checked, legend:v('lyLeg').checked, cart:v('lyCart').checked,
-            logo:v('lyLogo').value, logoSrc:v('lyLogo').value === 'pick' ? logoCur : '', range:v('lyRange').value, from:v('lyFrom').value, to:v('lyTo').value, only:v('lyOnly').checked,
+            logo:v('lyLogo').value, logoSrc:v('lyLogo').value === 'pick' ? logoCur : '', logoPos:v('lyLogoPos').value, logoH:+v('lyLogoH').value || 15, range:v('lyRange').value, from:v('lyFrom').value, to:v('lyTo').value, only:v('lyOnly').checked,
             font:+v('lyPFont').value, rh:+v('lyPRh').value, links:v('lyPLinks').checked, base:v('lyPBase').checked, zebra:v('lyZebra').checked, fit:v('lyFit').checked, note:v('lyNote').value.trim()}};
         b.querySelectorAll('[data-color]').forEach(c => o.colors[c.dataset.color] = c.value);
         return mergeLay(DEF_LAY, o);
@@ -1822,7 +1825,15 @@ async function makePdf(layOv){
   let cols = Ly.cols.filter(k => Ly.pdfc.includes(k)).map(k => ({k, l:COLDEF[k].l, w:COLDEF[k].pw * FS / 7.5, r:COLDEF[k].n}));
   let tw = cols.reduce((a, c) => a + c.w, 0); const maxTw = (W - 2 * M) * .55; if (tw > maxTw) { const k = maxTw / tw; cols.forEach(c => c.w *= k); tw = maxTw; }
   const cx0 = M + tw + 6, cw = W - M - cx0;
-  const titleH = Pp.subtitle ? 44 : 30, top = Hp - M - titleH, tlH = 26, rowsTop = top - tlH;
+  /* logo : en haut à gauche (hauteur logoH mm) et / ou dans le cartouche */
+  let logo = null;
+  const lPos = Pp.logoPos || 'tl', lTop = lPos !== 'cart', lCart = Pp.cart && lPos !== 'tl';
+  if (Pp.logo !== 'none' && (lTop || lCart)) {
+    const L = logoList(), src = Pp.logo === 'comp' ? L.comp : Pp.logo === 'site' ? L.site : Pp.logoSrc;
+    if (src) try { const png = await logoPng(src); if (png) logo = await doc.embedPng(png); } catch (e) {}
+  }
+  const lH = logo && lTop ? Math.max(14, (+Pp.logoH || 15) * 72 / 25.4) : 0, lW = lH ? Math.min(W * .4, logo.width * lH / logo.height) : 0, lH2 = lW && logo.width * lH / logo.height > lW ? lW * logo.height / logo.width : lH, tX = M + (lW ? lW + 12 : 0);
+  const titleH = Math.max(Pp.subtitle ? 44 : 30, lH2 + 8), top = Hp - M - titleH, tlH = 26, rowsTop = top - tlH;
   const foot = M + (Pp.cart ? 64 : Pp.legend || Pp.note ? 30 : 14), per = Math.max(1, Math.floor((rowsTop - foot) / RHp));
   const C = {txt:rgb(.1, .11, .13), mut:rgb(.42, .45, .48), line:rgb(.8, .8, .8), off:rgb(.93, .93, .93), zebra:rgb(.97, .97, .97),
     task:hex(Ly.colors.task), crit:hex(Ly.colors.crit), done:hex(Ly.colors.done), sum:hex(Ly.colors.sum), ms:hex(Ly.colors.ms), base:hex(Ly.colors.base), late:hex(Ly.colors.late), today:hex(Ly.colors.today)};
@@ -1848,16 +1859,12 @@ async function makePdf(layOv){
     const tx = o.r ? x - f.widthOfTextAtSize(str, sz) : o.c ? x - f.widthOfTextAtSize(str, sz) / 2 : x; pg.drawText(str, {x:tx, y, size:sz, font:f, color:o.col || C.txt}); };
   if (Pp.fit && kf === 1 && rowsAll.length > per) { const k = (rowsAll.length * RHp + Hp - (rowsTop - foot) + 1) / Hp; return makePdf({...Ly, pdf:{...Pp, _k:k}}); }
   const pages = Math.max(1, Math.ceil(rowsAll.length / per)), comp = H.company ? H.company(U.siteId) : '';
-  /* logo du cartouche */
-  let logo = null;
-  if (Pp.cart && Pp.logo !== 'none') {
-    const L = logoList(), src = Pp.logo === 'comp' ? L.comp : Pp.logo === 'site' ? L.site : Pp.logoSrc;
-    if (src) try { const png = await logoPng(src); if (png) logo = await doc.embedPng(png); } catch (e) {}
-  }
+
   for (let pi = 0; pi < pages; pi++) {
     const pg = doc.addPage([W, Hp]), rows = rowsAll.slice(pi * per, (pi + 1) * per), y0 = rowsTop;
-    text(pg, Pp.title || 'Planning – ' + p.name, M, Hp - M - 16, {b:1, s:16, w:W - 2 * M});
-    if (Pp.subtitle) text(pg, `${st ? st.label : ''}   ·   Début ${chOfDn(cal.start)}   ·   Fin ${chOfDn(s.end)}   ·   ${s.pEnd} jours ouvrés${p.baseline ? '   ·   Référence : fin ' + chOfDn(p.baseline.end) : ''}${Pp.range !== 'all' ? '   ·   Période ' + chOfDn(d0) + ' – ' + chOfDn(d1) : ''}${ftxt ? '   ·   ' + ftxt : ''}`, M, Hp - M - 32, {s:9, col:C.mut, w:W - 2 * M});
+    if (lW) pg.drawImage(logo, {x:M, y:Hp - M - lH2, width:lW, height:lH2});
+    text(pg, Pp.title || 'Planning – ' + p.name, tX, Hp - M - 16, {b:1, s:16, w:W - M - tX});
+    if (Pp.subtitle) text(pg, `${st ? st.label : ''}   ·   Début ${chOfDn(cal.start)}   ·   Fin ${chOfDn(s.end)}   ·   ${s.pEnd} jours ouvrés${p.baseline ? '   ·   Référence : fin ' + chOfDn(p.baseline.end) : ''}${Pp.range !== 'all' ? '   ·   Période ' + chOfDn(d0) + ' – ' + chOfDn(d1) : ''}${ftxt ? '   ·   ' + ftxt : ''}`, tX, Hp - M - 32, {s:9, col:C.mut, w:W - M - tX});
     let hx = M; for (const c of cols) { text(pg, c.l, c.r ? hx + c.w - 3 : hx + 2, rowsTop + 8, {b:1, s:FS, r:c.r, col:C.mut, w:c.w - 3}); hx += c.w; }
     pg.drawLine({start:{x:M, y:rowsTop}, end:{x:W - M, y:rowsTop}, thickness:.8, color:C.txt});
     const nRows = rows.length, yb = y0 - nRows * RHp;
@@ -1929,9 +1936,9 @@ async function makePdf(layOv){
     }
     if (Pp.note) text(pg, Pp.note, M, ly + (Pp.legend ? -14 : 0), {s:8, b:1, col:C.mut, w:W - 2 * M - (Pp.cart ? 340 : 0)});
     if (Pp.cart) {
-      const lw = logo ? 70 : 0, bwc = 330 + lw, bxc = W - M - bwc, byc = M, bhc = 56, tx0 = bxc + lw;
+      const lw = logo && lCart ? 70 : 0, bwc = 330 + lw, bxc = W - M - bwc, byc = M, bhc = 56, tx0 = bxc + lw;
       pg.drawRectangle({x:bxc, y:byc, width:bwc, height:bhc, borderColor:C.txt, borderWidth:.8});
-      if (logo) { const k = Math.min((lw - 10) / logo.width, (bhc - 10) / logo.height); pg.drawImage(logo, {x:bxc + (lw - logo.width * k) / 2, y:byc + (bhc - logo.height * k) / 2, width:logo.width * k, height:logo.height * k});
+      if (lw) { const k = Math.min((lw - 10) / logo.width, (bhc - 10) / logo.height); pg.drawImage(logo, {x:bxc + (lw - logo.width * k) / 2, y:byc + (bhc - logo.height * k) / 2, width:logo.width * k, height:logo.height * k});
         pg.drawLine({start:{x:tx0, y:byc}, end:{x:tx0, y:byc + bhc}, thickness:.5, color:C.txt}); }
       pg.drawLine({start:{x:tx0, y:byc + 28}, end:{x:bxc + bwc, y:byc + 28}, thickness:.5, color:C.txt});
       pg.drawLine({start:{x:tx0 + 230, y:byc}, end:{x:tx0 + 230, y:byc + bhc}, thickness:.5, color:C.txt});
