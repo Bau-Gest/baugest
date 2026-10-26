@@ -319,7 +319,7 @@ body.bp-split #app{left:var(--bp-w,55%)}
 #pqList{overflow:auto;padding:6px}
 .pq-pv{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:8px;border:0;border-radius:8px;background:none;color:var(--text)}
 .pq-pv:hover{background:var(--surface2)}
-.pq-row{display:flex;align-items:center;gap:6px}.pq-row .pq-pv{flex:1;min-width:0}.pq-rc{flex:none;border-color:var(--signal);color:var(--signal)}
+.pq-row{display:flex;align-items:center;gap:6px}.pq-row .pq-pv{flex:1;min-width:0}
 .pq-pv .t{display:grid;min-width:0}
 .pq-pv .t b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pq-pv .t small{color:var(--muted);font-size:12px}
@@ -2985,18 +2985,15 @@ async function pqLoadList(){
     const day = f => (f.appProperties && f.appProperties.pvdate) || (f.createdTime || '').slice(0, 10);
     const srt = (a, b) => day(b).localeCompare(day(a)) || (+(b.appProperties || {}).pvn || 0) - (+(a.appProperties || {}).pvn || 0);
     const pdfs = all.filter(f => f.mimeType !== FOLD);
-    PQ.recaps = new Map();
-    for (const f of pdfs) { const m = PQ_RECAP.exec(f.name); if (!m) continue; const k = m[1].toLowerCase().trim(), o = PQ.recaps.get(k); if (!o || f.createdTime > o.createdTime) PQ.recaps.set(k, f); }
     PQ.list = pdfs.filter(f => !PQ_RECAP.test(f.name)).sort(srt); PQ.old = old.sort(srt);
-    for (const f of PQ.list.concat(PQ.old, [...PQ.recaps.values()])) f._k = kindOf(f);
+    for (const f of PQ.list.concat(PQ.old)) f._k = kindOf(f);
   } catch (e) { if (tok === PQ.tok) { $('#pqList').innerHTML = `<p class="hint" style="padding:12px;color:var(--bad)">Lecture impossible : ${esc(e.message)}</p>`; return; } }
   if (tok === PQ.tok) renderPqList();
 }
-/* Récap avant séance : « <nom du PV> – récap[ AAAA-MM-JJ].pdf » à côté du PV (tâche « Récap PV BauGest »), même règle que la tablette. */
+/* anciens récaps avant séance (tâche « Récap PV » supprimée le 26.10.2026) : jamais listés comme PV, même règle que la tablette */
 const PQ_RECAP = /^(.*?)\s+[–-]\s+r[ée]cap(?:\s+\d{4}-\d{2}-\d{2})?\.pdf$/i;
 function pqItem(f){
-  const rc = PQ.recaps && PQ.recaps.get(f.name.replace(/\.pdf$/i, '').toLowerCase().trim());
-  return `<div class="pq-row">${pqBtn(f)}${rc ? `<button class="btn pq-rc" data-pqf="${esc(rc.id)}" title="Comparatif avec le PV précédent">Récap séance</button>` : ''}</div>`;
+  return `<div class="pq-row">${pqBtn(f)}</div>`;
 }
 function pqBtn(f){
   const a = f.appProperties || {}, d = a.pvdate || (f.createdTime || '').slice(0, 10);
@@ -3028,7 +3025,7 @@ function bindPq(){
   $('#pqList').addEventListener('click', e => {
     if (e.target.closest('#pqOldTog')) { PQ.showOld = !PQ.showOld; renderPqList(); return; }
     const b = e.target.closest('[data-pqf]'); if (!b) return;
-    const f = PQ.list.concat(PQ.old, [...(PQ.recaps || new Map()).values()]).find(x => x.id === b.dataset.pqf); if (!f) return;
+    const f = PQ.list.concat(PQ.old).find(x => x.id === b.dataset.pqf); if (!f) return;
     const list = PQ.old.includes(f) ? PQ.old : PQ.list;
     endPick(); openIn(P.split ? V.active : 0, f, list);
   });
@@ -3513,8 +3510,7 @@ function calSiteBody(s){
   return {summary:'Séance de chantier – ' + siteLabel(s), location:m.place || (geo ? s.lat.toFixed(6) + ', ' + s.lon.toFixed(6) : ''),
     description:['Chantier : ' + siteLabel(s), c && 'Entreprise : ' + c.name + (s.abbr ? ' (' + s.abbr + ')' : ''),
       'Rythme : le ' + SE_DAYN[t.getDay()] + ', ' + (SE_EVERY[every] || 'toutes les ' + every + ' semaines'), m.place && 'Lieu : ' + m.place,
-      geo && 'Position : https://www.openstreetmap.org/?mlat=' + s.lat.toFixed(6) + '&mlon=' + s.lon.toFixed(6) + '#map=17/' + s.lat.toFixed(6) + '/' + s.lon.toFixed(6),
-      'Récap des PV DT : prêt la veille vers 17h40, à côté du dernier PV (Drive › ' + siteFolder(s) + ' › ' + PVDT_DIR + ', bouton « Récap séance » dans BauGest) · rappel le matin vers 7h'].filter(Boolean).join('\n'),
+      geo && 'Position : https://www.openstreetmap.org/?mlat=' + s.lat.toFixed(6) + '&mlon=' + s.lon.toFixed(6) + '#map=17/' + s.lat.toFixed(6) + '/' + s.lon.toFixed(6)].filter(Boolean).join('\n'),
     start:{dateTime:calLocal(t), timeZone:CAL_TZ}, end:{dateTime:calLocal(new Date(t.getTime() + (+m.dur || 90) * 60000)), timeZone:CAL_TZ},
     recurrence:['RRULE:FREQ=WEEKLY;INTERVAL=' + every + ';BYDAY=' + SE_RR[t.getDay()]],
     colorId:'9', reminders:{useDefault:false, overrides:[{method:'popup', minutes:60}]}, status:'confirmed',
@@ -4205,8 +4201,8 @@ function sdMeet(dlg){
 }
 function sdHint(dlg){
   const m = sdMeet(dlg), h = dlg.querySelector('#sdHint');
-  h.textContent = !m ? 'Sans date : pas de séance, pas de récap PV ni d’événement dans Google Agenda.'
-    : `Le ${SE_DAYN[new Date(m.from + 'T12:00:00').getDay()]} à ${m.time.replace(':', 'h')}, ${SE_EVERY[m.every]}. Événement récurrent dans Google Agenda · récap des PV DT la veille (le vendredi pour une séance du lundi).`;
+  h.textContent = !m ? 'Sans date : pas de séance ni d’événement dans Google Agenda.'
+    : `Le ${SE_DAYN[new Date(m.from + 'T12:00:00').getDay()]} à ${m.time.replace(':', 'h')}, ${SE_EVERY[m.every]}. Événement récurrent dans Google Agenda.`;
 }
 async function editSiteDlg(id){
   const s = siteById(id); if (!s) { toast('Chantier introuvable', 'err'); return; }
@@ -4227,7 +4223,7 @@ async function editSiteDlg(id){
     <h4>Notre entreprise sur ce chantier</h4>
     <select id="sdComp">${opt('', comps.length ? '— Aucune —' : 'Aucune entreprise (à créer dans Devis › Entreprises)', s.comp || '')}${comps.map(c => opt(c.id, c.name, s.comp || '')).join('')}</select>
     <input type="text" id="sdAbbr" value="${esc(s.abbr || '')}" placeholder="Abréviations dans les PV : DUP, Ent. Dupont" aria-label="Abréviations de l'entreprise dans les PV">
-    <small class="muted">Sert au récap des PV DT avant chaque séance : les points qui concernent cette entreprise sont mis en avant.</small>`,
+    <small class="muted">Sert à repérer dans les PV DT et les mails les points qui concernent cette entreprise.</small>`,
     onOpen:dlg => { sdHint(dlg); ['#sdFrom', '#sdTime', '#sdEvery'].forEach(k => dlg.querySelector(k).addEventListener('input', () => sdHint(dlg))); }});
   if (!r) return;
   const v = k => r.querySelector(k).value.trim(), num = k => parseFloat(v(k).replace(',', '.'));
@@ -5512,7 +5508,7 @@ function hmToday(){
   const late = all.reduce((n, b) => n + b.tasks.filter(t => t.due && t.due < Date.now()).length, 0), today = all.reduce((n, b) => n + b.tasks.filter(tdUrgent).length, 0) - late;
   const c = [];
   c.push(`<button class="hm-ev ${late + today ? 'al' : 'ok'}" data-hm="todo"><span class="t">${late + today}</span><span><b>${late + today ? [late && late + ' en retard', today && today + ' pour aujourd’hui'].filter(Boolean).join(', ') : 'Rien en retard'}</b><small>Rappels À faire</small></span></button>`);
-  for (const o of hmSeances(t0, t1)) c.push(`<button class="hm-ev se" data-hmpv="${esc(o.s.id)}"><span class="t">${hmHM(o.at)}</span><span><b>Séance · ${esc(siteLabel(o.s))}</b><small>${esc(o.m.place || 'Lieu non indiqué')} · PV DT et récap</small></span></button>`);
+  for (const o of hmSeances(t0, t1)) c.push(`<button class="hm-ev se" data-hmpv="${esc(o.s.id)}"><span class="t">${hmHM(o.at)}</span><span><b>Séance · ${esc(siteLabel(o.s))}</b><small>${esc(o.m.place || 'Lieu non indiqué')} · PV DT</small></span></button>`);
   for (const o of hmVisits(t0, t1)) c.push(`<button class="hm-ev dv" data-hmdv="${esc(o.d.id)}"><span class="t">${hmHM(o.at)}</span><span><b>Visite devis · ${esc(devName(o.d) + (devCity(o.d) ? ' – ' + devCity(o.d) : ''))}</b><small>${esc([o.d.addr?.street, o.d.client?.tel].filter(Boolean).join(' · ') || 'Ouvrir la fiche')}</small></span></button>`);
   const pv = HMD.pvs[0];
   if (pv) { const a = pv.appProperties || {}, s = S.sites.find(x => x.id === a.site); c.push(`<button class="hm-ev pv" data-hmpvf="${esc(pv.id)}"><span class="t">${HMD.pvs.length}</span><span><b>${HMD.pvs.length > 1 ? 'PV DT reçus (7 j)' : 'PV DT reçu'}</b><small>Dernier : ${esc((s ? (s.number || s.name) + ' · ' : '') + (a.pvn ? 'PV n° ' + a.pvn : pv.name))}</small></span></button>`); }

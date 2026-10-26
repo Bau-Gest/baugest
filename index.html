@@ -789,7 +789,6 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 .pd-new{display:inline-block;margin-right:8px;padding:2px 8px;border-radius:999px;background:var(--signal);color:var(--signal-ink);font:700 11px/1.5 var(--body);text-transform:uppercase;letter-spacing:.05em;vertical-align:2px}
 .pd-pts{font-size:12.5px;font-weight:600;color:var(--warn)}
 .pd-pts.ok{color:var(--ok)}
-.pd-rc{justify-self:start;display:inline-flex;align-items:center;gap:6px;min-height:34px;margin-top:2px;padding:0 12px;border-radius:17px;border:1px solid var(--signal);background:var(--signal-soft);color:var(--signal);font:600 13.5px var(--body)}
 .pd-prev{display:block;font-size:12px;font-weight:600;color:var(--ok)}
 .pdv{z-index:34}
 .pdv-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:calc(8px + var(--st)) calc(10px + var(--sr)) 8px calc(10px + var(--sl));border-bottom:1px solid var(--line);background:var(--surface)}
@@ -1542,7 +1541,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <div class="field"><span>Notre entreprise sur ce chantier</span>
       <select id="seComp"></select>
       <input type="text" id="seAbbr" placeholder="Abréviations dans les PV : DUP, Ent. Dupont" autocomplete="off" aria-label="Abréviations de l'entreprise dans les PV">
-      <p class="hint">Sert au récap des PV DT avant chaque séance : les points qui concernent cette entreprise sont mis en avant.</p>
+      <p class="hint">Sert à repérer dans les PV DT et les mails les points qui concernent cette entreprise.</p>
     </div>
     <div class="field"><span>Mise en page des photos de ce chantier</span>
       <canvas id="seLayPreview" width="720" height="540" aria-label="Aperçu de la mise en page"></canvas>
@@ -2215,7 +2214,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
 
       <section class="group" id="g-api">
         <h2>Coût API Claude</h2>
-        <p class="hint">Combien coûteraient les tâches planifiées (transcription, plans, récap PV, soumission, mails, rappel séance) avec une clé API Claude Opus 5.5 ou Sonnet 5.5, comparé à l'abonnement. Calculé sur leur consommation réelle, relevée chaque soir (fichier « BauGest – consommation des tâches » du Drive).</p>
+        <p class="hint">Combien coûteraient les tâches planifiées (transcription, soumission, mails) avec une clé API Claude Opus 5.5 ou Sonnet 5.5, comparé à l'abonnement. Calculé sur leur consommation réelle, relevée chaque soir (fichier « BauGest – consommation des tâches » du Drive).</p>
         <p class="hint" id="apiCostSum"></p>
         <button id="apiCostOpen" class="btn block">Ouvrir le calculateur</button>
       </section>
@@ -3319,10 +3318,10 @@ function seMeetDraft(){
 }
 function renderSeMeet(){
   const m = seMeetDraft(), h = $('#seMeetHint'); if (!h) return;
-  if (!m) { h.textContent = 'Sans date : pas de séance, pas de récap PV ni d’événement dans Google Agenda.'; return; }
+  if (!m) { h.textContent = 'Sans date : pas de séance ni d’événement dans Google Agenda.'; return; }
   const sent = editId && calMap()['se:' + editId] === JSON.stringify(calSiteBody({...siteById(editId), meet:m}));
   h.textContent = `Le ${SE_DAYN[new Date(m.from + 'T12:00:00').getDay()]} à ${m.time.replace(':', 'h')}, ${SE_EVERY[m.every]}. `
-    + (sent ? 'Déjà dans Google Agenda.' : 'Ajouté à Google Agenda à l’enregistrement.') + ' Récap des PV DT la veille (le vendredi pour une séance du lundi).';
+    + (sent ? 'Déjà dans Google Agenda.' : 'Ajouté à Google Agenda à l’enregistrement.');
 }
 function seMsg(t, ok){ const m = $('#seMsg'); m.textContent = t; m.className = 'msg' + (ok ? ' ok' : ''); m.hidden = false; }
 function fillHere(){
@@ -6954,7 +6953,7 @@ function pdPoints(lines, keys){
 }
 
 /* ---------- PV de chantier de la DT : liste (tablette) (v2.0) ---------- */
-const PDX = {items:[], old:[], recaps:new Map(), err:null, loading:false, showOld:false};
+const PDX = {items:[], old:[], err:null, loading:false, showOld:false};
 const PDCACHE = {
   db:null,
   async open(){
@@ -6987,19 +6986,9 @@ function pdItem(f, old){
   return {key:f.id, driveId:f.id, name:f.name, size:+f.size || 0, modified:f.modifiedTime || '', created:f.createdTime || '', num:a.pvn || '', date:a.pvdate || '',
     thumb:f.thumbnailLink ? f.thumbnailLink.replace(/=s\d+$/, '=s400') : '', old:!!old, inDrive:true};
 }
-/* Récap avant séance (tâche « Récap PV BauGest ») : « <nom du PV> – récap[ AAAA-MM-JJ].pdf » dans le même dossier que le PV.
-   Il n'est jamais listé comme un PV : il s'ouvre par le bouton « Récap séance » de la ligne du PV. */
+/* anciens récaps avant séance (tâche « Récap PV » supprimée le 26.10.2026) : « <nom du PV> – récap[ AAAA-MM-JJ].pdf », jamais listés comme PV */
 const PD_RECAP = /^(.*?)\s+[–-]\s+r[ée]cap(?:\s+\d{4}-\d{2}-\d{2})?\.pdf$/i;
-function pdSplitRecaps(list){
-  const pvs = [], rc = new Map();
-  for (const it of list) {
-    const m = PD_RECAP.exec(it.name || ''); if (!m) { pvs.push(it); continue; }
-    it.recap = true; const k = pdNorm(m[1]).trim(), o = rc.get(k);
-    if (!o || String(it.created || '') > String(o.created || '')) rc.set(k, it);
-  }
-  return {pvs, rc};
-}
-const pdRecapOf = it => it && !it.recap ? PDX.recaps.get(pdNorm(plBase(it.name)).trim()) || null : null;
+const pdNoRecaps = list => list.filter(it => !PD_RECAP.test(it.name || ''));
 const pdDay = it => it.date || (it.created || it.modified || '').slice(0, 10);
 const pdSort = (a, b) => pdDay(b).localeCompare(pdDay(a)) || (+b.num || 0) - (+a.num || 0) || String(b.created).localeCompare(String(a.created));
 async function loadPvdt(){
@@ -7009,7 +6998,7 @@ async function loadPvdt(){
   for (const r of await PDCACHE.all()) if ((r.siteId || 'none') === sid && !r.old) map.set(r.key, {key:r.key, driveId:r.driveId || '', name:r.name, size:r.size || 0, modified:r.modified || '', created:r.created || '', num:r.num || '', date:r.date || '', local:true});
   for (const it of await DB.all()) if (it.meta.kind === 'pvdt' && (it.meta.siteId || 'none') === sid)
     map.set('q:' + it.meta.uid, {key:'q:' + it.meta.uid, name:it.meta.name, size:it.blob.size, num:it.meta.pvn || '', date:it.meta.pvdate || '', created:it.meta.taken || '', pending:true, qid:it.id});
-  { const sp = pdSplitRecaps([...map.values()]); PDX.items = sp.pvs.sort(pdSort); PDX.recaps = sp.rc; } PDX.old = [];
+  PDX.items = pdNoRecaps([...map.values()]).sort(pdSort); PDX.old = [];
   if (tok === desk.token) renderPvdt();
   const r = queueReason();
   if (DEMO && !tokenValid()) PDX.err = 'Aperçu : dans l’app, la liste montre les PDF du dossier « PV de chantier » du chantier sur ton Drive.';
@@ -7024,8 +7013,7 @@ async function loadPvdt(){
       const keep = [...map.values()].filter(o => o.pending);
       const ids = new Set(cur.map(f => f.id));
       for (const o of map.values()) if (o.local && !ids.has(o.key)) PDCACHE.del(o.key);
-      const sp = pdSplitRecaps(cur.map(f => pdItem(f)));
-      PDX.items = sp.pvs.concat(keep).sort(pdSort); PDX.recaps = sp.rc;
+      PDX.items = pdNoRecaps(cur.map(f => pdItem(f))).concat(keep).sort(pdSort);
       PDX.old = olds.map(f => pdItem(f, true)).sort(pdSort);
     } catch (e) { PDX.err = 'Lecture du Drive impossible : ' + e.message; }
   }
@@ -7033,12 +7021,12 @@ async function loadPvdt(){
   PDX.loading = false; renderPvdt();
 }
 function pdRow(it){
-  const seen = pdSeen(), isNew = !it.pending && !it.old && !seen[it.key], pts = pdPtsInfo(it.key), rc = pdRecapOf(it);
+  const seen = pdSeen(), isNew = !it.pending && !it.old && !seen[it.key], pts = pdPtsInfo(it.key);
   const st = it.pending ? '<span class="dk-st wait">À envoyer</span>' : it.old ? '<span class="dk-st">Annulé</span>' : it.local && !it.inDrive ? '<span class="dk-st">Sur cet appareil</span>' : '<span class="dk-st ok">Sur le Drive</span>';
   const ptsT = pts ? (pts.open ? `<span class="pd-pts">${pts.open} point${pts.open > 1 ? 's' : ''} à notre charge</span>` : pts.n ? '<span class="pd-pts ok">Points réglés</span>' : '') : '';
   return `<div class="pd-row ${isNew ? 'new' : ''}" role="button" tabindex="0" data-pd="${esc(it.key)}">
     <span class="pd-ic">PV${it.num ? `<b>${esc(it.num)}</b>` : ''}</span>
-    <span class="pd-t"><b>${isNew ? '<span class="pd-new">Nouveau</span>' : ''}${esc(plBase(it.name))}</b><small>${esc([it.num ? 'PV n° ' + it.num : '', pdDay(it) ? 'Séance du ' + fmtISO(pdDay(it)) : '', it.size ? fmtSize(it.size) : ''].filter(Boolean).join(' · '))}</small>${ptsT}${rc ? `<button class="pd-rc" data-pdrc="${esc(rc.key)}">${ICON_DOC}Récap séance</button>` : ''}</span>
+    <span class="pd-t"><b>${isNew ? '<span class="pd-new">Nouveau</span>' : ''}${esc(plBase(it.name))}</b><small>${esc([it.num ? 'PV n° ' + it.num : '', pdDay(it) ? 'Séance du ' + fmtISO(pdDay(it)) : '', it.size ? fmtSize(it.size) : ''].filter(Boolean).join(' · '))}</small>${ptsT}</span>
     ${st}</div>`;
 }
 function renderPvdt(){
@@ -7198,15 +7186,14 @@ function pdChanged(){
   clearTimeout(PDV.pushT); PDV.pushT = setTimeout(pdAnnPush, 2500);
   $('#pdUndo').disabled = !PDV.undo.length;
 }
-function pdFindItem(key){ return PDX.items.concat(PDX.old, [...PDX.recaps.values()]).find(x => x.key === key) || null; }
+function pdFindItem(key){ return PDX.items.concat(PDX.old).find(x => x.key === key) || null; }
 async function openPvdt(key){
   const it = pdFindItem(key); if (!it) return;
   const s = pdSiteOf(desk.site === '__none' ? 'none' : desk.site);
   Object.assign(PDV, {it, zoom:1, undo:[], cur:null, pan:null, ovs:[], points:[], prevDone:null, lines:null, siteId:s ? s.id : 'none', ann:{strokes:[], done:{}, mod:0}});
   if (PDV.doc) { try { PDV.doc.destroy(); } catch (e) {} PDV.doc = null; }
   $('#pdTitle').textContent = plBase(it.name);
-  $('#pdSub').textContent = it.recap ? ['Récap des PV DT avant séance', s ? siteLabel(s) : ''].filter(Boolean).join(' · ')
-    : [it.num ? 'PV n° ' + it.num : '', pdDay(it) ? 'Séance du ' + fmtISO(pdDay(it)) : '', s ? siteLabel(s) : 'À classer', it.old ? 'ANNULÉ' : ''].filter(Boolean).join(' · ');
+  $('#pdSub').textContent = [it.num ? 'PV n° ' + it.num : '', pdDay(it) ? 'Séance du ' + fmtISO(pdDay(it)) : '', s ? siteLabel(s) : 'À classer', it.old ? 'ANNULÉ' : ''].filter(Boolean).join(' · ');
   $('#pdPages').innerHTML = '<p class="hint pd-wait">Ouverture du PV…</p>'; $('#pdPtsList').innerHTML = ''; $('#pdPtsN').textContent = '';
   pdSaveState(''); pdSetTool('hl'); $('#pdUndo').disabled = true; pdRenderNotesBtn();
   $('#pdView').hidden = false; pdDrawerMode(); pdTools(false);
@@ -7230,7 +7217,7 @@ async function openPvdt(key){
     if (PDV.it !== it) return;
     pdRenderNotesBtn();
     await pdLayout();
-    if (!it.recap) pdLoadPoints(it);
+    pdLoadPoints(it);
   } catch (e) { $('#pdPages').innerHTML = `<p class="hint pd-wait">Ouverture impossible : ${esc(e.message || e)}</p>`; }
 }
 function closePvdt(){
@@ -7635,7 +7622,6 @@ function bindPvdt(){
     if (desk.mode !== 'pvdt') return;
     if (e.target.closest('#pdAdd')) { $('#pdFile').click(); return; }
     if (e.target.closest('#pdOldTog')) { PDX.showOld = !PDX.showOld; renderPvdt(); return; }
-    const rc = e.target.closest('[data-pdrc]'); if (rc) { openPvdt(rc.dataset.pdrc); return; }
     const r = e.target.closest('[data-pd]'); if (r) openPvdt(r.dataset.pd);
   });
   $('#dkMain').addEventListener('keydown', e => { if (desk.mode === 'pvdt' && (e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pd]')) { e.preventDefault(); e.target.click(); } });
@@ -8053,8 +8039,7 @@ function calSiteBody(s){
   return {summary:'Séance de chantier – ' + siteLabel(s), location:m.place || (geo ? s.lat.toFixed(6) + ', ' + s.lon.toFixed(6) : ''),
     description:['Chantier : ' + siteLabel(s), c && 'Entreprise : ' + c.name + (s.abbr ? ' (' + s.abbr + ')' : ''),
       'Rythme : le ' + SE_DAYN[t.getDay()] + ', ' + (SE_EVERY[every] || 'toutes les ' + every + ' semaines'), m.place && 'Lieu : ' + m.place,
-      geo && 'Position : https://www.openstreetmap.org/?mlat=' + s.lat.toFixed(6) + '&mlon=' + s.lon.toFixed(6) + '#map=17/' + s.lat.toFixed(6) + '/' + s.lon.toFixed(6),
-      'Récap des PV DT : prêt la veille vers 17h40, à côté du dernier PV (Drive › ' + siteFolder(s) + ' › ' + PVDT_DIR + ', bouton « Récap séance » dans BauGest) · rappel le matin vers 7h'].filter(Boolean).join('\n'),
+      geo && 'Position : https://www.openstreetmap.org/?mlat=' + s.lat.toFixed(6) + '&mlon=' + s.lon.toFixed(6) + '#map=17/' + s.lat.toFixed(6) + '/' + s.lon.toFixed(6)].filter(Boolean).join('\n'),
     start:{dateTime:calLocal(t), timeZone:CAL_TZ}, end:{dateTime:calLocal(new Date(t.getTime() + (+m.dur || 90) * 60000)), timeZone:CAL_TZ},
     recurrence:['RRULE:FREQ=WEEKLY;INTERVAL=' + every + ';BYDAY=' + SE_RR[t.getDay()]],
     colorId:'9', reminders:{useDefault:false, overrides:[{method:'popup', minutes:60}]}, status:'confirmed',
@@ -10513,8 +10498,8 @@ function renderHome(){
       <span class="acts"><button class="btn" data-hmdv="${esc(d.id)}">Ouvrir la fiche</button></span></div>`);
   }
   for (const o of hmSeances(t0, t1)) {
-    cards.push(`<div class="hm-ev se"><span class="t">${hmHM(o.at)}</span><span class="k">Séance de chantier</span><b>${esc(siteLabel(o.s))}</b><small>${esc(o.m.place || 'Lieu non indiqué')} · récap prêt la veille dans PV DT</small>
-      <span class="acts"><button class="btn primary" data-hmpv="${esc(o.s.id)}">PV DT et récap</button><button class="btn" data-hmtd="${esc(o.s.id)}">À faire du chantier</button></span></div>`);
+    cards.push(`<div class="hm-ev se"><span class="t">${hmHM(o.at)}</span><span class="k">Séance de chantier</span><b>${esc(siteLabel(o.s))}</b><small>${esc(o.m.place || 'Lieu non indiqué')}</small>
+      <span class="acts"><button class="btn primary" data-hmpv="${esc(o.s.id)}">PV DT</button><button class="btn" data-hmtd="${esc(o.s.id)}">À faire du chantier</button></span></div>`);
   }
   if (pvs.length) {
     const f = pvs[0], a = f.appProperties || {}, s = siteById(remapId(a.site));

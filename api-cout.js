@@ -50,6 +50,7 @@ function analyse(D){
   for (const x of T.values()) {
     const list = [...x.runs.values()], k = list.length; if (!k) continue;
     const avg = f => list.reduce((a, e) => a + e[f], 0) / k, trig = D.triggers && D.triggers[x.id], pm = trig ? cronPerMonth(trig.cron) : 0;
+    if (D.triggers && !trig) continue; /* tâche supprimée : plus comptée */
     const row = {n:(trig && trig.n) || x.n, k, pm, cron:trig ? trig.cron : '', models:[...x.models], last:list.map(e => e.at).sort().pop(),
       avg:{usd:avg('usd'), opus:avg('opus'), sonnet:avg('sonnet'), in:avg('in'), cw:avg('cw'), cr:avg('cr'), out:avg('out')}};
     row.mo = {opus:row.avg.opus * pm, sonnet:row.avg.sonnet * pm, cur:row.avg.usd * pm};

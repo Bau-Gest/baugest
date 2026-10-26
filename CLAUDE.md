@@ -1,6 +1,6 @@
 # BauGest — résumé technique
 
-État au 26.10.2026 · Soumission : Word BauBit lu par l'app, PDF lus par Claude sur demande (bouton, vendredi 18:30) · Calculateur « Coût API Claude » des tâches planifiées sur leur consommation réelle (Paramètres tablette + ⚙ Réglages PC ; relève quotidienne « Conso BauGest ») · Planning : périodes de présence des ressources (semaines ou dates fixes, plusieurs par ressource) dans les tâches et les lots ; couleur auto des nouvelles ressources toujours différente ; onglet Analyse (courbe main-d'œuvre / machines / montants, écran + PDF + impression + Excel) ; ressources propres aux lots par périodes (effectif qui varie) ; remarques en bas de page en nombre libre (Mise en page) ; logo de l'entreprise en haut à gauche des impressions (taille réglable), impression d'une partie (dates, lots, zones, sélection), sélection multiple + style des barres, couleur de barre par tâche, impression avec aperçu PDF (PC), formats A4–A0, ajuster à la page.
+État au 26.10.2026 · Simplification : tâches « Plans BauGest », « Récap PV BauGest » et « Rappel séance BauGest » supprimées avec leurs fonctions dans l'app (Joel classe et renomme lui-même les plans ; plus de bouton « Récap séance ») · Soumission : Word BauBit lu par l'app, PDF lus par Claude sur demande (bouton, vendredi 18:30) · Calculateur « Coût API Claude » des tâches planifiées sur leur consommation réelle (Paramètres tablette + ⚙ Réglages PC ; relève quotidienne « Conso BauGest ») · Planning : périodes de présence des ressources (semaines ou dates fixes, plusieurs par ressource) dans les tâches et les lots ; couleur auto des nouvelles ressources toujours différente ; onglet Analyse (courbe main-d'œuvre / machines / montants, écran + PDF + impression + Excel) ; ressources propres aux lots par périodes (effectif qui varie) ; remarques en bas de page en nombre libre (Mise en page) ; logo de l'entreprise en haut à gauche des impressions (taille réglable), impression d'une partie (dates, lots, zones, sélection), sélection multiple + style des barres, couleur de barre par tâche, impression avec aperçu PDF (PC), formats A4–A0, ajuster à la page.
 
 ## 1. En bref
 
@@ -30,7 +30,6 @@
 | `tools/transcription/prepare.py` | — | Rendu des traits JSON → PNG, découpe en segments, extraction des cases signature |
 | `tools/transcription/make_pdf.py` | — | PDF « texte tapé » avec la mise en page BauGest (reportlab) |
 | `tools/transcription/README.md` | — | Mode d'emploi du pipeline |
-| `tools/recap/make_recap.py` | — | PDF « Récap PV DT » avant séance (reportlab), utilisé par la tâche Récap PV |
 | `tools/soumission/soumission.py` | — | Soumission `.crbx` (SIA 451) ou Word BauBit → « <nom> – positions.json » ; utilisé par la tâche Soumission |
 
 Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être en retard sur GitHub → GitHub fait foi). `claude/transcription/make_docx.js` et `render_baugest_doc.py` = anciennes versions (sortie .docx abandonnée). `claude/pwa/*` et `claude/planschantier_v1.html` = anciens PlansChantier.
@@ -67,7 +66,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 ```
 <Racine BauGest>/                         (ancien dossier PhotoChantier renommé)
 ├── Réglages PhotoChantier (ne pas supprimer).json   ← chantiers, mises en page, entreprises ; partagé tablette/PC
-├── BauGest – journal des plans (ne pas supprimer).json  ← tâche « Plans BauGest »
+├── BauGest – journal des plans (ne pas supprimer).json  ← ancien, plus utilisé (tâche « Plans BauGest » supprimée le 26.10.2026)
 ├── <N° Nom du chantier>/
 │   ├── Photos/                 (un seul dossier ; nom AAAA-MM-JJ_HHhMM_<chantier>_<étiquettes>.jpg)
 │   ├── Documents/
@@ -84,7 +83,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 │   │   └── Anciennes versions/
 │   ├── À faire (ne pas supprimer).json   (tâches du chantier, kind='todo')
 │   ├── À faire – texte tapé.json         (textes tapés des tâches, écrit par la tâche Transcription)
-│   └── PV de chantier/         (PV DT + « <nom du PV> – récap[ AAAA-MM-JJ].pdf » à côté de chaque PV, tâche Récap PV)
+│   └── PV de chantier/         (PV DT ; anciens « <nom du PV> – récap[ AAAA-MM-JJ].pdf » de la tâche Récap PV supprimée : cachés de la liste des PV, `PD_RECAP` / `PQ_RECAP`)
 │       ├── PV annulés/
 │       └── Annotations/        (« <PV> - annotations BauGest.json » : traits + points cochés `done` {id: texte du point})
 ├── À classer/                  (photos sans chantier)
@@ -158,9 +157,9 @@ Tablette : rubrique « Mails » (rail + `dkModes`, `desk.mode='mails'`, bloc « 
 - Photos jamais dans la galerie du téléphone ; un seul dossier Photos par chantier.
 - Documents transcrits : affichés d'abord en texte tapé (PDF), bascule vers le manuscrit ; non transcrits = manuscrit seul. Signatures jamais transcrites.
 - Devis : GPS actif mais **ne relie jamais** la fiche à un chantier ; en-tête du mémo = entreprise choisie à la création ; notes tapées ou dictées (pas manuscrites).
-- PV DT : récap avant séance stocké à côté du PV (jamais listé comme PV, bouton « Récap séance ») ; nom de fichier d'origine conservé ; PV corrigé → PV annulés ; détection chantier avec confirmation sur PC ; dossier présent dans tous les chantiers.
+- PV DT : plus de récap avant séance ni de rappel le matin (supprimés le 26.10.2026 ; la séance reste dans Google Agenda avec rappel 1 h avant) ; nom de fichier d'origine conservé ; PV corrigé → PV annulés ; détection chantier avec confirmation sur PC ; dossier présent dans tous les chantiers.
 - Soumission : consultation dans la rubrique tablette (PC = dépôt du fichier dans « Soumission » par l'explorateur + clic droit « Lire la soumission Word » / « Demander la lecture par Claude ») ; une seule soumission par chantier, l'ancienne → « Anciennes versions » ; `.crbx` et Word BauBit lus tout de suite par l'app (le Word lu est déposé en « – positions.json ») ; PDF / .doc / Excel (ou Word non lisible) : **seulement sur demande** (bouton « Demander la lecture par Claude » → fichier « – demande de lecture.json »), traité par la tâche Soumission le vendredi à 18:30 (26.10.2026) ; montant = quantité × PU arrondi à 0.05 CHF (comme BauBit).
-- Plans : nom « Sujet ind C AAAA-MM-JJ.pdf » ; un seul dossier Plans annulés par chantier ; jamais de suppression de plan.
+- Plans : classement, tri et nom faits par Joel lui-même (plus de tâche automatique depuis le 26.10.2026) ; un seul dossier Plans annulés par chantier ; jamais de suppression de plan.
 - Tablette : droitier au stylet → outils à gauche ; thème sombre + bouton fort contraste.
 - Bureau Documents (tablette) : seuls les types de documents ayant au moins 1 document dans le chantier sont affichés (pas de ligne vide) ; nouveau type via « Nouveau document ».
 - PC = complément : ne jamais modifier le comportement tablette pour le PC.
@@ -179,16 +178,15 @@ Réglages & synchro (~1868–2130) · GPS/caméra/prise de vue (~2164–2515) ·
 | Tâche | Horaire (Europe/Zurich) | Rôle |
 |---|---|---|
 | Transcription BauGest | lu–ve 17:53 (11:53 retiré le 19.10.2026) | JSON manuscrit → PDF texte tapé à côté du JSON (un item par paragraphe, texte à la largeur de la page, sans ligne vide, aligné à gauche, pages manuscrites enchaînées sur les lignes libres — validé par Joel le 17.10.2026) ; signatures recopiées, jamais transcrites ; tâches À faire → « À faire – texte tapé.json » (`todo.py`) ; notification si ≥ 1 document |
-| Plans BauGest | lu–ve 17:17 (11:17 retiré le 19.10.2026) | Renomme les plans d'après le cartouche (« Sujet ind C AAAA-MM-JJ.pdf »), doublons/anciens indices → Plans annulés ; notification si changement |
-| Récap PV BauGest | lu–ve 17:35 | Veille de séance (vendredi pour le lundi) : compare les 2 derniers PV DT du chantier + points cochés, PDF « <PV> – récap.pdf » à côté du PV + notification ; « PV manquant » si aucun nouveau PV |
 | Soumission BauGest | vendredi 18:30 (depuis le 26.10.2026) | **Sur demande seulement** : cherche les « – demande de lecture.json » (aucune → s'arrête tout de suite, ~0,10 USD) ; lit la source (PDF : pdftotext / pages en images ; Word non lisible : XML ; .doc / Excel : LibreOffice) → JSON des positions, contrôle des totaux par CAN ; dépôt par le connecteur Drive (textContent) en un fichier si ≤ 60 000 caractères, sinon en morceaux « – positions (i-N).json » retéléchargés et comparés octet par octet ; demande mise à la corbeille ; notification. N'utilise plus de script du dépôt |
 | Mails BauGest | lu–ve 11:50 et 17:50 | Mails classés par BauGest PC (`<Chantier>/Courrier/*.json` sans « – résumé.json ») → résumé, actions, délais, importance + mémoire du chantier ; notification si mail important (voir 3b « Accueil PC + Courrier ») |
 | Conso BauGest | tous les jours 19:12 | Session dédiée `session_01Y2urnRdWyWXAiMxCfLNgqA` (« Conso BauGest (relève) », Sonnet 5.5) réveillée par la tâche `trig_01Vhqmftxoqs8Hp2umyyQBbc` (les tâches planifiées ordinaires n'ont pas `list_triggers` / `list_events`) : lit le `last_run` de chaque tâche « BauGest » (sauf elle-même), le dernier événement `result` de la session (`modelUsage` : tokens + `costUSD`), ajoute les nouvelles exécutions au fichier « BauGest – consommation des tâches (ne pas supprimer).json » (racine `1Xpqz1RTZ_dpoRAB28FR86_sq315zoNf7`, nouvelle version + ancienne à la corbeille) ; ~0,20 USD par relève ; lu par le calculateur Coût API Claude. Une exécution par tâche et par jour au plus est relevée (Mails 11:50 manquée : la projection reste juste, elle utilise la moyenne par exécution × la planification) |
-| Rappel séance BauGest | tous les jours 06:52 | Jour de séance : notification avec le résumé et les liens directs vers le récap (Drive + BauGest tablette `?pvdt=<id>&site=<id>`) |
 
-**Scripts du dépôt (Transcription, Récap PV)** : la protection automatique des sessions planifiées refuse d'exécuter du code cloné pendant la tâche (« Code from External », vu le 26.10.2026 ; même avec autorisation écrite dans la consigne). Le code s'exécute si le dépôt est **la source de la tâche** (testé le 26.10.2026 : session avec `source_url` = dépôt → aucun refus). Les sources d'une tâche ne se règlent pas par l'outil `update_trigger` : Joel doit ajouter le dépôt Bau-Gest/baugest aux tâches « Transcription BauGest » et « Récap PV BauGest » dans claude.ai › Routines. Les consignes (26.10.2026) utilisent le dépôt s'il est le dossier de travail, sinon le clonent ; si l'exécution est refusée, elles n'écrivent pas de code de remplacement et le signalent dans la notification.
+Supprimées le 26.10.2026 (demande de Joel, simplification) : « Plans BauGest », « Récap PV BauGest » (+ `tools/recap/`) et « Rappel séance BauGest ». Le calculateur Coût API ne compte plus une tâche absente de `triggers` dans la relève.
+
+**Scripts du dépôt (Transcription)** : la protection automatique des sessions planifiées refuse d'exécuter du code cloné pendant la tâche (« Code from External », vu le 26.10.2026 ; même avec autorisation écrite dans la consigne). Le code s'exécute si le dépôt est **la source de la tâche** (testé le 26.10.2026 : session avec `source_url` = dépôt → aucun refus). Les sources d'une tâche ne se règlent pas par l'outil `update_trigger` : Joel doit ajouter le dépôt Bau-Gest/baugest à la tâche « Transcription BauGest » dans claude.ai › Routines. Les consignes (26.10.2026) utilisent le dépôt s'il est le dossier de travail, sinon le clonent ; si l'exécution est refusée, elles n'écrivent pas de code de remplacement et le signalent dans la notification.
 Les deux tournent sans l'ordinateur de Joel, mais dépendent des connexions Google Drive/GitHub du compte Claude. Dernier passage réussi : 09.10.2026.
-Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_01XjUE62rMyRVSSEq1JPZk37` transcription, `trig_01CwbzZRPB1U3bZNXRm3VBE8` plans, `trig_01XDouvMa1Gg46UiyyEWy9kU` récap PV, `trig_01VTEvcsYX7xHzW3Ayy1Hd1C` rappel séance, `trig_019PiTMiYsTCVz7GKh5fZNrS` mails, `trig_01SrjGNQAySVobeYiVkVhE2e` soumission — créée sans connecteur Google Drive : à ajouter dans claude.ai › Routines). Si un format de fichier ou un nom de dossier change dans l'app, **mettre à jour le prompt de la tâche concernée** (`update_trigger`). La tâche Transcription clone le dépôt et exécute `tools/transcription/*.py` : ne pas casser leur interface.
+Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_01XjUE62rMyRVSSEq1JPZk37` transcription, `trig_019PiTMiYsTCVz7GKh5fZNrS` mails, `trig_01SrjGNQAySVobeYiVkVhE2e` soumission — créée sans connecteur Google Drive : à ajouter dans claude.ai › Routines). Si un format de fichier ou un nom de dossier change dans l'app, **mettre à jour le prompt de la tâche concernée** (`update_trigger`). La tâche Transcription clone le dépôt et exécute `tools/transcription/*.py` : ne pas casser leur interface.
 
 ## 4b. Déploiement et comptes
 
@@ -231,7 +229,7 @@ Le prompt complet de chaque tâche est lisible avec `list_triggers` (ids `trig_0
 - À faire : rappel quand l'app est fermée (serveur push ou tâche planifiée du matin).
 - Courrier : test avec de vrais mails Outlook (glisser direct depuis Outlook vers Chrome / Edge) ; fichiers winmail.dat (TNEF) non lus ; images jointes de moins de 25 ko ignorées.
 - Accueil : l'icône BauGest de l'écran d'accueil Android reprend l'app là où elle était (pas de retour à l'accueil BauGest) ; `launch_handler` du manifeste écarté car il risque de casser « Partager → BauGest ». Jalons : seulement les plannings déjà ouverts sur la tablette.
-- Planning : lien des tâches aux positions de la soumission (`positions.json`) comme source de budget ; jalons du planning dans le récap de séance.
+- Planning : lien des tâches aux positions de la soumission (`positions.json`) comme source de budget .
 - Outils non faits de la maquette : texte sur plan (tablette), comptage de points, zoom caméra.
 - Notifications PV quand l'app est fermée (nécessiterait un serveur push).
 - OCR des PV scannés pour la détection automatique.
