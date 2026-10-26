@@ -4775,7 +4775,7 @@ $('#btnBack').addEventListener('click', hideViewer);
 $('#btnViewerShow').addEventListener('click', showViewer);
 /* ⚙ Réglages du PC : menu (coût API Claude des tâches planifiées, module partagé api-cout.js) */
 $('#btnSettings').addEventListener('click', e => { const r = e.currentTarget.getBoundingClientRect();
-  showMenu(r.left, r.bottom + 4, [{label:'Coût API Claude des tâches planifiées', fn:() => { if (window.BGApiCost) BGApiCost.open(); else toast('Calculateur non chargé : recharge la page avec le réseau', 'err'); }}]); });
+  showMenu(r.left, r.bottom + 4, [{label:'Coût API Claude des tâches planifiées', fn:() => { if (window.BGApiCost) BGApiCost.open({api, root:() => P.rootId}); else toast('Calculateur non chargé : recharge la page avec le réseau', 'err'); }}]); });
 $('#btnLogout').addEventListener('click', async () => {
   const r = await dialog({title:'Compte et dossier', body:`<p>Connecté : <b>${esc(P.email || '?')}</b><br>Dossier BauGest : <b>${esc(P.rootName || '?')}</b></p>`,
     buttons:[{label:'Fermer', value:null}, {label:'Changer de dossier', value:'root'}, {label:'Changer de compte', value:'acct', primary:true}]});
