@@ -88,5 +88,7 @@ await shot('gantt-suivi');
 await tab('bud');await shot('budget');
 console.log('kpi',await p.$$eval('.bp-kpi',a=>a.map(x=>x.innerText.replace(/\n/g,' ')).join(' | ')));
 await p.click('[data-act="a22"]');await p.waitForTimeout(400);await shot('realise','.bp-dlg');await p.keyboard.press('Escape');
+await p.evaluate(()=>{try{localStorage.setItem('baugest.planAn',JSON.stringify({kind:'team',per:'w',by:'lot',src:'plan',cmp:{real:true,base:true}}))}catch(e){}});
+await p.setViewportSize({width:1280,height:1300});await tab('an');await shot('analyse','#bpMain .bp-card:nth-child(2)');await p.setViewportSize({width:1280,height:720});
 await p.evaluate(()=>BGPlan.close());await p.waitForTimeout(400);
 await b.close();fs.unlinkSync(R+'/_cap.html');})();

@@ -332,6 +332,82 @@ function levelProposal(plan, statusDn){
   return {moves, endBefore:before.end, endAfter:sch.end, left:overloads(work, sch).length, delay:cal.idx(sch.end) - cal.idx(before.end)};
 }
 
+/* ---------- Analyse des ressources : effectif main-d'œuvre, machines et montants par jour / semaine / mois ----------
+   o = {per:'d'|'w'|'m', by:'zone'|'lot'|'res'|'type'} → {pers:[{k, a, b, nd}], groups:[{k, l, c?}], S:{plan, base, real}} ;
+   S[src] = {team:{groupe:[personnes-jours par période]}, machine:{…unités-jours}, chf:{…CHF}} ; effectif = jours ÷ nd (moyenne des jours ouvrés de la période).
+   Prévu = ressources des tâches + des lots (+ montants saisis selon la source du budget) ; référence = mêmes ressources aux dates de la référence, CHF ramenés au budget de référence ;
+   réel = saisies du réalisé (heures ÷ h/jour, jours machine, montants) à leur date. */
+function resAnalysis(plan, sch, o){
+  const cal = sch.cal, hpd = +plan.opts.hpd || 8.5, byId = new Map(plan.tasks.map(t => [t.id, t])), resOf = id => plan.res.find(r => r.id === id);
+  const kRes = plan.opts.budget === 'man' ? 0 : 1, kMan = plan.opts.budget === 'res' ? 0 : 1;
+  const top = t => { let x = t, g = 0; while (x.parent && byId.get(x.parent) && g++ < 30) x = byId.get(x.parent); return x; };
+  const zone = t => { let x = t, g = 0; while (x && g++ < 30) { if (x.zone) return x.zone; x = x.parent ? byId.get(x.parent) : null; } return ''; };
+  const G = new Map();
+  const grp = (t, r) => {
+    let g;
+    if (o.by === 'res') g = r ? {k:'r:' + r.id, l:r.name, c:r.color, o:plan.res.indexOf(r)} : {k:'~', l:'Montants sans ressource', o:1e6};
+    else if (o.by === 'type') g = r ? {k:'t:' + r.type, l:(RTYPES[r.type] || RTYPES.team).label, o:Object.keys(RTYPES).indexOf(r.type)} : {k:'~', l:'Montants sans ressource', o:1e6};
+    else if (o.by === 'zone') { const z = zone(t); g = {k:'z:' + z, l:z || 'Sans zone', z:z}; }
+    else { const x = top(t); g = x === t && !sch.sumIds.has(t.id) ? {k:'l:', l:'Hors lot', o:1e6} : {k:'l:' + x.id, l:x.name, c:x.col, o:plan.tasks.indexOf(x)}; }
+    if (!G.has(g.k)) G.set(g.k, g);
+    return g.k;
+  };
+  const pts = {plan:[], base:[], real:[]};   /* [jour ouvré, groupe, type, quantité par jour, CHF] */
+  const spread = (src, k, ty, es, dur, qd, chf) => { const n = Math.max(1, dur); for (let i = es; i < es + n; i++) pts[src].push([i, k, ty, dur > 0 ? qd : 0, chf / n]); };
+  const leafPts = (src, t, es, dur) => {
+    for (const a of t.asg) { const r = resOf(a.r); if (!r) continue; spread(src, grp(t, r), r.type, es, dur, RTYPES[r.type] && RTYPES[r.type].time ? +a.q || 0 : 0, asgCost(plan, a, dur) * kRes); }
+    if (kMan && +t.bud) spread(src, grp(t, null), 'man', es, dur, 0, +t.bud);
+  };
+  const lotPts = (src, t, R) => {
+    for (const a of t.lres || []) { if (!a || !a.r || !(+a.q > 0)) continue; const r = resOf(a.r); if (!r) continue; const sp = lotSpan(cal, R, a);
+      spread(src, grp(t, r), r.type, sp.es, sp.dur, RTYPES[r.type] && RTYPES[r.type].time ? +a.q : 0, asgCost(plan, a, sp.dur) * kRes); }
+  };
+  const B = plan.baseline;
+  for (const ol of sch.ol) {
+    const t = ol.t, R = sch.R.get(t.id); if (!R) continue;
+    if (!ol.sum) leafPts('plan', t, R.es, R.dur); else lotPts('plan', t, R);
+    const b = B && (ol.sum ? B.lots && B.lots[t.id] : B.tasks && B.tasks[t.id]);
+    if (b) {
+      const st0 = pts.base.length, es = cal.idx(b.start), dur = Math.max(0, Math.round(+b.dur || 0)), bc = +b.cost || 0;
+      if (!ol.sum) leafPts('base', t, es, dur); else lotPts('base', t, {es, ef:es + dur, start:b.start});
+      let sum = 0; for (let j = st0; j < pts.base.length; j++) sum += pts.base[j][4];
+      if (sum > 0) for (let j = st0; j < pts.base.length; j++) pts.base[j][4] *= bc / sum;
+      else if (bc > 0) spread('base', grp(t, null), 'man', es, dur, 0, bc);
+    }
+    for (const e of t.act || []) {
+      const d = dnOfIso(e.d); if (d == null) continue;
+      const r = e.r ? resOf(e.r) : null, qd = !r ? 0 : r.type === 'team' ? (+e.q || 0) / hpd : r.type === 'machine' ? +e.q || 0 : 0;
+      pts.real.push([cal.idx(d), grp(t, r), r ? r.type : 'man', qd, actLine(plan, e)]);
+    }
+  }
+  const groups = [...G.values()].sort((a, b) => o.by === 'zone' ? (!a.z) - (!b.z) || a.l.localeCompare(b.l, 'fr', {numeric:true}) : (a.o ?? 0) - (b.o ?? 0));
+  let i0 = Infinity, i1 = -Infinity;
+  for (const src in pts) for (const q of pts[src]) { if (q[0] < i0) i0 = q[0]; if (q[0] > i1) i1 = q[0]; }
+  if (!isFinite(i0)) return {pers:[], groups, S:null};
+  /* périodes entières de la 1re à la dernière ; nd = jours ouvrés de la période */
+  const per = o.per || 'w', keyOf = dn => { if (per === 'd') return dn; if (per === 'w') return dn - (wdOf(dn) + 6) % 7; const d = new Date(dn * DAY); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) / DAY; };
+  const lastK = keyOf(cal.dnOf(i1)), endDn = per === 'd' ? lastK : per === 'w' ? lastK + 6 : (() => { const d = new Date(lastK * DAY); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0) / DAY; })();
+  const pers = [], pIdx = new Map(), iIdx = new Map();
+  for (let i = cal.idx(keyOf(cal.dnOf(i0))), g = 0; g < 40000; i++, g++) {
+    const dn = cal.dnOf(i); if (dn > endDn) break;
+    const k = keyOf(dn); let pi = pIdx.get(k);
+    if (pi == null) { pi = pers.length; pIdx.set(k, pi); pers.push({k, a:dn, b:dn, nd:0}); }
+    pers[pi].b = dn; pers[pi].nd++; iIdx.set(i, pi);
+  }
+  const S = {};
+  for (const src in pts) {
+    const out = {team:{}, machine:{}, chf:{}};
+    for (const [i, k, ty, qd, chf] of pts[src]) {
+      const pi = iIdx.get(i); if (pi == null) continue;
+      const put = (m, v) => { if (v) (m[k] = m[k] || new Array(pers.length).fill(0))[pi] += v; };
+      if (ty === 'team') put(out.team, qd); else if (ty === 'machine') put(out.machine, qd);
+      put(out.chf, chf);
+    }
+    S[src] = out;
+  }
+  return {pers, groups, S, hpd};
+}
+
 /* ---------- MS Project (XML MSPDI) ---------- */
 const MSP_TYPE = {FF:0, FS:1, SF:2, SS:3}, MSP_BACK = ['FF', 'FS', 'SF', 'SS'];
 const xesc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&apos;'}[c]));
@@ -415,7 +491,7 @@ function fromMSPDI(xml, siteId){
 }
 
 const CORE = {dnOfIso, isoOfDn, chOfDn, shortOfDn, todayDn, easter, HOL, HOL_ORDER, CANTONS, cantonKeys, holidayList, makeCal, newPlan, normPlan, outline, schedule,
-  asgCost, taskBudget, lotSpan, lotSpans, lotCost, lotBudget, taskActual, actLine, evm, takeBaseline, loads, overloads, levelProposal, toMSPDI, fromMSPDI, RTYPES, LINK, uid, maxDepth, round05};
+  asgCost, taskBudget, lotSpan, lotSpans, lotCost, lotBudget, taskActual, actLine, evm, takeBaseline, loads, overloads, levelProposal, resAnalysis, toMSPDI, fromMSPDI, RTYPES, LINK, uid, maxDepth, round05};
 if (typeof module !== 'undefined' && module.exports) { module.exports = CORE; return; }
 
 /* ---------- Interface ---------- */
@@ -542,6 +618,12 @@ function css(){ return `
 .bp-tbl tr.on td{background:var(--signal-soft,#3b3219)}
 .bp-tbl tr[data-r]{cursor:pointer}
 .bp-neg{color:#ff7b7b}.bp-pos{color:#6fd39a}
+.bp-anctl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end}.bp-anctl>div>small{display:block;font-size:12px;color:var(--muted,#9da2a8);margin-bottom:3px}.bp-anout{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.bp-anwrap{overflow:auto;max-width:100%;padding-bottom:4px}.bp-anwrap .bp-chart{margin-bottom:6px}
+.bp-antbl{table-layout:fixed;font-size:12px}.bp-antbl th,.bp-antbl td{padding:4px 2px;border-left:1px solid rgba(128,128,128,.14)}.bp-antbl th.mo{text-align:center;background:var(--surface2,#262a30)}
+.bp-antbl .c{text-align:center;font-family:var(--mono,monospace);white-space:nowrap;overflow:hidden}.bp-antbl .big{font-size:14px;font-weight:700}.bp-antbl tr.cmp td{color:var(--muted,#9da2a8)}
+.bp-antbl .lab{position:sticky;left:0;z-index:1;background:var(--surface,#1c1f23);text-align:left;padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bp-anleg{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:13px}
 .bp-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .bp-kpi{background:var(--surface2,#262a30);border-radius:10px;padding:9px 11px}
 .bp-kpi small{display:block;font-size:12px;color:var(--muted,#9da2a8)}
@@ -758,7 +840,7 @@ function build(){
     <select id="bpSite" title="Chantier" style="max-width:240px"></select>
     <select id="bpPlan" title="Planning du chantier" style="max-width:220px"></select>
     <button class="bp-btn" data-a="new" title="Nouveau planning">${I.plus}<span>Nouveau</span></button>
-    <nav class="bp-tabs"><button data-tab="gantt">Gantt</button><button data-tab="res">Ressources</button><button data-tab="bud">Budget</button><button data-tab="set">Réglages</button></nav>
+    <nav class="bp-tabs"><button data-tab="gantt">Gantt</button><button data-tab="res">Ressources</button><button data-tab="bud">Budget</button><button data-tab="an">Analyse</button><button data-tab="set">Réglages</button></nav>
     <span class="bp-grow"></span>
     <span class="bp-state" id="bpState"></span>
     <button class="bp-ib" data-a="undo" title="Annuler (Ctrl+Z)">${I.undo}</button>
@@ -913,6 +995,7 @@ function render(){
   if (U.tab === 'gantt') renderGantt();
   else if (U.tab === 'res') renderRes();
   else if (U.tab === 'bud') renderBud();
+  else if (U.tab === 'an') renderAn();
   else renderSet();
 }
 
@@ -1703,6 +1786,244 @@ async function levelDlg(){
   toast(left ? `Lissage appliqué · ${left} jour(s) de surcharge restent` : 'Lissage appliqué · plus de surcharge');
 }
 
+/* ---------- Analyse des ressources (onglet Analyse) : courbe de main-d'œuvre, machines, montants ; écran, PDF, impression, Excel ---------- */
+const AN_KIND = {team:{l:'Main-d’œuvre', u:'pers.', t:'Courbe main-d’œuvre', e:'EFF'}, machine:{l:'Machines', u:'u.', t:'Courbe des machines', e:'Unités'}, chf:{l:'Montants', u:'CHF', t:'Montants', e:'CHF'}};
+const AN_PER = {d:'Jour', w:'Semaine', m:'Mois'}, AN_BY = {zone:'Zone / bâtiment', lot:'Lot', res:'Ressource', type:'Type'}, AN_SRC = {plan:'Prévu', real:'Réel', base:'Référence'};
+const AN_CMP = {plan:'#3e8ed0', real:'#e5484d', base:'#8a8f96'};
+function anState(){
+  if (!U.an) { let s = {}; try { s = JSON.parse(localStorage.getItem('baugest.planAn') || '{}') || {}; } catch (e) {} U.an = Object.assign({kind:'team', per:'w', by:'', src:'plan', cmp:{real:true, base:true}}, s); }
+  if (!AN_BY[U.an.by]) U.an.by = zonesOf(U.plan).length ? 'zone' : 'lot';
+  if (!AN_KIND[U.an.kind]) U.an.kind = 'team'; if (!AN_PER[U.an.per]) U.an.per = 'w'; if (!AN_SRC[U.an.src]) U.an.src = 'plan'; U.an.cmp = U.an.cmp || {};
+  return U.an;
+}
+const anSave = () => { try { localStorage.setItem('baugest.planAn', JSON.stringify(U.an)); } catch (e) {} };
+/* valeurs d'un contenu : effectif = jours ÷ jours ouvrés de la période, montants tels quels */
+function anView(A, kind, src){
+  const n = A.pers.length, val = (s, k) => { const a = A.S[s] && A.S[s][kind][k]; return a ? a.map((v, i) => kind === 'chf' ? v : v / A.pers[i].nd) : null; };
+  const tot = s => { const t = new Array(n).fill(0); let any = false; for (const g of A.groups) { const a = val(s, g.k); if (a) { any = true; a.forEach((v, i) => t[i] += v); } } return any ? t : null; };
+  const groups = A.groups.map((g, i) => ({...g, c:/^#[0-9a-f]{6}$/i.test(g.c || '') ? g.c : COLORS[i % COLORS.length], v:val(src, g.k)})).filter(g => g.v && g.v.some(x => Math.abs(x) > 1e-9));
+  const days = s => { let d = 0; const m = A.S[s] && A.S[s][kind]; if (m) for (const k in m) for (const v of m[k]) d += v; return d; };
+  /* réel : seulement jusqu'à la date d'état (au-delà rien n'est encore saisi) */
+  const cut = A.pers.filter(P => P.a <= U.sch.statusDn).length, real = tot('real');
+  return {n, groups, tot:{plan:tot('plan'), base:tot('base'), real:real && real.map((v, i) => i < cut ? v : null)}, cur:src === 'real' && real ? real.map((v, i) => i < cut ? v : 0) : tot(src), days};
+}
+const anCum = a => { let c = 0; return a ? a.map(v => v == null ? null : c += v) : null; };
+const anFmt = (kind, v, short) => { if (!v || Math.abs(v) < 1e-9) return ''; if (kind === 'chf') return short ? (Math.abs(v) >= 1e6 ? fmtN(v / 1e6, 1) + 'M' : Math.abs(v) >= 1e3 ? fmtN(v / 1e3, Math.abs(v) >= 1e5 ? 0 : 1) + 'k' : fmtN(v)) : fmtN(v);
+  return Math.abs(v) < 9.95 && Math.abs(v - Math.round(v)) > .05 ? fmtN(v, 1) : fmtN(Math.round(v)); };
+const anNice = v => { if (v <= 0) return 1; const e = Math.pow(10, Math.floor(Math.log10(v))), f = v / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; };
+/* libellés des périodes : en-tête du dessus (mois / année) et numéro (semaine, jour, mois) */
+function anLabels(A, per){
+  const top = [], lab = A.pers.map(P => { const d = new Date((per === 'w' ? P.a : P.k) * DAY); return per === 'w' ? String(isoWeek(P.k)) : per === 'd' ? String(d.getUTCDate()) : MONTHS[d.getUTCMonth()]; });
+  A.pers.forEach((P, i) => { const d = new Date(P.a * DAY), k = per === 'm' ? String(d.getUTCFullYear()) : MONTHS[d.getUTCMonth()] + ' ' + String(d.getUTCFullYear()).slice(2);
+    if (top.length && top[top.length - 1].l === k) top[top.length - 1].n++; else top.push({l:k, n:1}); });
+  return {top, lab, name:per === 'w' ? 'Sem.' : per === 'd' ? 'Jour' : 'Mois'};
+}
+const anCmpList = (o, V) => Object.keys(AN_SRC).filter(s => s !== o.src && o.cmp[s] && V.tot[s]).map(s => ({s, l:AN_SRC[s], v:V.tot[s], c:AN_CMP[s]}));
+const anSub = o => `${AN_SRC[o.src]} · par ${AN_PER[o.per].toLowerCase()} · couleurs : ${AN_BY[o.by].toLowerCase()}`;
+function anSvg(V, o, cw, lw, cum){
+  const n = V.n, Hh = cum ? 200 : 280, tp = 22, bt = 8, W = lw + n * cw, cmp = anCmpList(o, V), K = AN_KIND[o.kind];
+  const ser = cum ? [{l:AN_SRC[o.src], v:anCum(V.cur), c:AN_CMP[o.src]}, ...cmp.map(c => ({...c, v:anCum(c.v)}))] : null;
+  let mx = 0; for (const a of cum ? ser.map(x => x.v) : [V.cur, ...cmp.map(c => c.v)]) if (a) for (const v of a) mx = Math.max(mx, v);
+  const top = anNice(mx * 1.08), y = v => Hh - bt - v / top * (Hh - tp - bt);
+  let g = '';
+  for (let k = 0; k <= 5; k++) { const v = top * k / 5, yy = y(v); g += `<line x1="${lw}" x2="${W}" y1="${yy}" y2="${yy}" stroke="var(--line,#353a41)" stroke-width="${k ? .6 : 1.2}"/><text x="${lw - 6}" y="${yy + 4}" text-anchor="end" class="mut sm">${o.kind === 'chf' ? anFmt('chf', v, 1) || '0' : fmtN(v, v % 1 ? 1 : 0)}</text>`; }
+  g += `<text x="4" y="13" class="mut sm">${cum ? 'Cumul CHF' : K.u + (o.kind === 'chf' ? '' : ' (moyenne / jour)')}</text>`;
+  if (cum) {
+    const used = [];
+    for (const x of ser) { if (!x.v) continue; const ok = x.v.map((v, i) => [i, v]).filter(q => q[1] != null), last = ok.length ? ok[ok.length - 1] : [0, 0];
+      let ly = y(last[1]) - 6; while (used.some(u => Math.abs(u - ly) < 13)) ly += 13; used.push(ly);
+      g += `<polyline points="${lw},${y(0)} ${ok.map(([i, v]) => `${lw + i * cw + cw},${y(v)}`).join(' ')}" fill="none" stroke="${x.c}" stroke-width="2.4"/><text x="${lw + last[0] * cw + cw - 4}" y="${ly}" text-anchor="end" class="sm bd" style="fill:${x.c}">${esc(x.l)} ${anFmt('chf', last[1], 1) || '0'}</text>`; }
+    return `<svg class="bp-chart" width="${W}" height="${Hh}" style="display:block">${g}</svg>`;
+  }
+  const bw = Math.max(3, cw * .72);
+  for (let i = 0; i < n; i++) {
+    const x0 = lw + i * cw + (cw - bw) / 2, many = V.groups.filter(gr => gr.v[i] > 1e-9).length > 1; let acc = 0;
+    for (const gr of V.groups) { const v = gr.v[i]; if (!(v > 1e-9)) continue; const y1 = y(acc + v), h = y(acc) - y1; acc += v;
+      g += `<rect x="${x0}" y="${y1}" width="${bw}" height="${Math.max(.5, h)}" fill="${gr.c}"><title>${esc(gr.l)} : ${anFmt(o.kind, v)} ${K.u}</title></rect>`;
+      if (many && h >= 13 && bw >= 18) g += `<text x="${x0 + bw / 2}" y="${y1 + h / 2 + 4}" text-anchor="middle" class="sm bd" style="fill:${inkOn(gr.c)}">${anFmt(o.kind, v, 1)}</text>`; }
+    if (acc > 1e-9 && cw >= 16) g += `<text x="${x0 + bw / 2}" y="${y(acc) - 4}" text-anchor="middle" class="sm bd">${anFmt(o.kind, acc, 1)}</text>`;
+  }
+  for (const c of cmp) { const p = c.v.map((v, i) => v == null ? '' : `${lw + i * cw + cw / 2},${y(v)}`).join(' ');
+    g += `<polyline points="${p}" fill="none" stroke="${c.c}" stroke-width="2" ${c.s === 'base' ? 'stroke-dasharray="6 4"' : ''}/>` + c.v.map((v, i) => v == null ? '' : `<circle cx="${lw + i * cw + cw / 2}" cy="${y(v)}" r="2.6" fill="${c.c}"><title>${c.l} : ${anFmt(o.kind, v)} ${K.u}</title></circle>`).join(''); }
+  return `<svg class="bp-chart" width="${W}" height="${Hh}" style="display:block">${g}</svg>`;
+}
+function anTable(A, V, o, cw, lw){
+  const L = anLabels(A, o.per), K = AN_KIND[o.kind], cmp = anCmpList(o, V), n = V.n;
+  const cells = (a, cls = '') => a.map(v => `<td class="c ${cls}">${anFmt(o.kind, v, o.kind === 'chf' && cw < 60)}</td>`).join('');
+  let r = `<colgroup><col style="width:${lw}px">${'<col>'.repeat(n)}</colgroup><thead><tr><th class="lab"></th>${L.top.map(t => `<th colspan="${t.n}" class="mo">${t.l}</th>`).join('')}</tr>`
+    + `<tr><th class="lab">${L.name}</th>${L.lab.map((l, i) => `<th class="c" title="${chOfDn(A.pers[i].a)} → ${chOfDn(A.pers[i].b)} · ${A.pers[i].nd} j ouvrés">${l}</th>`).join('')}</tr></thead><tbody>`;
+  r += `<tr class="tot"><td class="lab">${K.e} ${o.kind === 'chf' ? '' : '(' + K.u + ')'} · ${AN_SRC[o.src]}</td>${cells(V.cur || new Array(n).fill(0), 'big')}</tr>`;
+  for (const g of V.groups) r += `<tr><td class="lab"><span class="bp-dot" style="background:${g.c}"></span>${esc(g.l)}</td>${cells(g.v)}</tr>`;
+  for (const c of cmp) {
+    r += `<tr class="cmp"><td class="lab"><span class="bp-dot" style="background:${c.c}"></span>${c.l}</td>${cells(c.v)}</tr>`;
+    if (V.cur) r += `<tr class="cmp"><td class="lab">Écart ${AN_SRC[o.src].toLowerCase()} − ${c.l.toLowerCase()}</td>${V.cur.map((v, i) => { const d = c.v[i] == null ? 0 : v - c.v[i]; return `<td class="c">${Math.abs(d) < 1e-9 ? '' : (d > 0 ? '+' : '−') + anFmt(o.kind, Math.abs(d), o.kind === 'chf' && cw < 60)}</td>`; }).join('')}</tr>`;
+  }
+  if (o.kind === 'chf') { r += `<tr class="sum"><td class="lab">Cumul ${AN_SRC[o.src].toLowerCase()}</td>${cells(anCum(V.cur || new Array(n).fill(0)))}</tr>`;
+    for (const c of cmp) r += `<tr class="cmp"><td class="lab">Cumul ${c.l.toLowerCase()}</td>${cells(anCum(c.v))}</tr>`; }
+  return `<table class="bp-tbl bp-antbl" style="width:${lw + n * cw}px">${r}</tbody></table>`;
+}
+function anKpis(A, V, o){
+  const K = AN_KIND[o.kind], k = (l, v, sub, cls = '') => `<div class="bp-kpi"><small>${l}</small><b class="${cls}">${v}</b>${sub ? `<em>${sub}</em>` : ''}</div>`, L = anLabels(A, o.per);
+  const cur = V.cur || [], pi = cur.reduce((b, v, i) => v > (cur[b] || 0) ? i : b, 0), on = cur.filter(v => v > 1e-9);
+  const pl = i => `${AN_PER[o.per].toLowerCase()} ${o.per === 'm' ? L.lab[i] + ' ' + new Date(A.pers[i].a * DAY).getUTCFullYear() : L.lab[i] + (o.per === 'd' ? '.' + (new Date(A.pers[i].a * DAY).getUTCMonth() + 1) : '')} (${chOfDn(A.pers[i].a)})`;
+  const sum = s => (V.tot[s] || []).reduce((a, v) => a + (v || 0), 0);
+  if (o.kind === 'chf') return k('Total ' + AN_SRC[o.src].toLowerCase(), fmtN(sum(o.src)) + ' CHF', '') + (V.tot.base ? k('Référence', fmtN(sum('base')) + ' CHF', '') : '') + (V.tot.real ? k('Réel saisi', fmtN(sum('real')) + ' CHF', '') : '')
+    + (cur.length ? k('Période la plus chargée', fmtN(cur[pi]) + ' CHF', pl(pi)) : '');
+  const d = V.days(o.src);
+  return k('Pic', anFmt(o.kind, cur[pi] || 0) + ' ' + K.u, cur.length ? pl(pi) : '') + k('Moyenne', on.length ? anFmt(o.kind, on.reduce((a, v) => a + v, 0) / on.length) + ' ' + K.u : '–', 'sur ' + {d:'les jours actifs', w:'les semaines actives', m:'les mois actifs'}[o.per])
+    + k(o.kind === 'team' ? 'Hommes-jours' : 'Jours machine', fmtN(d, 1), o.kind === 'team' ? fmtN(d * A.hpd) + ' h (' + fmtN(A.hpd, 1) + ' h/j)' : '')
+    + (o.src !== 'real' && V.tot.real ? k('Réel saisi', fmtN(V.days('real'), 1) + (o.kind === 'team' ? ' h·j' : ' j'), 'heures ÷ ' + fmtN(A.hpd, 1) + ' h/j') : '');
+}
+function renderAn(){
+  const p = U.plan, o = anState(), main = $b('#bpMain'), A = resAnalysis(p, U.sch, o), K = AN_KIND[o.kind];
+  const seg = (k, map, cur) => `<div class="bp-seg">${Object.entries(map).map(([v, l]) => `<button data-an="${k}" data-v="${v}" class="${cur === v ? 'on' : ''}">${typeof l === 'string' ? l : l.l}</button>`).join('')}</div>`;
+  const ck = (s, l) => `<label class="bp-chk"><input type="checkbox" data-ancmp="${s}" ${o.cmp[s] ? 'checked' : ''} ${s === o.src ? 'disabled' : ''}>${l}</label>`;
+  const V = A.pers.length ? anView(A, o.kind, o.src) : null, cw = o.per === 'm' ? 64 : o.kind === 'chf' ? 46 : 34, lw = 190;
+  const empty = !V || (!V.cur && !V.tot.base && !V.tot.real);
+  main.innerHTML = `<div class="bp-pane">
+    <div class="bp-card bp-anctl">
+      <div><small>Contenu</small>${seg('kind', AN_KIND, o.kind)}</div><div><small>Période</small>${seg('per', AN_PER, o.per)}</div>
+      <div><small>Couleurs par</small>${seg('by', AN_BY, o.by)}</div><div><small>Barres</small>${seg('src', AN_SRC, o.src)}</div>
+      <div><small>Comparer (lignes)</small><div style="display:flex;gap:10px;align-items:center;height:38px">${ck('plan', 'Prévu')}${ck('real', 'Réel')}${ck('base', 'Référence' + (p.baseline ? '' : ' (aucune)'))}</div></div>
+      <div class="bp-anout"><button class="bp-btn" data-anx="print">${I.print}Imprimer</button><button class="bp-btn" data-anx="pdf">${I.exp}PDF</button><button class="bp-btn" data-anx="xlsx">${I.tbl}Excel</button></div>
+    </div>
+    <div class="bp-card"><h3>${K.t} · ${esc(p.name)}</h3><p class="bp-hint">${anSub(o)}. ${o.kind === 'chf' ? 'Montants = budget (source réglée dans Réglages) réparti sur les jours ouvrés des tâches et des lots.' : 'Effectif = moyenne des jours ouvrés de la période (ressources des tâches + des lots).'}</p>
+      ${empty ? `<p class="bp-hint">Rien à afficher : ${o.kind === 'team' ? 'aucune équipe' : o.kind === 'machine' ? 'aucune machine' : 'aucun montant'} affecté${o.src === 'real' ? ' ni réalisé saisi' : ''}.</p>` : `
+      <div class="bp-kpis" style="margin-bottom:10px">${anKpis(A, V, o)}</div>
+      <div class="bp-anwrap">${anSvg(V, o, cw, lw)}${o.kind === 'chf' ? anSvg(V, o, cw, lw, true) : ''}${anTable(A, V, o, cw, lw)}</div>
+      <div class="bp-anleg">${V.groups.map(g => `<span><span class="bp-dot" style="background:${g.c}"></span>${esc(g.l)}</span>`).join('')}${anCmpList(o, V).map(c => `<span><span class="bp-dot" style="background:${c.c};height:3px;vertical-align:3px"></span>${c.l} (ligne)</span>`).join('')}</div>`}
+    </div></div>`;
+  const ctl = main.querySelector('.bp-anctl');
+  ctl.addEventListener('click', e => {
+    const b = e.target.closest('[data-an]'); if (b) { o[b.dataset.an] = b.dataset.v; anSave(); renderAn(); return; }
+    const x = e.target.closest('[data-anx]'); if (x) anOut(x.dataset.anx);
+  });
+  ctl.addEventListener('change', e => { const c = e.target.closest('[data-ancmp]'); if (c) { o.cmp[c.dataset.ancmp] = c.checked; anSave(); renderAn(); } });
+}
+/* sorties : PDF / impression (A4–A0, une page par contenu coché) et Excel */
+async function anOut(what){
+  const o = anState(), P0 = LAY().pdf;
+  if (what === 'xlsx') {
+    try { toast('Préparation de l’Excel…', 1500); await loadScript(XLSX_URL); const X = window.XLSX, wb = X.utils.book_new(); anSheets(wb, X, o);
+      if (!wb.SheetNames.length) { toast('Rien à exporter'); return; }
+      const blob = new Blob([X.write(wb, {bookType:'xlsx', type:'array'})], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), name = `${fileBase()} – analyse ressources ${isoOfDn(todayDn())}.xlsx`;
+      download(blob, name); toast(await exportToDrive(blob, name) ? 'Exporté : téléchargé + Drive › Planning › Exports' : 'Exporté (téléchargé)');
+    } catch (e) { toast('Export impossible : ' + ((e && e.message) || e), 5000); }
+    return;
+  }
+  const r = await dlg({title:what === 'print' ? 'Imprimer l’analyse' : 'PDF de l’analyse', width:520, body:`<div class="bp-form">
+      <label class="bp-f"><span>Format</span><select id="anSize">${Object.keys(PAPER).map(k => `<option ${k === (P0.size === 'A4' ? 'A4' : 'A3') ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
+      <label class="bp-f"><span>Orientation</span><select id="anOr"><option value="land">Paysage</option><option value="port">Portrait</option></select></label>
+      <div class="bp-f w"><span>Pages (une par contenu)</span>${Object.entries(AN_KIND).map(([k, v]) => `<label class="bp-chk"><input type="checkbox" data-ank="${k}" ${k === o.kind ? 'checked' : ''}>${v.l}</label>`).join(' ')}</div>
+    </div><p class="bp-hint">${anSub(o)} — réglages de l’onglet Analyse. Logo et cartouche : ceux de la mise en page du planning.</p>`,
+    buttons:[{label:'Annuler', value:null}, {label:what === 'print' ? 'Imprimer' : 'Créer le PDF', pri:true, check:b => !!b.querySelector('[data-ank]:checked')}]});
+  if (!r) return;
+  const opt = {size:r.querySelector('#anSize').value, orient:r.querySelector('#anOr').value, kinds:[...r.querySelectorAll('[data-ank]:checked')].map(x => x.dataset.ank)};
+  if (what === 'print') return printPlan({pdf:{size:opt.size, orient:opt.orient}}, () => makeAnPdf(opt));
+  try { toast('Préparation du PDF…', 1500); const blob = await makeAnPdf(opt), name = `${fileBase()} – analyse ressources ${opt.size} ${isoOfDn(todayDn())}.pdf`;
+    download(blob, name); toast(await exportToDrive(blob, name) ? 'Exporté : téléchargé + Drive › Planning › Exports' : 'Exporté (téléchargé)');
+  } catch (e) { console.error('analyse pdf', e); toast('PDF impossible : ' + ((e && e.message) || e), 5000); }
+}
+function anSheets(wb, X, o){
+  const D = dn => new Date(Date.UTC(1970, 0, 1) + dn * DAY + 12 * 36e5), A = resAnalysis(U.plan, U.sch, o); if (!A.pers.length) return;
+  const L = anLabels(A, o.per), r1 = v => Math.round(v * 10) / 10;
+  for (const kind of Object.keys(AN_KIND)) {
+    const V = anView(A, kind, 'plan'); if (!V.tot.plan && !V.tot.base && !V.tot.real) continue;
+    const K = AN_KIND[kind], f0 = kind === 'chf' ? Math.round : r1, f = v => v == null ? '' : f0(v), cols = V.groups;
+    const head = [L.name, 'Du', 'Au', 'Jours ouvrés', ...cols.map(g => g.l + (kind === 'chf' ? ' CHF' : ' (' + K.u + ')')), 'Total prévu', ...(V.tot.base ? ['Référence'] : []), ...(V.tot.real ? ['Réel'] : [])];
+    if (kind === 'chf') head.push('Cumul prévu', ...(V.tot.base ? ['Cumul référence'] : []), ...(V.tot.real ? ['Cumul réel'] : []));
+    const rows = [[`${K.t} · ${U.plan.name} · par ${AN_PER[o.per].toLowerCase()} · ${kind === 'chf' ? 'CHF' : 'effectif = moyenne des jours ouvrés (' + K.u + ')'}`], [], head];
+    const cp = anCum(V.tot.plan), cb = anCum(V.tot.base), cr = anCum(V.tot.real);
+    A.pers.forEach((P, i) => rows.push([o.per === 'w' ? 'S' + L.lab[i] : L.lab[i], D(P.a), D(P.b), P.nd, ...cols.map(g => f(g.v[i])), f(V.tot.plan ? V.tot.plan[i] : 0), ...(V.tot.base ? [f(V.tot.base[i])] : []), ...(V.tot.real ? [f(V.tot.real[i])] : []),
+      ...(kind === 'chf' ? [f(cp ? cp[i] : 0), ...(cb ? [f(cb[i])] : []), ...(cr ? [f(cr[i])] : [])] : [])]));
+    if (kind !== 'chf') { rows.push([], ['Total ' + (kind === 'team' ? 'hommes-jours' : 'jours machine'), '', '', '', ...cols.map(g => r1(g.v.reduce((a, v, i) => a + v * A.pers[i].nd, 0))), r1(V.days('plan')), ...(V.tot.base ? [r1(V.days('base'))] : []), ...(V.tot.real ? [r1(V.days('real'))] : [])]); }
+    const ws = X.utils.aoa_to_sheet(rows, {cellDates:true, dateNF:'dd\\.mm\\.yyyy'}); ws['!cols'] = head.map((h, i) => ({wch:i === 0 ? 10 : i < 3 ? 11 : Math.min(28, Math.max(10, String(h).length + 2))}));
+    X.utils.book_append_sheet(wb, ws, kind === 'team' ? 'Analyse main-d’œuvre' : kind === 'machine' ? 'Analyse machines' : 'Analyse CHF');
+  }
+}
+async function makeAnPdf(opt){
+  await loadScript(PDFLIB_URL);
+  const {PDFDocument, StandardFonts, rgb} = window.PDFLib, p = U.plan, o = anState(), st = site(U.siteId), Pp = LAY().pdf;
+  const hex = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); const n = m ? parseInt(m[1], 16) : 0x888888; return rgb((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255); };
+  const doc = await PDFDocument.create(); doc.setTitle(winAnsi(p.name + ' – analyse des ressources')); doc.setCreator('BauGest');
+  const F = await doc.embedFont(StandardFonts.Helvetica), FB = await doc.embedFont(StandardFonts.HelveticaBold);
+  let [W, Hp] = PAPER[opt.size] || PAPER.A3; if (opt.orient === 'port') [W, Hp] = [Hp, W];
+  const k0 = W / PAPER.A3[0] > 1 ? Math.min(2, W / PAPER.A3[0]) : Math.max(.75, W / PAPER.A3[0]), M = 22;
+  const C = {txt:rgb(.1, .11, .13), mut:rgb(.42, .45, .48), line:rgb(.8, .8, .8), band:hex('#f2c230'), zebra:rgb(.96, .96, .96), white:rgb(1, 1, 1)};
+  const text = (pg, t, x, y, o2 = {}) => { const f = o2.b ? FB : F, sz = o2.s || 8; let str = winAnsi(t); if (o2.w) { while (str.length > 1 && f.widthOfTextAtSize(str, sz) > o2.w) str = str.slice(0, -2) + '…'; }
+    const w = f.widthOfTextAtSize(str, sz); pg.drawText(str, {x:o2.c ? x - w / 2 : o2.r ? x - w : x, y, size:sz, font:f, color:o2.col || C.txt}); };
+  let logo = null;
+  if (Pp.logo !== 'none') { const L = logoList(), src = Pp.logo === 'comp' ? L.comp : Pp.logo === 'site' ? L.site : Pp.logoSrc; if (src) try { const png = await logoPng(src); if (png) logo = await doc.embedPng(png); } catch (e) {} }
+  const A = resAnalysis(p, U.sch, o); if (!A.pers.length) throw new Error('aucune ressource à analyser');
+  const Lb = anLabels(A, o.per), lw = 150 * k0, minCw = 13 * k0, pages = [];
+  for (const kind of opt.kinds) {
+    const V = anView(A, kind, o.src); if (!V.cur && !V.tot.base && !V.tot.real) continue;
+    const per = Math.max(1, Math.floor((W - 2 * M - lw) / minCw));
+    for (let a = 0; a < V.n; a += per) pages.push({kind, V, a, b:Math.min(V.n, a + per)});
+  }
+  if (!pages.length) throw new Error('rien à imprimer pour les contenus choisis');
+  pages.forEach((pgD, pi) => {
+    const {kind, V, a, b} = pgD, K = AN_KIND[kind], n = b - a, cw = (W - 2 * M - lw) / n, fs = Math.max(5, Math.min(8.5 * k0, cw * .42)), cmp = anCmpList({...o, kind}, V).map(c => ({...c, v:c.v.slice(a, b)}));
+    const cur = (V.cur || new Array(V.n).fill(0)).slice(a, b), grs = V.groups.map(g => ({...g, v:g.v.slice(a, b)})), pg = doc.addPage([W, Hp]);
+    /* en-tête : logo, titre, bandeau */
+    const lH = logo ? Math.max(20, (+Pp.logoH || 15) * 72 / 25.4 * Math.min(1.4, k0)) : 0, lWd = logo ? Math.min(W * .25, logo.width * lH / logo.height) : 0, lH2 = logo ? lWd * logo.height / logo.width : 0;
+    if (logo) pg.drawImage(logo, {x:M, y:Hp - M - lH2, width:lWd, height:lH2});
+    const tTop = Hp - M - 12 * k0;
+    text(pg, (K.t + (kind === 'chf' ? ' (CHF)' : '')).toUpperCase(), W / 2, tTop, {s:12 * k0, b:1, c:1});
+    text(pg, [st ? st.label : '', p.name, anSub(o)].filter(Boolean).join(' · '), W / 2, tTop - 14 * k0, {s:8.5 * k0, c:1, col:C.mut});
+    const bandY = Math.min(tTop - 34 * k0, Hp - M - lH2 - 8 * k0) , bandH = 17 * k0;
+    pg.drawRectangle({x:M, y:bandY, width:W - 2 * M, height:bandH, color:C.band, borderColor:C.txt, borderWidth:.6});
+    text(pg, `${K.t.toUpperCase()} – ${AN_SRC[o.src].toUpperCase()}${pages.filter(x => x.kind === kind).length > 1 ? ` (${chOfDn(A.pers[a].a)} – ${chOfDn(A.pers[b - 1].b)})` : ''}`, W / 2, bandY + 5 * k0, {s:10.5 * k0, b:1, c:1});
+    /* tableau (en bas) : mois, période, total, groupes, comparaisons, cumuls */
+    const rows = [{l:`${K.e}${kind === 'chf' ? '' : ' (' + K.u + ')'} · ${AN_SRC[o.src]}`, v:cur, b:1, big:1}, ...grs.map(g => ({l:g.l, v:g.v, c:g.c}))];
+    for (const c of cmp) rows.push({l:c.l, v:c.v, c:c.c, m:1});
+    if (kind === 'chf') { const cc = anCum(V.cur || new Array(V.n).fill(0)).slice(a, b); rows.push({l:'Cumul ' + AN_SRC[o.src].toLowerCase(), v:cc, b:1}); for (const c of anCmpList({...o, kind}, V)) rows.push({l:'Cumul ' + c.l.toLowerCase(), v:anCum(c.v).slice(a, b), m:1}); }
+    const foot = M + 14 * k0, rh = Math.max(9, Math.min(15 * k0, (Hp * .36) / (rows.length + 2))), tblH = (rows.length + 2) * rh + rh * .4, tY = foot + 4;   /* bas du tableau */
+    let y = tY + tblH;
+    const X = i => M + lw + i * cw, short = kind === 'chf' && cw < 44;
+    const hdr = (yy, fill) => pg.drawRectangle({x:M, y:yy, width:W - 2 * M, height:rh, color:fill});
+    /* ligne des mois */
+    y -= rh; hdr(y, C.band);
+    let acc = 0; for (const t of Lb.top) { const s0 = Math.max(acc, a), s1 = Math.min(acc + t.n, b); if (s1 > s0) { pg.drawLine({start:{x:X(s0 - a), y}, end:{x:X(s0 - a), y:y + rh}, thickness:.5, color:C.txt}); if ((s1 - s0) * cw > 26) text(pg, t.l, (X(s0 - a) + X(s1 - a)) / 2, y + rh * .3, {s:Math.min(7.5 * k0, rh * .62), b:1, c:1, w:(s1 - s0) * cw - 2}); } acc += t.n; }
+    y -= rh; hdr(y, C.zebra); text(pg, Lb.name, M + 3, y + rh * .3, {s:Math.min(7.5 * k0, rh * .62), b:1});
+    for (let i = 0; i < n; i++) text(pg, Lb.lab[a + i], X(i) + cw / 2, y + rh * .3, {s:Math.min(fs, rh * .6), c:1, w:cw - 1});
+    for (const rw of rows) {
+      const h = rw.big ? rh * 1.4 : rh; y -= h;
+      if (rw.c) pg.drawRectangle({x:M, y, width:6, height:h, color:hex(rw.c)});
+      if (rw.big) pg.drawRectangle({x:M, y, width:W - 2 * M, height:h, color:rgb(1, .97, .82)});
+      text(pg, rw.l, M + (rw.c ? 9 : 3), y + h * .3, {s:Math.min(7.5 * k0, rh * .62), b:rw.b, w:lw - 12, col:rw.m ? C.mut : C.txt});
+      for (let i = 0; i < n; i++) { const s = anFmt(kind, rw.v[i], short); if (s) text(pg, s, X(i) + cw / 2, y + h * .3, {s:Math.min(rw.big ? fs * 1.25 : fs, h * .62), b:rw.b, c:1, w:cw - 1, col:rw.m ? C.mut : C.txt}); }
+      pg.drawLine({start:{x:M, y}, end:{x:W - M, y}, thickness:.4, color:C.line});
+    }
+    pg.drawRectangle({x:M, y, width:W - 2 * M, height:tY + tblH - y, borderColor:C.txt, borderWidth:.7});
+    for (let i = 0; i <= n; i++) pg.drawLine({start:{x:X(i), y}, end:{x:X(i), y:tY + tblH - rh}, thickness:.3, color:C.line});
+    /* graphique : barres empilées (+ courbe cumulée pour les montants) */
+    const gTop = bandY - 10 * k0, legH = 12 * k0, gBot = tY + tblH + legH + 6, gH = gTop - gBot;
+    const charts = kind === 'chf' ? [{y0:gBot + gH * .4 + 8, h:gH * .6 - 8, cum:0}, {y0:gBot, h:gH * .4 - 8, cum:1}] : [{y0:gBot, h:gH, cum:0}];
+    for (const ch of charts) {
+      const ser = ch.cum ? [{l:AN_SRC[o.src], v:anCum(V.cur || []).slice(a, b), c:AN_CMP[o.src]}, ...anCmpList({...o, kind}, V).map(c => ({...c, v:anCum(c.v).slice(a, b)}))] : null;
+      let mx = 0; for (const arr of ch.cum ? ser.map(x => x.v) : [cur, ...cmp.map(c => c.v)]) for (const v of arr || []) mx = Math.max(mx, v);
+      const top = anNice(mx * 1.08), Y = v => ch.y0 + v / top * (ch.h - 10);
+      for (let kk = 0; kk <= 5; kk++) { const v = top * kk / 5; pg.drawLine({start:{x:X(0), y:Y(v)}, end:{x:X(n), y:Y(v)}, thickness:kk ? .3 : .8, color:C.line}); text(pg, kind === 'chf' ? anFmt('chf', v, 1) || '0' : fmtN(v, v % 1 ? 1 : 0), X(0) - 4, Y(v) - 2.5, {s:6.5 * k0, r:1, col:C.mut}); }
+      text(pg, ch.cum ? 'Cumul CHF' : K.u + (kind === 'chf' ? ' par ' + AN_PER[o.per].toLowerCase() : ' (moyenne / jour)'), M, ch.y0 + ch.h - 8, {s:7 * k0, b:1, col:C.mut, w:lw - 30});
+      if (ch.cum) { for (const s of ser) { if (!s.v || !s.v.length) continue; let px = X(0), py = Y(0), lv = 0, lx = X(n); s.v.forEach((v, i) => { if (v == null) return; lv = v; lx = X(i + 1); const nx = X(i + 1), ny = Y(v); pg.drawLine({start:{x:px, y:py}, end:{x:nx, y:ny}, thickness:1.6, color:hex(s.c)}); px = nx; py = ny; }); text(pg, s.l + ' ' + (anFmt('chf', lv, 1) || '0'), lx - 2, py + 4, {s:7 * k0, b:1, r:1, col:hex(s.c)}); } continue; }
+      const bw = Math.max(2, cw * .72);
+      for (let i = 0; i < n; i++) { const x0 = X(i) + (cw - bw) / 2, many = grs.filter(g => g.v[i] > 1e-9).length > 1; let accv = 0;
+        for (const g of grs) { const v = g.v[i]; if (!(v > 1e-9)) continue; const y1 = Y(accv), h = Y(accv + v) - y1; accv += v; pg.drawRectangle({x:x0, y:y1, width:bw, height:h, color:hex(g.c)});
+          if (many && h >= fs + 3 && bw >= 12) text(pg, anFmt(kind, v, 1), x0 + bw / 2, y1 + h / 2 - fs * .35, {s:fs * .95, b:1, c:1, col:inkOn(g.c) === '#ffffff' ? C.white : C.txt}); }
+        if (accv > 1e-9) text(pg, anFmt(kind, accv, 1), x0 + bw / 2, Y(accv) + 2, {s:fs, b:1, c:1}); }
+      for (const c of cmp) { let px = null, py = null; c.v.forEach((v, i) => { if (v == null) return; const nx = X(i) + cw / 2, ny = Y(v); if (px != null) pg.drawLine({start:{x:px, y:py}, end:{x:nx, y:ny}, thickness:1.4, color:hex(c.c), dashArray:c.s === 'base' ? [4, 3] : undefined}); pg.drawCircle({x:nx, y:ny, size:1.6, color:hex(c.c)}); px = nx; py = ny; }); }
+    }
+    /* légende + pied */
+    let lx = M; const ly = tY + tblH + 4;
+    for (const g of grs) { pg.drawRectangle({x:lx, y:ly, width:10, height:6, color:hex(g.c)}); text(pg, g.l, lx + 13, ly, {s:7 * k0}); lx += 22 + F.widthOfTextAtSize(winAnsi(g.l), 7 * k0) + 8; }
+    for (const c of cmp) { pg.drawLine({start:{x:lx, y:ly + 3}, end:{x:lx + 12, y:ly + 3}, thickness:1.6, color:hex(c.c)}); text(pg, c.l + ' (ligne)', lx + 15, ly, {s:7 * k0}); lx += 26 + F.widthOfTextAtSize(winAnsi(c.l + ' (ligne)'), 7 * k0) + 8; }
+    text(pg, kind === 'chf' ? 'Montants = budget réparti sur les jours ouvrés des tâches et des lots ; réel = saisies du réalisé à leur date.' : 'Effectif = moyenne des jours ouvrés de la période ; comprend les ressources des tâches et des lots ; réel = heures saisies ÷ ' + fmtN(A.hpd, 1) + ' h/j.', M, M, {s:7 * k0, col:C.mut, w:W * .62});
+    text(pg, `BauGest · imprimé le ${chOfDn(todayDn())} · page ${pi + 1} / ${pages.length}`, W - M, M, {s:7 * k0, r:1, col:C.mut});
+  });
+  return new Blob([await doc.save()], {type:'application/pdf'});
+}
+
 /* ---------- Budget ---------- */
 function renderBud(){
   const p = U.plan, s = U.sch, main = $b('#bpMain'), E = evm(p, s), byId = new Map(E.rows.map(r => [r.id, r]));
@@ -1851,7 +2172,7 @@ async function exportMenu(){
     <div class="bp-menu">
     <button class="bp-btn" data-x="print">${I.print}<span>Imprimer<small>Directement sur l’imprimante, avec la mise en page du PDF</small></span></button>
     <button class="bp-btn" data-x="pdf">${I.exp}<span>PDF<small>Gantt imprimable avec cartouche, au format choisi ci-dessus</small></span></button>
-    <button class="bp-btn" data-x="xlsx">${I.tbl}<span>Excel<small>Tâches, ressources, budget, réalisé, fériés</small></span></button>
+    <button class="bp-btn" data-x="xlsx">${I.tbl}<span>Excel<small>Tâches, ressources, budget, réalisé, fériés, analyse des ressources</small></span></button>
     <button class="bp-btn" data-x="xml">${I.cal}<span>MS Project (XML)<small>À ouvrir dans Project : Fichier › Ouvrir › XML</small></span></button>
     <button class="bp-btn" data-x="layout">${I.edit}<span>Mise en page…<small>Colonnes, couleurs, format, cartouche, logo, période</small></span></button>
     <button class="bp-btn" data-x="import">${I.imp}<span>Importer MS Project (XML)<small>Crée un nouveau planning dans ce chantier</small></span></button>
@@ -2095,12 +2416,12 @@ async function printDlg(){
   if (!b) return;
   printPlan(fmtRead(b, Lx));
 }
-async function printPlan(layOv){
+async function printPlan(layOv, build){
   if (!U.plan || U.printing) return;
   U.printing = true;
   try {
     toast('Préparation de l’impression…', 2000);
-    const Ly = layOv || LAY(), blob = await makePdf(Ly); fitNote(blob);
+    const Ly = layOv || LAY(), blob = build ? await build() : await makePdf(Ly); if (!build) fitNote(blob);
     if (H.split) { printPreview(blob); return; }
     if (!window.pdfjsLib) await loadScript(PDFJS_URL + 'pdf.min.js');
     if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_URL + 'pdf.worker.min.js';
@@ -2155,6 +2476,7 @@ async function makeXlsx(){
   add(bud, 'Budget', [26, 36, 14, 14, 12, 14, 12, 12]);
   add(act, 'Réalisé', [11, 8, 36, 26, 10, 7, 12]);
   add(off, 'Fériés et vacances', [11, 36]);
+  anSheets(wb, X, anState());
   const out = X.write(wb, {bookType:'xlsx', type:'array', cellDates:true});
   return new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
