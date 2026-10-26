@@ -2103,7 +2103,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <div class="panel-body" id="setScroll">
     <div class="panel-inner">
       <nav class="jump" aria-label="Sections">
-        <a href="#g-look">Affichage</a><a href="#g-drive">Google Drive</a><a href="#g-sites">Chantiers</a><a href="#g-comp">Entreprises</a><a href="#g-photos">Photos</a><a href="#g-docs">Documents</a><a href="#g-tags">Étiquettes</a><a href="#g-api">Coût API</a><a href="#g-help">Aide</a>
+        <a href="#g-look">Affichage</a><a href="#g-drive">Google Drive</a><a href="#g-sites">Chantiers</a><a href="#g-comp">Entreprises</a><a href="#g-photos">Photos</a><a href="#g-docs">Documents</a><a href="#g-tags">Étiquettes</a><a href="#g-help">Aide</a>
       </nav>
 
       <section class="group" id="g-look">
@@ -2212,13 +2212,6 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
         <div class="copy"><input type="text" id="tagNew" placeholder="Nouvelle étiquette" autocomplete="off"><button id="tagAdd" class="btn">Ajouter</button></div>
       </section>
 
-      <section class="group" id="g-api">
-        <h2>Coût API Claude</h2>
-        <p class="hint">Combien coûteraient les tâches planifiées (transcription, soumission, mails) avec une clé API Claude Opus 5.5 ou Sonnet 5.5, comparé à l'abonnement. Calculé sur leur consommation réelle, relevée chaque soir (fichier « BauGest – consommation des tâches » du Drive).</p>
-        <p class="hint" id="apiCostSum"></p>
-        <button id="apiCostOpen" class="btn block">Ouvrir le calculateur</button>
-      </section>
-
       <section class="group help" id="g-help">
         <h2>Aide</h2>
         <h3>Installer sur le téléphone</h3>
@@ -2303,7 +2296,6 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
 </section>
 
 <script src="planning.js"></script>
-<script src="api-cout.js"></script>
 <script src="soumission.js"></script>
 <script>
 (() => {
@@ -3182,11 +3174,7 @@ function renderActiveTag(){
 }
 
 /* ---------- Paramètres ---------- */
-/* Paramètres › Coût API Claude : calculateur partagé api-cout.js (aussi sur le PC) */
-function apiCostSum(){ const el = document.getElementById('apiCostSum'); if (el && window.BGApiCost) el.textContent = BGApiCost.summary(); }
-document.getElementById('apiCostOpen').addEventListener('click', () => { if (window.BGApiCost) BGApiCost.open({api:driveReady() ? api : null, root:() => S.drive.rootId, onClose:apiCostSum}); else alert('Calculateur non chargé : rouvre BauGest avec le réseau'); });
 function openSettings(anchor){
-  apiCostSum();
   $('#settings').hidden = false; renderSettings();
   if (anchor) setTimeout(() => document.getElementById(anchor)?.scrollIntoView({block:'start'}), 30);
 }
