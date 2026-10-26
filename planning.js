@@ -898,9 +898,12 @@ const DEF_LAY = {
   colors:{task:'#3e8ed0', crit:'#e5484d', done:'#4caf7a', sum:'#6b7178', ms:'#6b7178', base:'#8a8f96', late:'#ff9f43', today:'#f2c230'},
   crit:true, barText:'res',
   screen:{rh:32, font:13, zoom:'week', links:true, base:true, weekend:true},
-  pdf:{size:'A3', orient:'land', title:'', subtitle:true, legend:true, cart:true, logo:'comp', logoSrc:'', logoPos:'tl', logoH:15, range:'all', from:'', to:'', only:false, fit:false, font:7.5, rh:13.5, links:true, base:true, zebra:true, note:''}
+  pdf:{size:'A3', orient:'land', title:'', subtitle:true, legend:true, cart:true, logo:'comp', logoSrc:'', logoPos:'tl', logoH:15, range:'all', from:'', to:'', only:false, fit:false, font:7.5, rh:13.5, links:true, base:true, zebra:true, note:'', notes:[]}
 };
 const clone = o => JSON.parse(JSON.stringify(o));
+/* remarques en bas de page : liste notes[] (ancien champ note = 1 seule remarque) */
+const noteList = P => (Array.isArray(P.notes) && P.notes.length ? P.notes : [P.note || '']).map(x => String(x || '').trim()).filter(Boolean);
+const noteRow = v => `<div class="bp-nrow" style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><input data-note value="${esc(v)}" placeholder="ex. Document provisoire – sous réserve des intempéries" style="flex:1"><button type="button" class="bp-ib" data-delnote title="Retirer cette remarque">${I.x}</button></div>`;
 function mergeLay(a, b){
   const o = clone(a);
   if (b) for (const k in b) {
@@ -1025,7 +1028,7 @@ async function layDlg(){
       <label class="bp-f"><span>Hauteur des lignes</span>${sel('lyPRh', Ly.pdf.rh, [[11, 'Compacte'], [13.5, 'Normale'], [17, 'Grande']])}</label>
       ${ck('lySub', Ly.pdf.subtitle, 'Ligne d’infos sous le titre')}${ck('lyLeg', Ly.pdf.legend, 'Légende')}${ck('lyCart', Ly.pdf.cart, 'Cartouche')}
       ${ck('lyPLinks', Ly.pdf.links, 'Flèches des liens')}${ck('lyPBase', Ly.pdf.base, 'Référence')}${ck('lyZebra', Ly.pdf.zebra, 'Lignes alternées')}${ck('lyFit', Ly.pdf.fit, 'Ajuster à la page (tout sur 1 page)')}
-      <label class="bp-f w"><span>Remarque en bas de page</span><input id="lyNote" value="${esc(Ly.pdf.note)}" placeholder="ex. Document provisoire – sous réserve des intempéries"></label>
+      <div class="bp-f w"><span>Remarques en bas de page (une par ligne du PDF)</span><div id="lyNotes">${(noteList(Ly.pdf).length ? noteList(Ly.pdf) : ['']).map(noteRow).join('')}</div><button type="button" class="bp-btn" id="lyAddNote">+ Ajouter une remarque</button></div>
       <label class="bp-f"><span>Logo</span>${sel('lyLogo', Ly.pdf.logo, [['comp', 'Logo de l’entreprise du chantier'], ['site', 'Logo du chantier'], ['pick', 'Logo choisi (ci-dessous)'], ['none', 'Pas de logo']])}</label>
       <label class="bp-f"><span>Place du logo</span>${sel('lyLogoPos', Ly.pdf.logoPos || 'tl', [['tl', 'En haut à gauche'], ['cart', 'Dans le cartouche'], ['both', 'En haut à gauche + cartouche']])}</label>
       <label class="bp-f"><span>Hauteur du logo en haut : <b id="lyLogoHV">${+Ly.pdf.logoH || 15}</b> mm</span><input id="lyLogoH" type="range" min="8" max="60" step="1" value="${+Ly.pdf.logoH || 15}"></label>
@@ -1033,6 +1036,9 @@ async function layDlg(){
     </div>`,
     buttons:[{label:'Valeurs d’origine', value:'reset', left:true}, ...(own ? [{label:'Revenir au modèle commun', value:'common'}] : []), {label:'Aperçu PDF', value:'preview'}, {label:'Annuler', value:null}, {label:'Enregistrer', pri:true}],
     onOpen:b => {
+      b.querySelector('#lyAddNote').addEventListener('click', () => { const w = b.querySelector('#lyNotes'); w.insertAdjacentHTML('beforeend', noteRow('')); w.lastElementChild.querySelector('input').focus(); });
+      b.querySelector('#lyNotes').addEventListener('click', e => { const d = e.target.closest('[data-delnote]'); if (!d) return; const r = d.closest('.bp-nrow'), w = b.querySelector('#lyNotes');
+        if (w.children.length > 1) r.remove(); else r.querySelector('input').value = ''; });
       b.querySelector('#lyLogoH').addEventListener('input', e => { b.querySelector('#lyLogoHV').textContent = e.target.value; });
       const upd = () => { const rg = b.querySelector('#lyRange').value; b.querySelectorAll('[data-rg]').forEach(e => e.hidden = rg !== 'custom'); b.querySelector('[data-rg2]').hidden = rg === 'all';
         b.querySelector('#lyPick').hidden = b.querySelector('#lyLogo').value !== 'pick'; };
@@ -1051,7 +1057,7 @@ async function layDlg(){
           screen:{rh:+v('lyRh').value, font:+v('lyFont').value, zoom:v('lyZoom').value, links:v('lyLinks').checked, base:v('lyBase').checked, weekend:v('lyWe').checked},
           pdf:{size:v('lySize').value, orient:v('lyOrient').value, title:v('lyTitle').value.trim(), subtitle:v('lySub').checked, legend:v('lyLeg').checked, cart:v('lyCart').checked,
             logo:v('lyLogo').value, logoSrc:v('lyLogo').value === 'pick' ? logoCur : '', logoPos:v('lyLogoPos').value, logoH:+v('lyLogoH').value || 15, range:v('lyRange').value, from:v('lyFrom').value, to:v('lyTo').value, only:v('lyOnly').checked,
-            font:+v('lyPFont').value, rh:+v('lyPRh').value, links:v('lyPLinks').checked, base:v('lyPBase').checked, zebra:v('lyZebra').checked, fit:v('lyFit').checked, note:v('lyNote').value.trim()}};
+            font:+v('lyPFont').value, rh:+v('lyPRh').value, links:v('lyPLinks').checked, base:v('lyPBase').checked, zebra:v('lyZebra').checked, fit:v('lyFit').checked, note:'', notes:[...b.querySelectorAll('#lyNotes [data-note]')].map(x => x.value.trim()).filter(Boolean)}};
         b.querySelectorAll('[data-color]').forEach(c => o.colors[c.dataset.color] = c.value);
         return mergeLay(DEF_LAY, o);
       };
@@ -1834,7 +1840,8 @@ async function makePdf(layOv){
   }
   const lH = logo && lTop ? Math.max(14, (+Pp.logoH || 15) * 72 / 25.4) : 0, lW = lH ? Math.min(W * .4, logo.width * lH / logo.height) : 0, lH2 = lW && logo.width * lH / logo.height > lW ? lW * logo.height / logo.width : lH, tX = M + (lW ? lW + 12 : 0);
   const titleH = Math.max(Pp.subtitle ? 44 : 30, lH2 + 8), top = Hp - M - titleH, tlH = 26, rowsTop = top - tlH;
-  const foot = M + (Pp.cart ? 64 : Pp.legend || Pp.note ? 30 : 14), per = Math.max(1, Math.floor((rowsTop - foot) / RHp));
+  const notes = noteList(Pp), legY = Math.max(M + (Pp.cart ? 46 : 8), M + 2 + (notes.length ? (Pp.legend ? 14 : 0) + (notes.length - 1) * 11 : 0));
+  const foot = Pp.cart ? Math.max(M + 64, legY + 18) : Pp.legend || notes.length ? legY + 22 : M + 14, per = Math.max(1, Math.floor((rowsTop - foot) / RHp));
   const C = {txt:rgb(.1, .11, .13), mut:rgb(.42, .45, .48), line:rgb(.8, .8, .8), off:rgb(.93, .93, .93), zebra:rgb(.97, .97, .97),
     task:hex(Ly.colors.task), crit:hex(Ly.colors.crit), done:hex(Ly.colors.done), sum:hex(Ly.colors.sum), ms:hex(Ly.colors.ms), base:hex(Ly.colors.base), late:hex(Ly.colors.late), today:hex(Ly.colors.today)};
   const base = p.baseline && Pp.base ? p.baseline.tasks : null;
@@ -1928,13 +1935,13 @@ async function makePdf(layOv){
     }
     pg.drawLine({start:{x:cx0 - 3, y:top}, end:{x:cx0 - 3, y:yb}, thickness:.5, color:C.line});
     /* légende, remarque, cartouche */
-    const ly = M + (Pp.cart ? 46 : 8);
+    const ly = legY;
     if (Pp.legend) {
       const leg = [...(Ly.crit ? [[C.crit, 'Chemin critique']] : []), [C.task, 'Tâche'], [C.done, 'Terminée'], ...(base ? [[C.base, 'Référence']] : []), [C.late, 'Retard'], [C.today, 'Aujourd’hui']];
       let lx = M; for (const [c, l] of leg) { pg.drawRectangle({x:lx, y:ly, width:12, height:6, color:c}); text(pg, l, lx + 16, ly, {s:7.5}); lx += 26 + F.widthOfTextAtSize(winAnsi(l), 7.5) + 12; }
       pg.drawSvgPath('M0 -4 L4 0 L0 4 L-4 0 Z', {x:lx + 4, y:ly + 3, color:C.ms}); text(pg, 'Jalon', lx + 12, ly, {s:7.5});
     }
-    if (Pp.note) text(pg, Pp.note, M, ly + (Pp.legend ? -14 : 0), {s:8, b:1, col:C.mut, w:W - 2 * M - (Pp.cart ? 340 : 0)});
+    notes.forEach((nt, i) => text(pg, nt, M, ly - (Pp.legend ? 14 : 0) - i * 11, {s:8, b:1, col:C.mut, w:W - 2 * M - (Pp.cart ? (logo && lCart ? 410 : 340) : 0)}));
     if (Pp.cart) {
       const lw = logo && lCart ? 70 : 0, bwc = 330 + lw, bxc = W - M - bwc, byc = M, bhc = 56, tx0 = bxc + lw;
       pg.drawRectangle({x:bxc, y:byc, width:bwc, height:bhc, borderColor:C.txt, borderWidth:.8});
