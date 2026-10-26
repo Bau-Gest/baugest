@@ -284,12 +284,19 @@ code,.k2{font-family:ui-monospace,Consolas,monospace;font-size:.92em;background:
   <li>Le tarif horaire d’équipe : prends le <b>prix de revient</b> de ton entreprise (pas le prix de vente) pour suivre le coût réel ; ou le prix de vente si tu veux comparer à la soumission. Reste cohérent sur tout le planning.</li>
 </ul>
 
-<h3>Ressources d’un lot (effectif qui varie)</h3>
-<p>Certaines ressources servent à tout un lot plutôt qu’à une tâche : chef d’équipe, grue, baraques, équipe de base dont l’effectif monte puis descend. Double-clique la ligne du lot › <b>Ressources du lot</b> › <b>+ Ressource</b> : ressource, quantité et période en <b>semaines du lot</b> (semaine 1 = la 1<sup>re</sup> semaine du lot ; « à » vide = jusqu’à la fin du lot).</p>
+<h3>Ressources d’un lot (effectif qui varie, périodes de présence)</h3>
+<p>Certaines ressources servent à tout un lot plutôt qu’à une tâche : chef d’équipe, grue, baraques, équipe de base dont l’effectif monte puis descend. Double-clique la ligne du lot › <b>Ressources du lot</b> › <b>+ Ressource</b> : ressource, quantité et <b>période de présence</b> :</p>
 <ul>
-  <li><b>Effectif qui varie</b> : une ligne par période pour la même ressource, ex. équipe maçonnerie sem. 1 à 2 : 2 pers., sem. 3 à fin : 4 pers. Les dates de chaque période s’affichent à côté.</li>
-  <li>Les périodes <b>suivent le début du lot</b> : si le lot se décale, elles se décalent avec lui ; s’il s’allonge, la période « à fin » s’allonge aussi.</li>
-  <li>Elles s’ajoutent aux ressources des tâches : charge et surcharges (onglet Ressources, lignes « lot, sem. … »), lissage (charge du lot gardée fixe), coût du lot et budget (avancement du lot = moyenne de ses tâches). Bouton <b>Réalisé</b> sur la ligne du lot dans l’onglet Budget.</li>
+  <li><b>Toute la durée</b> du lot ;</li>
+  <li><b>Semaines</b> du lot (semaine 1 = la 1<sup>re</sup> semaine du lot ; « à » vide = jusqu’à la fin) : elles <b>suivent le lot</b> s’il se décale, la période « à fin » s’allonge avec lui ;</li>
+  <li><b>Dates</b> fixes du … au … (en choisissant « Dates », celles du lot sont proposées) : elles ne bougent pas avec le lot.</li>
+</ul>
+<p>Les tâches ont la même chose : dans la fiche d’une tâche, chaque ressource peut être présente toute la tâche, certaines semaines de la tâche ou à des dates fixes.</p>
+<ul>
+  <li><b>Plusieurs périodes</b> pour la même ressource = plusieurs lignes : ex. grue du 12.04 au 30.04 puis du 01.06 au 19.06 ; équipe maçonnerie sem. 1 à 2 : 2 pers., sem. 3 à fin : 4 pers. <b>+ Ressource</b> propose la même ressource avec la période qui suit. Les dates comptées et le coût de chaque ligne s’affichent à côté.</li>
+  <li>Une période toujours <b>bornée au lot / à la tâche</b> : la partie en dehors n’est pas comptée et la ligne s’affiche en <b>orange</b> (« en partie hors du lot ») pour corriger les dates.</li>
+  <li>Lissage : une période en dates fixes d’une tâche est déplacée avec la tâche pendant la proposition de lissage.</li>
+  <li>Elles s’ajoutent aux ressources des tâches : charge et surcharges (onglet Ressources, lignes « lot, … » avec la période), lissage (charge du lot gardée fixe), coût du lot et budget (avancement du lot = moyenne de ses tâches). Bouton <b>Réalisé</b> sur la ligne du lot dans l’onglet Budget.</li>
   <li>Pas reprises dans l’export MS Project (XML).</li>
 </ul>
 
@@ -527,7 +534,8 @@ Meilleures salutations
 <ol>
   <li>Onglet <b>Ressources</b> › <b>+ Ressource</b> : nom, type, tarif, capacité, couleur (proposée automatiquement, toujours différente des ressources existantes et des couleurs de barres choisies ; modifiable).</li>
   <li>Dans chaque fiche de tâche : <b>+ Ressource</b>, quantité (personnes, unités ou quantité totale). Le coût s’affiche à droite.</li>
-  <li>Ressources communes à un lot (chef d’équipe, grue…) : fiche du lot › <b>Ressources du lot</b>, par périodes en semaines du lot (effectif qui varie = plusieurs lignes).</li>
+  <li>Période de présence (fiche de la tâche ou du lot) : toute la durée, semaines ou dates fixes ; plusieurs lignes pour la même ressource = plusieurs périodes.</li>
+  <li>Ressources communes à un lot (chef d’équipe, grue…) : fiche du lot › <b>Ressources du lot</b>, mêmes périodes (effectif qui varie = plusieurs lignes).</li>
   <li>Onglet <b>Ressources</b> : clique une ressource pour voir sa charge ; <b>Proposer un lissage</b> si barres rouges.</li>
 </ol>
 <h3>6. Référence, suivi et budget</h3>

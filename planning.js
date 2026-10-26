@@ -228,17 +228,32 @@ function asgCost(plan, a, dur){
   if (r.type === 'machine') return q * dur * rate;
   return q * rate;
 }
-function taskBudget(plan, t, dur){
-  const m = plan.opts.budget, res = t.asg.reduce((s, a) => s + asgCost(plan, a, dur), 0), man = +t.bud || 0;
+/* budget d'une tâche ; avec cal + R (calcul de la tâche), chaque ressource ne compte que sur sa période de présence */
+function taskBudget(plan, t, dur, cal, R){
+  const m = plan.opts.budget, res = t.asg.reduce((s, a) => s + asgCost(plan, a, cal && R ? asgSpan(cal, R, a).dur : dur), 0), man = +t.bud || 0;
   return m === 'res' ? res : m === 'man' ? man : res + man;
 }
-/* ressources propres d'un lot, en plus de celles de ses tâches : t.lres = [{r, q, w0, w1}] ;
-   semaines comptées depuis le début du lot (w0 = 1 : 1re semaine), w1 = 0 : jusqu'à la fin du lot (suit le lot s'il se décale ou s'allonge) */
-function lotSpan(cal, R, a){
-  const w0 = Math.max(1, Math.round(+a.w0 || 1)), w1 = Math.round(+a.w1 || 0);
-  const es = Math.min(R.ef, Math.max(R.es, cal.idx(R.start + 7 * (w0 - 1)))), ef = w1 >= w0 ? Math.min(R.ef, cal.idx(R.start + 7 * w1)) : R.ef;
-  return {es, ef:Math.max(es, ef), dur:Math.max(0, ef - es)};
+/* période de présence d'une ressource dans une tâche (t.asg) ou un lot (t.lres, en plus de ses tâches) ; plusieurs lignes pour la même ressource = plusieurs périodes :
+   - rien : toute la durée ; - semaines w0..w1 comptées depuis le début (1 = 1re semaine, w1 = 0 : jusqu'à la fin ; suivent la tâche / le lot s'il se décale) ;
+   - dates fixes d0..d1 (ISO, d1 vide = jusqu'à la fin). Toujours bornée à la tâche / au lot ; out = une partie des dates saisies est en dehors (non comptée, alerte dans la fiche) */
+const perMode = a => a && (a.d0 || a.d1) ? 'd' : a && (+a.w0 > 1 || +a.w1 > 0) ? 'w' : '';
+function asgSpan(cal, R, a){
+  let es = R.es, ef = R.ef, out = false;
+  const m = perMode(a);
+  if (m === 'd') {
+    const a0 = dnOfIso(a.d0), a1 = dnOfIso(a.d1), last = R.ef > R.es ? cal.dnOf(R.ef - 1) : R.start;
+    if (a0 != null) { es = cal.idx(a0); if (a0 < R.start) out = true; }
+    if (a1 != null) { ef = cal.idx(a1 + 1); if (a1 > last) out = true; }
+    if (a0 != null && (a0 > last || (a1 != null && a1 < R.start))) out = true;
+  } else if (m === 'w') {
+    const w0 = Math.max(1, Math.round(+a.w0 || 1)), w1 = Math.round(+a.w1 || 0);
+    es = cal.idx(R.start + 7 * (w0 - 1)); if (w1 >= w0) ef = cal.idx(R.start + 7 * w1);
+  }
+  es = Math.min(Math.max(es, R.es), R.ef); ef = Math.max(es, Math.min(ef, R.ef));
+  return {es, ef, dur:ef - es, out};
 }
+const lotSpan = asgSpan;
+const taskSpans = (cal, R, t) => t.asg.filter(a => a && a.r).map(a => Object.assign({a}, asgSpan(cal, R, a)));
 function lotSpans(plan, sch, t){
   const R = sch.R.get(t.id); if (!R || !R.sum || !Array.isArray(t.lres) || !t.lres.length) return [];
   return t.lres.filter(a => a && a.r && +a.q > 0).map(a => Object.assign({a}, lotSpan(sch.cal, R, a)));
@@ -259,7 +274,7 @@ function evm(plan, sch){
   for (const o of sch.ol) {
     if (o.sum) continue;
     const t = o.t, r = sch.R.get(t.id);
-    const cur = taskBudget(plan, t, r.dur);
+    const cur = taskBudget(plan, t, r.dur, cal, r);
     const b = base && base.tasks[t.id];
     const bac = b ? b.cost : cur, bes = b ? cal.idx(b.start) : r.es, bdur = b ? b.dur : r.dur;
     const frac = bdur > 0 ? Math.min(1, Math.max(0, (sIdx - bes) / bdur)) : (sIdx > bes ? 1 : 0);
@@ -283,7 +298,7 @@ function evm(plan, sch){
 }
 function takeBaseline(plan, sch){
   const tasks = {};
-  for (const o of sch.ol) { if (o.sum) continue; const r = sch.R.get(o.t.id); tasks[o.t.id] = {start:r.start, finish:r.finish, mx:r.mx, dur:r.dur, cost:taskBudget(plan, o.t, r.dur)}; }
+  for (const o of sch.ol) { if (o.sum) continue; const r = sch.R.get(o.t.id); tasks[o.t.id] = {start:r.start, finish:r.finish, mx:r.mx, dur:r.dur, cost:taskBudget(plan, o.t, r.dur, sch.cal, r)}; }
   const lots = {}; for (const o of sch.ol) if (o.sum && (o.t.lres || []).length) { const r = sch.R.get(o.t.id); lots[o.t.id] = {start:r.start, dur:r.dur, cost:lotBudget(plan, sch, o.t)}; }
   return {at:new Date().toISOString(), end:sch.end, tasks, lots};
 }
@@ -295,7 +310,7 @@ function loads(plan, sch){
   for (const o of sch.ol) {
     if (o.sum) continue;
     const t = o.t, s = sch.R.get(t.id); if (!s || s.dur <= 0 || s.done) continue;
-    for (const a of t.asg) { const m = L.get(a.r); if (!m) continue; for (let i = s.es; i < s.ef; i++) m.set(i, (m.get(i) || 0) + (+a.q || 0)); }
+    for (const x of taskSpans(sch.cal, s, t)) { const m = L.get(x.a.r); if (!m) continue; for (let i = x.es; i < x.ef; i++) m.set(i, (m.get(i) || 0) + (+x.a.q || 0)); }
   }
   addLotLoads(plan, sch, L);
   return L;
@@ -322,8 +337,9 @@ function levelProposal(plan, statusDn){
   const leaves = sch0.ol.filter(o => !o.sum).map(o => o.t), ids = new Set(leaves.map(t => t.id));
   const preds = new Map(leaves.map(t => [t.id, t.deps.filter(d => ids.has(d.id) && d.id !== t.id)]));
   const done = new Map(), left = new Set(leaves.map(t => t.id));
-  const demand = t => { const m = new Map(); for (const a of t.asg) if (cap.has(a.r)) m.set(a.r, (m.get(a.r) || 0) + (+a.q || 0)); return m; };
-  const fits = (dm, es, dur) => { for (const [r, q] of dm) { const c = cap.get(r), p = prof.get(r); if (q > c + 1e-9) continue; for (let i = es; i < es + dur; i++) if ((p.get(i) || 0) + q > c + 1e-9) return false; } return true; };
+  /* demande de la tâche : périodes de présence en décalage depuis son début (une période en dates fixes suit la tâche pendant le lissage) */
+  const demand = t => { const R = sch0.R.get(t.id); return taskSpans(cal, R, t).filter(x => cap.has(x.a.r) && x.dur > 0).map(x => ({r:x.a.r, q:+x.a.q || 0, o0:x.es - R.es, o1:x.ef - R.es})); };
+  const fits = (dm, es) => { for (const d of dm) { const c = cap.get(d.r), p = prof.get(d.r); if (d.q > c + 1e-9) continue; for (let i = es + d.o0; i < es + d.o1; i++) if ((p.get(i) || 0) + d.q > c + 1e-9) return false; } return true; };
   let guard = 0;
   while (left.size && guard++ < 5000) {
     let ready = [...left].filter(id => preds.get(id).every(d => done.has(d.id) || !left.has(d.id)));
@@ -335,10 +351,10 @@ function levelProposal(plan, statusDn){
     for (const d of preds.get(id)) { const p = done.get(d.id); if (!p) continue; const lag = Math.round(+d.lag || 0), ty = LINK[d.type] ? d.type : 'FS';
       const v = ty === 'FS' ? p.ef + lag : ty === 'SS' ? p.es + lag : ty === 'FF' ? p.ef + lag - dur : p.es + lag - dur; if (v > base) base = v; }
     let es = base;
-    const dm = demand(t), movable = !t.aStart && !(+t.pct > 0) && !t.ms && !r0.done && dur > 0 && dm.size;
+    const dm = demand(t), movable = !t.aStart && !(+t.pct > 0) && !t.ms && !r0.done && dur > 0 && dm.length;
     if (r0.fixed) es = r0.es;
-    else if (movable) { let k = 0; while (!fits(dm, es, dur) && k++ < 1500) es++; if (k > 1500) es = base; t.lvl = es - base; }
-    if (!r0.done) for (const [r, q] of dm) { const p = prof.get(r); for (let i = es; i < es + dur; i++) p.set(i, (p.get(i) || 0) + q); }
+    else if (movable) { let k = 0; while (!fits(dm, es) && k++ < 1500) es++; if (k > 1500) es = base; t.lvl = es - base; }
+    if (!r0.done) for (const d of dm) { const p = prof.get(d.r); for (let i = es + d.o0; i < es + d.o1; i++) p.set(i, (p.get(i) || 0) + d.q); }
     done.set(id, {es, ef:es + dur}); left.delete(id);
   }
   const sch = schedule(work, cal, statusDn), moves = [];
@@ -370,7 +386,8 @@ function resAnalysis(plan, sch, o){
   const pts = {plan:[], base:[], real:[]};   /* [jour ouvré, groupe, type, quantité par jour, CHF] */
   const spread = (src, k, ty, es, dur, qd, chf) => { const n = Math.max(1, dur); for (let i = es; i < es + n; i++) pts[src].push([i, k, ty, dur > 0 ? qd : 0, chf / n]); };
   const leafPts = (src, t, es, dur) => {
-    for (const a of t.asg) { const r = resOf(a.r); if (!r) continue; spread(src, grp(t, r), r.type, es, dur, RTYPES[r.type] && RTYPES[r.type].time ? +a.q || 0 : 0, asgCost(plan, a, dur) * kRes); }
+    const Rl = {es, ef:es + dur, start:cal.dnOf(es)};
+    for (const a of t.asg) { const r = resOf(a.r); if (!r) continue; const sp = asgSpan(cal, Rl, a); spread(src, grp(t, r), r.type, sp.es, sp.dur, RTYPES[r.type] && RTYPES[r.type].time ? +a.q || 0 : 0, asgCost(plan, a, sp.dur) * kRes); }
     if (kMan && +t.bud) spread(src, grp(t, null), 'man', es, dur, 0, +t.bud);
   };
   const lotPts = (src, t, R) => {
@@ -507,7 +524,7 @@ function fromMSPDI(xml, siteId){
 }
 
 const CORE = {dnOfIso, isoOfDn, chOfDn, shortOfDn, todayDn, easter, HOL, HOL_ORDER, CANTONS, cantonKeys, holidayList, makeCal, newPlan, normPlan, outline, schedule,
-  resColor, asgCost, taskBudget, lotSpan, lotSpans, lotCost, lotBudget, taskActual, actLine, evm, takeBaseline, loads, overloads, levelProposal, resAnalysis, toMSPDI, fromMSPDI, RTYPES, LINK, uid, maxDepth, round05};
+  resColor, asgCost, taskBudget, asgSpan, taskSpans, perMode, lotSpan, lotSpans, lotCost, lotBudget, taskActual, actLine, evm, takeBaseline, loads, overloads, levelProposal, resAnalysis, toMSPDI, fromMSPDI, RTYPES, LINK, uid, maxDepth, round05};
 if (typeof module !== 'undefined' && module.exports) { module.exports = CORE; return; }
 
 /* ---------- Interface ---------- */
@@ -660,6 +677,7 @@ function css(){ return `
 .bp-li{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .bp-li>input,.bp-li>select{flex:1 1 110px}
 .bp-li>.n{flex:0 0 86px;text-align:right}
+.bp-per{padding:4px 0 6px;border-bottom:1px solid rgba(128,128,128,.15)}.bp-li [data-d].warn{color:#e8a33d;font-weight:600}
 .bp-li>.cost{flex:0 0 100px;text-align:right;font-family:var(--mono,monospace);font-size:13px;color:var(--muted,#9da2a8)}
 .bp-scrim{font:15px/1.35 var(--body,system-ui,sans-serif);color:var(--text,#ecebe6);position:fixed;inset:0;z-index:75;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px}
 .bp-dlg{width:min(720px,100%);max-height:calc(100% - 10px);display:flex;flex-direction:column;background:var(--surface,#1c1f23);color:var(--text,#ecebe6);border:1px solid var(--line,#353a41);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
@@ -1081,14 +1099,16 @@ async function saveCommonLay(lay){
 function costMap(){
   const p = U.plan, s = U.sch, m = new Map();
   for (let i = s.ol.length - 1; i >= 0; i--) { const o = s.ol[i];
-    if (!o.sum) m.set(o.t.id, taskBudget(p, o.t, s.R.get(o.t.id).dur));
+    if (!o.sum) m.set(o.t.id, taskBudget(p, o.t, s.R.get(o.t.id).dur, s.cal, s.R.get(o.t.id)));
     else m.set(o.t.id, p.tasks.filter(t => t.parent === o.t.id).reduce((a, t) => a + (m.get(t.id) || 0), 0) + lotBudget(p, s, o.t)); }
   return m;
 }
+/* texte d'une période de présence : « sem. 2 à fin », « 12.04.27 → 30.04.27 » ou '' (toute la durée) */
+const perTxt = a => { const m = perMode(a); return m === 'w' ? `sem. ${Math.max(1, +a.w0 || 1)} à ${+a.w1 ? a.w1 : 'fin'}` : m === 'd' ? `${a.d0 ? shortOfDn(dnOfIso(a.d0)) : 'début'} → ${a.d1 ? shortOfDn(dnOfIso(a.d1)) : 'fin'}` : ''; };
 const resTxt = t => {
-  const q1 = v => fmtN(v, v % 1 ? 1 : 0), out = t.asg.map(a => { const re = U.plan.res.find(z => z.id === a.r); return re ? re.name + (a.q && a.q !== 1 ? ' ×' + q1(a.q) : '') : ''; });
-  /* ressources du lot : effectif mini–maxi sur ses périodes */
-  const g = new Map(); for (const a of t.lres || []) { if (!a.r || !(+a.q > 0)) continue; const x = g.get(a.r) || [Infinity, 0]; g.set(a.r, [Math.min(x[0], +a.q), Math.max(x[1], +a.q)]); }
+  const q1 = v => fmtN(v, v % 1 ? 1 : 0), out = [];
+  /* une ressource par nom ; effectif mini–maxi sur ses périodes (tâche et lot) */
+  const g = new Map(); for (const a of [...t.asg, ...(t.lres || [])]) { if (!a.r || !(+a.q > 0)) continue; const x = g.get(a.r) || [Infinity, 0]; g.set(a.r, [Math.min(x[0], +a.q), Math.max(x[1], +a.q)]); }
   for (const [rid, [lo, hi]] of g) { const re = U.plan.res.find(z => z.id === rid); if (re) out.push(re.name + (lo !== hi ? ' ×' + q1(lo) + '–' + q1(hi) : hi !== 1 ? ' ×' + q1(hi) : '')); }
   return out.filter(Boolean).join(', ');
 };
@@ -1470,15 +1490,38 @@ async function editTask(id, isNew){
   const resOpts = p.res.map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
   const depRow = d => `<div class="bp-li" data-dep><select data-k="id">${leafOpts(new Set())}</select><select data-k="type" style="flex:0 0 140px">${Object.entries(LINK).map(([k, v]) => `<option value="${k}" ${d.type === k ? 'selected' : ''}>${k} · ${v}</option>`).join('')}</select><input data-k="lag" class="n" type="number" step="1" value="${+d.lag || 0}" title="Décalage en jours ouvrés (négatif = avance)"><span class="bp-hint">j</span><button class="bp-ib" data-rm title="Retirer">${I.x}</button></div>`;
   const colRow = `<div class="bp-f w"><span>Couleur de la barre</span><div class="bp-swl" id="tkCol" data-v="${esc(t.col || '')}"><button type="button" class="bp-btn" data-c="">Auto</button>${COLORS.concat(['#e5484d', '#6b7178']).map(c => `<button type="button" class="bp-sw" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}<label class="bp-sw bp-swc" title="Autre couleur"><input type="color" value="${esc(t.col || '#3e8ed0')}"></label></div></div>`;
-  const asgRow = a => `<div class="bp-li" data-asg><select data-k="r">${resOpts}</select><input data-k="q" class="n" type="number" step="any" min="0" value="${+a.q || 1}"><span class="bp-hint" data-u></span><span class="cost" data-c></span><button class="bp-ib" data-rm title="Retirer">${I.x}</button></div>`;
-  const lresRow = a => `<div class="bp-li" data-lres><select data-k="r" style="flex:1 1 150px">${resOpts}</select><input data-k="q" type="number" step="any" min="0" value="${+a.q || 1}" title="Quantité (personnes, unités…)" style="flex:0 0 64px;text-align:right"><span class="bp-hint" data-u></span><span class="bp-hint">sem.</span><input data-k="w0" type="number" min="1" step="1" value="${Math.max(1, Math.round(+a.w0 || 1))}" title="De la semaine n° (1 = 1re semaine du lot)" style="flex:0 0 64px;text-align:right"><span class="bp-hint">à</span><input data-k="w1" type="number" min="1" step="1" value="${+a.w1 || ''}" placeholder="fin" title="À la semaine n° (vide = jusqu’à la fin du lot)" style="flex:0 0 64px;text-align:right"><span class="bp-hint" data-d style="flex:0 0 170px;font-size:12px"></span><span class="cost" data-c></span><button class="bp-ib" data-rm title="Retirer">${I.x}</button></div>`;
+  /* ligne ressource + période de présence (toute la durée / semaines / dates) ; plusieurs lignes pour la même ressource = plusieurs périodes */
+  const perRow = a => { const m = perMode(a), w = 'style="width:58px;text-align:right"', sel = v => m === v ? 'selected' : '';
+    return `<div class="bp-li bp-per" data-per><select data-k="r" style="flex:1 1 150px">${resOpts}</select><input data-k="q" type="number" step="any" min="0" value="${+a.q || 1}" title="Quantité (personnes, unités…)" style="flex:0 0 64px;text-align:right"><span class="bp-hint" data-u></span>`
+      + `<select data-k="m" style="flex:0 0 150px" title="Période de présence"><option value="">Toute la durée</option><option value="w" ${sel('w')}>Semaines</option><option value="d" ${sel('d')}>Dates</option></select>`
+      + `<span data-pw style="display:inline-flex;gap:4px;align-items:center"><span class="bp-hint">sem.</span><input data-k="w0" type="number" min="1" step="1" value="${Math.max(1, Math.round(+a.w0 || 1))}" title="De la semaine n° (1 = 1re semaine)" ${w}><span class="bp-hint">à</span><input data-k="w1" type="number" min="1" step="1" value="${+a.w1 || ''}" placeholder="fin" title="À la semaine n° (vide = jusqu’à la fin)" ${w}></span>`
+      + `<span data-pd style="display:inline-flex;gap:4px;align-items:center"><input data-k="d0" type="date" value="${esc(a.d0 || '')}" title="Du (vide = dès le début)" style="width:150px"><span class="bp-hint">→</span><input data-k="d1" type="date" value="${esc(a.d1 || '')}" title="Au (vide = jusqu’à la fin)" style="width:150px"></span>`
+      + `<span class="bp-hint" data-d style="flex:1 1 170px;font-size:12px"></span><span class="cost" data-c></span><button class="bp-ib" data-rm title="Retirer">${I.x}</button></div>`; };
+  const perRead = row => { const g = k => row.querySelector(`[data-k=${k}]`).value, m = g('m'), a = {r:g('r'), q:+g('q') || 0};
+    if (m === 'w') { const w0 = Math.max(1, Math.round(+g('w0') || 1)), w1 = Math.round(+g('w1') || 0); a.w0 = w0; a.w1 = w1 ? Math.max(w0, w1) : 0; if (w0 === 1 && !a.w1) delete a.w0, delete a.w1; }
+    else if (m === 'd') { if (g('d0')) a.d0 = g('d0'); if (g('d1')) a.d1 = g('d1'); if (a.d0 && a.d1 && a.d1 < a.d0) [a.d0, a.d1] = [a.d1, a.d0]; }
+    return a; };
+  /* coûts, dates comptées et alerte (période en partie hors de la tâche / du lot) ; R = calcul de la tâche ou du lot */
+  const perUpd = (wrap, R, scope) => { let tot = 0;
+    wrap.querySelectorAll('[data-per]').forEach(row => { const a = perRead(row), m = row.querySelector('[data-k=m]').value, re = p.res.find(x => x.id === a.r), sp = asgSpan(U.cal, R, a), c = asgCost(p, a, sp.dur), dd = row.querySelector('[data-d]');
+      tot += c; row.querySelector('[data-pw]').hidden = m !== 'w'; row.querySelector('[data-pd]').hidden = m !== 'd'; row.querySelector('[data-u]').textContent = unitOf(re);
+      const per = sp.dur ? `${shortOfDn(U.cal.dnOf(sp.es))} → ${shortOfDn(U.cal.dnOf(sp.ef - 1))} · ${sp.dur} j` : '';
+      dd.textContent = R.ef <= R.es ? '' : sp.out ? (sp.dur ? `⚠ en partie hors ${scope} · compté ${per}` : `⚠ hors des dates ${scope} : pas compté`) : m ? per || `hors des dates ${scope}` : '';
+      dd.classList.toggle('warn', !!sp.out || (!!m && !sp.dur && R.ef > R.es)); row.querySelector('[data-c]').textContent = fmtN(c) + ' CHF'; });
+    return tot; };
+  const perPrefill = (wrap, getR) => wrap.addEventListener('change', e => { const m = e.target.closest('[data-k=m]'); if (!m) return; const row = m.closest('[data-per]'), R = getR();
+    if (m.value === 'd' && !row.querySelector('[data-k=d0]').value && !row.querySelector('[data-k=d1]').value && R.ef > R.es) { row.querySelector('[data-k=d0]').value = isoOfDn(U.cal.dnOf(R.es)); row.querySelector('[data-k=d1]').value = isoOfDn(U.cal.dnOf(R.ef - 1)); } }, true);
+  /* nouvelle ligne : même ressource que la précédente, période qui suit la sienne */
+  const perNext = wrap => { const last = wrap.lastElementChild; if (!last) return {q:1}; const a = perRead(last), m = last.querySelector('[data-k=m]').value, n = {r:a.r, q:1};
+    if (m === 'w') { n.w0 = a.w1 ? a.w1 + 1 : 1; n.w1 = 0; } else if (m === 'd') { const d1 = dnOfIso(a.d1); if (d1 != null) n.d0 = isoOfDn(d1 + 1); else n.d0 = ''; n.d1 = ''; if (!n.d0) n.d0 = a.d0 || ''; }
+    return n; };
   const lotWk = sum && r.dur > 0 ? Math.ceil((r.finish - r.start + 1) / 7) : 0;
   const body = sum ? `
     <label class="bp-f"><span>Nom du lot</span><input id="tkName" value="${esc(t.name)}" ${isNew ? 'autofocus' : ''}></label>
     <p class="bp-hint">Lot : ses dates (${shortOfDn(r.start)} → ${shortOfDn(r.finish)}, ${r.dur} j${lotWk ? ', ' + lotWk + ' semaine' + (lotWk > 1 ? 's' : '') : ''}) sont celles de ses tâches ; son coût = ses tâches + ses ressources ci-dessous.</p>
     <h4>Ressources du lot <span class="bp-hint">(en plus de celles des tâches : chef d’équipe, grue, installations…)</span></h4>
     ${p.res.length ? `<div class="bp-lst" id="tkLres"></div>
-    <div><button class="bp-btn" id="tkLresAdd">${I.plus}Ressource</button> <span class="bp-hint">Semaines comptées depuis le début du lot (elles suivent le lot s’il se décale) ; « à » vide = jusqu’à la fin du lot. Effectif qui varie = plusieurs lignes pour la même ressource (ex. sem. 1 à 2 : 2 pers., sem. 3 à fin : 4 pers.).</span></div>
+    <div><button class="bp-btn" id="tkLresAdd">${I.plus}Ressource</button> <span class="bp-hint">Période : toute la durée du lot, semaines du lot (suivent le lot s’il se décale ; « à » vide = jusqu’à la fin) ou dates fixes (du … au …). Plusieurs lignes pour la même ressource = effectif qui varie ou plusieurs périodes de présence (ex. grue du 12.04 au 30.04 puis du 01.06 au 19.06).</span></div>
     <p class="bp-hint" id="tkLInfo"></p>` : '<p class="bp-hint">Aucune ressource : crée-les dans l’onglet Ressources.</p>'}
     <label class="bp-f"><span>Zone (secteur, bâtiment… ; reprise par ses tâches)</span><input id="tkZone" list="tkZones" value="${esc(t.zone || '')}"><datalist id="tkZones">${zonesOf(p).map(z => `<option value="${esc(z)}">`).join('')}</datalist></label>
     ${colRow}
@@ -1493,7 +1536,7 @@ async function editTask(id, isNew){
     <h4>Prédécesseurs</h4><div class="bp-lst" id="tkDeps"></div>
     <div><button class="bp-btn" id="tkDepAdd">${I.plus}Lien</button> <span class="bp-hint">FS = commence à la fin · SS = commence avec · FF = finit avec · SF = finit au début. Décalage : ex. +3 j séchage.</span></div>
     <h4>Ressources ${p.res.length ? '' : '<span class="bp-hint">(aucune : crée-les dans l’onglet Ressources)</span>'}</h4><div class="bp-lst" id="tkAsg"></div>
-    ${p.res.length ? `<div><button class="bp-btn" id="tkAsgAdd">${I.plus}Ressource</button> <span class="bp-hint">Équipe : nombre de personnes · Machine : nombre d’unités · Sous-traitant / fourniture : quantité totale.</span></div>` : ''}
+    ${p.res.length ? `<div><button class="bp-btn" id="tkAsgAdd">${I.plus}Ressource</button> <span class="bp-hint">Équipe : nombre de personnes · Machine : nombre d’unités · Sous-traitant / fourniture : quantité totale. Période : toute la tâche, semaines de la tâche ou dates fixes ; plusieurs lignes pour la même ressource = plusieurs périodes de présence.</span></div>` : ''}
     <div class="bp-form">
       ${budMode !== 'res' ? `<label class="bp-f"><span>Montant budgété${budMode === 'mix' ? ' en plus des ressources' : ''} (CHF)</span><input id="tkBud" type="number" step="any" value="${t.bud ?? ''}"></label>` : ''}
       <label class="bp-f"><span>Avancement : <b id="tkPctV">${Math.round(t.pct)}</b> %</span><input id="tkPct" type="range" min="0" max="100" step="5" value="${Math.round(t.pct)}"></label>
@@ -1511,17 +1554,12 @@ async function editTask(id, isNew){
       cb.querySelector('input').addEventListener('input', e => cSet(e.target.value));
       if (sum) {
         const lw = b.querySelector('#tkLres'); if (!lw) return;
-        const updL = () => { let tot = 0;
-          lw.querySelectorAll('[data-lres]').forEach(row => { const g = k => row.querySelector(`[data-k=${k}]`).value, re = p.res.find(x => x.id === g('r')), a = {r:g('r'), q:+g('q') || 0, w0:+g('w0') || 1, w1:+g('w1') || 0};
-            const sp = lotSpan(U.cal, r, a), c = asgCost(p, a, sp.dur); tot += c;
-            row.querySelector('[data-u]').textContent = unitOf(re);
-            row.querySelector('[data-d]').textContent = sp.dur ? `${shortOfDn(U.cal.dnOf(sp.es))} → ${shortOfDn(U.cal.dnOf(sp.ef - 1))} · ${sp.dur} j` : r.dur ? 'hors des dates du lot' : 'lot sans tâche';
-            row.querySelector('[data-c]').textContent = fmtN(c) + ' CHF'; });
+        const updL = () => { const tot = perUpd(lw, r, 'du lot');
           b.querySelector('#tkLInfo').textContent = lw.children.length ? `Coût des ressources du lot : ${fmtN(tot)} CHF${budMode === 'man' ? ' (pas compté dans le budget : source = montants saisis, voir Réglages)' : ''}` : ''; };
-        const addL = a => { lw.insertAdjacentHTML('beforeend', lresRow(a)); lw.lastElementChild.querySelector('[data-k=r]').value = a.r || (p.res[0] && p.res[0].id); updL(); };
+        const addL = a => { lw.insertAdjacentHTML('beforeend', perRow(a)); lw.lastElementChild.querySelector('[data-k=r]').value = a.r || (p.res[0] && p.res[0].id); updL(); };
         (t.lres || []).forEach(addL);
-        b.querySelector('#tkLresAdd').onclick = () => { const last = lw.lastElementChild, w1 = last ? +last.querySelector('[data-k=w1]').value || 0 : 0;
-          addL({r:last ? last.querySelector('[data-k=r]').value : '', q:1, w0:w1 ? w1 + 1 : 1}); };
+        b.querySelector('#tkLresAdd').onclick = () => addL(perNext(lw));
+        perPrefill(lw, () => r);
         b.addEventListener('click', e => { const x = e.target.closest('[data-rm]'); if (x) { x.parentElement.remove(); updL(); } });
         b.addEventListener('input', updL); b.addEventListener('change', updL);
         return;
@@ -1531,18 +1569,19 @@ async function editTask(id, isNew){
       const upd = () => {
         const ms = b.querySelector('#tkMs').value === '1', dur = ms ? 0 : Math.max(0, Math.round(+b.querySelector('#tkDur').value || 0));
         b.querySelector('#tkDurF').hidden = ms;
-        let tot = 0;
-        asg.querySelectorAll('[data-asg]').forEach(row => { const re = p.res.find(x => x.id === row.querySelector('[data-k=r]').value), q = +row.querySelector('[data-k=q]').value || 0;
-          row.querySelector('[data-u]').textContent = unitOf(re); const c = asgCost(p, {r:re && re.id, q}, dur); tot += c; row.querySelector('[data-c]').textContent = fmtN(c) + ' CHF'; });
+        const tot = perUpd(asg, Rt(), 'de la tâche');
         const man = b.querySelector('#tkBud') ? +b.querySelector('#tkBud').value || 0 : 0;
         const bud = budMode === 'res' ? tot : budMode === 'man' ? man : tot + man;
         b.querySelector('#tkInfo').textContent = `Calcul actuel : ${shortOfDn(r.start)} → ${shortOfDn(r.finish)} · marge ${r.tf} j${r.crit ? ' · chemin critique' : ''} · budget ${fmtN(bud)} CHF`;
         b.querySelector('#tkPctV').textContent = b.querySelector('#tkPct').value;
       };
-      const addAsg = a => { asg.insertAdjacentHTML('beforeend', asgRow(a)); const row = asg.lastElementChild; row.querySelector('[data-k=r]').value = a.r || (p.res[0] && p.res[0].id); upd(); };
+      /* calcul de la tâche avec la durée saisie dans la fiche (pour les périodes) */
+      const Rt = () => { const ms = b.querySelector('#tkMs').value === '1', d = ms ? 0 : Math.max(0, Math.round(+b.querySelector('#tkDur').value || 0)); return {es:r.es, ef:r.es + d, start:U.cal.dnOf(r.es)}; };
+      const addAsg = a => { asg.insertAdjacentHTML('beforeend', perRow(a)); const row = asg.lastElementChild; row.querySelector('[data-k=r]').value = a.r || (p.res[0] && p.res[0].id); upd(); };
+      perPrefill(asg, Rt);
       t.deps.forEach(addDep); t.asg.forEach(addAsg);
       b.querySelector('#tkDepAdd').onclick = () => addDep({type:'FS', lag:0});
-      const aa = b.querySelector('#tkAsgAdd'); if (aa) aa.onclick = () => addAsg({q:1});
+      const aa = b.querySelector('#tkAsgAdd'); if (aa) aa.onclick = () => addAsg(asg.children.length ? perNext(asg) : {q:1});
       b.addEventListener('click', e => { const x = e.target.closest('[data-rm]'); if (x) { x.parentElement.remove(); upd(); } });
       b.addEventListener('input', upd); b.addEventListener('change', upd);
       b.querySelector('#tkPct').addEventListener('input', () => { if (+b.querySelector('#tkPct').value === 100 && !b.querySelector('#tkAE').value) b.querySelector('#tkAE').value = isoOfDn(Math.min(todayDn(), r.finish)); if (+b.querySelector('#tkPct').value > 0 && !b.querySelector('#tkAS').value) b.querySelector('#tkAS').value = isoOfDn(Math.min(todayDn(), r.start)); });
@@ -1556,8 +1595,7 @@ async function editTask(id, isNew){
   { const z = box.querySelector('#tkZone').value.trim(); if (z) t.zone = z; else delete t.zone; }
   const tc = box.querySelector('#tkCol').dataset.v; if (tc) t.col = tc; else delete t.col;
   if (sum && box.querySelector('#tkLres')) {
-    const l = [...box.querySelectorAll('[data-lres]')].map(row => { const g = k => row.querySelector(`[data-k=${k}]`).value, w0 = Math.max(1, Math.round(+g('w0') || 1)), w1 = Math.round(+g('w1') || 0);
-      return {r:g('r'), q:+g('q') || 0, w0, w1:w1 ? Math.max(w0, w1) : 0}; }).filter(a => a.r && a.q > 0);
+    const l = [...box.querySelectorAll('#tkLres [data-per]')].map(perRead).filter(a => a.r && a.q > 0);
     if (l.length) t.lres = l; else delete t.lres;
   }
   if (!sum) {
@@ -1566,7 +1604,7 @@ async function editTask(id, isNew){
     t.snet = box.querySelector('#tkSnet').value || undefined; if (!t.snet) delete t.snet; else t.lvl = 0;
     const seen = new Set();
     t.deps = [...box.querySelectorAll('[data-dep]')].map(row => ({id:row.querySelector('[data-k=id]').value, type:row.querySelector('[data-k=type]').value, lag:Math.round(+row.querySelector('[data-k=lag]').value || 0)})).filter(d => d.id && !seen.has(d.id) && seen.add(d.id));
-    t.asg = [...box.querySelectorAll('[data-asg]')].map(row => ({r:row.querySelector('[data-k=r]').value, q:+row.querySelector('[data-k=q]').value || 0})).filter(a => a.r && a.q > 0);
+    t.asg = [...box.querySelectorAll('#tkAsg [data-per]')].map(perRead).filter(a => a.r && a.q > 0);
     if (box.querySelector('#tkBud')) { const v = box.querySelector('#tkBud').value; if (v === '') delete t.bud; else t.bud = +v; }
     t.pct = +box.querySelector('#tkPct').value || 0;
     t.aStart = box.querySelector('#tkAS').value || undefined; if (!t.aStart) delete t.aStart;
@@ -1690,11 +1728,9 @@ function tapRow(id, e){
 function resStats(){
   const p = U.plan, s = U.sch, L = loads(p, s), ov = overloads(p, s, L), st = {};
   for (const r of p.res) st[r.id] = {cost:0, qty:0, max:0, over:0, tasks:[]};
-  for (const o of s.ol) { if (o.sum) continue; const r = s.R.get(o.t.id);
-    for (const a of o.t.asg) { const x = st[a.r]; if (!x) continue; x.cost += asgCost(p, a, r.dur); x.qty += (+a.q || 0) * (RTYPES[(p.res.find(z => z.id === a.r) || {}).type]?.time ? r.dur : 1); x.tasks.push({o, a, r}); } }
-  for (const o of s.ol) { if (!o.sum) continue;
-    for (const x of lotSpans(p, s, o.t)) { const y = st[x.a.r]; if (!y) continue; y.cost += asgCost(p, x.a, x.dur); y.qty += (+x.a.q || 0) * (RTYPES[(p.res.find(z => z.id === x.a.r) || {}).type]?.time ? x.dur : 1);
-      y.tasks.push({o, a:x.a, r:{start:s.cal.dnOf(x.es), finish:s.cal.dnOf(Math.max(x.es, x.ef - 1)), dur:x.dur}, lot:true}); } }
+  for (const o of s.ol) { const R = s.R.get(o.t.id); if (!R) continue;
+    for (const x of o.sum ? lotSpans(p, s, o.t) : taskSpans(s.cal, R, o.t)) { const y = st[x.a.r]; if (!y) continue; y.cost += asgCost(p, x.a, x.dur); y.qty += (+x.a.q || 0) * (RTYPES[(p.res.find(z => z.id === x.a.r) || {}).type]?.time ? x.dur : 1);
+      y.tasks.push({o, a:x.a, r:x.dur || !perMode(x.a) ? {start:x.dur ? s.cal.dnOf(x.es) : R.start, finish:x.dur ? s.cal.dnOf(x.ef - 1) : R.finish, dur:x.dur} : {start:null, finish:null, dur:0}, lot:o.sum}); } }
   for (const [rid, m] of L) { for (const v of m.values()) st[rid].max = Math.max(st[rid].max, v); }
   for (const o of ov) st[o.r].over++;
   return {L, ov, st};
@@ -1744,7 +1780,7 @@ function histo(r, m, x){
 function taskList(x){
   if (!x.tasks.length) return '<p class="bp-hint">Affectée à aucune tâche.</p>';
   return `<table class="bp-tbl"><thead><tr><th>Tâche</th><th class="n">Quantité</th><th class="n">Début</th><th class="n">Fin</th><th class="n">CHF</th></tr></thead><tbody>${x.tasks.map(({o, a, r, lot}) =>
-    `<tr data-goto="${esc(o.t.id)}" style="cursor:pointer"><td>${o.wbs} ${esc(o.t.name)}${lot ? ` <span class="bp-hint">(lot, sem. ${Math.max(1, +a.w0 || 1)}${+a.w1 ? ' à ' + a.w1 : ' à fin'})</span>` : ''}</td><td class="n">${fmtN(a.q, a.q % 1 ? 2 : 0)}</td><td class="n">${shortOfDn(r.start)}</td><td class="n">${shortOfDn(r.finish)}</td><td class="n">${fmtN(asgCost(U.plan, a, r.dur))}</td></tr>`).join('')}</tbody></table>`;
+    `<tr data-goto="${esc(o.t.id)}" style="cursor:pointer"><td>${o.wbs} ${esc(o.t.name)}${lot || perMode(a) ? ` <span class="bp-hint">(${[lot ? 'lot' : '', perTxt(a)].filter(Boolean).join(', ')})</span>` : ''}</td><td class="n">${fmtN(a.q, a.q % 1 ? 2 : 0)}</td><td class="n">${r.start == null ? '–' : shortOfDn(r.start)}</td><td class="n">${r.finish == null ? 'hors dates' : shortOfDn(r.finish)}</td><td class="n">${fmtN(asgCost(U.plan, a, r.dur))}</td></tr>`).join('')}</tbody></table>`;
 }
 async function editRes(id){
   const p = U.plan, r = id ? p.res.find(x => x.id === id) : {id:uid(), name:'', type:'team', unit:'pers.', rate:0, cap:1, color:resColor(p)};
@@ -2470,10 +2506,10 @@ async function makeXlsx(){
   const D = dn => new Date(Date.UTC(1970, 0, 1) + dn * DAY + 12 * 36e5);
   const resName = id => (p.res.find(r => r.id === id) || {}).name || '';
   const tasks = [['N°', 'Tâche', 'Type', 'Durée (j ouvrés)', 'Début', 'Fin', 'Prédécesseurs', 'Avancement %', 'Marge (j)', 'Critique', 'Début réel', 'Fin réelle', 'Ressources', 'Budget CHF', 'Réel CHF', 'Remarque']];
-  const lresX = t => (t.lres || []).map(a => resName(a.r) + ' × ' + a.q + ' (sem. ' + (+a.w0 || 1) + (+a.w1 ? '–' + a.w1 : '–fin') + ')').join(', ');
+  const asgX = l => (l || []).map(a => resName(a.r) + ' × ' + a.q + (perMode(a) ? ' (' + perTxt(a) + ')' : '')).join(', ');
   for (const o of s.ol) { const t = o.t, r = s.R.get(t.id), e = o.sum ? null : ev.get(t.id);
     tasks.push([o.wbs, '  '.repeat(o.lvl) + t.name, o.sum ? 'Lot' : t.ms ? 'Jalon' : 'Tâche', r.dur, D(r.start), D(r.finish), o.sum ? '' : predTxt(t), o.sum ? '' : t.pct, o.sum ? '' : r.tf, !o.sum && r.crit ? 'oui' : '',
-      t.aStart ? D(dnOfIso(t.aStart)) : '', t.aEnd ? D(dnOfIso(t.aEnd)) : '', o.sum ? lresX(t) : t.asg.map(a => resName(a.r) + ' × ' + a.q).join(', '), e ? Math.round(e.cur) : '', e ? Math.round(e.ac) : '', t.note || '']); }
+      t.aStart ? D(dnOfIso(t.aStart)) : '', t.aEnd ? D(dnOfIso(t.aEnd)) : '', asgX(o.sum ? t.lres : t.asg), e ? Math.round(e.cur) : '', e ? Math.round(e.ac) : '', t.note || '']); }
   const res = [['Ressource', 'Type', 'Unité', 'Tarif', 'Unité du tarif', 'Capacité / jour', 'Coût prévu CHF']];
   const {st} = resStats();
   for (const r of p.res) res.push([r.name, RTYPES[r.type].label, unitOf(r), +r.rate || 0, RTYPES[r.type].rateUnit, RTYPES[r.type].time ? +r.cap || 0 : '', Math.round(st[r.id].cost)]);
