@@ -842,6 +842,7 @@ html[data-theme="light"] .pv-act.go{color:#8a6200}
 @media (max-width:720px){.pdv-side{position:absolute;inset:auto 0 0 0;width:auto;max-height:55%;border-left:0;border-top:1px solid var(--line)}}
 /* ---------- Soumission du chantier (v2.2) ---------- */
 .so-files{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.so-task{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}.so-task p{margin:0 0 8px}.so-task .btn-row{display:flex;gap:8px;flex-wrap:wrap}
 .so-file{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 12px;border-radius:19px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:14px;text-decoration:none}
 .so-file small{color:var(--muted);font-size:12px}
 .so-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:6px 16px;padding-bottom:10px;border-bottom:2px solid var(--line)}
@@ -2304,6 +2305,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
 
 <script src="planning.js"></script>
 <script src="api-cout.js"></script>
+<script src="soumission.js"></script>
 <script>
 (() => {
 'use strict';
@@ -7664,11 +7666,12 @@ function bindPvdt(){
 
 /* ---------- Soumission du chantier (tablette) : tableau des positions, filtre CAN / position / texte (v2.2) ----------
    Drive : « <Chantier>/Soumission/ » = la soumission rentrée (une seule ; l'ancienne va dans « Anciennes versions »).
-   .crbx (BauBit, SIA 451) : lu directement sur la tablette. Word / PDF : la tâche « Soumission BauGest » (vendredi soir)
-   dépose « <nom> – positions.json » à côté (tools/soumission/soumission.py) ; préféré au .crbx car les textes sont complets. */
+   .crbx (BauBit, SIA 451) et Word BauBit (.docx, soumission.js) : lus directement par l'app ; le Word lu est déposé en « <nom> – positions.json » à côté.
+   PDF / .doc / Excel : bouton « Demander la lecture » → « <nom> – demande de lecture.json » ; la tâche « Soumission BauGest » (vendredi 18:30)
+   dépose « <nom> – positions.json » (ou « positions (1-3).json »… à recoller) et met la demande à la corbeille. Le JSON est préféré au .crbx (textes complets). */
 const SOUM_DIR = 'Soumission', SOUM_OLD = 'Anciennes versions';
 const SOUM_SRC = /\.(crbx|e1s|01s|docx?|pdf|xlsx?)$/i, SOUM_451 = /\.(crbx|e1s|01s)$/i, SOUM_POS = /^(.*?)\s+[–-]\s+positions\.json$/i;
-const SOUMX = {data:null, files:[], src:null, err:null, loading:false, cans:new Set(), q:'', p:'', open:new Set(), sid:null};
+const SOUMX = {data:null, files:[], src:null, err:null, loading:false, cans:new Set(), q:'', p:'', open:new Set(), sid:null, req:null, need:null, wordErr:''};
 const SOUMCACHE = {
   db:null,
   async open(){
@@ -7765,7 +7768,7 @@ async function loadSoum(){
   if (SOUMX.sid !== sid) { SOUMX.sid = sid; SOUMX.cans.clear(); SOUMX.q = ''; SOUMX.p = ''; SOUMX.open.clear(); }
   SOUMX.loading = true; SOUMX.err = null;
   const c = await SOUMCACHE.get(sid);
-  SOUMX.data = c ? c.data : null; SOUMX.files = c ? c.files || [] : []; SOUMX.src = c ? c.src || null : null;
+  SOUMX.data = c ? c.data : null; SOUMX.files = c ? c.files || [] : []; SOUMX.src = c ? c.src || null : null; SOUMX.need = c ? c.need || null : null; SOUMX.req = c ? c.req || null : null; SOUMX.wordErr = '';
   if (tok === desk.token) renderSoum();
   const r = queueReason();
   if (!site) SOUMX.err = null;
@@ -7779,22 +7782,37 @@ async function loadSoum(){
       if (tok !== desk.token) return;
       const byNew = (a, b) => String(b.createdTime).localeCompare(String(a.createdTime));
       const srcs = fs.filter(f => SOUM_SRC.test(f.name)).sort(byNew), jsons = fs.filter(f => SOUM_POS.test(f.name)).sort(byNew);
-      const cr = srcs.find(f => SOUM_451.test(f.name));
-      let js = null, jsSrc = null;
+      const cr = srcs.find(f => SOUM_451.test(f.name)), dx = srcs.find(f => /\.docx$/i.test(f.name));
+      let js = null, jsSrc = null, parts = null;
       for (const j of jsons) { jsSrc = srcs.find(f => soumBase(f.name) === SOUM_POS.exec(j.name)[1].trim()); if (jsSrc) { js = j; break; } }
-      // le Word lu par la tâche est préféré (textes complets), sauf si un .crbx plus récent a été déposé depuis
-      const pick = js && (!cr || Date.parse(cr.createdTime) <= Date.parse(jsSrc.createdTime) + 12 * 3600e3) ? js : cr || null;
-      let data = null;
-      if (pick && c && c.src && c.src.id === pick.id && c.src.mod === pick.modifiedTime) data = c.data;
+      if (!js) for (const f of srcs) { const ps = BGSoum.partsOf(fs, f.name); if (ps) { parts = ps; jsSrc = f; js = ps[0]; break; } }   // positions en plusieurs morceaux (gros JSON de la tâche)
+      // le JSON (Word lu ou tâche) est préféré (textes complets), sauf si un .crbx plus récent a été déposé depuis ; sans JSON : .crbx ou Word le plus récent, lus par l'app
+      const late = f => !jsSrc || Date.parse(f.createdTime) > Date.parse(jsSrc.createdTime) + 12 * 3600e3;
+      const pick = js && (!cr || !late(cr)) ? js : (cr && (!dx || cr.createdTime >= dx.createdTime) ? cr : dx && (!js || late(dx)) ? dx : cr || js || null);
+      const pmod = pick ? (parts ? parts.map(x => x.modifiedTime).join('|') : pick.modifiedTime) : '';
+      let data = null, wordErr = '';
+      if (pick && c && c.src && c.src.id === pick.id && c.src.mod === pmod) data = c.data;
       else if (pick) {
-        const res = await api(PL_FILES + encodeURIComponent(pick.id) + '?alt=media'), buf = await res.arrayBuffer();
-        data = pick === js ? JSON.parse(new TextDecoder().decode(buf)) : await soumParseFile(buf, pick.name);
+        const get = async f => (await api(PL_FILES + encodeURIComponent(f.id) + '?alt=media')).arrayBuffer();
+        if (pick === js) data = JSON.parse(parts ? (await Promise.all(parts.map(get))).map(b => new TextDecoder().decode(b)).join('') : new TextDecoder().decode(await get(pick)));
+        else if (pick === dx) {
+          try {
+            data = await BGSoum.parseDocx(await get(dx), dx.name);
+            // déposé à côté : la tâche et les autres appareils n'ont plus à le relire
+            if (!fs.some(f => f.name === BGSoum.posName(dx.name))) uploadFile(new Blob([JSON.stringify(data)], {type:'application/json'}), {name:BGSoum.posName(dx.name), mime:'application/json', description:`Positions lues dans « ${dx.name} » par BauGest`, siteId:sid}, dir).catch(() => {});
+          } catch (e) { wordErr = e.message; }
+        }
+        else data = await soumParseFile(await get(pick), pick.name);
       }
       if (tok !== desk.token) return;
-      SOUMX.data = data;
-      SOUMX.src = pick ? {id:pick.id, mod:pick.modifiedTime, name:pick === js ? jsSrc.name : pick.name, by:pick === js ? 'task' : 'crbx'} : null;
+      SOUMX.data = data; SOUMX.wordErr = wordErr;
+      SOUMX.src = pick && data ? {id:pick.id, mod:pmod, name:pick === js ? jsSrc.name : pick.name, by:pick === js ? 'task' : pick === dx ? 'word' : 'crbx'} : null;
       SOUMX.files = srcs.map(f => ({id:f.id, name:f.name, size:+f.size || 0, created:f.createdTime || ''}));
-      SOUMCACHE.put({key:sid, data:SOUMX.data, src:SOUMX.src, files:SOUMX.files});
+      // fichier à faire lire par la tâche : le plus récent sans tableau (PDF, .doc, Excel, ou Word non lisible), et sa demande éventuelle
+      const need = data ? null : srcs.find(f => BGSoum.TASKABLE.test(f.name) && !SOUM_451.test(f.name));
+      const rq = need && fs.find(f => f.name === BGSoum.reqName(need.name));
+      SOUMX.need = need ? {id:need.id, name:need.name} : null; SOUMX.req = rq ? {id:rq.id, at:rq.createdTime} : null;
+      SOUMCACHE.put({key:sid, data:SOUMX.data, src:SOUMX.src, files:SOUMX.files, need:SOUMX.need, req:SOUMX.req});
     } catch (e) { SOUMX.err = 'Lecture de la soumission impossible : ' + e.message; }
   }
   if (tok !== desk.token) return;
@@ -7854,10 +7872,14 @@ function renderSoum(){
   $('#dkInfo').hidden = !SOUMX.err; $('#dkInfo').textContent = SOUMX.err || '';
   if (!s) { $('#dkList').innerHTML = '<p class="dk-empty">Choisis un chantier pour voir sa soumission.</p>'; renderDeskModes(); return; }
   const files = SOUMX.files.map(f => `<a class="so-file" href="https://drive.google.com/file/d/${encodeURIComponent(f.id)}/view" target="_blank" rel="noopener">${esc(f.name)}${f.size ? `<small>${fmtSize(f.size)}</small>` : ''}</a>`).join('');
-  const wait = SOUMX.files.length && !d ? '<p class="dk-empty">Le Word / PDF sera lu par la tâche du vendredi soir : le tableau des positions apparaîtra ici ensuite. Avec un fichier .crbx, le tableau est immédiat.</p>' : '';
+  const nx = BGSoum.nextRun(), nxT = `vendredi ${String(nx.getDate()).padStart(2, '0')}.${String(nx.getMonth() + 1).padStart(2, '0')} à 18:30`;
+  const task = !d && SOUMX.need ? `<div class="so-task">${SOUMX.req
+      ? `<p><b>Lecture demandée</b> le ${esc(new Date(SOUMX.req.at).toLocaleDateString('fr-CH'))} pour « ${esc(SOUMX.need.name)} ». Claude la fera ${nxT} ; le tableau des positions apparaîtra ici ensuite (notification sur le téléphone).</p><div class="btn-row"><button class="btn" id="soReqCancel">Annuler la demande</button></div>`
+      : `<p>${SOUMX.wordErr ? `Word non lisible par l’app (${esc(SOUMX.wordErr)}). ` : ''}« ${esc(SOUMX.need.name)} » doit être lu par Claude (tâche « Soumission BauGest », ${nxT} au plus tôt).</p><div class="btn-row"><button class="btn primary" id="soReq">Demander la lecture par Claude</button></div>`}</div>` : '';
+  const wait = SOUMX.files.length && !d && !task ? '<p class="dk-empty">Lecture de la soumission…</p>' : '';
   const srcT = SOUMX.src ? (SOUMX.src.by === 'task' ? `Tableau tiré de « ${esc(SOUMX.src.name)} »` : `Tableau lu dans « ${esc(SOUMX.src.name)} »`) : '';
   $('#dkList').innerHTML = `<p class="pl-path pd-path">Drive : ${esc([siteFolder(s), SOUM_DIR].join(' / '))}</p>
-    ${files ? `<div class="so-files">${files}</div>` : ''}
+    ${files ? `<div class="so-files">${files}</div>` : ''}${task}
     ${d ? `<section class="dk-sec">
       <div class="so-head"><div><b>CHF ${soumCHF(d.total)}</b><small>Total brut (hors rabais et TVA) · ${d.pos.filter(x => !x.h).length} positions · ${d.cans.length} CAN</small></div>
         <small>${esc([d.entreprise, d.projet].filter(Boolean).join(' · '))}${srcT ? '<br>' + srcT : ''}</small></div>
@@ -7866,7 +7888,7 @@ function renderSoum(){
         <button class="btn" id="soReset">Effacer les filtres</button></div>
       <div class="so-cans" id="soCans">${soumCansHTML()}</div>
       <div id="soTable">${soumTableHTML()}</div></section>`
-    : wait || `<p class="dk-empty">${SOUMX.loading ? 'Chargement…' : 'Aucune soumission pour ce chantier. Touche « Importer la soumission » (fichier .crbx de BauBit, Word ou PDF), ou glisse le fichier depuis BauGest PC dans le dossier « Soumission » du chantier.'}</p>`}`;
+    : task ? '' : wait || `<p class="dk-empty">${SOUMX.loading ? 'Chargement…' : 'Aucune soumission pour ce chantier. Touche « Importer la soumission » (fichier .crbx de BauBit, Word ou PDF), ou glisse le fichier depuis BauGest PC dans le dossier « Soumission » du chantier.'}</p>`}`;
   renderDeskModes();
 }
 
@@ -7886,8 +7908,10 @@ async function soumAddFiles(files){
       } catch (e) { note('Remplacement impossible : ' + e.message, 4000); return; }
     }
     let data = null;
-    const cr = files.find(f => SOUM_451.test(f.name));
+    let cr = files.find(f => SOUM_451.test(f.name)), by = 'crbx';
     if (cr) { try { data = await soumParseFile(await cr.arrayBuffer(), cr.name); } catch (e) { note('Fichier .crbx illisible : ' + e.message, 4000); } }
+    const dxf = !data && files.find(f => /\.docx$/i.test(f.name));
+    if (dxf) { try { data = await BGSoum.parseDocx(await dxf.arrayBuffer(), dxf.name); cr = dxf; by = 'word'; } catch (e) { note('Word non lisible par l’app : ' + e.message + ' · demande la lecture par Claude', 5000); } }
     for (const f of files) {
       const uid = pvUid();
       await DB.put({id:'so-' + uid, blob:f, created:Date.now(), thumb:PDF_THUMB,
@@ -7895,7 +7919,7 @@ async function soumAddFiles(files){
           description:`Chantier : ${siteLabel(site)}\nSoumission`, siteId:sid, taken:new Date().toISOString(), tags:[]}, error:''});
     }
     const local = files.map(f => ({id:'', name:f.name, size:f.size, created:new Date().toISOString()}));
-    SOUMX.data = data; SOUMX.files = local; SOUMX.src = data ? {id:'', mod:'', name:cr.name, by:'crbx'} : null; SOUMX.cans.clear(); SOUMX.q = ''; SOUMX.p = ''; SOUMX.open.clear();
+    SOUMX.data = data; SOUMX.files = local; SOUMX.src = data ? {id:'', mod:'', name:cr.name, by} : null; SOUMX.need = null; SOUMX.req = null; SOUMX.cans.clear(); SOUMX.q = ''; SOUMX.p = ''; SOUMX.open.clear();
     await SOUMCACHE.put({key:sid, data, src:SOUMX.src, files:local});
     renderSoum();
     await refreshQueue(); processQueue();
@@ -7904,11 +7928,32 @@ async function soumAddFiles(files){
   if (SOUMX.files.length) confirmBox('Remplacer la soumission ?', `La soumission actuelle (${SOUMX.files.length} fichier${SOUMX.files.length > 1 ? 's' : ''}) sera rangée dans « ${SOUM_DIR} / ${SOUM_OLD} ».`, 'Remplacer', go);
   else go();
 }
+/* demande de lecture par la tâche « Soumission BauGest » (vendredi 18:30) : fichier « <nom> – demande de lecture.json » à côté de la soumission */
+async function soumRequest(){
+  const sid = desk.site === '__none' ? 'none' : desk.site, site = pdSiteOf(sid), f = SOUMX.need;
+  if (!site || !f || !f.id) { note('Soumission pas encore envoyée au Drive : réessaie dans un moment', 3500); return; }
+  if (queueReason() || !navigator.onLine) { note('Connexion au Drive nécessaire pour demander la lecture', 3500); return; }
+  try {
+    const dir = await soumDir(site), body = BGSoum.request(f, {id:site.id, label:siteLabel(site)}, 'tablette');
+    const r = await uploadFile(new Blob([JSON.stringify(body)], {type:'application/json'}), {name:BGSoum.reqName(f.name), mime:'application/json', description:'Demande de lecture de la soumission par la tâche « Soumission BauGest » (vendredi 18:30)', siteId:sid}, dir);
+    SOUMX.req = {id:r.id, at:new Date().toISOString()}; SOUMCACHE.put({key:sid, data:SOUMX.data, src:SOUMX.src, files:SOUMX.files, need:SOUMX.need, req:SOUMX.req});
+    renderSoum(); note('Lecture demandée : Claude la fera vendredi à 18:30', 3500);
+  } catch (e) { note('Demande impossible : ' + e.message, 4000); }
+}
+async function soumRequestCancel(){
+  const sid = desk.site === '__none' ? 'none' : desk.site, rq = SOUMX.req;
+  if (!rq) return;
+  try { await api(PL_FILES + encodeURIComponent(rq.id) + '?fields=id', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})}); }
+  catch (e) { note('Annulation impossible : ' + e.message, 4000); return; }
+  SOUMX.req = null; SOUMCACHE.put({key:sid, data:SOUMX.data, src:SOUMX.src, files:SOUMX.files, need:SOUMX.need, req:null}); renderSoum(); note('Demande annulée', 2500);
+}
 function bindSoum(){
   $('#dkMain').addEventListener('click', e => {
     if (desk.mode !== 'soum') return;
     if (e.target.closest('#soAdd')) { $('#soFile').click(); return; }
     if (e.target.closest('#soReset')) { SOUMX.cans.clear(); SOUMX.q = ''; SOUMX.p = ''; renderSoum(); return; }
+    if (e.target.closest('#soReq')) { soumRequest(); return; }
+    if (e.target.closest('#soReqCancel')) { soumRequestCancel(); return; }
     const c = e.target.closest('[data-socan]');
     if (c) { const k = c.dataset.socan; if (!k) SOUMX.cans.clear(); else if (SOUMX.cans.has(k)) SOUMX.cans.delete(k); else SOUMX.cans.add(k); renderSoumTable(); return; }
     const r = e.target.closest('[data-sorow]');

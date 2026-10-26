@@ -785,6 +785,7 @@ body.bp-split #app{left:var(--bp-w,55%)}
 
 <script src="planning.js"></script>
 <script src="api-cout.js"></script>
+<script src="soumission.js"></script>
 <script>
 (() => {
 'use strict';
@@ -1655,12 +1656,44 @@ filesEl.addEventListener('contextmenu', e => {
   const cmp = files.filter(f => ['pdf', 'img', 'office'].includes(f._k));
   if (cmp.length === 2) en.push({label:'Comparer côte à côte (vues liées)', icon:IC.swap, fn:() => compareFiles(cmp[0], cmp[1])});
   if (files.some(f => f._k === 'img')) en.push({label:'Rapport photo…', icon:IC.file, fn:() => photoReport(files)});
+  if (one && one._k !== 'folder' && window.BGSoum && pcSoumDir(one)) {
+    if (/\.docx$/i.test(one.name)) en.push({label:'Lire la soumission Word (tableau des positions)', icon:IC.file, fn:() => pcSoumWord(one)});
+    if (BGSoum.TASKABLE.test(one.name)) en.push({label:'Demander la lecture par Claude (vendredi 18:30)', icon:IC.file, fn:() => pcSoumRequest(one)});
+  }
   en.push('-');
   if (one) en.push({label:'Renommer', icon:IC.rename, fn:renameSel, kbd:'F2'});
   if (one) en.push({label:'Ouvrir dans Google Drive', icon:IC.drive, fn:() => window.open(one.webViewLink || `https://drive.google.com/drive/folders/${one.id}`, '_blank', 'noopener')});
   en.push({label:'Mettre à la corbeille', icon:IC.trash, danger:true, fn:trashSel, kbd:'Suppr'});
   showMenu(e.clientX, e.clientY, en);
 });
+/* Soumission (dossier « <Chantier>/Soumission ») : Word BauBit lu ici → « <nom> – positions.json » ; PDF / .doc / Excel → demande de lecture
+   « <nom> – demande de lecture.json » traitée par la tâche « Soumission BauGest » (vendredi 18:30). Module partagé soumission.js. */
+function pcSoumDir(f){ const par = (f.parents && f.parents[0]) || E.cur, n = FN.get(par); return n && n.name === 'Soumission' && FN.get(n.parent) && siteByFolder(FN.get(n.parent).name) ? {dir:par, site:siteByFolder(FN.get(n.parent).name)} : null; }
+async function pcSoumWord(f){
+  const d0 = pcSoumDir(f); if (!d0) return;
+  try {
+    toast('Lecture du Word…');
+    const r = await api(`${DRV}/${encodeURIComponent(f.id)}?alt=media`, {}, true), doc = await BGSoum.parseDocx(await r.arrayBuffer(), f.name), bad = BGSoum.check(doc);
+    const ex = await api(DRV + '?' + new URLSearchParams({q:`'${qEsc(d0.dir)}' in parents and name='${qEsc(BGSoum.posName(f.name))}' and trashed=false`, fields:'files(id)'}));
+    const old = ex.files && ex.files[0];
+    await putFile({id:old ? old.id : undefined, md:old ? {} : {name:BGSoum.posName(f.name), parents:[d0.dir], description:`Positions lues dans « ${f.name} » par BauGest`, appProperties:{pc:'1', site:d0.site.id}}, blob:new Blob([JSON.stringify(doc)], {type:'application/json'})});
+    toast(`Soumission lue : ${doc.pos.filter(p => !p.h).length} positions, ${doc.cans.length} CAN, total CHF ${(doc.total || 0).toLocaleString('de-CH', {minimumFractionDigits:2})}${bad.length ? ` · ⚠ ${bad.length} CAN dont la somme diffère du total` : ' · totaux par CAN justes'} · visible sur la tablette (rubrique Soumission)`, bad.length ? 'err' : '', 8000);
+    navigate(E.cur, true);
+  } catch (e) { toast('Word non lisible : ' + e.message + ' · demande la lecture par Claude', 'err', 7000); }
+}
+async function pcSoumRequest(f){
+  const d0 = pcSoumDir(f); if (!d0) return;
+  try {
+    const name = BGSoum.reqName(f.name);
+    const ex = await api(DRV + '?' + new URLSearchParams({q:`'${qEsc(d0.dir)}' in parents and name='${qEsc(name)}' and trashed=false`, fields:'files(id)'}));
+    const nx = BGSoum.nextRun(), when = `vendredi ${nx.toLocaleDateString('fr-CH', {day:'2-digit', month:'2-digit'})} à 18:30`;
+    if (ex.files && ex.files.length) { toast(`Lecture déjà demandée : Claude la fera ${when}`); return; }
+    await putFile({md:{name, parents:[d0.dir], description:'Demande de lecture de la soumission par la tâche « Soumission BauGest » (vendredi 18:30)', appProperties:{pc:'1', site:d0.site.id}},
+      blob:new Blob([JSON.stringify(BGSoum.request(f, {id:d0.site.id, label:siteFolderName(d0.site)}, 'pc'))], {type:'application/json'})});
+    toast(`Lecture demandée : Claude la fera ${when} (notification sur le téléphone)`, '', 6000);
+    navigate(E.cur, true);
+  } catch (e) { toast('Demande impossible : ' + e.message, 'err', 6000); }
+}
 $('#tree').addEventListener('contextmenu', e => {
   const tn = e.target.closest('.tn'); if (!tn) return; e.preventDefault();
   const id = tn.dataset.fid;
