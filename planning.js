@@ -109,6 +109,21 @@ const RTYPES = {
   supply: {label:'Fourniture', unit:'m³', rateUnit:'CHF/u.', time:false}
 };
 const LINK = {FS:'Fin → Début', SS:'Début → Début', FF:'Fin → Fin', SF:'Début → Fin'};
+/* couleur d'une nouvelle ressource : la plus éloignée des couleurs déjà prises (ressources, barres colorées à la main, rouge des surcharges) ;
+   d'abord la palette (16 couleurs nettes), puis un teint calculé si la palette est épuisée */
+const RES_PAL = ['#3e8ed0', '#e8a33d', '#4caf7a', '#9b6fd6', '#d65f8f', '#3fb0b0', '#c97a46', '#7d8a2e', '#2f5fa8', '#f2c230', '#1f8a5b', '#6b4bb3', '#a8326e', '#5aa6e0', '#8c5a2b', '#9fc23a'];
+function resColor(plan, exceptId){
+  const rgbOf = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if (!m) return null; const n = parseInt(m[1], 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const dist = (a, b) => { const r = (a[0] + b[0]) / 2, d = [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; return Math.sqrt((2 + r / 256) * d[0] * d[0] + 4 * d[1] * d[1] + (2 + (255 - r) / 256) * d[2] * d[2]); };
+  const used = [...(plan.res || []).filter(r => r.id !== exceptId).map(r => r.color), ...(plan.tasks || []).map(t => t.col), '#e5484d'].map(rgbOf).filter(Boolean);
+  const score = h => { const c = rgbOf(h); return used.length ? Math.min(...used.map(u => dist(c, u))) : 1e9; };
+  const hex = (h, sat, l) => { const f = n => { const k = (n + h / 30) % 12, a = sat * Math.min(l, 1 - l); return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, '0'); }; return '#' + f(0) + f(8) + f(4); };
+  const free = RES_PAL.find(h => score(h) > 140); if (free) return free;
+  let best = RES_PAL[0], bs = -1, gb = null, gs = -1;
+  for (const h of RES_PAL) { const v = score(h); if (v > bs) { bs = v; best = h; } }
+  for (let hu = 0; hu < 360; hu += 6) for (const [sat, l] of [[.55, .5], [.5, .66], [.55, .36]]) { const h = hex(hu, sat, l), v = score(h); if (v > gs) { gs = v; gb = h; } }
+  return gs > bs * 1.25 ? gb : best;
+}
 function newPlan(siteId, name, opts){
   const t = isoOfDn(todayDn());
   return Object.assign({v:1, uid:uid(), siteId:siteId || 'none', name:name || 'Planning général', start:t, indice:'A',
@@ -478,6 +493,7 @@ function fromMSPDI(xml, siteId){
   for (const el of all(prj, 'Resource')) {
     const name = val(el, 'Name'); if (!name) continue;
     const work = val(el, 'Type') !== '0', r = {id:uid(), name, type:work ? 'team' : 'supply', unit:work ? 'pers.' : (val(el, 'MaterialLabel') || 'u.'), rate:+val(el, 'StandardRate') || 0, cap:+val(el, 'MaxUnits') || 1, color:''};
+    r.color = resColor(p);
     rMap.set(val(el, 'UID'), r); p.res.push(r);
   }
   for (const el of all(prj, 'Assignment')) {
@@ -491,7 +507,7 @@ function fromMSPDI(xml, siteId){
 }
 
 const CORE = {dnOfIso, isoOfDn, chOfDn, shortOfDn, todayDn, easter, HOL, HOL_ORDER, CANTONS, cantonKeys, holidayList, makeCal, newPlan, normPlan, outline, schedule,
-  asgCost, taskBudget, lotSpan, lotSpans, lotCost, lotBudget, taskActual, actLine, evm, takeBaseline, loads, overloads, levelProposal, resAnalysis, toMSPDI, fromMSPDI, RTYPES, LINK, uid, maxDepth, round05};
+  resColor, asgCost, taskBudget, lotSpan, lotSpans, lotCost, lotBudget, taskActual, actLine, evm, takeBaseline, loads, overloads, levelProposal, resAnalysis, toMSPDI, fromMSPDI, RTYPES, LINK, uid, maxDepth, round05};
 if (typeof module !== 'undefined' && module.exports) { module.exports = CORE; return; }
 
 /* ---------- Interface ---------- */
@@ -1731,7 +1747,7 @@ function taskList(x){
     `<tr data-goto="${esc(o.t.id)}" style="cursor:pointer"><td>${o.wbs} ${esc(o.t.name)}${lot ? ` <span class="bp-hint">(lot, sem. ${Math.max(1, +a.w0 || 1)}${+a.w1 ? ' à ' + a.w1 : ' à fin'})</span>` : ''}</td><td class="n">${fmtN(a.q, a.q % 1 ? 2 : 0)}</td><td class="n">${shortOfDn(r.start)}</td><td class="n">${shortOfDn(r.finish)}</td><td class="n">${fmtN(asgCost(U.plan, a, r.dur))}</td></tr>`).join('')}</tbody></table>`;
 }
 async function editRes(id){
-  const p = U.plan, r = id ? p.res.find(x => x.id === id) : {id:uid(), name:'', type:'team', unit:'pers.', rate:0, cap:1, color:COLORS[p.res.length % COLORS.length]};
+  const p = U.plan, r = id ? p.res.find(x => x.id === id) : {id:uid(), name:'', type:'team', unit:'pers.', rate:0, cap:1, color:resColor(p)};
   const used = id && p.tasks.some(t => t.asg.some(a => a.r === id) || (t.lres || []).some(a => a.r === id));
   const box = await dlg({title:id ? 'Ressource' : 'Nouvelle ressource', width:560, body:`<div class="bp-form">
     <label class="bp-f w"><span>Nom</span><input id="reName" value="${esc(r.name)}" placeholder="ex. Équipe maçonnerie, Pelle 14 t, Béton C25/30" autofocus></label>
