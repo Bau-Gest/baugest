@@ -120,7 +120,7 @@ function normPlan(p){
   p.hol = p.hol || {canton:'VD'}; if (!Array.isArray(p.hol.keys)) p.hol.keys = cantonKeys(p.hol.canton); p.hol.extra = p.hol.extra || [];
   p.vac = p.vac || []; p.res = p.res || []; p.tasks = p.tasks || [];
   p.opts = Object.assign({sat:false, hpd:8.5, structure:'lots', budget:'mix', currency:'CHF'}, p.opts || {});
-  for (const t of p.tasks) { t.deps = t.deps || []; t.asg = t.asg || []; t.act = t.act || []; t.pct = +t.pct || 0; t.dur = Math.max(0, Math.round(+t.dur || 0)); t.lvl = Math.max(0, Math.round(+t.lvl || 0)); if (t.parent === undefined) t.parent = null; }
+  for (const t of p.tasks) { t.deps = t.deps || []; t.asg = t.asg || []; t.act = t.act || []; t.pct = +t.pct || 0; t.dur = Math.max(0, Math.round(+t.dur || 0)); t.lvl = Math.max(0, Math.round(+t.lvl || 0)); if (t.parent === undefined) t.parent = null; if (t.lres && !Array.isArray(t.lres)) delete t.lres; }
   return p;
 }
 const maxDepth = p => ({flat:1, lots:2, tree:9})[p.opts.structure] || 2;
@@ -217,6 +217,19 @@ function taskBudget(plan, t, dur){
   const m = plan.opts.budget, res = t.asg.reduce((s, a) => s + asgCost(plan, a, dur), 0), man = +t.bud || 0;
   return m === 'res' ? res : m === 'man' ? man : res + man;
 }
+/* ressources propres d'un lot, en plus de celles de ses tâches : t.lres = [{r, q, w0, w1}] ;
+   semaines comptées depuis le début du lot (w0 = 1 : 1re semaine), w1 = 0 : jusqu'à la fin du lot (suit le lot s'il se décale ou s'allonge) */
+function lotSpan(cal, R, a){
+  const w0 = Math.max(1, Math.round(+a.w0 || 1)), w1 = Math.round(+a.w1 || 0);
+  const es = Math.min(R.ef, Math.max(R.es, cal.idx(R.start + 7 * (w0 - 1)))), ef = w1 >= w0 ? Math.min(R.ef, cal.idx(R.start + 7 * w1)) : R.ef;
+  return {es, ef:Math.max(es, ef), dur:Math.max(0, ef - es)};
+}
+function lotSpans(plan, sch, t){
+  const R = sch.R.get(t.id); if (!R || !R.sum || !Array.isArray(t.lres) || !t.lres.length) return [];
+  return t.lres.filter(a => a && a.r && +a.q > 0).map(a => Object.assign({a}, lotSpan(sch.cal, R, a)));
+}
+const lotCost = (plan, sch, t) => lotSpans(plan, sch, t).reduce((s, x) => s + asgCost(plan, x.a, x.dur), 0);
+const lotBudget = (plan, sch, t) => plan.opts.budget === 'man' ? 0 : lotCost(plan, sch, t);
 function actLine(plan, e){
   if (!e.r) return +e.amt || 0;
   const r = plan.res.find(x => x.id === e.r); if (!r) return +e.amt || 0;
@@ -239,13 +252,25 @@ function evm(plan, sch){
     BAC += bac; PV += pv; EV += ev; AC += ac; CUR += cur;
     rows.push({id:t.id, bac, cur, pv, ev, ac});
   }
+  /* lots avec ressources propres : avancement = moyenne de leurs tâches pondérée par la durée */
+  sch.ol.forEach((o, i) => {
+    const t = o.t; if (!o.sum || !((t.lres || []).length || (t.act || []).length)) return;
+    const r = sch.R.get(t.id), cur = lotBudget(plan, sch, t), b = base && base.lots && base.lots[t.id];
+    let wd = 0, wp = 0; for (let j = i + 1; j < sch.ol.length && sch.ol[j].lvl > o.lvl; j++) if (!sch.ol[j].sum) { const d = Math.max(1, sch.R.get(sch.ol[j].t.id).dur); wd += d; wp += d * Math.min(100, +sch.ol[j].t.pct || 0); }
+    const pct = wd ? wp / wd : 0, bac = b ? b.cost : cur, bes = b ? cal.idx(b.start) : r.es, bdur = b ? b.dur : r.dur;
+    const frac = bdur > 0 ? Math.min(1, Math.max(0, (sIdx - bes) / bdur)) : (sIdx > bes ? 1 : 0);
+    const pv = bac * frac, ev = bac * pct / 100, ac = taskActual(plan, t, st);
+    BAC += bac; PV += pv; EV += ev; AC += ac; CUR += cur;
+    rows.push({id:t.id, bac, cur, pv, ev, ac, pct, lot:true});
+  });
   const SPI = PV > 0 ? EV / PV : null, CPI = AC > 0 ? EV / AC : null, EAC = CPI ? BAC / CPI : AC + (BAC - EV);
   return {rows, BAC, PV, EV, AC, CUR, SV:EV - PV, CV:EV - AC, SPI, CPI, EAC, VAC:BAC - EAC};
 }
 function takeBaseline(plan, sch){
   const tasks = {};
   for (const o of sch.ol) { if (o.sum) continue; const r = sch.R.get(o.t.id); tasks[o.t.id] = {start:r.start, finish:r.finish, mx:r.mx, dur:r.dur, cost:taskBudget(plan, o.t, r.dur)}; }
-  return {at:new Date().toISOString(), end:sch.end, tasks};
+  const lots = {}; for (const o of sch.ol) if (o.sum && (o.t.lres || []).length) { const r = sch.R.get(o.t.id); lots[o.t.id] = {start:r.start, dur:r.dur, cost:lotBudget(plan, sch, o.t)}; }
+  return {at:new Date().toISOString(), end:sch.end, tasks, lots};
 }
 
 /* ---------- Ressources : charge journalière et lissage ---------- */
@@ -257,7 +282,12 @@ function loads(plan, sch){
     const t = o.t, s = sch.R.get(t.id); if (!s || s.dur <= 0 || s.done) continue;
     for (const a of t.asg) { const m = L.get(a.r); if (!m) continue; for (let i = s.es; i < s.ef; i++) m.set(i, (m.get(i) || 0) + (+a.q || 0)); }
   }
+  addLotLoads(plan, sch, L);
   return L;
+}
+function addLotLoads(plan, sch, L){
+  for (const o of sch.ol) { if (!o.sum) continue; const s = sch.R.get(o.t.id); if (!s || s.done) continue;
+    for (const x of lotSpans(plan, sch, o.t)) { const m = L.get(x.a.r); if (!m) continue; for (let i = x.es; i < x.ef; i++) m.set(i, (m.get(i) || 0) + (+x.a.q || 0)); } }
 }
 function overloads(plan, sch, L){
   L = L || loads(plan, sch); const out = [];
@@ -273,6 +303,7 @@ function levelProposal(plan, statusDn){
   const cal = makeCal(work), sch0 = schedule(work, cal, statusDn), byId = new Map(work.tasks.map(t => [t.id, t]));
   const cap = new Map(work.res.filter(r => RTYPES[r.type] && RTYPES[r.type].time && +r.cap > 0).map(r => [r.id, +r.cap]));
   const prof = new Map([...cap.keys()].map(k => [k, new Map()]));
+  addLotLoads(work, sch0, prof);
   const leaves = sch0.ol.filter(o => !o.sum).map(o => o.t), ids = new Set(leaves.map(t => t.id));
   const preds = new Map(leaves.map(t => [t.id, t.deps.filter(d => ids.has(d.id) && d.id !== t.id)]));
   const done = new Map(), left = new Set(leaves.map(t => t.id));
@@ -375,7 +406,7 @@ function fromMSPDI(xml, siteId){
   }
   for (const el of all(prj, 'Assignment')) {
     const tk = byUid.get(val(el, 'TaskUID')), r = rMap.get(val(el, 'ResourceUID')); if (!tk || !r) continue;
-    tk.t.asg.push({r:r.id, q:+val(el, 'Units') || 1});
+    if (tk.t.lot) (tk.t.lres = tk.t.lres || []).push({r:r.id, q:+val(el, 'Units') || 1, w0:1, w1:0}); else tk.t.asg.push({r:r.id, q:+val(el, 'Units') || 1});
   }
   const depth = Math.max(0, ...outline(p).map(o => o.lvl));
   p.opts.structure = depth === 0 ? 'flat' : depth === 1 ? 'lots' : 'tree';
@@ -384,7 +415,7 @@ function fromMSPDI(xml, siteId){
 }
 
 const CORE = {dnOfIso, isoOfDn, chOfDn, shortOfDn, todayDn, easter, HOL, HOL_ORDER, CANTONS, cantonKeys, holidayList, makeCal, newPlan, normPlan, outline, schedule,
-  asgCost, taskBudget, taskActual, actLine, evm, takeBaseline, loads, overloads, levelProposal, toMSPDI, fromMSPDI, RTYPES, LINK, uid, maxDepth, round05};
+  asgCost, taskBudget, lotSpan, lotSpans, lotCost, lotBudget, taskActual, actLine, evm, takeBaseline, loads, overloads, levelProposal, toMSPDI, fromMSPDI, RTYPES, LINK, uid, maxDepth, round05};
 if (typeof module !== 'undefined' && module.exports) { module.exports = CORE; return; }
 
 /* ---------- Interface ---------- */
@@ -952,10 +983,16 @@ function costMap(){
   const p = U.plan, s = U.sch, m = new Map();
   for (let i = s.ol.length - 1; i >= 0; i--) { const o = s.ol[i];
     if (!o.sum) m.set(o.t.id, taskBudget(p, o.t, s.R.get(o.t.id).dur));
-    else m.set(o.t.id, p.tasks.filter(t => t.parent === o.t.id).reduce((a, t) => a + (m.get(t.id) || 0), 0)); }
+    else m.set(o.t.id, p.tasks.filter(t => t.parent === o.t.id).reduce((a, t) => a + (m.get(t.id) || 0), 0) + lotBudget(p, s, o.t)); }
   return m;
 }
-const resTxt = t => t.asg.map(a => { const re = U.plan.res.find(z => z.id === a.r); return re ? re.name + (a.q && a.q !== 1 ? ' ×' + fmtN(a.q, a.q % 1 ? 1 : 0) : '') : ''; }).filter(Boolean).join(', ');
+const resTxt = t => {
+  const q1 = v => fmtN(v, v % 1 ? 1 : 0), out = t.asg.map(a => { const re = U.plan.res.find(z => z.id === a.r); return re ? re.name + (a.q && a.q !== 1 ? ' ×' + q1(a.q) : '') : ''; });
+  /* ressources du lot : effectif mini–maxi sur ses périodes */
+  const g = new Map(); for (const a of t.lres || []) { if (!a.r || !(+a.q > 0)) continue; const x = g.get(a.r) || [Infinity, 0]; g.set(a.r, [Math.min(x[0], +a.q), Math.max(x[1], +a.q)]); }
+  for (const [rid, [lo, hi]] of g) { const re = U.plan.res.find(z => z.id === rid); if (re) out.push(re.name + (lo !== hi ? ' ×' + q1(lo) + '–' + q1(hi) : hi !== 1 ? ' ×' + q1(hi) : '')); }
+  return out.filter(Boolean).join(', ');
+};
 /* zone d'une tâche (secteur, bâtiment…) : la sienne, sinon celle du lot parent */
 function zoneOf(t, p){ p = p || U.plan; let x = t, g = 0; while (x && g++ < 30) { if (x.zone) return x.zone; x = x.parent ? p.tasks.find(y => y.id === x.parent) : null; } return ''; }
 const zonesOf = p => [...new Set(p.tasks.map(t => (t.zone || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr', {numeric:true}));
@@ -972,12 +1009,12 @@ function cellTxt(k, o, r, cm){
   if (k === 'tf') return o.sum ? '' : r.tf + ' j';
   if (k === 'aStart') return t.aStart ? shortOfDn(dnOfIso(t.aStart)) : '';
   if (k === 'aEnd') return t.aEnd ? shortOfDn(dnOfIso(t.aEnd)) : '';
-  if (k === 'res') return o.sum ? '' : resTxt(t);
+  if (k === 'res') return resTxt(t);
   if (k === 'cost') return cm ? fmtN(cm.get(t.id) || 0) : '';
   return '';
 }
 /* texte à côté d'une barre : réglage de la tâche (t.st.txt) sinon de la mise en page ; lots : seulement si réglé sur le lot */
-const barLabel = (Ly, o, r) => { const k = (o.t.st && o.t.st.txt) || (o.sum ? 'none' : Ly.barText); if (k === 'none') return ''; const rs = o.sum ? '' : resTxt(o.t);
+const barLabel = (Ly, o, r) => { const k = (o.t.st && o.t.st.txt) || (o.sum ? 'none' : Ly.barText); if (k === 'none') return ''; const rs = resTxt(o.t);
   r = r || (U.sch && U.sch.R.get(o.t.id));
   if (k === 'dates') return r ? `${shortOfDn(r.start)} → ${shortOfDn(r.finish)}` : '';
   if (k === 'dur') return r ? `${r.dur} j` : '';
@@ -1335,9 +1372,15 @@ async function editTask(id, isNew){
   const depRow = d => `<div class="bp-li" data-dep><select data-k="id">${leafOpts(new Set())}</select><select data-k="type" style="flex:0 0 140px">${Object.entries(LINK).map(([k, v]) => `<option value="${k}" ${d.type === k ? 'selected' : ''}>${k} · ${v}</option>`).join('')}</select><input data-k="lag" class="n" type="number" step="1" value="${+d.lag || 0}" title="Décalage en jours ouvrés (négatif = avance)"><span class="bp-hint">j</span><button class="bp-ib" data-rm title="Retirer">${I.x}</button></div>`;
   const colRow = `<div class="bp-f w"><span>Couleur de la barre</span><div class="bp-swl" id="tkCol" data-v="${esc(t.col || '')}"><button type="button" class="bp-btn" data-c="">Auto</button>${COLORS.concat(['#e5484d', '#6b7178']).map(c => `<button type="button" class="bp-sw" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')}<label class="bp-sw bp-swc" title="Autre couleur"><input type="color" value="${esc(t.col || '#3e8ed0')}"></label></div></div>`;
   const asgRow = a => `<div class="bp-li" data-asg><select data-k="r">${resOpts}</select><input data-k="q" class="n" type="number" step="any" min="0" value="${+a.q || 1}"><span class="bp-hint" data-u></span><span class="cost" data-c></span><button class="bp-ib" data-rm title="Retirer">${I.x}</button></div>`;
+  const lresRow = a => `<div class="bp-li" data-lres><select data-k="r" style="flex:1 1 150px">${resOpts}</select><input data-k="q" type="number" step="any" min="0" value="${+a.q || 1}" title="Quantité (personnes, unités…)" style="flex:0 0 64px;text-align:right"><span class="bp-hint" data-u></span><span class="bp-hint">sem.</span><input data-k="w0" type="number" min="1" step="1" value="${Math.max(1, Math.round(+a.w0 || 1))}" title="De la semaine n° (1 = 1re semaine du lot)" style="flex:0 0 64px;text-align:right"><span class="bp-hint">à</span><input data-k="w1" type="number" min="1" step="1" value="${+a.w1 || ''}" placeholder="fin" title="À la semaine n° (vide = jusqu’à la fin du lot)" style="flex:0 0 64px;text-align:right"><span class="bp-hint" data-d style="flex:0 0 170px;font-size:12px"></span><span class="cost" data-c></span><button class="bp-ib" data-rm title="Retirer">${I.x}</button></div>`;
+  const lotWk = sum && r.dur > 0 ? Math.ceil((r.finish - r.start + 1) / 7) : 0;
   const body = sum ? `
     <label class="bp-f"><span>Nom du lot</span><input id="tkName" value="${esc(t.name)}" ${isNew ? 'autofocus' : ''}></label>
-    <p class="bp-hint">Lot : ses dates (${shortOfDn(r.start)} → ${shortOfDn(r.finish)}, ${r.dur} j) et son coût sont la somme de ses tâches.</p>
+    <p class="bp-hint">Lot : ses dates (${shortOfDn(r.start)} → ${shortOfDn(r.finish)}, ${r.dur} j${lotWk ? ', ' + lotWk + ' semaine' + (lotWk > 1 ? 's' : '') : ''}) sont celles de ses tâches ; son coût = ses tâches + ses ressources ci-dessous.</p>
+    <h4>Ressources du lot <span class="bp-hint">(en plus de celles des tâches : chef d’équipe, grue, installations…)</span></h4>
+    ${p.res.length ? `<div class="bp-lst" id="tkLres"></div>
+    <div><button class="bp-btn" id="tkLresAdd">${I.plus}Ressource</button> <span class="bp-hint">Semaines comptées depuis le début du lot (elles suivent le lot s’il se décale) ; « à » vide = jusqu’à la fin du lot. Effectif qui varie = plusieurs lignes pour la même ressource (ex. sem. 1 à 2 : 2 pers., sem. 3 à fin : 4 pers.).</span></div>
+    <p class="bp-hint" id="tkLInfo"></p>` : '<p class="bp-hint">Aucune ressource : crée-les dans l’onglet Ressources.</p>'}
     <label class="bp-f"><span>Zone (secteur, bâtiment… ; reprise par ses tâches)</span><input id="tkZone" list="tkZones" value="${esc(t.zone || '')}"><datalist id="tkZones">${zonesOf(p).map(z => `<option value="${esc(z)}">`).join('')}</datalist></label>
     ${colRow}
     <label class="bp-f"><span>Remarque</span><textarea id="tkNote" rows="2">${esc(t.note || '')}</textarea></label>` : `
@@ -1361,13 +1404,29 @@ async function editTask(id, isNew){
       <label class="bp-f w"><span>Remarque</span><textarea id="tkNote" rows="2">${esc(t.note || '')}</textarea></label>
     </div>
     <p class="bp-hint" id="tkInfo"></p>`;
-  const box = await dlg({title:sum ? 'Lot' : isNew ? 'Nouvelle tâche' : 'Tâche ' + wbsOf(id), width:sum ? 520 : 760, body,
+  const box = await dlg({title:sum ? 'Lot' : isNew ? 'Nouvelle tâche' : 'Tâche ' + wbsOf(id), width:sum ? (p.res.length ? 900 : 520) : 760, body,
     buttons:[{label:'Supprimer', value:'del', dang:true, left:true}, {label:'Annuler', value:null}, {label:'Enregistrer', pri:true}],
     onOpen:b => {
       const cb = b.querySelector('#tkCol'), cSet = v => { cb.dataset.v = v; cb.querySelectorAll('[data-c]').forEach(x => x.classList.toggle('on', x.dataset.c === v)); const ci = cb.querySelector('input'), cu = !!v && !cb.querySelector(`[data-c="${v}"]`); ci.parentElement.classList.toggle('on', cu); ci.parentElement.style.background = cu ? v : ''; };
       cSet(cb.dataset.v); cb.addEventListener('click', e => { const x = e.target.closest('[data-c]'); if (x) cSet(x.dataset.c); });
       cb.querySelector('input').addEventListener('input', e => cSet(e.target.value));
-      if (sum) return;
+      if (sum) {
+        const lw = b.querySelector('#tkLres'); if (!lw) return;
+        const updL = () => { let tot = 0;
+          lw.querySelectorAll('[data-lres]').forEach(row => { const g = k => row.querySelector(`[data-k=${k}]`).value, re = p.res.find(x => x.id === g('r')), a = {r:g('r'), q:+g('q') || 0, w0:+g('w0') || 1, w1:+g('w1') || 0};
+            const sp = lotSpan(U.cal, r, a), c = asgCost(p, a, sp.dur); tot += c;
+            row.querySelector('[data-u]').textContent = unitOf(re);
+            row.querySelector('[data-d]').textContent = sp.dur ? `${shortOfDn(U.cal.dnOf(sp.es))} → ${shortOfDn(U.cal.dnOf(sp.ef - 1))} · ${sp.dur} j` : r.dur ? 'hors des dates du lot' : 'lot sans tâche';
+            row.querySelector('[data-c]').textContent = fmtN(c) + ' CHF'; });
+          b.querySelector('#tkLInfo').textContent = lw.children.length ? `Coût des ressources du lot : ${fmtN(tot)} CHF${budMode === 'man' ? ' (pas compté dans le budget : source = montants saisis, voir Réglages)' : ''}` : ''; };
+        const addL = a => { lw.insertAdjacentHTML('beforeend', lresRow(a)); lw.lastElementChild.querySelector('[data-k=r]').value = a.r || (p.res[0] && p.res[0].id); updL(); };
+        (t.lres || []).forEach(addL);
+        b.querySelector('#tkLresAdd').onclick = () => { const last = lw.lastElementChild, w1 = last ? +last.querySelector('[data-k=w1]').value || 0 : 0;
+          addL({r:last ? last.querySelector('[data-k=r]').value : '', q:1, w0:w1 ? w1 + 1 : 1}); };
+        b.addEventListener('click', e => { const x = e.target.closest('[data-rm]'); if (x) { x.parentElement.remove(); updL(); } });
+        b.addEventListener('input', updL); b.addEventListener('change', updL);
+        return;
+      }
       const deps = b.querySelector('#tkDeps'), asg = b.querySelector('#tkAsg');
       const addDep = d => { deps.insertAdjacentHTML('beforeend', depRow(d)); const row = deps.lastElementChild; if (d.id) row.querySelector('[data-k=id]').value = d.id; };
       const upd = () => {
@@ -1397,6 +1456,11 @@ async function editTask(id, isNew){
   t.note = box.querySelector('#tkNote').value.trim();
   { const z = box.querySelector('#tkZone').value.trim(); if (z) t.zone = z; else delete t.zone; }
   const tc = box.querySelector('#tkCol').dataset.v; if (tc) t.col = tc; else delete t.col;
+  if (sum && box.querySelector('#tkLres')) {
+    const l = [...box.querySelectorAll('[data-lres]')].map(row => { const g = k => row.querySelector(`[data-k=${k}]`).value, w0 = Math.max(1, Math.round(+g('w0') || 1)), w1 = Math.round(+g('w1') || 0);
+      return {r:g('r'), q:+g('q') || 0, w0, w1:w1 ? Math.max(w0, w1) : 0}; }).filter(a => a.r && a.q > 0);
+    if (l.length) t.lres = l; else delete t.lres;
+  }
   if (!sum) {
     t.ms = box.querySelector('#tkMs').value === '1';
     t.dur = t.ms ? 0 : Math.max(0, Math.round(+box.querySelector('#tkDur').value || 0));
@@ -1529,6 +1593,9 @@ function resStats(){
   for (const r of p.res) st[r.id] = {cost:0, qty:0, max:0, over:0, tasks:[]};
   for (const o of s.ol) { if (o.sum) continue; const r = s.R.get(o.t.id);
     for (const a of o.t.asg) { const x = st[a.r]; if (!x) continue; x.cost += asgCost(p, a, r.dur); x.qty += (+a.q || 0) * (RTYPES[(p.res.find(z => z.id === a.r) || {}).type]?.time ? r.dur : 1); x.tasks.push({o, a, r}); } }
+  for (const o of s.ol) { if (!o.sum) continue;
+    for (const x of lotSpans(p, s, o.t)) { const y = st[x.a.r]; if (!y) continue; y.cost += asgCost(p, x.a, x.dur); y.qty += (+x.a.q || 0) * (RTYPES[(p.res.find(z => z.id === x.a.r) || {}).type]?.time ? x.dur : 1);
+      y.tasks.push({o, a:x.a, r:{start:s.cal.dnOf(x.es), finish:s.cal.dnOf(Math.max(x.es, x.ef - 1)), dur:x.dur}, lot:true}); } }
   for (const [rid, m] of L) { for (const v of m.values()) st[rid].max = Math.max(st[rid].max, v); }
   for (const o of ov) st[o.r].over++;
   return {L, ov, st};
@@ -1577,12 +1644,12 @@ function histo(r, m, x){
 }
 function taskList(x){
   if (!x.tasks.length) return '<p class="bp-hint">Affectée à aucune tâche.</p>';
-  return `<table class="bp-tbl"><thead><tr><th>Tâche</th><th class="n">Quantité</th><th class="n">Début</th><th class="n">Fin</th><th class="n">CHF</th></tr></thead><tbody>${x.tasks.map(({o, a, r}) =>
-    `<tr data-goto="${esc(o.t.id)}" style="cursor:pointer"><td>${o.wbs} ${esc(o.t.name)}</td><td class="n">${fmtN(a.q, a.q % 1 ? 2 : 0)}</td><td class="n">${shortOfDn(r.start)}</td><td class="n">${shortOfDn(r.finish)}</td><td class="n">${fmtN(asgCost(U.plan, a, r.dur))}</td></tr>`).join('')}</tbody></table>`;
+  return `<table class="bp-tbl"><thead><tr><th>Tâche</th><th class="n">Quantité</th><th class="n">Début</th><th class="n">Fin</th><th class="n">CHF</th></tr></thead><tbody>${x.tasks.map(({o, a, r, lot}) =>
+    `<tr data-goto="${esc(o.t.id)}" style="cursor:pointer"><td>${o.wbs} ${esc(o.t.name)}${lot ? ` <span class="bp-hint">(lot, sem. ${Math.max(1, +a.w0 || 1)}${+a.w1 ? ' à ' + a.w1 : ' à fin'})</span>` : ''}</td><td class="n">${fmtN(a.q, a.q % 1 ? 2 : 0)}</td><td class="n">${shortOfDn(r.start)}</td><td class="n">${shortOfDn(r.finish)}</td><td class="n">${fmtN(asgCost(U.plan, a, r.dur))}</td></tr>`).join('')}</tbody></table>`;
 }
 async function editRes(id){
   const p = U.plan, r = id ? p.res.find(x => x.id === id) : {id:uid(), name:'', type:'team', unit:'pers.', rate:0, cap:1, color:COLORS[p.res.length % COLORS.length]};
-  const used = id && p.tasks.some(t => t.asg.some(a => a.r === id));
+  const used = id && p.tasks.some(t => t.asg.some(a => a.r === id) || (t.lres || []).some(a => a.r === id));
   const box = await dlg({title:id ? 'Ressource' : 'Nouvelle ressource', width:560, body:`<div class="bp-form">
     <label class="bp-f w"><span>Nom</span><input id="reName" value="${esc(r.name)}" placeholder="ex. Équipe maçonnerie, Pelle 14 t, Béton C25/30" autofocus></label>
     <label class="bp-f"><span>Type</span><select id="reType">${Object.entries(RTYPES).map(([k, v]) => `<option value="${k}" ${r.type === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></label>
@@ -1605,7 +1672,7 @@ async function editRes(id){
   if (!box) return;
   if (box === 'del') {
     if (used && !await confirmDlg('Supprimer la ressource', `« ${esc(r.name)} » est affectée à des tâches : elle en sera retirée.`, 'Supprimer', true)) return;
-    mut(pp => { pp.res = pp.res.filter(x => x.id !== id); for (const t of pp.tasks) { t.asg = t.asg.filter(a => a.r !== id); t.act = t.act.filter(a => a.r !== id); } });
+    mut(pp => { pp.res = pp.res.filter(x => x.id !== id); for (const t of pp.tasks) { t.asg = t.asg.filter(a => a.r !== id); if (t.lres) { t.lres = t.lres.filter(a => a.r !== id); if (!t.lres.length) delete t.lres; } t.act = t.act.filter(a => a.r !== id); } });
     return;
   }
   mut(pp => {
@@ -1642,14 +1709,14 @@ function renderBud(){
   const agg = new Map();
   for (let i = s.ol.length - 1; i >= 0; i--) { const o = s.ol[i];
     if (!o.sum) { const r = byId.get(o.t.id); agg.set(o.t.id, {bac:r.bac, cur:r.cur, pv:r.pv, ev:r.ev, ac:r.ac}); }
-    else { const a = {bac:0, cur:0, pv:0, ev:0, ac:0}; for (const t of p.tasks) if (t.parent === o.t.id) { const c = agg.get(t.id); if (c) for (const k in a) a[k] += c[k]; } agg.set(o.t.id, a); } }
+    else { const a = {bac:0, cur:0, pv:0, ev:0, ac:0}, own = byId.get(o.t.id); for (const t of p.tasks) if (t.parent === o.t.id) { const c = agg.get(t.id); if (c) for (const k in a) a[k] += c[k]; } if (own) for (const k in a) a[k] += own[k]; agg.set(o.t.id, a); } }
   const k = (l, v, sub, cls = '') => `<div class="bp-kpi"><small>${l}</small><b class="${cls}">${v}</b>${sub ? `<em>${sub}</em>` : ''}</div>`;
   const idx = v => v == null ? '–' : fmtR(v), col = v => v == null ? '' : v >= 1 ? 'bp-pos' : v < 0.95 ? 'bp-neg' : '';
   const sg = v => (v > 0 ? '+' : '') + fmtN(v);
   const rows = s.ol.map(o => { const a = agg.get(o.t.id), cv = a.ev - a.ac, pct = o.sum ? (a.bac ? a.ev / a.bac * 100 : 0) : o.t.pct;
     return `<tr class="${o.sum ? 'sum' : ''}"><td>${o.wbs}</td><td style="padding-left:${6 + o.lvl * 14}px">${esc(o.t.name)}</td><td class="n">${fmtN(a.bac)}</td>${p.baseline ? `<td class="n ${a.cur > a.bac + .5 ? 'bp-neg' : ''}">${fmtN(a.cur)}</td>` : ''}`
       + `<td class="n">${fmtN(pct)}%</td><td class="n">${fmtN(a.ev)}</td><td class="n">${fmtN(a.ac)}</td><td class="n ${cv < -.5 ? 'bp-neg' : cv > .5 ? 'bp-pos' : ''}">${a.ac || a.ev ? sg(cv) : ''}</td>`
-      + `<td>${o.sum || o.t.ms ? '' : `<button class="bp-btn" data-act="${esc(o.t.id)}" style="height:34px">${I.money}Réalisé</button>`}</td></tr>`; }).join('');
+      + `<td>${(o.sum && !(o.t.lres || []).length && !(o.t.act || []).length) || (!o.sum && o.t.ms) ? '' : `<button class="bp-btn" data-act="${esc(o.t.id)}" style="height:34px">${I.money}Réalisé</button>`}</td></tr>`; }).join('');
   main.innerHTML = `<div class="bp-pane">
     <div class="bp-card"><h3>Situation au <input type="date" id="bdStatus" value="${isoOfDn(s.statusDn)}" style="height:34px;margin-left:6px"></h3>
       <div class="bp-kpis">
@@ -1675,7 +1742,7 @@ async function actDlg(id){
   const p = U.plan, t = T(id); if (!t) return;
   const resOpts = sel => `<option value="">Montant libre (CHF)</option>` + p.res.map(r => `<option value="${esc(r.id)}" ${sel === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
   const qUnit = r => !r ? 'CHF' : r.type === 'team' ? 'h' : r.type === 'machine' ? 'j' : (r.unit || 'u.');
-  const row = e => `<div class="bp-li" data-e><input type="date" data-k="d" value="${esc(e.d || isoOfDn(todayDn()))}" style="flex:0 0 150px"><select data-k="r">${resOpts(e.r || (t.asg[0] && t.asg[0].r) || '')}</select><input data-k="q" class="n" type="number" step="any" min="0" value="${e.r ? +e.q || 0 : +e.amt || 0}"><span class="bp-hint" data-u style="width:36px"></span><span class="cost" data-c></span><button class="bp-ib" data-rm>${I.x}</button></div>`;
+  const row = e => `<div class="bp-li" data-e><input type="date" data-k="d" value="${esc(e.d || isoOfDn(todayDn()))}" style="flex:0 0 150px"><select data-k="r">${resOpts(e.r || ((t.asg[0] || (t.lres || [])[0] || {}).r) || '')}</select><input data-k="q" class="n" type="number" step="any" min="0" value="${e.r ? +e.q || 0 : +e.amt || 0}"><span class="bp-hint" data-u style="width:36px"></span><span class="cost" data-c></span><button class="bp-ib" data-rm>${I.x}</button></div>`;
   const box = await dlg({title:'Réalisé · ' + wbsOf(id) + ' ' + t.name, width:760, body:`
     <p class="bp-hint">Heures des équipes, jours des machines, quantités des sous-traitants et fournitures, ou montant libre (facture…). Montant = quantité × tarif de la ressource.</p>
     <div class="bp-lst" id="acList"></div><div><button class="bp-btn" id="acAdd">${I.plus}Ligne</button></div>
@@ -2066,16 +2133,17 @@ async function makeXlsx(){
   const D = dn => new Date(Date.UTC(1970, 0, 1) + dn * DAY + 12 * 36e5);
   const resName = id => (p.res.find(r => r.id === id) || {}).name || '';
   const tasks = [['N°', 'Tâche', 'Type', 'Durée (j ouvrés)', 'Début', 'Fin', 'Prédécesseurs', 'Avancement %', 'Marge (j)', 'Critique', 'Début réel', 'Fin réelle', 'Ressources', 'Budget CHF', 'Réel CHF', 'Remarque']];
-  for (const o of s.ol) { const t = o.t, r = s.R.get(t.id), e = ev.get(t.id);
+  const lresX = t => (t.lres || []).map(a => resName(a.r) + ' × ' + a.q + ' (sem. ' + (+a.w0 || 1) + (+a.w1 ? '–' + a.w1 : '–fin') + ')').join(', ');
+  for (const o of s.ol) { const t = o.t, r = s.R.get(t.id), e = o.sum ? null : ev.get(t.id);
     tasks.push([o.wbs, '  '.repeat(o.lvl) + t.name, o.sum ? 'Lot' : t.ms ? 'Jalon' : 'Tâche', r.dur, D(r.start), D(r.finish), o.sum ? '' : predTxt(t), o.sum ? '' : t.pct, o.sum ? '' : r.tf, !o.sum && r.crit ? 'oui' : '',
-      t.aStart ? D(dnOfIso(t.aStart)) : '', t.aEnd ? D(dnOfIso(t.aEnd)) : '', t.asg.map(a => resName(a.r) + ' × ' + a.q).join(', '), e ? Math.round(e.cur) : '', e ? Math.round(e.ac) : '', t.note || '']); }
+      t.aStart ? D(dnOfIso(t.aStart)) : '', t.aEnd ? D(dnOfIso(t.aEnd)) : '', o.sum ? lresX(t) : t.asg.map(a => resName(a.r) + ' × ' + a.q).join(', '), e ? Math.round(e.cur) : '', e ? Math.round(e.ac) : '', t.note || '']); }
   const res = [['Ressource', 'Type', 'Unité', 'Tarif', 'Unité du tarif', 'Capacité / jour', 'Coût prévu CHF']];
   const {st} = resStats();
   for (const r of p.res) res.push([r.name, RTYPES[r.type].label, unitOf(r), +r.rate || 0, RTYPES[r.type].rateUnit, RTYPES[r.type].time ? +r.cap || 0 : '', Math.round(st[r.id].cost)]);
   const bud = [['Situation au', D(s.statusDn)], ['Budget (BAC)', Math.round(E.BAC)], ['Prévu à date (PV)', Math.round(E.PV)], ['Valeur acquise (VA)', Math.round(E.EV)], ['Coût réel (CR)', Math.round(E.AC)],
     ['Écart de coût (VA − CR)', Math.round(E.CV)], ['Écart de délai (VA − PV)', Math.round(E.SV)], ['SPI', E.SPI == null ? '' : +E.SPI.toFixed(2)], ['CPI', E.CPI == null ? '' : +E.CPI.toFixed(2)], ['Coût final estimé', Math.round(E.EAC)], ['Écart final estimé', Math.round(E.VAC)], [],
     ['N°', 'Tâche', 'Budget réf. CHF', 'Budget actuel CHF', 'Avancement %', 'Valeur acquise CHF', 'Réel CHF', 'Écart CHF']];
-  for (const o of s.ol) { if (o.sum) continue; const e = ev.get(o.t.id); bud.push([o.wbs, o.t.name, Math.round(e.bac), Math.round(e.cur), o.t.pct, Math.round(e.ev), Math.round(e.ac), Math.round(e.ev - e.ac)]); }
+  for (const o of s.ol) { const e = ev.get(o.t.id); if (!e) continue; bud.push([o.wbs, o.t.name + (e.lot ? ' (ressources du lot)' : ''), Math.round(e.bac), Math.round(e.cur), e.lot ? Math.round(e.pct) : o.t.pct, Math.round(e.ev), Math.round(e.ac), Math.round(e.ev - e.ac)]); }
   const act = [['Date', 'N°', 'Tâche', 'Ressource', 'Quantité', 'Unité', 'Montant CHF']];
   for (const o of s.ol) for (const e of o.t.act || []) { const r = p.res.find(z => z.id === e.r); act.push([e.d ? D(dnOfIso(e.d)) : '', o.wbs, o.t.name, r ? r.name : 'Montant libre', r ? +e.q : '', r ? (r.type === 'team' ? 'h' : r.type === 'machine' ? 'j' : r.unit) : '', Math.round(actLine(p, e) * 100) / 100]); }
   const y0 = new Date(s.cal.start * DAY).getUTCFullYear(), y1 = new Date(s.end * DAY).getUTCFullYear();
