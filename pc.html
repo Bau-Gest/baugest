@@ -1087,10 +1087,12 @@ const DOCS = {
       purpose:'Heures, machines et matériaux hors soumission'},
   constat:{name:'Constat', title:'Constat / défaut', folder:'Constats', file:'Constat', bg:'plain', form:true, sign:true,
       purpose:'Défaut, dégât ou réserve, avec croquis'},
+  releve:{name:'Croquis de relevé', title:'Croquis de relevé', folder:'Croquis de relevé', file:'Croquis-releve', bg:'grid', form:false, sign:false, notx:true,
+      purpose:'Relevé à main levée, photos cotées (jamais transcrit)'},
   libre:{name:'Note libre', title:'Note', folder:'Notes', file:'Note', bg:'lined', form:false, sign:false,
       purpose:'Page libre avec l’en-tête'}
 };
-const DOC_ORDER = ['pv', 'journal', 'regie', 'constat', 'libre'];
+const DOC_ORDER = ['pv', 'journal', 'regie', 'constat', 'releve', 'libre'];
 const DOCLAY_DEF = {logo:true, pos:'left', date:'short', bg:'auto', site:true, form:true, sign:true};
 const PW = 1000, PH = 1414;
 const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
