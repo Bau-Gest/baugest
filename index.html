@@ -1020,6 +1020,11 @@ html:not([data-theme="light"]):not([data-contrast]) .td-due.today{color:#f2b233}
 .td-hand{padding:0 10px}.td-hand.on{border-color:var(--signal)}
 .td-sec{display:grid;gap:8px}
 .td-sh{display:flex;align-items:center;gap:10px}
+.td-row.td-dv{border-left-color:var(--signal)}
+.td-row.td-dv .td-txt{font-weight:600}
+.td-dvsub{margin:-2px 0 4px 26px}
+.dk-label.td-hc{margin-top:16px}
+.td-addl{border-style:dashed;border-color:var(--line)}
 .td-sh .slogo{width:30px;height:30px;font-size:12px}
 .td-sh b{flex:1;min-width:0;font:700 18px/1.15 var(--display);text-transform:uppercase;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .td-sh .n{min-width:24px;height:22px;border-radius:11px;padding:0 7px;background:var(--surface2);font:700 12.5px/22px var(--body);text-align:center}
@@ -2044,6 +2049,12 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <div class="sheet-head"><h3 id="tdPanelTitle">À faire<small id="tdPanelSub" class="td-sub"></small></h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <div class="sheet-body" id="tdPanel"><div id="tdPanelNew"></div><div id="tdPanelList"></div></div>
 </div>
+<div id="sheetTdList" class="sheet" hidden role="dialog" aria-labelledby="tdlTitle">
+  <div class="sheet-head"><h3 id="tdlTitle">Nouvelle liste</h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="sheet-body"><label class="field"><span>Nom de la liste</span><input id="tdlName" type="text" maxlength="60" autocomplete="off" placeholder="ex. Entreprise, Administratif, Perso"></label>
+    <p class="hint">Liste À faire hors chantier, avec rappels comme un chantier. Sur le Drive : « À faire hors chantier ».</p></div>
+  <div class="sheet-foot"><button id="tdlDel" class="btn danger" hidden>Supprimer la liste</button><button class="btn" data-close>Annuler</button><button id="tdlOk" class="btn primary">Créer</button></div>
+</div>
 <div id="sheetTodoEd" class="sheet" hidden role="dialog" aria-labelledby="tdEdTitle">
   <div class="sheet-head"><h3 id="tdEdTitle">Tâche<small id="tdEdSub" class="td-sub"></small></h3><button class="icon-btn" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <div class="sheet-body"><p id="tdEdTxt" class="td-txt" hidden></p><div id="tdEdHost"></div></div>
@@ -2314,7 +2325,7 @@ const ICON_FOLDER = '<svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1
 const KEY = 'photochantier.v1';
 const DEF = {
   v: 1, companies: [], devis: [], ddel: {}, logoOn: true, logoPos: 'tr', logoSize: 18, logoBg: false, logoLib: [], stampLines: {site:true, tags:true, date:true, gps:true, note:true},
-  stamp: true, quality: 'standard', tagPrompt: true, tagDelay: 5, structure: 'A', autoRotate: true, mapLayer: 'Plan CH', home: 'auto', docTitles: {}, theme: 'dark', pvKeys: [], pvNotif: false,
+  stamp: true, quality: 'standard', tagPrompt: true, tagDelay: 5, structure: 'A', autoRotate: true, mapLayer: 'Plan CH', home: 'auto', docTitles: {}, theme: 'dark', pvKeys: [], pvNotif: false, tdLists: [],
   tags: ['fouille','réseau EU','réseau EC','coffrage','armature','bétonnage','remblayage','enrobé','bordures','défaut','avant','après'],
   sites: [
     {id:'ex1', number:'000001', name:'Exemple Saillon', lat:46.17170, lon:7.18830, radius:300, example:true},
@@ -2352,7 +2363,7 @@ function save(){
   if (ch || (S.drive.rootId && S.drive.token && S.drive.rootId !== S.syncRoot)) scheduleSync();
 }
 /* ---------- Synchronisation des chantiers et réglages entre appareils (v1.4) ---------- */
-const SYNC_FIELDS = ['companies', 'tags', 'logoLib', 'docLay', 'docTitles', 'stamp', 'logoOn', 'logoPos', 'logoSize', 'logoBg', 'stampLines', 'quality', 'tagPrompt', 'tagDelay', 'structure', 'pvKeys'];
+const SYNC_FIELDS = ['companies', 'tags', 'logoLib', 'docLay', 'docTitles', 'stamp', 'logoOn', 'logoPos', 'logoSize', 'logoBg', 'stampLines', 'quality', 'tagPrompt', 'tagDelay', 'structure', 'pvKeys', 'tdLists'];
 const SYNC_NAME = 'Réglages PhotoChantier (ne pas supprimer).json';
 S.smod = S.smod || {}; S.sdel = S.sdel || {}; S.fmod = S.fmod || {}; S.remap = S.remap || {}; S.migrate = S.migrate || {};
 for (const s of S.sites) if (!s.example && !S.smod[s.id]) S.smod[s.id] = 1;
@@ -2511,6 +2522,7 @@ function refreshAfterSync(){
   if (!$('#settings').hidden) { renderSites(); renderTagList(); renderDpLayout(); renderDocSettings(); if (!$('#structOpts').contains(document.activeElement)) $$('input[name=struct]').forEach(r => r.checked = r.value === S.structure); }
   if (!$('#desk').hidden) { if (desk.site && desk.site !== '__none' && !siteById(desk.site)) desk.site = null; if (!desk.site) { const c = currentSite(); desk.site = c ? c.id : (S.sites[0]?.id || '__none'); } renderDeskHead(); renderDeskSites(); loadDocs(); }
   if (!$('#gallery').hidden) renderGalSites();
+  tdBadges(); renderTodoPanel();
   if (!$('#sheetSite').hidden) renderSitePick();
   if (!$('#settings').hidden) renderComps();
   dzAfterSync(); renderSiteChip();
@@ -4643,10 +4655,11 @@ function renderDeskHead(){
 }
 function renderDeskSites(){
   const c = currentSite();
-  const b = (id, s) => `<button class="dk-site ${desk.site === id ? 'on' : ''}" data-dsite="${esc(id)}">${s ? logoHTML(s) : '<span class="slogo none" aria-hidden="true">?</span>'}<span class="t"><b>${esc(s ? s.name : 'À classer')}</b><small>${s ? esc(s.number || '') + (c && c.id === s.id ? ' · ● ici' : '') : 'hors chantier'}</small></span></button>`;
-  $('#dkSites').innerHTML = S.sites.map(s => b(s.id, s)).join('') + b('__none', null);
+  const tdm = desk.mode === 'todo' && isTabletScreen(), tsel = tdm ? desk.tdSel : null;
+  const b = (id, s) => `<button class="dk-site ${desk.site === id && !tsel ? 'on' : ''}" data-dsite="${esc(id)}">${s ? logoHTML(s) : '<span class="slogo none" aria-hidden="true">?</span>'}<span class="t"><b>${esc(s ? s.name : 'À classer')}</b><small>${s ? esc(s.number || '') + (c && c.id === s.id ? ' · ● ici' : '') : 'hors chantier'}</small></span></button>`;
+  $('#dkSites').innerHTML = S.sites.map(s => b(s.id, s)).join('') + (tdm ? tdDeskPicks(tsel) : b('__none', null));
   const ds = desk.site && desk.site !== '__none' ? siteById(desk.site) : null;
-  $('#dkSiteName').textContent = ds ? siteLabel(ds) : 'À classer';
+  $('#dkSiteName').textContent = tsel ? (tsel === TD_DV ? 'Devis à faire' : tdLabel(tsel)) : ds ? siteLabel(ds) : 'À classer';
 }
 function recItem(r){
   return {key:'u' + r.uid, uid:r.uid, src:r.demo ? 'demo' : 'local', title:r.doc.title, dtype:r.doc.kind, date:r.doc.date, siteId:r.doc.siteId, thumb:r.thumb || '',
@@ -5370,9 +5383,9 @@ function bindDocs(){
   bindErgo();
   $('#dkPhoto').addEventListener('click', closeDesk);
   $('#dkSettings').addEventListener('click', () => openSettings());
-  $('#dkGps').addEventListener('click', () => { const c = currentSite(); desk.site = c ? c.id : '__none'; renderDeskSites(); loadDocs(); });
+  $('#dkGps').addEventListener('click', () => { const c = currentSite(); desk.site = c ? c.id : '__none'; desk.tdSel = null; renderDeskSites(); loadDocs(); });
   $('#dkRefresh').addEventListener('click', () => { syncSettings(true); loadDocs(); });
-  $('#dkSites').addEventListener('click', e => { const b = e.target.closest('[data-dsite]'); if (!b) return; if (desk.mode === 'plans' && desk.site === b.dataset.dsite && PL.path.length) { plGo([]); return; } desk.site = b.dataset.dsite; renderDeskSites(); loadDocs(); $('#dkMain').scrollTop = 0; });
+  $('#dkSites').addEventListener('click', e => { const b = e.target.closest('[data-dsite]'); if (!b) return; if (desk.mode === 'todo') { const v = b.dataset.dsite; desk.tdSel = v === TD_DV || tdIsList(v) ? v : null; if (!desk.tdSel) desk.site = v; renderDeskSites(); loadDocs(); $('#dkMain').scrollTop = 0; return; } if (desk.mode === 'plans' && desk.site === b.dataset.dsite && PL.path.length) { plGo([]); return; } desk.site = b.dataset.dsite; renderDeskSites(); loadDocs(); $('#dkMain').scrollTop = 0; });
   $('#desk').addEventListener('click', e => {
     if (e.target.closest('#dkNew')) { openKindPick(); return; }
     if (e.target.closest('#dkGalSite')) { openGallery(); gal.site = desk.site; renderGalSites(); loadGallery(true); return; }
@@ -8168,7 +8181,7 @@ function renderDzList(){
   $('#dzCount').textContent = `Fiches · ${list.length}`;
   $('#dzList').innerHTML = list.length ? list.map(d => {
     const n = d.items ? d.items.filter(i => (i.d || '').trim()).length : 0;
-    const info = [d.visit ? 'Visite ' + dzFmtVisit(d.visit) : 'Visite à fixer', n ? n + ' poste' + (n > 1 ? 's' : '') : ''].filter(Boolean).join(' · ');
+    const info = [devSent(d) ? 'Envoyé le ' + fmtDate(new Date(d.sent)) : 'Devis à faire', d.visit ? 'Visite ' + dzFmtVisit(d.visit) : 'Visite à fixer', n ? n + ' poste' + (n > 1 ? 's' : '') : ''].filter(Boolean).join(' · ');
     if (dz.selMode) { const on = dz.sel.has(d.id); return `<button class="pick dz-pick ${on ? 'cur' : ''}" data-dz="${esc(d.id)}" aria-pressed="${on}"><span class="dz-chk" aria-hidden="true">${on ? '✓' : ''}</span><span class="t"><b>${esc(devName(d))}</b><small>${esc(devCity(d) || 'Localité à préciser')}</small><small>${esc(info)}</small></span></button>`; }
     return `<button class="pick dz-pick ${d.id === dz.cur ? 'cur' : ''}" data-dz="${esc(d.id)}">${compLogoHTML(compById(d.comp))}<span class="t"><b>${esc(devName(d))}</b><small>${esc(devCity(d) || 'Localité à préciser')}</small><small>${esc(info)}</small></span>${activeDevis === d.id ? '<span class="dz-live" title="Photos de la caméra rangées ici">● Caméra</span>' : ''}</button>`;
   }).join('') : `<p class="dz-empty">${q ? 'Aucune fiche trouvée.' : 'Aucune fiche devis.<br>Touchez « Nouvelle fiche devis ».'}</p>`;
@@ -8195,7 +8208,20 @@ function renderDzHead(d){
   const c = compById(d.comp);
   $('#dzHeadLogo').innerHTML = compLogoHTML(c);
   $('#dzName').textContent = devName(d);
-  $('#dzSub').textContent = `${c ? c.name : 'Sans entreprise'} · fiche du ${fmtDate(new Date(d.created || Date.now()))}`;
+  $('#dzSub').textContent = `${c ? c.name : 'Sans entreprise'} · fiche du ${fmtDate(new Date(d.created || Date.now()))} · ${devSent(d) ? 'devis envoyé le ' + fmtDate(new Date(d.sent)) : 'devis à faire'}`;
+}
+/* état du devis : à faire (dans la liste À faire › Devis) ou envoyé */
+function renderDzSent(d){
+  const b = $('#dzSent'); if (!b) return;
+  b.classList.toggle('primary', !devSent(d));
+  b.innerHTML = devSent(d) ? `✓ Envoyé le ${fmtDate(new Date(d.sent))} · remettre à faire` : `${ICON_MAIL}Devis envoyé`;
+}
+function devMarkSent(id, on){
+  const d = devById(id); if (!d) return;
+  d.sent = on ? Date.now() : null; devSave(d);
+  note(on ? 'Devis envoyé · ' + devName(d) + ' sort de la liste À faire' : 'Devis remis à faire · ' + devName(d), 2600);
+  if (!$('#devis').hidden) { renderDzList(); if (dz.cur === id) { renderDzHead(d); renderDzSent(d); } }
+  tdBadges(); tdRenderAll();
 }
 function renderDzGps(){
   const d = devById(dz.cur); const el = $('#dzGps'); if (!d || !el) return;
@@ -8270,10 +8296,11 @@ function renderDzFiche(){
   <div class="dz-foot">
     <small>Drive › ${esc(DZ_ROOT)} › ${esc(d.folder)}</small>
     <button class="btn danger" id="dzDel">${ICON_TRASH}Supprimer</button>
-    <button class="btn primary" id="dzMemo">${ICON_DOC}Créer le mémo PDF</button>
+    <button class="btn" id="dzMemo">${ICON_DOC}Créer le mémo PDF</button>
+    <button class="btn" id="dzSent"></button>
   </div>
   <div class="dz-memos" id="dzMemos" hidden></div>`;
-  renderDzHead(d); renderDzActs(d); renderDzGps(); renderDzItems(); renderDzCal();
+  renderDzHead(d); renderDzSent(d); renderDzActs(d); renderDzGps(); renderDzItems(); renderDzCal();
   addrSuggest(m.querySelector('input[data-f="addr.street"]'), x => addrFillFiche(m, x));
   dz.photos = []; dz.memos = []; renderDzPhotos(); dzLoadPhotos();
 }
@@ -8781,6 +8808,7 @@ function bindDevis(){
     if (t.closest('#dzShoot')) { dzShoot(); return; }
     if (t.closest('#dzMemo')) { dzMemo(); return; }
     if (t.closest('#dzDel')) { askDeleteDevis(); return; }
+    if (t.closest('#dzSent')) { devMarkSent(d.id, !devSent(d)); return; }
     if (t.closest('#dzPosHere')) {
       if (!pos) { note('Position GPS pas encore disponible.'); return; }
       d.pos = {lat:+pos.lat.toFixed(6), lon:+pos.lon.toFixed(6), acc:Math.round(pos.acc)}; devSave(d); renderDzGps(); renderDzActs(d); note('Position enregistrée (±' + Math.round(pos.acc) + ' m)'); return;
@@ -9709,6 +9737,24 @@ const tdList = sid => TD.lists[sid] || (TD.lists[sid] = {sid, tasks:[], fileId:'
 const tdLive = t => !t.del;
 const tdOpen = t => !t.del && !t.done;
 const tdSites = () => S.sites.filter(s => !s.example);
+/* Listes hors chantier (S.tdLists, réglages synchronisés) et fiches devis : mêmes tâches, même format, autre dossier Drive.
+   sid 'td:<id>' → « À faire hors chantier/<nom>/À faire (ne pas supprimer).json » ; sid 'devis:<id>' → « Devis particuliers/<fiche>/… ».
+   Une fiche devis pas encore envoyée (d.sent vide) est elle-même une ligne « Faire et envoyer le devis » de la liste Devis. */
+const TD_HC = 'À faire hors chantier', TD_DV = '__devis';
+const tdLists = () => (Array.isArray(S.tdLists) ? S.tdLists : (S.tdLists = [])).filter(l => !l.del);
+const tdIsList = sid => String(sid || '').startsWith('td:');
+const tdIsDevis = sid => String(sid || '').startsWith('devis:');
+const devSent = d => !!(d && d.sent);
+function tdTarget(sid){
+  if (!sid) return null;
+  if (tdIsList(sid)) { const l = tdLists().find(x => 'td:' + x.id === sid); return l ? {sid, k:'list', l, label:l.name, short:l.name, path:[TD_HC, clean(l.name) || 'Liste']} : null; }
+  if (tdIsDevis(sid)) { const d = devById(sid.slice(6)); return d ? {sid, k:'devis', d, label:devLabel(d), short:'Devis ' + devName(d), path:[DZ_ROOT, clean(d.folder) || 'Devis']} : null; }
+  const s = siteById(sid); return s && !s.example ? {sid, k:'site', s, label:siteLabel(s), short:s.number || s.name, path:[siteFolder(s)]} : null;
+}
+const tdTargets = () => [...tdSites().map(s => s.id), ...tdLists().map(l => 'td:' + l.id), ...devList().map(devSid)].map(tdTarget).filter(Boolean);
+const tdLabel = sid => tdTarget(sid)?.label || '';
+const tdLogo = g => g.k === 'site' ? logoHTML(g.s) : g.k === 'devis' ? compLogoHTML(compById(g.d.comp)) : logoHTML({name:g.label});
+const devTodo = () => devList().filter(d => !devSent(d)).sort((a, b) => (a.created || 0) - (b.created || 0)); // plus ancienne demande d'abord
 function tdEndOfDay(d = new Date()){ const x = new Date(d); x.setHours(23, 59, 59, 999); return x.getTime(); }
 const tdUrgent = t => tdOpen(t) && t.due && t.due <= tdEndOfDay();
 function tdSort(a, b){
@@ -9732,7 +9778,7 @@ function tdNextDue(from, rep){
   do { if (rep === 'm') d.setMonth(d.getMonth() + 1); else d.setDate(d.getDate() + rep); } while (d.getTime() < now);
   return d.getTime();
 }
-function tdCount(){ let n = 0; for (const s of tdSites()) n += (TD.lists[s.id]?.tasks || []).filter(tdUrgent).length; return n; }
+function tdCount(){ let n = 0; for (const g of tdTargets()) n += (TD.lists[g.sid]?.tasks || []).filter(tdUrgent).length; return n; }
 function tdBadges(){
   const n = tdCount();
   $$('[data-tdbadge]').forEach(b => { b.textContent = n > 99 ? '99+' : String(n); b.hidden = !n; });
@@ -9782,8 +9828,8 @@ async function tdSync(){
     const remote = {};
     for (const f of res.files || []) { const sid = remapId((f.appProperties || {}).site); if (sid && (!remote[sid] || f.modifiedTime > remote[sid].modifiedTime)) remote[sid] = f; }
     let changed = false;
-    for (const s of tdSites()) {
-      const sid = s.id, L = tdList(sid), f = remote[sid];
+    for (const g of tdTargets()) {
+      const sid = g.sid, L = tdList(sid), f = remote[sid];
       if (f && !L.fileId) L.fileId = f.id;
       if (f && f.id !== L.fileId) L.fileId = f.id;
       let tasks = L.tasks, upload = L.dirty;
@@ -9807,16 +9853,16 @@ async function tdSync(){
       if (!f) upload = true;
       L.tasks = tasks;
       if (upload) {
-        const md = {name:TD_FILE, mimeType:'application/json', description:`À faire BauGest du chantier « ${siteLabel(s)} »`,
+        const md = {name:TD_FILE, mimeType:'application/json', description:`À faire BauGest ${g.k === 'site' ? 'du chantier' : g.k === 'devis' ? 'de la fiche' : 'de la liste'} « ${g.label} »`,
           appProperties:{pc:'1', kind:'todo', site:sid, n:String(tasks.filter(tdOpen).length)}};
-        const blob = new Blob([JSON.stringify({v:1, siteId:sid, site:siteLabel(s), updatedAt:new Date().toISOString(), tasks})], {type:'application/json'});
+        const blob = new Blob([JSON.stringify({v:1, siteId:sid, site:g.label, updatedAt:new Date().toISOString(), tasks})], {type:'application/json'});
         let out = null;
         if (L.fileId) {
           try { out = await driveMultipart(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(L.fileId)}?uploadType=multipart&fields=id,modifiedTime`, 'PATCH', md, blob, 'application/json'); }
           catch (e) { if (e.status !== 404) throw e; }
         }
         if (!out) {
-          const dir = await ensurePath([siteFolder(s)]);
+          const dir = await ensurePath(g.path);
           out = await driveMultipart('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime', 'POST', {...md, parents:[dir]}, blob, 'application/json');
         }
         L.fileId = out.id; L.rmod = out.modifiedTime || '';
@@ -9902,6 +9948,33 @@ function tdFillInk(root){
   });
 }
 function tdListHTML(tasks, sid){ return `<div class="td-list">${tasks.map(t => tdRowHTML(t, sid)).join('')}</div>`; }
+function tdDevRowHTML(d){
+  const sent = devSent(d), n = (d.items || []).filter(i => (i.d || '').trim()).length;
+  const meta = [sent ? `Envoyé le ${fmtDate(new Date(d.sent))}` : d.visit ? 'Visite ' + dzFmtVisit(d.visit) : 'Visite à fixer', n ? n + ' poste' + (n > 1 ? 's' : '') : '', 'Fiche du ' + fmtDate(new Date(d.created || Date.now()))].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
+  return `<div class="td-row td-dv${sent ? ' done' : ''}" data-tddv="${esc(d.id)}">
+    <button class="td-chk" data-tdsent="${esc(d.id)}" aria-label="${sent ? 'Remettre à faire' : 'Devis envoyé'}" title="${sent ? 'Remettre à faire' : 'Cocher quand le devis est envoyé'}"><i>${sent ? '✓' : ''}</i></button>
+    <div class="td-body" data-tddvo="${esc(d.id)}" role="button" tabindex="0"><span class="td-txt">${sent ? 'Devis envoyé' : 'Faire et envoyer le devis'} · ${esc(devName(d) + (devCity(d) ? ' – ' + devCity(d) : ''))}</span><span class="td-meta">${meta}</span></div>
+  </div>`;
+}
+/* liste Devis : fiches pas encore envoyées (avec leurs tâches) puis fiches envoyées qui ont encore des tâches ouvertes */
+function tdDevisHTML(){
+  const open = devTodo(), more = devList().filter(d => devSent(d) && (TD.lists[devSid(d)]?.tasks || []).some(tdOpen)).sort((a, b) => b.sent - a.sent);
+  const one = d => { const tasks = (TD.lists[devSid(d)]?.tasks || []).filter(tdOpen).sort(tdSort); return tdDevRowHTML(d) + (tasks.length ? `<div class="td-dvsub">${tdListHTML(tasks, devSid(d))}</div>` : ''); };
+  return {n:open.length, empty:!open.length && !more.length, html:`<div class="td-list">${[...open, ...more].map(one).join('')}</div>`};
+}
+function tdOpenDevis(id){
+  if (!devById(id)) return;
+  $$('.sheet').forEach(s => { if (!s.hidden) closeSheet(s); });
+  if (!$('#devis').hidden) dzOpenFiche(id); else { dz.cur = id; dz.view = 'fiche'; goSection('devis'); }
+}
+function tdDevClick(e){
+  let b;
+  if ((b = e.target.closest('[data-tdsent]'))) { const d = devById(b.dataset.tdsent); if (d) devMarkSent(d.id, !devSent(d)); return true; }
+  if ((b = e.target.closest('[data-tddvo]'))) { tdOpenDevis(b.dataset.tddvo); return true; }
+  if (e.target.closest('[data-tdnewlist]')) { tdListDlg(); return true; }
+  if ((b = e.target.closest('[data-tdlistedit]'))) { tdListDlg(b.dataset.tdlistedit); return true; }
+  return false;
+}
 
 /* ---------- bloc « nouvelle tâche » (stylet) ---------- */
 function tdNewHTML(id, o = {}){
@@ -9979,7 +10052,14 @@ function tdPadOpts(el){
   const r = el.querySelector('[data-tdrep]'); r.classList.toggle('on', !!st.rep); r.querySelector('span').textContent = TD_REPN[st.rep];
   const l = el.querySelector('[data-tdlink]'); l.classList.toggle('on', !!st.ln); l.querySelector('span').textContent = st.ln ? tdLinkLabel(st.ln) : 'Lier';
   const ss = el.querySelector('[data-tdsites]');
-  if (ss) ss.innerHTML = tdSites().map(s => `<button class="chip${s.id === st.sid ? ' on' : ''}" data-tdsite="${esc(s.id)}">${esc(siteLabel(s))}</button>`).join('') || '<p class="hint">Crée d’abord un chantier.</p>';
+  if (ss) {
+    const chip = (sid, l) => `<button class="chip${sid === st.sid ? ' on' : ''}" data-tdsite="${esc(sid)}">${esc(l)}</button>`;
+    const dv = devTodo().map(devSid), cur = tdTarget(st.sid);
+    if (cur && cur.k === 'devis' && !dv.includes(cur.sid)) dv.unshift(cur.sid); // fiche déjà envoyée : reste proposée si elle est choisie
+    const devChips = dv.map(sid => chip(sid, 'Devis · ' + devName(devById(sid.slice(6)))));
+    ss.innerHTML = st.pick === 'devis' ? devChips.join('') || '<p class="hint">Aucun devis à faire.</p>'
+      : [...tdSites().map(s => chip(s.id, siteLabel(s))), ...tdLists().map(l => chip('td:' + l.id, l.name)), ...devChips, '<button class="chip" data-tdnewlist>+ Liste</button>'].join('');
+  }
 }
 function bindTdPad(el){
   const c = el.querySelector('canvas');
@@ -10047,10 +10127,10 @@ function tdPadClick(e){
   if (e.target.closest('[data-tdclear]')) { st.ink = []; st.ops = []; st.lines = 0; tdPadLines(el, 2); tdPadDraw(el); return true; }
   if (e.target.closest('[data-tdline]')) { tdPadLines(el, st.lines + 1); return true; }
   if (e.target.closest('[data-tdadd]')) {
-    if (!st.sid || !siteById(st.sid)) { note('Choisis le chantier de la tâche', 2500); return true; }
+    if (!tdTarget(st.sid)) { note(st.pick === 'devis' ? 'Choisis la fiche devis de la tâche' : 'Choisis le chantier ou la liste de la tâche', 2500); return true; }
     if (!st.ink.length) { note('Écris d’abord la tâche au stylo', 2500); return true; }
     tdAdd(st.sid, {ink:st.ink, pri:st.pri, due:st.due, rep:st.rep, ln:st.ln});
-    note('Tâche ajoutée · ' + siteLabel(siteById(st.sid)), 2200);
+    note('Tâche ajoutée · ' + tdLabel(st.sid), 2200);
     tdPadReset(el); return true;
   }
   if (e.target.closest('[data-tdsave]')) { tdEdSave(); return true; }
@@ -10062,8 +10142,8 @@ function tdPadClick(e){
 function tdEdit(id){
   const f = tdFind(id); if (!f) return;
   if (!isTabletScreen()) { if (f.t.ln) tdOpenLink(f.t, f.sid); return; } // téléphone : consultation et case à cocher seulement
-  const t = f.t, s = siteById(f.sid);
-  $('#tdEdSub').textContent = s ? siteLabel(s) : '';
+  const t = f.t;
+  $('#tdEdSub').textContent = tdLabel(f.sid);
   $('#tdEdTxt').hidden = !tdText(t); $('#tdEdTxt').textContent = tdText(t);
   $('#tdEdHost').innerHTML = tdNewHTML('tdEdPad', {edit:true, ph:t.t ? 'Ajoute une précision au stylo (facultatif)' : 'Écris la tâche ici au stylo'});
   openSheet('#sheetTodoEd');
@@ -10128,7 +10208,7 @@ function tdDateDone(v){ const cb = TDD.cb; TDD.cb = null; closeSheet($('#sheetTo
 /* ---------- lien : photo, plan ou PV ---------- */
 const TDL = {cb:null, sid:null, tok:0};
 function tdLinkPick(sid, cur, cb){
-  if (!sid || !siteById(sid)) { note('Choisis d’abord le chantier', 2500); return; }
+  if (!sid || !siteById(sid)) { note(tdTarget(sid) ? 'Lien photo / plan / PV : seulement pour une tâche de chantier' : 'Choisis d’abord le chantier', 2800); return; }
   TDL.cb = cb; TDL.sid = sid;
   const here = [];
   if (!$('#planView').hidden && PV.item && (PV.siteId === sid)) here.push({t:'plan', id:PV.item.driveId || '', key:PV.key, name:PV.planName});
@@ -10227,6 +10307,8 @@ async function tdOpenLink(t, sid){
 
 /* ---------- panneau ☑ (accès rapide, tous les chantiers) ---------- */
 function tdDefaultSite(){
+  if (!$('#devis').hidden && dz.cur && devById(dz.cur)) return 'devis:' + dz.cur;
+  if (!$('#desk').hidden && desk.mode === 'todo' && desk.tdSel) return desk.tdSel === TD_DV ? (devTodo()[0] ? devSid(devTodo()[0]) : null) : desk.tdSel;
   if (!$('#planView').hidden && PV.siteId && siteById(PV.siteId)) return PV.siteId;
   if (!$('#pdView').hidden && PDV.siteId && siteById(PDV.siteId)) return PDV.siteId;
   if (!$('#desk').hidden && desk.site && siteById(desk.site)) return desk.site;
@@ -10248,14 +10330,19 @@ function openTodo(focus){
 }
 function renderTodoPanel(){
   if ($('#sheetTodo').hidden) return;
-  const sites = tdSites(), cur = tdDefaultSite();
-  const blocks = sites.map(s => ({s, tasks:(TD.lists[s.id]?.tasks || []).filter(tdOpen).sort(tdSort)})).filter(b => b.tasks.length || b.s.id === cur)
-    .sort((a, b) => (b.s.id === cur) - (a.s.id === cur) || (b.tasks.some(tdUrgent) - a.tasks.some(tdUrgent)) || siteLabel(a.s).localeCompare(siteLabel(b.s), 'fr', {numeric:true}));
-  const info = tdSyncState(), n = blocks.reduce((k, b) => k + b.tasks.length, 0);
-  $('#tdPanelSub').textContent = n ? n + ' tâche' + (n > 1 ? 's' : '') + ' à faire' : 'Rien à faire';
-  $('#tdPanelList').innerHTML = (info ? `<p class="dk-info">${esc(info)}</p>` : '') + (blocks.length ? blocks.map(b => `<section class="td-sec" data-tdsec="${esc(b.s.id)}">
-      <div class="td-sh">${logoHTML(b.s)}<b>${esc(siteLabel(b.s))}</b><span class="n">${b.tasks.length}</span>${isTabletScreen() ? `<button class="btn ghost" data-tdgo="${esc(b.s.id)}">Historique</button>` : ''}</div>
-      ${b.tasks.length ? tdListHTML(b.tasks, b.s.id) : '<p class="hint">Aucune tâche pour ce chantier.</p>'}</section>`).join('')
+  const cur = tdDefaultSite(), dvCur = tdIsDevis(cur);
+  const blocks = tdTargets().filter(g => g.k !== 'devis').map(g => ({g, tasks:(TD.lists[g.sid]?.tasks || []).filter(tdOpen).sort(tdSort)})).filter(b => b.tasks.length || b.g.sid === cur)
+    .sort((a, b) => (b.g.sid === cur) - (a.g.sid === cur) || (a.g.k === 'list') - (b.g.k === 'list') || (b.tasks.some(tdUrgent) - a.tasks.some(tdUrgent)) || a.g.label.localeCompare(b.g.label, 'fr', {numeric:true}));
+  const dv = tdDevisHTML(), dvTasks = devList().reduce((k, d) => k + (TD.lists[devSid(d)]?.tasks || []).filter(tdOpen).length, 0);
+  const info = tdSyncState(), n = blocks.reduce((k, b) => k + b.tasks.length, 0) + dvTasks + dv.n;
+  const sec = b => `<section class="td-sec" data-tdsec="${esc(b.g.sid)}">
+      <div class="td-sh">${tdLogo(b.g)}<b>${esc(b.g.label)}</b><span class="n">${b.tasks.length}</span>${isTabletScreen() ? `<button class="btn ghost" data-tdgo="${esc(b.g.sid)}">Historique</button>` : ''}</div>
+      ${b.tasks.length ? tdListHTML(b.tasks, b.g.sid) : `<p class="hint">Aucune tâche ${b.g.k === 'site' ? 'pour ce chantier' : 'dans cette liste'}.</p>`}</section>`;
+  const dvSec = dv.empty && !dvCur ? '' : `<section class="td-sec" data-tdsec="${TD_DV}">
+      <div class="td-sh"><span class="slogo none" aria-hidden="true">D</span><b>Devis à faire</b><span class="n">${dv.n}</span>${isTabletScreen() ? `<button class="btn ghost" data-tdgo="${TD_DV}">Historique</button>` : ''}</div>
+      ${dv.empty ? '<p class="hint">Aucun devis à faire.</p>' : dv.html}</section>`;
+  $('#tdPanelSub').textContent = n ? n + ' à faire' + (dv.n ? ' · dont ' + dv.n + ' devis' : '') : 'Rien à faire';
+  $('#tdPanelList').innerHTML = (info ? `<p class="dk-info">${esc(info)}</p>` : '') + (blocks.length || dvSec ? (dvCur ? dvSec : '') + blocks.map(sec).join('') + (dvCur ? '' : dvSec)
     : '<p class="dk-empty">Aucun chantier.</p>');
   tdFillInk($('#tdPanelList'));
   if (TD.focus) { const r = $('#tdPanelList').querySelector(`[data-tdid="${CSS.escape(TD.focus)}"]`); TD.focus = null; if (r) { r.classList.add('flash'); r.scrollIntoView({block:'center'}); } }
@@ -10263,26 +10350,77 @@ function renderTodoPanel(){
 
 /* ---------- rubrique « À faire » du bureau (tablette) ---------- */
 function loadTodo(){ renderTodo(); tdSync(); }
+function tdDeskPicks(sel){
+  const n = sid => (TD.lists[sid]?.tasks || []).filter(tdOpen).length, dv = devTodo().length;
+  const b = (id, logo, name, sub) => `<button class="dk-site ${sel === id ? 'on' : ''}" data-dsite="${esc(id)}">${logo}<span class="t"><b>${esc(name)}</b><small>${esc(sub)}</small></span></button>`;
+  return `<p class="dk-label td-hc">Hors chantier</p>` + b(TD_DV, '<span class="slogo none" aria-hidden="true">D</span>', 'Devis', dv ? dv + ' devis à faire' : 'Aucun devis à faire')
+    + tdLists().map(l => { const k = n('td:' + l.id); return b('td:' + l.id, logoHTML({name:l.name}), l.name, k ? k + ' à faire' : 'Rien à faire'); }).join('')
+    + `<button class="dk-site td-addl" data-tdnewlist><span class="slogo none" aria-hidden="true">+</span><span class="t"><b>Nouvelle liste</b><small>Entreprise, administratif, perso…</small></span></button>`;
+}
 function renderTodo(){
-  const s = desk.site === '__none' ? null : siteById(desk.site);
+  if (desk.tdSel && desk.tdSel !== TD_DV && !tdTarget(desk.tdSel)) desk.tdSel = null;
+  const dv = desk.tdSel === TD_DV, g = dv ? null : tdTarget(desk.tdSel || desk.site);
   renderDeskSites();
-  $('#dkHead').innerHTML = `${s ? logoHTML(s) : ''}<div class="t"><small>${s ? esc(s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(s ? s.name : 'À classer')}</h2></div>`;
+  $('#dkHead').innerHTML = dv ? `<span class="slogo none" aria-hidden="true">D</span><div class="t"><small>Hors chantier</small><h2>Devis à faire</h2></div>`
+    : g && g.k === 'list' ? `${logoHTML({name:g.label})}<div class="t"><small>Liste hors chantier</small><h2>${esc(g.label)}</h2></div><button class="btn" data-tdlistedit="${esc(g.l.id)}">Renommer / supprimer</button>`
+    : `${g ? logoHTML(g.s) : ''}<div class="t"><small>${g ? esc(g.s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(g ? g.s.name : 'À classer')}</h2></div>`;
   const info = tdSyncState(); $('#dkInfo').hidden = !info; $('#dkInfo').textContent = info;
-  if (!s) { $('#dkList').innerHTML = '<p class="dk-empty">Choisis un chantier pour voir ses tâches.</p>'; renderDeskModes(); return; }
-  // le bloc d'écriture n'est recréé qu'au changement de chantier (une tâche en cours d'écriture n'est jamais effacée)
-  const pad = $('#tdDeskPad'), st = pad && tdPadState(pad);
-  if (!pad || !st || st.sid !== s.id || !$('#tdDeskList')) {
-    $('#dkList').innerHTML = tdNewHTML('tdDeskPad') + '<div id="tdDeskList"></div>';
-    tdPadInit($('#tdDeskPad'), {sid:s.id});
-  }
-  renderTodoList(s);
+  if (!g && !dv) { $('#dkList').innerHTML = '<p class="dk-empty">Choisis un chantier ou une liste pour voir ses tâches.</p>'; renderDeskModes(); return; }
+  // le bloc d'écriture n'est recréé qu'au changement de chantier / liste (une tâche en cours d'écriture n'est jamais effacée)
+  const key = dv ? TD_DV : g.sid, pad = $('#tdDeskPad'), st = pad && tdPadState(pad);
+  if (!pad || !st || st.key !== key || !$('#tdDeskList')) {
+    $('#dkList').innerHTML = tdNewHTML('tdDeskPad', dv ? {sites:true, ph:'Tâche pour la fiche choisie (relancer le client, demander un prix…) · au stylo'} : {}) + '<div id="tdDeskList"></div>';
+    tdPadInit($('#tdDeskPad'), dv ? {key, pick:'devis', sid:devTodo()[0] ? devSid(devTodo()[0]) : null} : {key, sid:g.sid});
+  } else if (dv) tdPadOpts(pad);
+  dv ? renderTodoDevis() : renderTodoList(g);
   renderDeskModes();
 }
-function renderTodoList(s){
-  const all = (TD.lists[s.id]?.tasks || []).filter(tdLive), open = all.filter(t => !t.done).sort(tdSort), done = all.filter(t => t.done).sort((a, b) => b.done - a.done);
-  $('#tdDeskList').innerHTML = `<section class="dk-sec"><div class="dk-sep"><h3>À faire</h3><span class="n">${open.length}</span></div>${open.length ? tdListHTML(open, s.id) : '<p class="dk-empty">Rien à faire sur ce chantier.</p>'}</section>
-    ${done.length ? `<section class="dk-sec"><div class="dk-sep"><h3>Historique</h3><span class="n">${done.length}</span><span class="p">Tâches faites</span><button class="btn" id="tdShowDone">${TD.showDone ? 'Masquer' : 'Afficher'}</button></div>${TD.showDone ? tdListHTML(done, s.id) : ''}</section>` : ''}`;
+function renderTodoList(g){
+  const all = (TD.lists[g.sid]?.tasks || []).filter(tdLive), open = all.filter(t => !t.done).sort(tdSort), done = all.filter(t => t.done).sort((a, b) => b.done - a.done);
+  $('#tdDeskList').innerHTML = `<section class="dk-sec"><div class="dk-sep"><h3>À faire</h3><span class="n">${open.length}</span></div>${open.length ? tdListHTML(open, g.sid) : `<p class="dk-empty">Rien à faire ${g.k === 'site' ? 'sur ce chantier' : 'dans cette liste'}.</p>`}</section>
+    ${done.length ? `<section class="dk-sec"><div class="dk-sep"><h3>Historique</h3><span class="n">${done.length}</span><span class="p">Tâches faites</span><button class="btn" id="tdShowDone">${TD.showDone ? 'Masquer' : 'Afficher'}</button></div>${TD.showDone ? tdListHTML(done, g.sid) : ''}</section>` : ''}`;
   tdFillInk($('#tdDeskList'));
+}
+function renderTodoDevis(){
+  const dv = tdDevisHTML(), sent = devList().filter(devSent).sort((a, b) => b.sent - a.sent);
+  const done = []; for (const d of devList()) for (const t of (TD.lists[devSid(d)]?.tasks || [])) if (tdLive(t) && t.done) done.push({t, sid:devSid(d)});
+  done.sort((a, b) => b.t.done - a.t.done);
+  const nh = sent.length + done.length;
+  $('#tdDeskList').innerHTML = `<section class="dk-sec"><div class="dk-sep"><h3>À faire</h3><span class="n">${dv.n}</span><span class="p">Coche quand le devis est envoyé</span></div>${dv.empty ? '<p class="dk-empty">Aucun devis à faire. Chaque nouvelle fiche devis arrive ici jusqu’à ce que le devis soit envoyé.</p>' : dv.html}</section>
+    ${nh ? `<section class="dk-sec"><div class="dk-sep"><h3>Historique</h3><span class="n">${nh}</span><span class="p">Devis envoyés et tâches faites</span><button class="btn" id="tdShowDone">${TD.showDone ? 'Masquer' : 'Afficher'}</button></div>${TD.showDone ? `<div class="td-list">${sent.map(tdDevRowHTML).join('')}${done.map(o => tdRowHTML(o.t, o.sid)).join('')}</div>` : ''}</section>` : ''}`;
+  tdFillInk($('#tdDeskList'));
+}
+/* ---------- listes hors chantier : créer, renommer, supprimer ---------- */
+const TDLS = {id:null};
+function tdListDlg(id){
+  const l = id ? tdLists().find(x => x.id === id) : null; TDLS.id = l ? l.id : null;
+  $('#tdlTitle').textContent = l ? 'Liste « ' + l.name + ' »' : 'Nouvelle liste';
+  $('#tdlName').value = l ? l.name : ''; $('#tdlOk').textContent = l ? 'Renommer' : 'Créer'; $('#tdlDel').hidden = !l;
+  openSheet('#sheetTdList'); setTimeout(() => $('#tdlName').focus(), 80);
+}
+function tdListSave(){
+  const name = $('#tdlName').value.replace(/\s+/g, ' ').trim().slice(0, 60);
+  if (!name) { note('Donne un nom à la liste', 2200); return; }
+  if (tdLists().some(x => x.id !== TDLS.id && x.name.toLowerCase() === name.toLowerCase())) { note('Cette liste existe déjà', 2200); return; }
+  let l = TDLS.id ? tdLists().find(x => x.id === TDLS.id) : null;
+  if (l) l.name = name; else { l = {id:newUid(), name, c:Date.now()}; S.tdLists.push(l); }
+  save(); closeSheet($('#sheetTdList'));
+  const sid = 'td:' + l.id;
+  if (!$('#desk').hidden && desk.mode === 'todo') desk.tdSel = sid;
+  const qp = $('#tdQuickPad'), st = qp && tdPadState(qp); if (st && !TDLS.id) st.sid = sid;
+  if (st) tdPadOpts(qp);
+  if (TD.lists[sid]?.tasks.length) tdChanged(sid); else tdRenderAll();
+  note(TDLS.id ? 'Liste renommée' : 'Liste « ' + name + ' » créée', 2000);
+}
+function tdListDelete(){
+  const l = tdLists().find(x => x.id === TDLS.id); if (!l) return;
+  const n = (TD.lists['td:' + l.id]?.tasks || []).filter(tdOpen).length;
+  closeSheet($('#sheetTdList'));
+  confirmBox('Supprimer la liste ?', `« ${esc(l.name)} »${n ? ` et ${n > 1 ? 'ses ' + n + ' tâches' : 'sa tâche'} à faire` : ''} disparaît aussi des autres appareils.<small>Le fichier reste dans le Drive (dossier « ${esc(TD_HC)} »).</small>`, 'Supprimer', () => {
+    l.del = Date.now(); save();
+    if (desk.tdSel === 'td:' + l.id) desk.tdSel = null;
+    tdBadges(); tdRenderAll(); if (!$('#desk').hidden && desk.mode === 'todo') renderDeskSites();
+  });
 }
 function tdRenderAll(){
   if (!$('#desk').hidden && desk.mode === 'todo') renderTodo();
@@ -10297,10 +10435,10 @@ function tdAskNotif(){
 }
 async function tdCheckDue(){
   const now = Date.now(), fresh = [];
-  for (const s of tdSites()) for (const t of (TD.lists[s.id]?.tasks || [])) {
+  for (const g of tdTargets()) for (const t of (TD.lists[g.sid]?.tasks || [])) {
     if (!tdOpen(t) || !t.due || t.due > now || TD.notif[t.id] === t.due) continue;
     TD.notif[t.id] = t.due;
-    if (now - t.due < 12 * 3600e3) fresh.push({s, t});
+    if (now - t.due < 12 * 3600e3) fresh.push({s:g, t});
   }
   for (const id of Object.keys(TD.notif)) { const f = tdFind(id); if (!f || !tdOpen(f.t)) delete TD.notif[id]; }
   try { localStorage.setItem('baugest.todo.notif', JSON.stringify(TD.notif)); } catch (e) {}
@@ -10309,17 +10447,17 @@ async function tdCheckDue(){
   const perm = 'Notification' in window && Notification.permission === 'granted';
   const reg = perm && 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration().catch(() => null) : null;
   for (const {s, t} of fresh.slice(0, 5)) {
-    const title = 'À faire · ' + siteLabel(s), body = tdText(t) || 'Tâche écrite au stylo · touche pour la voir';
-    if (perm) { const opt = {body, tag:'todo-' + t.id, icon:'icon-192.png', badge:'icon-192.png', data:{todo:t.id, site:s.id}}; try { if (reg) reg.showNotification(title, opt); else new Notification(title, opt); } catch (e) {} }
+    const title = 'À faire · ' + s.label, body = tdText(t) || 'Tâche écrite au stylo · touche pour la voir';
+    if (perm) { const opt = {body, tag:'todo-' + t.id, icon:'icon-192.png', badge:'icon-192.png', data:{todo:t.id, site:s.sid}}; try { if (reg) reg.showNotification(title, opt); else new Notification(title, opt); } catch (e) {} }
   }
-  if (!document.hidden) tdBanner(fresh.length === 1 ? 'Rappel · ' + siteLabel(fresh[0].s) + (tdText(fresh[0].t) ? ' : ' + tdText(fresh[0].t) : '') : fresh.length + ' rappels de tâches', fresh[0].t.id);
+  if (!document.hidden) tdBanner(fresh.length === 1 ? 'Rappel · ' + fresh[0].s.label + (tdText(fresh[0].t) ? ' : ' + tdText(fresh[0].t) : '') : fresh.length + ' rappels de tâches', fresh[0].t.id);
 }
 function tdBanner(msg, id){
   const b = $('#tdBanner'); $('#tdBannerT').textContent = msg; b.hidden = false; b.dataset.id = id || '';
   clearTimeout(TD.banT); TD.banT = setTimeout(() => b.hidden = true, 12000);
 }
 function tdStartup(){
-  const late = []; for (const s of tdSites()) for (const t of (TD.lists[s.id]?.tasks || [])) if (tdOpen(t) && t.due && t.due < Date.now()) late.push(t);
+  const late = []; for (const g of tdTargets()) for (const t of (TD.lists[g.sid]?.tasks || [])) if (tdOpen(t) && t.due && t.due < Date.now()) late.push(t);
   tdCheckDue();
   if (late.length) tdBanner(late.length === 1 ? '1 tâche en retard' : late.length + ' tâches en retard', late.length === 1 ? late[0].id : '');
 }
@@ -10473,7 +10611,7 @@ function renderHome(){
   const info = tdSyncState(); $('#dkInfo').hidden = !info; $('#dkInfo').textContent = info;
 
   /* aujourd'hui */
-  const sites = tdSites(), all = sites.map(s => ({s, tasks:(TD.lists[s.id]?.tasks || []).filter(tdOpen)}));
+  const all = tdTargets().map(g => ({g, s:g.s || null, tasks:(TD.lists[g.sid]?.tasks || []).filter(tdOpen)}));
   const late = all.reduce((n, b) => n + b.tasks.filter(t => t.due && t.due < Date.now()).length, 0), today = all.reduce((n, b) => n + b.tasks.filter(tdUrgent).length, 0) - late;
   const seen = pdSeen(), pvs = HM.pvs.filter(f => !seen[f.id]);
   const cards = [];
@@ -10505,41 +10643,48 @@ function renderHome(){
     for (const o of hmVisits(A, B)) it.push([o.at, `<button class="hm-it dv" data-hmdv="${esc(o.d.id)}"><i></i><span><small>${hmHM(o.at)}</small> Visite ${esc(devName(o.d))}</span></button>`]);
     const iso = hmIso(A);
     for (const m of HM.ms.filter(m => m.iso === iso)) { const s = siteById(m.siteId); it.push([A + 1, `<span class="hm-it ms"><i></i><span>${esc(m.name)}${s ? ' · ' + esc(s.number || s.name) : ''}</span></span>`]); }
-    const due = []; for (const b2 of all) for (const t of b2.tasks) if (t.due && t.due >= A && t.due < B) due.push({s:b2.s, t});
+    const due = []; for (const b2 of all) for (const t of b2.tasks) if (t.due && t.due >= A && t.due < B) due.push({g:b2.g, t});
     due.sort((x, y) => x.t.due - y.t.due);
-    for (const o of due.slice(0, 3)) it.push([o.t.due, `<button class="hm-it td" data-hmgo="${esc(o.t.id)}" data-hmsid="${esc(o.s.id)}"><i></i><span>${esc(hmTaskLabel(o.t))} · ${esc(o.s.number || o.s.name)}</span></button>`]);
+    for (const o of due.slice(0, 3)) it.push([o.t.due, `<button class="hm-it td" data-hmgo="${esc(o.t.id)}" data-hmsid="${esc(o.g.sid)}"><i></i><span>${esc(hmTaskLabel(o.t))} · ${esc(o.g.short)}</span></button>`]);
     if (due.length > 3) it.push([B, `<span class="hm-it"><span class="e">+ ${due.length - 3} tâche${due.length > 4 ? 's' : ''}</span></span>`]);
     const wd = a.toLocaleDateString('fr-CH', {weekday:'short'}).replace('.', '');
     days.push(`<div class="hm-wd${i === 0 ? ' now' : ''}"><b>${esc(wd)} ${a.getDate()}</b>${it.length ? it.sort((x, y) => x[0] - y[0]).map(x => x[1]).join('') : '<span class="e">Rien de prévu</span>'}</div>`);
   }
 
-  /* À faire par chantier : une colonne par chantier avec au moins 1 tâche ouverte ; chantier où je suis d'abord */
-  const cols = all.filter(b => b.tasks.length).map(b => ({...b, tasks:b.tasks.sort(tdSort)}))
-    .sort((a, b) => ((b.s.id === c?.id) - (a.s.id === c?.id)) || (b.tasks.some(tdUrgent) - a.tasks.some(tdUrgent)) || siteLabel(a.s).localeCompare(siteLabel(b.s), 'fr', {numeric:true}));
+  /* À faire par chantier : une colonne par chantier / liste hors chantier avec au moins 1 tâche ouverte ; chantier où je suis d'abord ; devis à faire en dernier */
+  const cols = all.filter(b => b.g.k !== 'devis' && b.tasks.length).map(b => ({...b, tasks:b.tasks.sort(tdSort)}))
+    .sort((a, b) => ((b.g.sid === c?.id) - (a.g.sid === c?.id)) || (a.g.k === 'list') - (b.g.k === 'list') || (b.tasks.some(tdUrgent) - a.tasks.some(tdUrgent)) || a.g.label.localeCompare(b.g.label, 'fr', {numeric:true}));
   const colHTML = b => {
-    const nl = b.tasks.filter(t => t.due && t.due < Date.now()).length, se = tdSeance(b.s.id), seD = se && hmDay0(new Date(se)) === t0;
+    const nl = b.tasks.filter(t => t.due && t.due < Date.now()).length, se = b.s ? tdSeance(b.s.id) : null, seD = se && hmDay0(new Date(se)) === t0;
     const seL = se ? 'Séance ' + (seD ? 'aujourd’hui ' + hmHM(se) : tdDueLabel(se).replace(/^Demain/, 'demain').replace(/^(\w+) (\d\d)\.(\d\d) /, '$1 $2.$3 · ')) : '';
-    return `<section class="hm-col" data-hmcol="${esc(b.s.id)}"><div class="hm-ch">${logoHTML(b.s)}<b>${esc(siteLabel(b.s))}</b><span class="meta">
-      ${c && c.id === b.s.id ? '<span class="hm-pill here">Sur place</span>' : ''}${seL ? `<span class="hm-pill${seD ? ' blue' : ''}">${esc(seL)}</span>` : ''}
+    return `<section class="hm-col" data-hmcol="${esc(b.g.sid)}"><div class="hm-ch">${tdLogo(b.g)}<b>${esc(b.g.label)}</b><span class="meta">
+      ${b.s && c && c.id === b.s.id ? '<span class="hm-pill here">Sur place</span>' : ''}${b.g.k === 'list' ? '<span class="hm-pill">Hors chantier</span>' : ''}${seL ? `<span class="hm-pill${seD ? ' blue' : ''}">${esc(seL)}</span>` : ''}
       ${nl ? `<span class="hm-pill red">${nl} en retard</span>` : ''}<span class="hm-pill">${b.tasks.length} à faire</span></span></div>
-      ${tdListHTML(b.tasks, b.s.id)}<button class="btn hm-add" data-hmtd="${esc(b.s.id)}">+ Tâche</button></section>`;
+      ${tdListHTML(b.tasks, b.g.sid)}<button class="btn hm-add" data-hmtd="${esc(b.g.sid)}">+ Tâche</button></section>`;
   };
+  const dv = tdDevisHTML();
+  if (!dv.empty) cols.push(null);
+  const dvCol = () => `<section class="hm-col" data-hmcol="${TD_DV}"><div class="hm-ch"><span class="slogo none" aria-hidden="true">D</span><b>Devis à faire</b><span class="meta"><span class="hm-pill">${dv.n} devis</span></span></div>
+      ${dv.html}<button class="btn hm-add" data-hmtd="${TD_DV}">+ Tâche devis</button></section>`;
   $('#dkList').innerHTML = `<section><h3 class="hm-lbl">Aujourd’hui</h3><div class="hm-today">${cards.join('')}</div></section>
     <section><h3 class="hm-lbl">Cette semaine</h3><div class="hm-week">${days.join('')}</div></section>
-    <section><h3 class="hm-lbl">À faire par chantier</h3>${cols.length ? `<div class="hm-cols">${cols.map(colHTML).join('')}</div>` : '<p class="dk-empty">Rien à faire sur tes chantiers. Touche « À faire » dans la barre de gauche pour écrire une tâche.</p>'}</section>`;
+    <section><h3 class="hm-lbl">À faire</h3>${cols.length ? `<div class="hm-cols">${cols.map(b => b ? colHTML(b) : dvCol()).join('')}</div>` : '<p class="dk-empty">Rien à faire sur tes chantiers. Touche « À faire » dans la barre de gauche pour écrire une tâche.</p>'}</section>`;
   tdFillInk($('#dkList'));
   renderDeskModes();
   clearTimeout(HM.timer); HM.timer = setTimeout(renderHome, 60000 - Date.now() % 60000 + 50); // heure et retards à jour chaque minute
 }
 function hmGoTodo(sid, id){
-  if (!siteById(sid)) return;
-  desk.site = sid; goSection('todo');
+  const g = sid === TD_DV ? {k:'devis'} : tdTarget(sid); if (!g) return;
+  if (g.k === 'site') { desk.site = sid; desk.tdSel = null; } else desk.tdSel = g.k === 'list' ? sid : TD_DV;
+  goSection('todo');
+  if (desk.mode === 'todo' && !$('#desk').hidden) renderTodo();
   if (!id) return;
   const r = $('#tdDeskList') && $('#tdDeskList').querySelector(`[data-tdid="${CSS.escape(id)}"]`);
   if (r) { r.classList.add('flash'); r.scrollIntoView({block:'center'}); }
 }
 function hmClick(e){
   let b;
+  if (tdDevClick(e)) return;
   if ((b = e.target.closest('[data-tdchk]'))) { tdToggle(b.dataset.tdchk); return; }
   if ((b = e.target.closest('[data-tdlnk]'))) { const f = tdFind(b.dataset.tdlnk); if (f) tdOpenLink(f.t, f.sid); return; }
   if ((b = e.target.closest('[data-tdedit]'))) { const r = b.closest('[data-tdsid]'); hmGoTodo(r && r.dataset.tdsid, b.dataset.tdedit); return; }
@@ -10606,14 +10751,19 @@ function bindTodo(){
   const lists = e => {
     let b;
     if (tdPadClick(e)) return;
+    if (tdDevClick(e)) return;
     if ((b = e.target.closest('[data-tdchk]'))) { tdToggle(b.dataset.tdchk); return; }
     if ((b = e.target.closest('[data-tdlnk]'))) { const f = tdFind(b.dataset.tdlnk); if (f) tdOpenLink(f.t, f.sid); return; }
     if ((b = e.target.closest('[data-tdhand]'))) { const id = b.dataset.tdhand; TD.open.has(id) ? TD.open.delete(id) : TD.open.add(id); tdRenderAll(); return; }
     if ((b = e.target.closest('[data-tdedit]'))) { tdEdit(b.dataset.tdedit); return; }
-    if ((b = e.target.closest('[data-tdgo]'))) { closeSheet($('#sheetTodo')); desk.site = b.dataset.tdgo; goSection('todo'); TD.showDone = true; if (desk.mode === 'todo') renderTodo(); return; }
+    if ((b = e.target.closest('[data-tdgo]'))) { closeSheet($('#sheetTodo')); TD.showDone = true; hmGoTodo(b.dataset.tdgo); return; }
   };
   $('#sheetTodo').addEventListener('click', lists);
   $('#sheetTodoEd').addEventListener('click', lists);
+  $('#dkSites').addEventListener('click', e => { if (e.target.closest('[data-tdnewlist]')) { setSitesOpen(false); tdListDlg(); } });
+  $('#tdlOk').addEventListener('click', tdListSave);
+  $('#tdlDel').addEventListener('click', tdListDelete);
+  $('#tdlName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); tdListSave(); } });
   $('#dkMain').addEventListener('click', e => {
     if (desk.mode === 'home') { if (!tdPadClick(e)) hmClick(e); return; }
     if (desk.mode !== 'todo') return;

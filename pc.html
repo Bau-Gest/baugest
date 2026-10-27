@@ -460,6 +460,9 @@ body.bp-split #app{left:var(--bp-w,55%)}
 .tdp-row b{white-space:pre-line}
 .tdp-row small .late{color:var(--bad);font-weight:700}
 .tdp-row small .today{color:var(--warn);font-weight:700}
+.tdp-row.tdp-dv{border-left-color:var(--signal)}
+.tdp-row.tdp-dv a{color:inherit}
+.tdp-dvsub{display:grid;gap:6px;margin-left:26px}
 /* ---------- Accueil PC personnalisable + Courrier (mails et fichiers à classer) ---------- */
 #home{position:absolute;inset:0;grid-column:1/-1;grid-row:2;z-index:25;background:var(--bg);overflow:auto;min-height:0}
 .hm-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:10px;padding:12px 20px 10px;background:var(--bg);border-bottom:1px solid var(--line)}
@@ -1062,7 +1065,7 @@ $('#jobsClose').addEventListener('click', () => { $('#jobs').hidden = true; for 
 
 /* ---------- chantiers et mises en page (fichier de réglages partagé avec la tablette) ---------- */
 const SYNC_NAME = 'Réglages PhotoChantier (ne pas supprimer).json';
-let S = {sites:[], docLay:null, docTitles:{}, devis:[], ddel:{}, companies:[], syncId:''};
+let S = {sites:[], docLay:null, docTitles:{}, devis:[], ddel:{}, companies:[], tdLists:[], syncId:''};
 async function loadSettings(){
   try {
     const r = await api(DRV + '?' + new URLSearchParams({q:`'${qEsc(P.rootId)}' in parents and name='${qEsc(SYNC_NAME)}' and trashed=false`, orderBy:'modifiedTime desc', pageSize:'1', fields:'files(id)'}));
@@ -3084,8 +3087,12 @@ async function tdLoad(){
   }
   TDP.files = files; tdBadge();
 }
+/* listes hors chantier (sid 'td:<id>', S.tdLists des réglages) et fiches devis (sid 'devis:<id>') : écrites sur la tablette, même format */
+const tdLists = () => (S.tdLists || []).filter(l => !l.del);
+const tdKnown = sid => S.sites.some(s => s.id === sid) || tdLists().some(l => 'td:' + l.id === sid) || (S.devis || []).some(d => 'devis:' + d.id === sid);
+const devTodo = () => (S.devis || []).filter(d => !d.sent).sort((a, b) => (a.created || 0) - (b.created || 0));
 function tdBadge(){
-  let n = 0; for (const sid in TDP.lists) if (S.sites.some(s => s.id === sid)) n += TDP.lists[sid].filter(tdUrgent).length;
+  let n = 0; for (const sid in TDP.lists) if (tdKnown(sid)) n += TDP.lists[sid].filter(tdUrgent).length;
   const b = $('#tdBadge'); b.textContent = String(n); b.hidden = !n;
 }
 function tdInk(ink){
@@ -3110,11 +3117,19 @@ function tdRow(t, sid){
 }
 function tdBody(){
   const sites = S.sites.filter(s => !s.example).sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}));
-  const blocks = sites.map(s => {
-    const all = (TDP.lists[s.id] || []).filter(t => !t.del), open = all.filter(t => !t.done).sort(tdSort), done = all.filter(t => t.done).sort((a, b) => b.done - a.done);
+  const sec = (sid, label) => {
+    const all = (TDP.lists[sid] || []).filter(t => !t.del), open = all.filter(t => !t.done).sort(tdSort), done = all.filter(t => t.done).sort((a, b) => b.done - a.done);
     if (!open.length && !(TDP.done && done.length)) return '';
-    return `<section class="tdp-sec"><h4>${esc(siteLabel(s))} <span>${open.length}</span></h4>${open.map(t => tdRow(t, s.id)).join('')}${TDP.done && done.length ? '<p class="tdp-h">Historique</p>' + done.map(t => tdRow(t, s.id)).join('') : ''}</section>`;
-  }).join('');
+    return `<section class="tdp-sec"><h4>${esc(label)} <span>${open.length}</span></h4>${open.map(t => tdRow(t, sid)).join('')}${TDP.done && done.length ? '<p class="tdp-h">Historique</p>' + done.map(t => tdRow(t, sid)).join('') : ''}</section>`;
+  };
+  const dvRow = d => `<div class="tdp-row tdp-dv${d.sent ? ' done' : ''}"><label title="Cocher quand le devis est envoyé"><input type="checkbox" data-dvsent="${esc(d.id)}"${d.sent ? ' checked' : ''}></label>
+    <div><b>${d.sent ? 'Devis envoyé' : 'Faire et envoyer le devis'} · <a href="#" data-dvo="${esc(d.id)}">${esc(devName(d) + (devCity(d) ? ' – ' + devCity(d) : ''))}</a></b><small>${esc([d.sent ? 'Envoyé le ' + dFmt(new Date(d.sent)) : d.visit ? 'Visite ' + dzFmtVisit(d.visit) : 'Visite à fixer', 'Fiche du ' + dFmt(new Date(d.created || Date.now()))].join(' · '))}</small></div></div>`;
+  const dvOne = d => { const sid = 'devis:' + d.id, all = (TDP.lists[sid] || []).filter(t => !t.del), open = all.filter(t => !t.done).sort(tdSort), done = TDP.done ? all.filter(t => t.done) : [];
+    return dvRow(d) + (open.length || done.length ? `<div class="tdp-dvsub">${open.map(t => tdRow(t, sid)).join('')}${done.map(t => tdRow(t, sid)).join('')}</div>` : ''); };
+  const dvMore = (S.devis || []).filter(d => d.sent && ((TDP.lists['devis:' + d.id] || []).some(tdOpen) || (TDP.done && Date.now() - d.sent < 90 * 864e5))).sort((a, b) => b.sent - a.sent);
+  const dvList = [...devTodo(), ...dvMore];
+  const blocks = sites.map(s => sec(s.id, siteLabel(s))).join('') + tdLists().map(l => sec('td:' + l.id, l.name + ' · hors chantier')).join('')
+    + (dvList.length ? `<section class="tdp-sec"><h4>Devis à faire <span>${devTodo().length}</span></h4>${dvList.map(dvOne).join('')}</section>` : '');
   return `<label class="tdp-opt"><input type="checkbox" id="tdpDone"${TDP.done ? ' checked' : ''}> Afficher l’historique (tâches faites)</label>${blocks || '<p class="muted">Rien à faire. Les tâches s’écrivent au stylo sur la tablette.</p>'}`;
 }
 async function tdToggle(sid, id){
@@ -3141,9 +3156,11 @@ async function openTodoPc(){
     draw();
     dlg.addEventListener('change', async e => {
       if (e.target.id === 'tdpDone') { TDP.done = e.target.checked; draw(); return; }
+      const dv = e.target.closest('[data-dvsent]'); if (dv) { const d = devById(dv.dataset.dvsent); if (d) { d.sent = d.sent ? null : Date.now(); devSave(d); if (!$('#devis').hidden) { renderDzList(); if (DV.cur === d.id) renderDzHead(d); } } draw(); return; }
       const c = e.target.closest('[data-tdc]'); if (c) { await tdToggle(c.dataset.tds, c.dataset.tdc); draw(); }
     });
     dlg.addEventListener('click', async e => {
+      const o = e.target.closest('[data-dvo]'); if (o) { e.preventDefault(); done(null); openDevis(o.dataset.dvo); return; }
       const a = e.target.closest('[data-tdf]'); if (!a) return;
       e.preventDefault(); done(null);
       try { const m = await meta(a.dataset.tdf); m._k = kindOf(m); openIn(0, m, [m]); } catch (x) { toast('Fichier introuvable : ' + x.message, 'err'); }
@@ -4156,6 +4173,7 @@ function applyRemote(R){
   if (Array.isArray(R.sites)) S.sites = R.sites;
   const fl = R.fields || {};
   S.docLay = fl.docLay || S.docLay; S.docTitles = fl.docTitles || S.docTitles || {}; S.companies = Array.isArray(fl.companies) ? fl.companies : (S.companies || []);
+  S.tdLists = Array.isArray(fl.tdLists) ? fl.tdLists : (S.tdLists || []);
   const m = mergeDevis(R); S.devis = m.out; S.ddel = m.ddel;
   for (const c of S.companies) if (c.logo) logoEl(c.logo);
 }
@@ -4272,7 +4290,7 @@ function renderDzList(){
   $('#dzCount').textContent = `Fiches · ${list.length}`;
   $('#dzList').innerHTML = list.length ? list.map(d => {
     const n = d.items ? d.items.filter(i => (i.d || '').trim()).length : 0;
-    const info = [d.visit ? 'Visite ' + dzFmtVisit(d.visit) : 'Visite à fixer', n ? n + ' poste' + (n > 1 ? 's' : '') : ''].filter(Boolean).join(' · ');
+    const info = [d.sent ? 'Envoyé le ' + dFmt(new Date(d.sent)) : 'Devis à faire', d.visit ? 'Visite ' + dzFmtVisit(d.visit) : 'Visite à fixer', n ? n + ' poste' + (n > 1 ? 's' : '') : ''].filter(Boolean).join(' · ');
     if (DV.selMode) { const on = DV.sel.has(d.id); return `<button class="dz-pick ${on ? 'cur' : ''}" data-dz="${esc(d.id)}"><span class="dz-chk">${on ? '✓' : ''}</span><span class="t"><b>${esc(devName(d))}</b><small>${esc(devCity(d) || 'Localité à préciser')}</small><small>${esc(info)}</small></span></button>`; }
     return `<button class="dz-pick ${d.id === DV.cur ? 'cur' : ''}" data-dz="${esc(d.id)}">${compLogoHTML(compById(d.comp))}<span class="t"><b>${esc(devName(d))}</b><small>${esc(devCity(d) || 'Localité à préciser')}</small><small>${esc(info)}</small></span></button>`;
   }).join('') : `<p class="dz-empty">${q ? 'Aucune fiche trouvée.' : 'Aucune fiche devis.'}</p>`;
@@ -4287,7 +4305,9 @@ function renderDzHead(d){
   const c = compById(d.comp);
   $('#dzHeadLogo').innerHTML = compLogoHTML(c);
   $('#dzName').textContent = devName(d);
-  $('#dzSub').textContent = `${c ? c.name : 'Sans entreprise'} · fiche du ${dFmt(new Date(d.created || Date.now()))}`;
+  $('#dzSub').textContent = `${c ? c.name : 'Sans entreprise'} · fiche du ${dFmt(new Date(d.created || Date.now()))} · ${d.sent ? 'devis envoyé le ' + dFmt(new Date(d.sent)) : 'devis à faire'}`;
+  const b = $('#dzSent');
+  if (b) { b.classList.toggle('primary', !d.sent); b.innerHTML = d.sent ? `✓ Envoyé le ${dFmt(new Date(d.sent))} · remettre à faire` : `${ICON_MAIL}Devis envoyé`; }
 }
 function renderDzGps(){
   const d = devById(DV.cur), el = $('#dzGps'); if (!d || !el) return;
@@ -4346,7 +4366,8 @@ function renderDzFiche(){
     <small>Drive › ${esc(DZ_ROOT)} › ${esc(d.folder)}<br><span id="dzSync"></span></small>
     <button class="btn danger" id="dzDel">${ICON_TRASH}Supprimer</button>
     <button class="btn" id="dzFolder">${IC.folder}Dossier Drive</button>
-    <button class="btn primary" id="dzMemo">${ICON_DOC}Créer le mémo PDF</button>
+    <button class="btn" id="dzMemo">${ICON_DOC}Créer le mémo PDF</button>
+    <button class="btn" id="dzSent"></button>
   </div>
   <div class="dz-memos" id="dzMemos" hidden></div>`;
   renderDzHead(d); renderDzActs(d); renderDzGps(); renderDzItems(); renderDzCal();
@@ -4560,6 +4581,7 @@ $('#dzMain').addEventListener('click', async e => {
     case 'dzMapBtn': openDzMap(); break;
     case 'dzGeo': dzGeocode(); break;
     case 'dzDel': dzDelete([d.id]); break;
+    case 'dzSent': d.sent = d.sent ? null : Date.now(); devSave(d); renderDzHead(d); renderDzList(); tdBadge(); toast(d.sent ? 'Devis envoyé · sort de la liste À faire' : 'Devis remis à faire', '', 2200); break;
     case 'dzMemo': dzMemo(); break;
     case 'dzFolder': try { const id = await dzPath(d); closeDevis(); navigate(id); } catch (err) { toast(err.message, 'err'); } break;
   }
@@ -5495,7 +5517,9 @@ function hmSeances(t0, t1){
   return out.sort((a, b) => a.at - b.at);
 }
 const hmVisits = (t0, t1) => (S.devis || []).map(d => ({d, at:new Date(d.visit || '').getTime()})).filter(o => o.d.visit && isFinite(o.at) && o.at >= t0 && o.at < t1).sort((a, b) => a.at - b.at);
-const hmOpenTasks = () => pqSites().map(s => ({s, tasks:(TDP.lists[s.id] || []).filter(tdOpen)}));
+const hmOpenTasks = () => [...pqSites().map(s => ({s, tasks:(TDP.lists[s.id] || []).filter(tdOpen)})),
+  ...tdLists().map(l => ({s:{id:'td:' + l.id, name:l.name, number:''}, tasks:(TDP.lists['td:' + l.id] || []).filter(tdOpen)})),
+  ...(S.devis || []).map(d => ({s:{id:'devis:' + d.id, name:'Devis ' + devName(d), number:''}, tasks:(TDP.lists['devis:' + d.id] || []).filter(tdOpen)}))];
 
 /* ---------- contenu des blocs ---------- */
 function hmToday(){
@@ -5503,6 +5527,8 @@ function hmToday(){
   const late = all.reduce((n, b) => n + b.tasks.filter(t => t.due && t.due < Date.now()).length, 0), today = all.reduce((n, b) => n + b.tasks.filter(tdUrgent).length, 0) - late;
   const c = [];
   c.push(`<button class="hm-ev ${late + today ? 'al' : 'ok'}" data-hm="todo"><span class="t">${late + today}</span><span><b>${late + today ? [late && late + ' en retard', today && today + ' pour aujourd’hui'].filter(Boolean).join(', ') : 'Rien en retard'}</b><small>Rappels À faire</small></span></button>`);
+  const ndv = devTodo().length;
+  if (ndv) c.push(`<button class="hm-ev dv" data-hm="todo"><span class="t">${ndv}</span><span><b>${ndv > 1 ? ndv + ' devis à faire' : '1 devis à faire'}</b><small>Pas encore envoyé${ndv > 1 ? 's' : ''} · plus ancien : ${esc(devName(devTodo()[0]))}</small></span></button>`);
   for (const o of hmSeances(t0, t1)) c.push(`<button class="hm-ev se" data-hmpv="${esc(o.s.id)}"><span class="t">${hmHM(o.at)}</span><span><b>Séance · ${esc(siteLabel(o.s))}</b><small>${esc(o.m.place || 'Lieu non indiqué')} · PV DT</small></span></button>`);
   for (const o of hmVisits(t0, t1)) c.push(`<button class="hm-ev dv" data-hmdv="${esc(o.d.id)}"><span class="t">${hmHM(o.at)}</span><span><b>Visite devis · ${esc(devName(o.d) + (devCity(o.d) ? ' – ' + devCity(o.d) : ''))}</b><small>${esc([o.d.addr?.street, o.d.client?.tel].filter(Boolean).join(' · ') || 'Ouvrir la fiche')}</small></span></button>`);
   const pv = HMD.pvs[0];
