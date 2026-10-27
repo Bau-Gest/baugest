@@ -550,7 +550,9 @@ const I = {
   link:ic('<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>'),
   del:ic('<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/>'), edit:ic('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
   undo:ic('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'), redo:ic('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
-  chk:ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3 3 7-7"/>'), pal:ic('<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.9 1.5-1.7 0-1.3-1-1.6-1-2.8 0-1 .8-1.5 1.8-1.5H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>'),
+  chk:ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3 3 7-7"/>'),
+  copy:ic('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>'),
+  paste:ic('<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11h6M9 15h4"/>'), pal:ic('<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.9 1.5-1.7 0-1.3-1-1.6-1-2.8 0-1 .8-1.5 1.8-1.5H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>'),
   base:ic('<path d="M4 20h16M6 16h12M8 12h8M10 8h4"/>'), lvl:ic('<path d="M3 20h18M6 16V9M10 16V5M14 16v-6M18 16v-3"/>'),
   exp:ic('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'), print:ic('<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/>'), today:ic('<path d="M12 2v20M5 7h14"/>'), cal:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
   imp:ic('<path d="M12 15V3M7 8l5-5 5 5M5 21h14"/>'), split:ic('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>'),
@@ -858,6 +860,41 @@ function redo(){ if (!U.redo.length) return; U.undo.push(JSON.stringify(U.plan))
 const T = id => U.plan.tasks.find(t => t.id === id);
 const kids = id => U.plan.tasks.filter(t => (t.parent || null) === (id || null));
 const depthOf = t => { let d = 0, p = t; while (p && p.parent && d < 20) { p = T(p.parent); d++; } return d; };
+/* presse-papiers des ressources (tâche ou lot → autre tâche / lot) : lignes + début de l’origine (n° de jour ouvré) ; les dates fixes gardent leur écart en jours ouvrés depuis le début */
+let RES_CLIP = null;
+function resClipSet(rows, start, from){
+  RES_CLIP = {rows:rows.map(a => ({...a})), start, from, names:Object.fromEntries(rows.map(a => [a.r, (U.plan.res.find(x => x.id === a.r) || {}).name]))};
+}
+function resClipRows(start){
+  if (!RES_CLIP) return {rows:[], miss:0};
+  const mv = d => { const v = dnOfIso(d); return v == null ? d : isoOfDn(U.cal.dnOf(start + U.cal.idx(v) - RES_CLIP.start)); };
+  let miss = 0;
+  const rows = RES_CLIP.rows.map(a => { const re = U.plan.res.find(x => x.id === a.r) || U.plan.res.find(x => x.name === RES_CLIP.names[a.r]); if (!re) { miss++; return null; }
+    const n = {...a, r:re.id}; if (n.d0) n.d0 = mv(n.d0); if (n.d1) n.d1 = mv(n.d1); return n; }).filter(Boolean);
+  return {rows, miss};
+}
+const resPasteAsk = n => dlg({title:'Coller les ressources', body:`<p>${n > 1 ? 'Certaines tâches ont' : 'Il y a'} déjà des ressources. Ajouter les ${RES_CLIP.rows.length} ligne(s) copiée(s) (de « ${esc(RES_CLIP.from)} ») ou remplacer les ressources existantes ?</p>`,
+  buttons:[{label:'Annuler', value:null}, {label:'Remplacer', value:'rep'}, {label:'Ajouter', value:'add', pri:true}]});
+const resMissTxt = m => m ? ` · ${m} ressource(s) absente(s) de ce planning, pas collée(s)` : '';
+/* barre du Gantt : copier les ressources de la tâche / du lot actif, coller sur la sélection */
+function resCopySel(){
+  const t = U.sel && T(U.sel); if (!t) return;
+  const rows = (isSum(t.id) ? t.lres || [] : t.asg).filter(a => a.r && +a.q > 0);
+  if (!rows.length) { toast('Aucune ressource à copier dans « ' + t.name + ' »'); return; }
+  resClipSet(rows, U.sch.R.get(t.id).es, t.name); toast(`${rows.length} ligne(s) de ressources copiée(s) : sélectionne une ou plusieurs tâches puis Coller`); render();
+}
+async function resPasteSel(){
+  if (!RES_CLIP) return;
+  const ts = selIds().map(T).filter(t => t && (isSum(t.id) || !t.ms));
+  if (!ts.length) { toast('Pas de tâche ni de lot sélectionné (les jalons n’ont pas de ressources)'); return; }
+  const cur = t => isSum(t.id) ? t.lres || [] : t.asg, full = ts.filter(t => cur(t).length).length;
+  const mode = full ? await resPasteAsk(full) : 'add'; if (!mode) return;
+  const before = JSON.stringify(U.plan); let miss = 0;
+  for (const t of ts) { const c = resClipRows(U.sch.R.get(t.id).es); miss = Math.max(miss, c.miss); const l = (mode === 'rep' ? [] : cur(t)).concat(c.rows);
+    if (isSum(t.id)) { if (l.length) t.lres = l; else delete t.lres; } else t.asg = l; }
+  U.undo.push(before); U.redo = []; commit();
+  toast(`Ressources collées sur ${ts.length} ${ts.length > 1 ? 'tâches / lots' : ts[0].name}${resMissTxt(miss)}`);
+}
 const isSum = id => { const x = T(id); return !!(x && x.lot) || U.plan.tasks.some(t => t.parent === id); };
 const descendants = id => { const out = new Set(), st = [id]; while (st.length) { const x = st.pop(); for (const t of U.plan.tasks) if (t.parent === x && !out.has(t.id)) { out.add(t.id); st.push(t.id); } } return out; };
 const wbsOf = id => { const o = U.sch.ol.find(x => x.t.id === id); return o ? o.wbs : '?'; };
@@ -1279,6 +1316,8 @@ function renderGantt(){
     <span class="bp-sep"></span>
     <button class="bp-ib ${U.selMode ? 'on' : ''}" data-g="selm" title="Sélection multiple : cases à cocher (PC : Ctrl+clic, Maj+clic, Ctrl+A)">${I.chk}</button>
     <button class="bp-btn" data-g="style" title="Couleur, texte et style des barres sélectionnées" ${sel || nSel ? '' : 'disabled'}>${I.pal}<span>Style</span></button>
+    <button class="bp-ib" data-g="rcopy" title="Copier les ressources de la tâche / du lot" ${sel && !sel.ms ? '' : 'disabled'}>${I.copy}</button>
+    <button class="bp-ib" data-g="rpaste" title="${RES_CLIP ? `Coller les ressources de « ${esc(RES_CLIP.from)} » sur la sélection` : 'Coller les ressources (copier d’abord une tâche ou un lot)'}" ${RES_CLIP && (sel || nSel) ? '' : 'disabled'}>${I.paste}</button>
     ${nSel > 1 ? `<span class="bp-msn">${nSel} tâches</span><button class="bp-ib" data-g="unsel" title="Tout désélectionner (Échap)">${I.x}</button>` : ''}
     <span class="bp-sep"></span>
     <span class="bp-seg">${[['day', 'Jour'], ['week', 'Semaine'], ['month', 'Mois']].map(([k, l]) => `<button data-zoom="${k}" class="${U.zoom === k ? 'on' : ''}">${l}</button>`).join('')}</span>
@@ -1515,13 +1554,23 @@ async function editTask(id, isNew){
   const perNext = wrap => { const last = wrap.lastElementChild; if (!last) return {q:1}; const a = perRead(last), m = last.querySelector('[data-k=m]').value, n = {r:a.r, q:1};
     if (m === 'w') { n.w0 = a.w1 ? a.w1 + 1 : 1; n.w1 = 0; } else if (m === 'd') { const d1 = dnOfIso(a.d1); if (d1 != null) n.d0 = isoOfDn(d1 + 1); else n.d0 = ''; n.d1 = ''; if (!n.d0) n.d0 = a.d0 || ''; }
     return n; };
+  /* copier / coller dans la fiche (lignes non encore enregistrées comprises) */
+  const perClip = (b, wrap, add, start, upd) => {
+    const bc = b.querySelector('[data-rcp]'), bp = b.querySelector('[data-rps]'); if (!bc) return;
+    bc.onclick = () => { const rows = [...wrap.querySelectorAll('[data-per]')].map(perRead).filter(a => a.r && a.q > 0);
+      if (!rows.length) { toast('Aucune ressource à copier'); return; }
+      resClipSet(rows, start(), b.querySelector('#tkName').value.trim() || t.name); bp.disabled = false; toast(`${rows.length} ligne(s) copiée(s) : ouvre une autre tâche ou un autre lot puis Coller`); };
+    bp.onclick = async () => { if (!RES_CLIP) return; const mode = wrap.children.length ? await resPasteAsk(1) : 'add'; if (!mode) return;
+      if (mode === 'rep') wrap.innerHTML = ''; const c = resClipRows(start()); c.rows.forEach(add); upd();
+      toast(`${c.rows.length} ligne(s) collée(s) de « ${RES_CLIP.from} »${resMissTxt(c.miss)}`); };
+  };
   const lotWk = sum && r.dur > 0 ? Math.ceil((r.finish - r.start + 1) / 7) : 0;
   const body = sum ? `
     <label class="bp-f"><span>Nom du lot</span><input id="tkName" value="${esc(t.name)}" ${isNew ? 'autofocus' : ''}></label>
     <p class="bp-hint">Lot : ses dates (${shortOfDn(r.start)} → ${shortOfDn(r.finish)}, ${r.dur} j${lotWk ? ', ' + lotWk + ' semaine' + (lotWk > 1 ? 's' : '') : ''}) sont celles de ses tâches ; son coût = ses tâches + ses ressources ci-dessous.</p>
     <h4>Ressources du lot <span class="bp-hint">(en plus de celles des tâches : chef d’équipe, grue, installations…)</span></h4>
     ${p.res.length ? `<div class="bp-lst" id="tkLres"></div>
-    <div><button class="bp-btn" id="tkLresAdd">${I.plus}Ressource</button> <span class="bp-hint">Période : toute la durée du lot, semaines du lot (suivent le lot s’il se décale ; « à » vide = jusqu’à la fin) ou dates fixes (du … au …). Plusieurs lignes pour la même ressource = effectif qui varie ou plusieurs périodes de présence (ex. grue du 12.04 au 30.04 puis du 01.06 au 19.06).</span></div>
+    <div><button class="bp-btn" id="tkLresAdd">${I.plus}Ressource</button> <button class="bp-btn" data-rcp title="Copier ces ressources (pour les coller dans une autre tâche ou un autre lot)">${I.copy}Copier</button> <button class="bp-btn" data-rps title="Coller les ressources copiées" ${RES_CLIP ? '' : 'disabled'}>${I.paste}Coller</button> <span class="bp-hint">Période : toute la durée du lot, semaines du lot (suivent le lot s’il se décale ; « à » vide = jusqu’à la fin) ou dates fixes (du … au …). Plusieurs lignes pour la même ressource = effectif qui varie ou plusieurs périodes de présence (ex. grue du 12.04 au 30.04 puis du 01.06 au 19.06).</span></div>
     <p class="bp-hint" id="tkLInfo"></p>` : '<p class="bp-hint">Aucune ressource : crée-les dans l’onglet Ressources.</p>'}
     <label class="bp-f"><span>Zone (secteur, bâtiment… ; reprise par ses tâches)</span><input id="tkZone" list="tkZones" value="${esc(t.zone || '')}"><datalist id="tkZones">${zonesOf(p).map(z => `<option value="${esc(z)}">`).join('')}</datalist></label>
     ${colRow}
@@ -1536,7 +1585,7 @@ async function editTask(id, isNew){
     <h4>Prédécesseurs</h4><div class="bp-lst" id="tkDeps"></div>
     <div><button class="bp-btn" id="tkDepAdd">${I.plus}Lien</button> <span class="bp-hint">FS = commence à la fin · SS = commence avec · FF = finit avec · SF = finit au début. Décalage : ex. +3 j séchage.</span></div>
     <h4>Ressources ${p.res.length ? '' : '<span class="bp-hint">(aucune : crée-les dans l’onglet Ressources)</span>'}</h4><div class="bp-lst" id="tkAsg"></div>
-    ${p.res.length ? `<div><button class="bp-btn" id="tkAsgAdd">${I.plus}Ressource</button> <span class="bp-hint">Équipe : nombre de personnes · Machine : nombre d’unités · Sous-traitant / fourniture : quantité totale. Période : toute la tâche, semaines de la tâche ou dates fixes ; plusieurs lignes pour la même ressource = plusieurs périodes de présence.</span></div>` : ''}
+    ${p.res.length ? `<div><button class="bp-btn" id="tkAsgAdd">${I.plus}Ressource</button> <button class="bp-btn" data-rcp title="Copier ces ressources (pour les coller dans une autre tâche ou un autre lot)">${I.copy}Copier</button> <button class="bp-btn" data-rps title="Coller les ressources copiées" ${RES_CLIP ? '' : 'disabled'}>${I.paste}Coller</button> <span class="bp-hint">Équipe : nombre de personnes · Machine : nombre d’unités · Sous-traitant / fourniture : quantité totale. Période : toute la tâche, semaines de la tâche ou dates fixes ; plusieurs lignes pour la même ressource = plusieurs périodes de présence.</span></div>` : ''}
     <div class="bp-form">
       ${budMode !== 'res' ? `<label class="bp-f"><span>Montant budgété${budMode === 'mix' ? ' en plus des ressources' : ''} (CHF)</span><input id="tkBud" type="number" step="any" value="${t.bud ?? ''}"></label>` : ''}
       <label class="bp-f"><span>Avancement : <b id="tkPctV">${Math.round(t.pct)}</b> %</span><input id="tkPct" type="range" min="0" max="100" step="5" value="${Math.round(t.pct)}"></label>
@@ -1559,7 +1608,7 @@ async function editTask(id, isNew){
         const addL = a => { lw.insertAdjacentHTML('beforeend', perRow(a)); lw.lastElementChild.querySelector('[data-k=r]').value = a.r || (p.res[0] && p.res[0].id); updL(); };
         (t.lres || []).forEach(addL);
         b.querySelector('#tkLresAdd').onclick = () => addL(perNext(lw));
-        perPrefill(lw, () => r);
+        perPrefill(lw, () => r); perClip(b, lw, addL, () => r.es, updL);
         b.addEventListener('click', e => { const x = e.target.closest('[data-rm]'); if (x) { x.parentElement.remove(); updL(); } });
         b.addEventListener('input', updL); b.addEventListener('change', updL);
         return;
@@ -1578,7 +1627,7 @@ async function editTask(id, isNew){
       /* calcul de la tâche avec la durée saisie dans la fiche (pour les périodes) */
       const Rt = () => { const ms = b.querySelector('#tkMs').value === '1', d = ms ? 0 : Math.max(0, Math.round(+b.querySelector('#tkDur').value || 0)); return {es:r.es, ef:r.es + d, start:U.cal.dnOf(r.es)}; };
       const addAsg = a => { asg.insertAdjacentHTML('beforeend', perRow(a)); const row = asg.lastElementChild; row.querySelector('[data-k=r]').value = a.r || (p.res[0] && p.res[0].id); upd(); };
-      perPrefill(asg, Rt);
+      perPrefill(asg, Rt); perClip(b, asg, addAsg, () => r.es, upd);
       t.deps.forEach(addDep); t.asg.forEach(addAsg);
       b.querySelector('#tkDepAdd').onclick = () => addDep({type:'FS', lag:0});
       const aa = b.querySelector('#tkAsgAdd'); if (aa) aa.onclick = () => addAsg(asg.children.length ? perNext(asg) : {q:1});
@@ -2564,6 +2613,7 @@ function bind(el){
       else if (k === 'link') linkPrev(); else if (k === 'del') delTask(); else if (k === 'edit') editTask(U.sel);
       else if (k === 'selm') { U.selMode = !U.selMode; if (U.selMode && U.sel && !U.msel.size) U.msel.add(U.sel); if (!U.selMode) U.msel.clear(); render(); }
       else if (k === 'unsel') { U.msel.clear(); U.selMode = false; render(); }
+      else if (k === 'rcopy') resCopySel(); else if (k === 'rpaste') resPasteSel();
       else if (k === 'style') styleDlg(U.msel.size ? [...U.msel] : [U.sel]);
       else if (k === 'today') scrollToday(); else if (k === 'cols') { U.full = !fullCols(); render(); } else if (k === 'base') { U.showBase = !U.showBase; render(); }
       return;
