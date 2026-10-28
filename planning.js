@@ -654,7 +654,7 @@ function css(){ return `
 .bp-tbl tr[data-r]{cursor:pointer}
 .bp-neg{color:#ff7b7b}.bp-pos{color:#6fd39a}
 .bp-anctl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end}.bp-anctl>div>small{display:block;font-size:12px;color:var(--muted,#9da2a8);margin-bottom:3px}.bp-anout{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
-.bp-anwrap{overflow:auto;max-width:100%;padding-bottom:4px}.bp-anwrap .bp-chart{margin-bottom:6px}
+.bp-anwrap{overflow:auto;max-width:100%;padding-bottom:4px}.bp-anhrs{width:auto;min-width:420px}.bp-anhrs td,.bp-anhrs th{padding:4px 10px;white-space:nowrap}.bp-anhrs .n{text-align:right;font-family:var(--mono,monospace)}.bp-anwrap .bp-chart{margin-bottom:6px}
 .bp-antbl{table-layout:fixed;font-size:12px}.bp-antbl th,.bp-antbl td{padding:4px 2px;border-left:1px solid rgba(128,128,128,.14)}.bp-antbl th.mo{text-align:center;background:var(--surface2,#262a30)}
 .bp-antbl .c{text-align:center;font-family:var(--mono,monospace);white-space:nowrap;overflow:hidden}.bp-antbl .big{font-size:14px;font-weight:700}.bp-antbl tr.cmp td{color:var(--muted,#9da2a8)}
 .bp-antbl .lab{position:sticky;left:0;z-index:1;background:var(--surface,#1c1f23);text-align:left;padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1975,6 +1975,25 @@ function anKpis(A, V, o){
     + k(o.kind === 'team' ? 'Hommes-jours' : 'Jours machine', fmtN(d, 1), o.kind === 'team' ? fmtN(d * A.hpd) + ' h (' + fmtN(A.hpd, 1) + ' h/j)' : '')
     + (o.src !== 'real' && V.tot.real ? k('Réel saisi', fmtN(V.days('real'), 1) + (o.kind === 'team' ? ' h·j' : ' j'), 'heures ÷ ' + fmtN(A.hpd, 1) + ' h/j') : '');
 }
+/* récap des heures de main-d'œuvre par mois (toujours par mois) : prévu, réel (jusqu'à la date d'état), référence, écart, cumuls */
+function anHours(o){
+  const A = resAnalysis(U.plan, U.sch, {...o, per:'m'}); if (!A.pers.length) return null;
+  const h = s => { const m = A.S[s] && A.S[s].team; if (!m || !Object.keys(m).length) return null; const t = new Array(A.pers.length).fill(0); for (const k in m) m[k].forEach((v, i) => t[i] += v * A.hpd); return t; };
+  const plan = h('plan'), base = h('base'), r0 = h('real'), real = r0 && r0.map((v, i) => A.pers[i].a <= U.sch.statusDn ? v : null);
+  if (!plan && !base && !real) return null;
+  const sum = a => a ? a.reduce((x, v) => x + (v || 0), 0) : 0;
+  const rows = A.pers.map((P, i) => { const d = new Date(P.a * DAY); return {l:MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(), a:P.a, b:P.b, nd:P.nd, plan:plan ? plan[i] : 0, base:base ? base[i] : null, real:real ? real[i] : null}; });
+  return {rows, hpd:A.hpd, has:{base:!!base, real:!!real}, tot:{plan:sum(plan), base:sum(base), real:sum(real)}, cum:{plan:anCum(plan || rows.map(() => 0)), real:anCum(real)}};
+}
+const anH = v => v == null ? '' : Math.abs(v) < .5 ? '0' : fmtN(Math.round(v));
+const anHd = v => Math.abs(v) < .5 ? '' : (v > 0 ? '+' : '−') + fmtN(Math.round(Math.abs(v)));
+function anHoursHTML(H){
+  const hd = `<tr><th>Mois</th><th class="n">J. ouvrés</th><th class="n">Prévu (h)</th>${H.has.real ? '<th class="n">Réel (h)</th><th class="n">Écart réel − prévu</th>' : ''}${H.has.base ? '<th class="n">Référence (h)</th>' : ''}<th class="n">Cumul prévu</th>${H.has.real ? '<th class="n">Cumul réel</th>' : ''}</tr>`;
+  const row = (r, i) => `<tr><td title="${chOfDn(r.a)} → ${chOfDn(r.b)}">${r.l}</td><td class="n">${r.nd}</td><td class="n">${anH(r.plan)}</td>${H.has.real ? `<td class="n">${anH(r.real)}</td><td class="n ${r.real != null && r.real - r.plan > .5 ? 'bp-neg' : ''}">${r.real == null ? '' : anHd(Math.round(r.real) - Math.round(r.plan))}</td>` : ''}${H.has.base ? `<td class="n">${anH(r.base)}</td>` : ''}<td class="n">${anH(H.cum.plan[i])}</td>${H.has.real ? `<td class="n">${anH(H.cum.real[i])}</td>` : ''}</tr>`;
+  const tot = `<tr class="sum"><td>Total</td><td class="n">${H.rows.reduce((a, r) => a + r.nd, 0)}</td><td class="n">${anH(H.tot.plan)}</td>${H.has.real ? `<td class="n">${anH(H.tot.real)}</td><td class="n"></td>` : ''}${H.has.base ? `<td class="n">${anH(H.tot.base)}</td>` : ''}<td class="n"></td>${H.has.real ? '<td class="n"></td>' : ''}</tr>`;
+  return `<div class="bp-card"><h3>Heures travaillées par mois</h3><p class="bp-hint">Main-d’œuvre (équipes) des tâches et des lots, en heures (${fmtN(H.hpd, 1)} h/j).${H.has.real ? ' Réel = heures saisies jusqu’à la date d’état.' : ''}</p>
+    <div class="bp-anwrap"><table class="bp-tbl bp-anhrs"><thead>${hd}</thead><tbody>${H.rows.map(row).join('')}${tot}</tbody></table></div></div>`;
+}
 function renderAn(){
   const p = U.plan, o = anState(), main = $b('#bpMain'), A = resAnalysis(p, U.sch, o), K = AN_KIND[o.kind];
   const seg = (k, map, cur) => `<div class="bp-seg">${Object.entries(map).map(([v, l]) => `<button data-an="${k}" data-v="${v}" class="${cur === v ? 'on' : ''}">${typeof l === 'string' ? l : l.l}</button>`).join('')}</div>`;
@@ -1993,7 +2012,7 @@ function renderAn(){
       <div class="bp-kpis" style="margin-bottom:10px">${anKpis(A, V, o)}</div>
       <div class="bp-anwrap">${anSvg(V, o, cw, lw)}${o.kind === 'chf' ? anSvg(V, o, cw, lw, true) : ''}${anTable(A, V, o, cw, lw)}</div>
       <div class="bp-anleg">${V.groups.map(g => `<span><span class="bp-dot" style="background:${g.c}"></span>${esc(g.l)}</span>`).join('')}${anCmpList(o, V).map(c => `<span><span class="bp-dot" style="background:${c.c};height:3px;vertical-align:3px"></span>${c.l} (ligne)</span>`).join('')}</div>`}
-    </div></div>`;
+    </div>${o.kind === 'team' && !empty ? (H => H ? anHoursHTML(H) : '')(anHours(o)) : ''}</div>`;
   const ctl = main.querySelector('.bp-anctl');
   ctl.addEventListener('click', e => {
     const b = e.target.closest('[data-an]'); if (b) { o[b.dataset.an] = b.dataset.v; anSave(); renderAn(); return; }
@@ -2041,6 +2060,14 @@ function anSheets(wb, X, o){
     const ws = X.utils.aoa_to_sheet(rows, {cellDates:true, dateNF:'dd\\.mm\\.yyyy'}); ws['!cols'] = head.map((h, i) => ({wch:i === 0 ? 10 : i < 3 ? 11 : Math.min(28, Math.max(10, String(h).length + 2))}));
     X.utils.book_append_sheet(wb, ws, kind === 'team' ? 'Analyse main-d’œuvre' : kind === 'machine' ? 'Analyse machines' : 'Analyse CHF');
   }
+  const H = anHours(o); if (!H) return;
+  const head = ['Mois', 'Du', 'Au', 'Jours ouvrés', 'Prévu (h)', ...(H.has.real ? ['Réel (h)', 'Écart réel − prévu (h)'] : []), ...(H.has.base ? ['Référence (h)'] : []), 'Cumul prévu (h)', ...(H.has.real ? ['Cumul réel (h)'] : [])];
+  const rh = v => v == null ? '' : Math.round(v);
+  const rows = [[`Heures travaillées par mois · ${U.plan.name} · main-d’œuvre des tâches et des lots (${fmtN(H.hpd, 1)} h/j)`], [], head,
+    ...H.rows.map((r, i) => [r.l, D(r.a), D(r.b), r.nd, rh(r.plan), ...(H.has.real ? [rh(r.real), r.real == null ? '' : Math.round(r.real) - Math.round(r.plan)] : []), ...(H.has.base ? [rh(r.base)] : []), rh(H.cum.plan[i]), ...(H.has.real ? [rh(H.cum.real[i])] : [])]),
+    [], ['Total', '', '', H.rows.reduce((a, r) => a + r.nd, 0), rh(H.tot.plan), ...(H.has.real ? [rh(H.tot.real), ''] : []), ...(H.has.base ? [rh(H.tot.base)] : [])]];
+  const ws = X.utils.aoa_to_sheet(rows, {cellDates:true, dateNF:'dd\\.mm\\.yyyy'}); ws['!cols'] = head.map((h, i) => ({wch:i === 0 ? 14 : i < 3 ? 11 : Math.max(10, h.length + 2)}));
+  X.utils.book_append_sheet(wb, ws, 'Heures par mois');
 }
 async function makeAnPdf(opt){
   await loadScript(PDFLIB_URL);
@@ -2063,6 +2090,7 @@ async function makeAnPdf(opt){
     for (let a = 0; a < V.n; a += per) pages.push({kind, V, a, b:Math.min(V.n, a + per)});
   }
   if (!pages.length) throw new Error('rien à imprimer pour les contenus choisis');
+  const H = opt.kinds.includes('team') ? anHours(o) : null, nPg = pages.length + (H ? 1 : 0);
   pages.forEach((pgD, pi) => {
     const {kind, V, a, b} = pgD, K = AN_KIND[kind], n = b - a, cw = (W - 2 * M - lw) / n, fs = Math.max(5, Math.min(8.5 * k0, cw * .42)), cmp = anCmpList({...o, kind}, V).map(c => ({...c, v:c.v.slice(a, b)}));
     const cur = (V.cur || new Array(V.n).fill(0)).slice(a, b), grs = V.groups.map(g => ({...g, v:g.v.slice(a, b)})), pg = doc.addPage([W, Hp]);
@@ -2120,8 +2148,32 @@ async function makeAnPdf(opt){
     for (const g of grs) { pg.drawRectangle({x:lx, y:ly, width:10, height:6, color:hex(g.c)}); text(pg, g.l, lx + 13, ly, {s:7 * k0}); lx += 22 + F.widthOfTextAtSize(winAnsi(g.l), 7 * k0) + 8; }
     for (const c of cmp) { pg.drawLine({start:{x:lx, y:ly + 3}, end:{x:lx + 12, y:ly + 3}, thickness:1.6, color:hex(c.c)}); text(pg, c.l + ' (ligne)', lx + 15, ly, {s:7 * k0}); lx += 26 + F.widthOfTextAtSize(winAnsi(c.l + ' (ligne)'), 7 * k0) + 8; }
     text(pg, kind === 'chf' ? 'Montants = budget réparti sur les jours ouvrés des tâches et des lots ; réel = saisies du réalisé à leur date.' : 'Effectif = moyenne des jours ouvrés de la période ; comprend les ressources des tâches et des lots ; réel = heures saisies ÷ ' + fmtN(A.hpd, 1) + ' h/j.', M, M, {s:7 * k0, col:C.mut, w:W * .62});
-    text(pg, `BauGest · imprimé le ${chOfDn(todayDn())} · page ${pi + 1} / ${pages.length}`, W - M, M, {s:7 * k0, r:1, col:C.mut});
+    text(pg, `BauGest · imprimé le ${chOfDn(todayDn())} · page ${pi + 1} / ${nPg}`, W - M, M, {s:7 * k0, r:1, col:C.mut});
   });
+  /* page « Heures travaillées par mois » (avec la main-d'œuvre) */
+  if (H) {
+    const pg = doc.addPage([W, Hp]), lH = logo ? Math.max(20, (+Pp.logoH || 15) * 72 / 25.4 * Math.min(1.4, k0)) : 0, lWd = logo ? Math.min(W * .25, logo.width * lH / logo.height) : 0, lH2 = logo ? lWd * logo.height / logo.width : 0;
+    if (logo) pg.drawImage(logo, {x:M, y:Hp - M - lH2, width:lWd, height:lH2});
+    const tTop = Hp - M - 12 * k0;
+    text(pg, 'HEURES TRAVAILLÉES PAR MOIS', W / 2, tTop, {s:12 * k0, b:1, c:1});
+    text(pg, [st ? st.label : '', p.name, `main-d’œuvre des tâches et des lots (${fmtN(H.hpd, 1)} h/j)`].filter(Boolean).join(' · '), W / 2, tTop - 14 * k0, {s:8.5 * k0, c:1, col:C.mut});
+    const cols = [{l:'Mois', w:1.6, f:r => r.l, left:1}, {l:'J. ouvrés', f:r => String(r.nd)}, {l:'Prévu (h)', f:r => anH(r.plan), b:1}];
+    if (H.has.real) cols.push({l:'Réel (h)', f:r => anH(r.real), b:1}, {l:'Écart réel - prévu', f:r => r.real == null ? '' : anHd(Math.round(r.real) - Math.round(r.plan)).replace('−', '-')});
+    if (H.has.base) cols.push({l:'Référence (h)', f:r => anH(r.base)});
+    cols.push({l:'Cumul prévu', f:(r, i) => anH(H.cum.plan[i])}); if (H.has.real) cols.push({l:'Cumul réel', f:(r, i) => anH(H.cum.real[i])});
+    const tw = Math.min(W - 2 * M, cols.length * 90 * k0), uw = tw / cols.reduce((a, c) => a + (c.w || 1), 0), x0 = (W - tw) / 2;
+    const top = Math.min(tTop - 34 * k0, Hp - M - lH2 - 10 * k0), n = H.rows.length + 2, rh = Math.max(8, Math.min(18 * k0, (top - M - 20 * k0) / n)), fs = Math.min(9 * k0, rh * .6);
+    const tot = {l:'Total', nd:H.rows.reduce((a, r) => a + r.nd, 0), plan:H.tot.plan, real:H.has.real ? H.tot.real : null, base:H.tot.base, _t:1};
+    let y = top;
+    const line = (r, i, hd) => { y -= rh; if (hd) pg.drawRectangle({x:x0, y, width:tw, height:rh, color:C.band}); else if (r._t) pg.drawRectangle({x:x0, y, width:tw, height:rh, color:rgb(1, .97, .82)}); else if (i % 2) pg.drawRectangle({x:x0, y, width:tw, height:rh, color:C.zebra});
+      let x = x0; for (const c of cols) { const w = (c.w || 1) * uw, t = hd ? c.l : r._t && /^Cumul|^Écart/.test(c.l) ? '' : c.f(r, i); if (t) text(pg, t, c.left ? x + 4 : x + w - 4, y + rh * .3, {s:fs, b:hd || r._t || c.b, r:!c.left, w:w - 6}); x += w; }
+      pg.drawLine({start:{x:x0, y}, end:{x:x0 + tw, y}, thickness:.4, color:C.line}); };
+    line(null, 0, 1); H.rows.forEach((r, i) => line(r, i)); line(tot, 0);
+    pg.drawRectangle({x:x0, y, width:tw, height:top - y, borderColor:C.txt, borderWidth:.7});
+    let xx = x0; for (const c of cols) { pg.drawLine({start:{x:xx, y}, end:{x:xx, y:top}, thickness:.3, color:C.line}); xx += (c.w || 1) * uw; }
+    if (H.has.real) text(pg, 'Réel = heures saisies dans le réalisé jusqu’à la date d’état.', M, M, {s:7 * k0, col:C.mut, w:W * .62});
+    text(pg, `BauGest · imprimé le ${chOfDn(todayDn())} · page ${nPg} / ${nPg}`, W - M, M, {s:7 * k0, r:1, col:C.mut});
+  }
   return new Blob([await doc.save()], {type:'application/pdf'});
 }
 
