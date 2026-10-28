@@ -3793,7 +3793,7 @@ function dzMemoPages(d, photos, logo){
   pages.forEach((cv, i) => {
     g = cv.getContext('2d');
     g.fillStyle = '#d6d2c8'; g.fillRect(MX, MH - 42, MW - 2 * MX, 1);
-    t('Mémo établi avec BauGest · ' + dFmt(new Date()), MX, MH - 24, {s:10, c:'#8a8f96'});
+    t('Établi le ' + dFmt(new Date()), MX, MH - 24, {s:10, c:'#8a8f96'});
     t(`${i + 1} / ${pages.length}`, MW - MX, MH - 24, {s:10, c:'#8a8f96', a:'right'});
   });
   return pages;
@@ -4782,7 +4782,7 @@ async function buildReport(photos, action, siteName, siteIds){
       if (P.repNote !== false && f._note) for (const l of wrapPdf(font, 8.5, safeText(font, f._note), cw, 2)) { pg.drawText(l, {x:cx, y, size:8.5, font, color:lib.rgb(.3, .32, .35)}); y -= 11; }
     }
     pages.forEach((pg, i) => {
-      pg.drawText(safeText(font, `Établi avec BauGest · ${dFmt(new Date())}`), {x:M, y:20, size:8, font, color:lib.rgb(.55, .56, .58)});
+      pg.drawText(safeText(font, `Établi le ${dFmt(new Date())}`), {x:M, y:20, size:8, font, color:lib.rgb(.55, .56, .58)});
       const t = `${i + 1} / ${pages.length}`; pg.drawText(t, {x:PW_ - M - font.widthOfTextAtSize(t, 8), y:20, size:8, font, color:lib.rgb(.55, .56, .58)});
     });
     const blob = new Blob([await out.save()], {type:'application/pdf'});

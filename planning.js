@@ -2136,7 +2136,7 @@ async function makeAnPdf(opt){
     pg.drawRectangle({x:x0, y, width:tw, height:top - y, borderColor:C.txt, borderWidth:.7});
     let xx = x0; for (const c of cols) { pg.drawLine({start:{x:xx, y}, end:{x:xx, y:top}, thickness:.3, color:C.line}); xx += (c.w || 1) * uw; }
     if (note) text(pg, note, M, M, {s:7 * k0, col:C.mut, w:W * .62});
-    text(pg, `BauGest · imprimé le ${chOfDn(todayDn())} · page ${++pgNo} / ${nPg}`, W - M, M, {s:7 * k0, r:1, col:C.mut});
+    text(pg, `Imprimé le ${chOfDn(todayDn())} · page ${++pgNo} / ${nPg}`, W - M, M, {s:7 * k0, r:1, col:C.mut});
   };
   pages.forEach((pgD, pi) => {
     const {kind, V, a, b} = pgD, K = AN_KIND[kind], n = b - a, cw = (W - 2 * M - lw) / n, fs = Math.max(5, Math.min(8.5 * k0, cw * .42)), cmp = anCmpList({...o, kind}, V).map(c => ({...c, v:c.v.slice(a, b)}));
@@ -2195,7 +2195,7 @@ async function makeAnPdf(opt){
     for (const g of grs) { pg.drawRectangle({x:lx, y:ly, width:10, height:6, color:hex(g.c)}); text(pg, g.l, lx + 13, ly, {s:7 * k0}); lx += 22 + F.widthOfTextAtSize(winAnsi(g.l), 7 * k0) + 8; }
     for (const c of cmp) { pg.drawLine({start:{x:lx, y:ly + 3}, end:{x:lx + 12, y:ly + 3}, thickness:1.6, color:hex(c.c)}); text(pg, c.l + ' (ligne)', lx + 15, ly, {s:7 * k0}); lx += 26 + F.widthOfTextAtSize(winAnsi(c.l + ' (ligne)'), 7 * k0) + 8; }
     text(pg, kind === 'chf' ? 'Montants = budget réparti sur les jours ouvrés des tâches et des lots ; réel = saisies du réalisé à leur date.' : 'Effectif = moyenne des jours ouvrés de la période ; comprend les ressources des tâches et des lots ; réel = heures saisies ÷ ' + fmtN(A.hpd, 1) + ' h/j.', M, M, {s:7 * k0, col:C.mut, w:W * .62});
-    text(pg, `BauGest · imprimé le ${chOfDn(todayDn())} · page ${pi + 1} / ${nPg}`, W - M, M, {s:7 * k0, r:1, col:C.mut});
+    text(pg, `Imprimé le ${chOfDn(todayDn())} · page ${pi + 1} / ${nPg}`, W - M, M, {s:7 * k0, r:1, col:C.mut});
   });
   /* page « Heures travaillées par mois » (avec la main-d'œuvre) */
   if (H) {

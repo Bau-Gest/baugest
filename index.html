@@ -8598,7 +8598,7 @@ function dzMemoPages(d, photos, logo){
   pages.forEach((cv, i) => {
     g = cv.getContext('2d');
     g.fillStyle = '#d6d2c8'; g.fillRect(MX, MH - 42, MW - 2 * MX, 1);
-    t('Mémo établi avec BauGest · ' + fmtDate(new Date()), MX, MH - 24, {s:10, c:'#8a8f96'});
+    t('Établi le ' + fmtDate(new Date()), MX, MH - 24, {s:10, c:'#8a8f96'});
     t(`${i + 1} / ${pages.length}`, MW - MX, MH - 24, {s:10, c:'#8a8f96', a:'right'});
   });
   return pages;
