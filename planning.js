@@ -2000,7 +2000,7 @@ function anMach(o){
   const A = resAnalysis(U.plan, U.sch, {...o, by:'res', per:'d'}); if (!A.pers.length) return null;
   const sd = U.sch.statusDn, sum = (src, m, k, cut) => { const a = A.S[src] && A.S[src][m][k]; let t = 0; if (a) a.forEach((v, i) => { if (!cut || A.pers[i].a <= sd) t += v; }); return t; };
   const rows = ms.map(r => { const k = 'r:' + r.id, a = A.S.plan.machine[k]; let i0 = -1, i1 = -1; if (a) a.forEach((v, i) => { if (v > 1e-9) { if (i0 < 0) i0 = i; i1 = i; } });
-    return {l:r.name, c:r.color, unit:r.unit || 'u.', from:i0 < 0 ? null : A.pers[i0].a, to:i1 < 0 ? null : A.pers[i1].a, plan:sum('plan', 'machine', k), real:sum('real', 'machine', k, 1), base:sum('base', 'machine', k), cPlan:sum('plan', 'chf', k), cReal:sum('real', 'chf', k, 1)}; })
+    return {l:r.name, c:r.color, unit:r.unit || 'u.', rate:+r.rate || 0, from:i0 < 0 ? null : A.pers[i0].a, to:i1 < 0 ? null : A.pers[i1].a, plan:sum('plan', 'machine', k), real:sum('real', 'machine', k, 1), base:sum('base', 'machine', k), cPlan:sum('plan', 'chf', k), cReal:sum('real', 'chf', k, 1)}; })
     .filter(r => r.plan > 1e-9 || r.real > 1e-9 || r.base > 1e-9);
   if (!rows.length) return null;
   const T = f => rows.reduce((a, r) => a + r[f], 0), has = {real:T('real') > 1e-9, base:!!U.plan.baseline && T('base') > 1e-9, chf:T('cPlan') > .5 || T('cReal') > .5};
@@ -2008,11 +2008,11 @@ function anMach(o){
 }
 const anJ = v => Math.abs(v) < .05 ? '' : fmtN(v, Math.abs(v - Math.round(v)) > .05 ? 1 : 0);
 function anMachHTML(Mc){
-  const h = Mc.has, row = (r, t) => `<tr class="${t ? 'sum' : ''}"><td>${t ? 'Total' : `<span class="bp-dot" style="background:${esc(r.c || '#888')}"></span>${esc(r.l)}`}</td><td>${t || r.from == null ? '' : `${chOfDn(r.from)} → ${chOfDn(r.to)}`}</td><td class="n">${anJ(r.plan)}</td>`
+  const h = Mc.has, row = (r, t) => `<tr class="${t ? 'sum' : ''}"><td>${t ? 'Total' : `<span class="bp-dot" style="background:${esc(r.c || '#888')}"></span>${esc(r.l)}`}</td><td>${t || r.from == null ? '' : `${chOfDn(r.from)} → ${chOfDn(r.to)}`}</td><td class="n">${!t && r.rate ? fmtN(r.rate) : ''}</td><td class="n">${anJ(r.plan)}</td>`
     + (h.real ? `<td class="n">${anJ(r.real)}</td><td class="n ${r.real - r.plan > .05 ? 'bp-neg' : ''}">${h.real && (t || r.real > 1e-9) ? (Math.abs(r.real - r.plan) < .05 ? '' : (r.real > r.plan ? '+' : '−') + anJ(Math.abs(r.real - r.plan))) : ''}</td>` : '')
     + (h.base ? `<td class="n">${anJ(r.base)}</td>` : '') + (h.chf ? `<td class="n">${r.cPlan > .5 ? fmtN(r.cPlan) : ''}</td>${h.real ? `<td class="n">${r.cReal > .5 ? fmtN(r.cReal) : ''}</td>` : ''}` : '') + '</tr>';
   return `<div class="bp-card"><h3>Récapitulatif par machine</h3><p class="bp-hint">Total de chaque machine sur tout le chantier, en jours machine (unités × jours ouvrés), ressources des tâches et des lots.${h.real ? ' Réel = jours saisis jusqu’à la date d’état.' : ''}</p>
-    <div class="bp-anwrap"><table class="bp-tbl bp-anhrs"><thead><tr><th>Machine</th><th>Période prévue</th><th class="n">Prévu (j)</th>${h.real ? '<th class="n">Réel (j)</th><th class="n">Écart réel − prévu</th>' : ''}${h.base ? '<th class="n">Référence (j)</th>' : ''}${h.chf ? `<th class="n">Coût prévu (CHF)</th>${h.real ? '<th class="n">Coût réel (CHF)</th>' : ''}` : ''}</tr></thead>
+    <div class="bp-anwrap"><table class="bp-tbl bp-anhrs"><thead><tr><th>Machine</th><th>Période prévue</th><th class="n">Prix / jour (CHF)</th><th class="n">Prévu (j)</th>${h.real ? '<th class="n">Réel (j)</th><th class="n">Écart réel − prévu</th>' : ''}${h.base ? '<th class="n">Référence (j)</th>' : ''}${h.chf ? `<th class="n">Coût prévu (CHF)</th>${h.real ? '<th class="n">Coût réel (CHF)</th>' : ''}` : ''}</tr></thead>
     <tbody>${Mc.rows.map(r => row(r)).join('')}${row(Mc.tot, 1)}</tbody></table></div></div>`;
 }
 function renderAn(){
@@ -2083,8 +2083,8 @@ function anSheets(wb, X, o){
   }
   const Mc = anMach(o);
   if (Mc) { const h = Mc.has, r1 = v => Math.round(v * 10) / 10;
-    const head = ['Machine', 'Unité', 'Prévu du', 'Prévu au', 'Prévu (j machine)', ...(h.real ? ['Réel (j)', 'Écart réel − prévu (j)'] : []), ...(h.base ? ['Référence (j)'] : []), ...(h.chf ? ['Coût prévu (CHF)', ...(h.real ? ['Coût réel (CHF)'] : [])] : [])];
-    const line = (r, t) => [t ? 'Total' : r.l, t ? '' : r.unit, t || r.from == null ? '' : D(r.from), t || r.from == null ? '' : D(r.to), r1(r.plan), ...(h.real ? [r1(r.real), r1(r.real - r.plan)] : []), ...(h.base ? [r1(r.base)] : []), ...(h.chf ? [Math.round(r.cPlan), ...(h.real ? [Math.round(r.cReal)] : [])] : [])];
+    const head = ['Machine', 'Unité', 'Prévu du', 'Prévu au', 'Prix / jour (CHF)', 'Prévu (j machine)', ...(h.real ? ['Réel (j)', 'Écart réel − prévu (j)'] : []), ...(h.base ? ['Référence (j)'] : []), ...(h.chf ? ['Coût prévu (CHF)', ...(h.real ? ['Coût réel (CHF)'] : [])] : [])];
+    const line = (r, t) => [t ? 'Total' : r.l, t ? '' : r.unit, t || r.from == null ? '' : D(r.from), t || r.from == null ? '' : D(r.to), t ? '' : r.rate, r1(r.plan), ...(h.real ? [r1(r.real), r1(r.real - r.plan)] : []), ...(h.base ? [r1(r.base)] : []), ...(h.chf ? [Math.round(r.cPlan), ...(h.real ? [Math.round(r.cReal)] : [])] : [])];
     const ws = X.utils.aoa_to_sheet([[`Récapitulatif par machine · ${U.plan.name} · jours machine sur tout le chantier (tâches et lots)`], [], head, ...Mc.rows.map(r => line(r)), [], line(Mc.tot, 1)], {cellDates:true, dateNF:'dd\\.mm\\.yyyy'});
     ws['!cols'] = head.map((x, i) => ({wch:i === 0 ? 24 : Math.max(10, x.length + 2)})); X.utils.book_append_sheet(wb, ws, 'Récap machines'); }
   const H = anHours(o); if (!H) return;
@@ -2208,7 +2208,7 @@ async function makeAnPdf(opt){
   }
   /* page « Récapitulatif par machine » (avec les machines) */
   if (Mc) {
-    const h = Mc.has, cols = [{l:'Machine', w:2, f:r => r.l, left:1}, {l:'Période prévue', w:1.7, noTot:1, f:r => r.from == null ? '' : `${chOfDn(r.from)} - ${chOfDn(r.to)}`}, {l:'Prévu (j)', f:r => anJ(r.plan), b:1}];
+    const h = Mc.has, cols = [{l:'Machine', w:2, f:r => r.l, left:1}, {l:'Période prévue', w:1.7, noTot:1, f:r => r.from == null ? '' : `${chOfDn(r.from)} - ${chOfDn(r.to)}`}, {l:'Prix / jour (CHF)', w:1.1, noTot:1, f:r => r.rate ? fmtN(r.rate) : ''}, {l:'Prévu (j)', f:r => anJ(r.plan), b:1}];
     if (h.real) cols.push({l:'Réel (j)', f:r => anJ(r.real), b:1}, {l:'Écart réel - prévu', f:r => r.real > 1e-9 || r._t ? (Math.abs(r.real - r.plan) < .05 ? '' : (r.real > r.plan ? '+' : '-') + anJ(Math.abs(r.real - r.plan))) : ''});
     if (h.base) cols.push({l:'Référence (j)', f:r => anJ(r.base)});
     if (h.chf) { cols.push({l:'Coût prévu (CHF)', w:1.2, f:r => r.cPlan > .5 ? fmtN(r.cPlan) : ''}); if (h.real) cols.push({l:'Coût réel (CHF)', w:1.2, f:r => r.cReal > .5 ? fmtN(r.cReal) : ''}); }
