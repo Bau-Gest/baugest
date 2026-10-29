@@ -1885,6 +1885,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     </div>
     <button class="icon-btn todo-btn" data-todo aria-label="À faire" title="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span class="badge red" data-tdbadge hidden>0</span></button>
     <button class="icon-btn calc-btn" data-calc aria-label="Calculette" title="Calculette"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4"/></svg></button>
+    <button id="deAddPageTop" class="btn" title="Ajouter une page à la fin du document"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M12 11v6M9 14h6"/></svg>Page</button>
     <button id="deSave" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>Enregistrer</button>
   </div>
   <div id="deStatus" class="de-status"><i></i><span id="deStatusT"></span><b id="deToolT" class="de-cur"></b></div>
@@ -5474,7 +5475,9 @@ function bindDocs(){
   for (const id of ['#dpCam', '#deCam']) $(id).addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) insertPhoto(f); });
   $('#dpGrid').addEventListener('click', e => { const b = e.target.closest('[data-dp]'); if (b) pickSitePhoto(b.dataset.dp); });
   $('#deBg').addEventListener('click', () => { const o = ['lined', 'grid', 'plain'], cur = layOfDoc(ed.doc).lay.bg; ed.doc.bg = o[(o.indexOf(cur) + 1) % 3]; $('#deBgT').textContent = BGN[ed.doc.bg]; redrawEd(); saveDraft(); });
-  $('#deAddPage').addEventListener('click', () => { ed.pages.push([]); ed.imgs.push([]); addEdCanvas(ed.pages.length - 1); resizeEdPages(); ed.canvases[ed.canvases.length - 1].scrollIntoView({behavior:'smooth', block:'start'}); saveDraft(); });
+  const edAddPage = () => { ed.pages.push([]); ed.imgs.push([]); addEdCanvas(ed.pages.length - 1); resizeEdPages(); ed.canvases[ed.canvases.length - 1].scrollIntoView({behavior:'smooth', block:'start'}); saveDraft(); note(`Page ${ed.pages.length} ajoutée`, 1500); };
+  $('#deAddPage').addEventListener('click', edAddPage);
+  $('#deAddPageTop').addEventListener('click', edAddPage);
   $('#deSite').addEventListener('change', () => { ed.doc.siteId = $('#deSite').value; redrawEd(); saveDraft(); });
   $('#deDate').addEventListener('change', () => { ed.doc.date = $('#deDate').value || todayISO(); redrawEd(); saveDraft(); });
   $('#deKind').addEventListener('change', () => { const t = $('#deKind').value, old = ed.doc.kind; if ($('#deTitle').value.trim() === docTitle(old)) { ed.doc.title = docTitle(t); $('#deTitle').value = ed.doc.title; } ed.doc.kind = t; ed.doc.bg = null; $('#deBgT').textContent = BGN[layOfDoc(ed.doc).lay.bg]; redrawEd(); saveDraft(); note('Modèle : ' + DOCS[t].name + ' · ton écriture est gardée', 2600); });
