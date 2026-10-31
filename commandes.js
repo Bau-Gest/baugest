@@ -296,6 +296,11 @@ function css(){ return `
 .bc-dlg h2{margin:0;padding:14px 16px 6px;font:700 22px var(--display,sans-serif);text-transform:uppercase;letter-spacing:.02em}
 .bc-db{padding:6px 16px;overflow:auto}
 .bc-df{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;flex-wrap:wrap}
+.bc-drag{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border:2px dashed var(--signal,#f2c230);border-radius:10px;background:var(--signal-soft,#3b3219);color:var(--text,#ecebe6);cursor:grab;user-select:none;-webkit-user-select:none;font:14px var(--body,sans-serif)}
+.bc-drag:active{cursor:grabbing}
+.bc-drag b{display:block;font-size:14px}.bc-drag small{display:block;color:var(--muted,#9da2a8);font-size:12px}
+.bc-drag.s{padding:4px 8px;gap:6px;font-size:12.5px;border-width:1px}
+.bc-mailrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 10px}
 .bc-toasts{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:95;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
 .bc-toast{background:#000d;color:#fff;padding:9px 14px;border-radius:8px;font:14px var(--body,sans-serif);max-width:90vw}
 @media (max-width:980px){.bc-cols{grid-template-columns:minmax(0,1fr)}}
@@ -346,12 +351,12 @@ function renderList(){
   const os = U.orders.map(r => r.o).sort((a, b) => b.n - a.n), t = isoToday(), in7 = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); })();
   const soon = os.filter(o => /[ecp]/.test(o.st) && o.dlv.date && o.dlv.date >= t && o.dlv.date <= in7).sort((a, b) => (a.dlv.date + a.dlv.time).localeCompare(b.dlv.date + b.dlv.time));
   const rows = os.map(o => `<tr data-co="${esc(o.uid)}"><td class="bc-mono" style="white-space:nowrap">${esc(o.no)}</td><td>${esc((o.supSnap && o.supSnap.name) || '—')}</td><td>${esc(objOf(o))}</td>
-    <td class="${late(o) ? 'bc-warn' : ''}" style="white-space:nowrap">${o.dlv.date ? esc(chShort(o.dlv.date) + (o.dlv.time ? ' · ' + o.dlv.time : '')) + (late(o) ? ' ⚠' : '') : '<span class="bc-mut">—</span>'}</td><td>${stBadge(o.st)}</td><td class="bc-n">${nLines(o)}</td></tr>`).join('');
+    <td class="${late(o) ? 'bc-warn' : ''}" style="white-space:nowrap">${o.dlv.date ? esc(chShort(o.dlv.date) + (o.dlv.time ? ' · ' + o.dlv.time : '')) + (late(o) ? ' ⚠' : '') : '<span class="bc-mut">—</span>'}</td><td>${stBadge(o.st)}</td><td class="bc-n">${nLines(o)}</td>${H.split ? `<td>${(() => { const r = U.orders.find(x => x.uid === o.uid); return r && r.pdfId ? dragChip(r, true) : ''; })()}</td>` : ''}</tr>`).join('');
   const miss = [!s.addr && 'l’adresse du chantier', !(s.fore && s.fore.name) && 'le contremaître'].filter(Boolean);
   U.els.list.innerHTML = `<div class="bc-root">${miss.length ? `<div class="bc-hint">À compléter dans la fiche du chantier : ${miss.join(' et ')} (repris dans chaque commande pour la livraison).${H.editSite ? ' ' + B('<span>Compléter la fiche du chantier</span>', 'data-ca="site"') : ''}</div>` : ''}
     <div class="bc-kpi"><div><b>${os.filter(o => o.st !== 'x').length}</b><span>commandes</span></div><div><b>${soon.length}</b><span>livraisons à venir (7 j)</span></div>
       <div><b class="${os.some(late) ? 'bc-warn' : ''}">${os.filter(late).length}</b><span>en retard de livraison</span></div></div>
-    <div class="bc-cols"><div><div class="bc-card"><h3>${I.list}Commandes</h3>${os.length ? `<table class="bc-t"><tr><th>N°</th><th>Fournisseur</th><th>Objet</th><th>Livraison</th><th>État</th><th class="bc-n">Lignes</th></tr>${rows}</table>` : '<p class="bc-empty">Aucune commande pour ce chantier. « Nouvelle commande » pour commencer.</p>'}</div></div>
+    <div class="bc-cols"><div><div class="bc-card"><h3>${I.list}Commandes</h3>${os.length ? `<table class="bc-t"><tr><th>N°</th><th>Fournisseur</th><th>Objet</th><th>Livraison</th><th>État</th><th class="bc-n">Lignes</th>${H.split ? '<th>PDF</th>' : ''}</tr>${rows}</table>` : '<p class="bc-empty">Aucune commande pour ce chantier. « Nouvelle commande » pour commencer.</p>'}</div></div>
     <div><div class="bc-card"><h3>${I.truck}Prochaines livraisons</h3>${soon.length ? soon.map(o => `<div class="bc-sm" style="padding:3px 0">${esc(wdName(o.dlv.date).slice(0, 2))} ${esc(chShort(o.dlv.date))}${o.dlv.time ? ' ' + esc(o.dlv.time) : ''} · <b>${esc((o.supSnap && o.supSnap.name) || '—')}</b> — ${esc(o.no)}</div>`).join('') : '<div class="bc-mut bc-sm">Rien dans les 7 prochains jours.</div>'}</div>
     <div class="bc-card"><h3>Livraison sur ce chantier</h3><div class="bc-sm"><b>${esc(s.addr || 'Adresse à compléter')}</b></div><div class="bc-sm bc-mut">Contremaître : ${esc(s.fore && s.fore.name ? [s.fore.name, s.fore.tel].filter(Boolean).join(' · ') : 'à compléter')}</div></div></div></div></div>`;
 }
@@ -374,7 +379,9 @@ function renderEdit(){
   const r = U.cur, o = r.o, ro = o.st !== 'b', s = site(U.siteId), d = o.dlv;
   head('Commande ' + o.no, s ? (s.number || 'Chantier') + ' · ' + (s.name || '') : '',
     `<select data-k="st" title="État de la commande">${ST_ORDER.map(k => `<option value="${k}" ${k === o.st ? 'selected' : ''}>${ST[k]}</option>`).join('')}</select>`
-    + B(I.del + '<span>Supprimer</span>', 'data-ca="odel"', 'dang') + (r.pdfId ? B('<span>PDF enregistré</span>', 'data-ca="pdfopen"') : '') + B(I.pdf + '<span>Créer le PDF</span>', 'data-ca="pdf"', 'pri'), 'Commandes');
+    + B(I.del + '<span>Supprimer</span>', 'data-ca="odel"', 'dang') + (r.pdfId ? B('<span>PDF enregistré</span>', 'data-ca="pdfopen"') : '')
+    + (H.split && r.pdfId ? B('<span>Mail au fournisseur</span>', 'data-ca="mail"') + dragChip(r, true) : '') + B(I.pdf + '<span>Créer le PDF</span>', 'data-ca="pdf"', 'pri'), 'Commandes');
+  if (H.split && r.pdfId) pdfPrefetch(r);
   U.els.list.innerHTML = `<div class="bc-root">${ro ? `<div class="bc-hint">Commande ${esc(ST[o.st].toLowerCase())}${o.sentAt ? ' le ' + new Date(o.sentAt).toLocaleDateString('fr-CH') : ''} : une modification demande de refaire le PDF et de le renvoyer.</div>` : ''}
     <div class="bc-cols"><div>
       <div class="bc-card"><h3>${I.list}Articles</h3><div id="bcLines">${linesHTML()}</div>
@@ -462,6 +469,7 @@ function supListHTML(){
 async function onClick(e){
   const b = e.target.closest('[data-ca],[data-co],[data-csup]'); if (!b) return;
   const a = b.dataset.ca, r = U.cur, o = r && r.o;
+  if (e.target.closest('[data-cdrag]')) return;
   if (b.dataset.co) { const rec = U.orders.find(x => x.uid === b.dataset.co); if (rec) openOrder(rec); return; }
   if (b.dataset.csup) { U.supSel = b.dataset.csup; renderSup(); return; }
   switch (a) {
@@ -474,6 +482,7 @@ async function onClick(e){
     case 'odel': delOrder(); break;
     case 'pdf': makeAndSave(); break;
     case 'pdfopen': openSavedPdf(); break;
+    case 'mail': if (r) mailSup(r); break;
     case 'supnew': { const s = await newSupDlg(); if (s) { U.supSel = s.id; renderSup(); } break; }
     case 'supedit': { const s = supById(U.supSel); if (s && await supEdit(Object.assign({}, s))) renderSup(); break; }
     case 'supdel': { const s = supById(U.supSel); if (!s || !(await confirmDlg('Supprimer le fournisseur', `Retirer « ${esc(s.name)} » de la liste ? Les commandes déjà faites gardent ses coordonnées.`, 'Supprimer', true))) return;
@@ -610,7 +619,8 @@ async function openSavedPdf(){
   try { const buf = await getBuf(r.pdfId); await pdfDlg(new Blob([buf], {type:'application/pdf'}), recName(r.o) + '.pdf', 'PDF enregistré sur le Drive.'); } catch (e) { toast('PDF : ' + e.message); }
 }
 async function pdfDlg(blob, name, saved){
-  const r = U.cur, o = r.o, file = new File([blob], name, {type:'application/pdf'});
+  const r = U.cur, o = r.o; if (H.split) pdfCacheSet(r, blob);
+  const file = new File([blob], name, {type:'application/pdf'});
   const canShare = !!(navigator.canShare && navigator.canShare({files:[file]})), url = URL.createObjectURL(blob);
   const btns = [{label:'Fermer', value:null}];
   if (H.split) btns.push({label:'Ouvrir dans un onglet', value:'tab'});
@@ -618,7 +628,8 @@ async function pdfDlg(blob, name, saved){
   if (canShare) btns.push({label:'Partager / Mail', value:'share'});
   if (o.st === 'b') btns.push({label:'Marquer « Envoyée »', value:'sent', pri:true});
   const v = await dlg({title:'PDF de la commande ' + o.no, width:H.split ? 900 : 520, buttons:btns,
-    body:`<p class="bc-sm">${esc(saved)}</p>${H.split ? `<iframe src="${url}" title="Aperçu" style="width:100%;height:62vh;border:1px solid var(--line,#353a41);border-radius:6px;background:#fff"></iframe>` : `<p>${esc(name)}</p>`}
+    onOpen:box => { const m = box.querySelector('[data-cmail]'); if (m) m.addEventListener('click', () => mailSup(r)); },
+    body:`<p class="bc-sm">${esc(saved)}</p>${H.split ? `<div class="bc-mailrow">${dragChip(r)}<button class="${btnCls()}" data-cmail>Nouveau mail au fournisseur</button><span class="bc-sm bc-mut">1. Nouveau mail · 2. glisse le PDF dans le mail</span></div>` : ''}${H.split ? `<iframe src="${url}" title="Aperçu" style="width:100%;height:62vh;border:1px solid var(--line,#353a41);border-radius:6px;background:#fff"></iframe>` : `<p>${esc(name)}</p>`}
       ${o.supSnap && o.supSnap.mail ? `<p class="bc-sm bc-mut">Mail du fournisseur : <b>${esc(o.supSnap.mail)}</b></p>` : ''}`});
   setTimeout(() => URL.revokeObjectURL(url), 60000);
   if (v === 'tab') window.open(URL.createObjectURL(blob), '_blank');
@@ -627,6 +638,37 @@ async function pdfDlg(blob, name, saved){
   else if (v === 'sent') markSent();
 }
 function markSent(){ const r = U.cur; if (!r) return; r.o.st = 'e'; r.o.sentAt = Date.now(); touch(r); render(); toast('Commande ' + r.o.no + ' marquée envoyée'); }
+
+/* ---------- PC : glisser le PDF dans un mail Outlook (Chrome / Edge : DownloadURL) + nouveau mail au fournisseur ---------- */
+const PDFC = new Map();   /* uid → {url, name, at} : PDF prêt à glisser */
+function pdfCacheSet(r, blob){ const old = PDFC.get(r.uid); if (old) setTimeout(() => URL.revokeObjectURL(old.url), 600000); PDFC.set(r.uid, {url:URL.createObjectURL(blob), name:(recName(r.o) + '.pdf').replace(/:/g, ' '), at:r.o.pdfAt || 0}); }
+const pdfReady = r => { const c = PDFC.get(r.uid); return c && c.at === (r.o.pdfAt || 0) ? c : null; };
+async function pdfPrefetch(r){
+  if (!r || !r.pdfId || pdfReady(r) || r._pf) return;
+  r._pf = true;
+  try { const buf = await getBuf(r.pdfId); pdfCacheSet(r, new Blob([buf], {type:'application/pdf'})); } catch (e) {} finally { r._pf = false; }
+}
+const dragChip = (r, small) => `<div class="bc-drag ${small ? 's' : ''}" draggable="true" data-cdrag="${esc(r.uid)}" title="Glisse ce PDF dans un mail Outlook (ou sur le bureau Windows)">${I.pdf}${small ? '<span>PDF</span>' : `<span><b>${esc(recName(r.o))}.pdf</b><small>Glisse-le dans ton mail Outlook</small></span>`}</div>`;
+document.addEventListener('dragstart', e => {
+  const el = e.target && e.target.closest && e.target.closest('[data-cdrag]'); if (!el) return;
+  const r = U.orders.find(x => x.uid === el.dataset.cdrag), c = r && pdfReady(r);
+  if (!c) { e.preventDefault(); toast('PDF en préparation… réessaie dans un instant'); pdfPrefetch(r); return; }
+  e.dataTransfer.setData('DownloadURL', `application/pdf:${c.name}:${c.url}`);
+  e.dataTransfer.setData('text/plain', c.name);
+  e.dataTransfer.effectAllowed = 'copy';
+});
+document.addEventListener('mouseover', e => { const el = e.target && e.target.closest && e.target.closest('[data-cdrag]'); if (el) pdfPrefetch(U.orders.find(x => x.uid === el.dataset.cdrag)); });
+function mailSup(r){
+  const o = r.o, s = site(o.siteId) || {label:''}, sn = o.supSnap || {}, d = o.dlv;
+  const when = d.date ? wdName(d.date) + ' ' + chDate(d.date) + (d.time ? ' à ' + d.time : '') : 'à convenir';
+  const body = [`Bonjour${sn.contact ? ' ' + sn.contact : ''},`, '', `Veuillez trouver ci-joint notre commande de matériaux N° ${o.no} pour le chantier ${s.label}.`, '',
+    `Livraison : ${when}`, d.place ? `Adresse : ${d.place}` : '', d.fore || d.tel ? `Contremaître sur place : ${[d.fore, d.tel].filter(Boolean).join(', ')}` : '', d.unload ? `Déchargement : ${d.unload}` : '', '',
+    'Merci de nous confirmer la commande et le délai de livraison.', '', 'Meilleures salutations', o.by || ''].filter((x, i, a) => x !== '' || a[i - 1] !== '').join('\r\n').trim();
+  const a = document.createElement('a');
+  a.href = `mailto:${encodeURIComponent(sn.mail || '').replace(/%40/g, '@')}?subject=${encodeURIComponent(`Commande de matériaux ${o.no} – chantier ${s.label}`)}&body=${encodeURIComponent(body)}`;
+  document.body.appendChild(a); a.click(); a.remove();
+  if (!sn.mail) toast('Pas de mail pour ce fournisseur : complète sa fiche, ou saisis l’adresse dans Outlook');
+}
 
 /* ---------- chargement / retour ---------- */
 async function loadSite(){
