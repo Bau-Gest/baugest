@@ -326,6 +326,16 @@ body.bp-split #app{left:var(--bp-w,55%)}
 .pq-num{width:42px;height:42px;flex:none;border-radius:8px;background:var(--surface2);border:1px solid var(--line);display:grid;place-items:center;align-content:center;font-size:10.5px;color:var(--muted);font-weight:700}
 .pq-num b{font-size:16px;color:var(--text)}
 .pq-oldtog{margin:10px 8px 4px;border:0;background:none;color:var(--muted);font-size:13px;padding:0}
+#cmdView{position:absolute;inset:0;grid-column:1/-1;grid-row:2;z-index:25;background:var(--bg);display:grid;grid-template-columns:300px minmax(0,1fr);min-height:0}
+#cmdView[hidden]{display:none}
+.cmd-main{overflow:auto;padding:16px 20px;min-width:0}
+.cmd-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.cmd-head .t{flex:1;min-width:180px}
+.cmd-head small{font:500 13px/1 var(--mono);color:var(--muted)}
+.cmd-head h2{margin:4px 0 0;font:700 30px/1 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.cmd-head .slogo{width:48px;height:48px}
+.cmd-head .dk-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cmd-info{margin:0 0 12px;padding:8px 12px;border-radius:8px;background:var(--signal-soft);font-size:13px}
 #devis{position:absolute;inset:0;grid-column:1/-1;grid-row:2;z-index:25;background:var(--bg);display:grid;grid-template-columns:330px minmax(0,1fr);min-height:0}
 #devis .icon-btn,#dzMapP .icon-btn{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--muted);flex:none;padding:0}
 #devis .icon-btn.on{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
@@ -750,6 +760,10 @@ body.bp-split #app{left:var(--bp-w,55%)}
       <div class="pq-sh"><b>PV déjà rangés</b><div class="r"><select id="pqSite"></select><button class="ibtn" id="pqSiteInfo" title="Infos du chantier et séances"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button><button class="ibtn" id="pqRefresh" title="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button></div><small id="pqPath"></small></div>
       <div id="pqList"></div>
     </aside>
+  </section>
+  <section id="cmdView" hidden aria-label="Commandes de matériaux">
+    <aside class="dz-side"><div class="dz-count">Chantiers</div><div id="cmdSites" style="display:grid;gap:6px"></div></aside>
+    <div class="cmd-main" id="cmdMain"><div class="cmd-head" id="cmdHead"></div><p class="cmd-info" id="cmdInfo" hidden></p><div id="cmdList"></div></div>
   </section>
   <section id="devis" hidden>
     <aside class="dz-side">
@@ -2895,7 +2909,7 @@ function openPq(){
   if (!PQ.site || !sites.some(s => s.id === PQ.site)) { try { PQ.site = localStorage.getItem('baugest.pc.pqSite') || ''; } catch (e) {} if (!sites.some(s => s.id === PQ.site)) PQ.site = sites[0]?.id || ''; }
   renderPq(); pqLoadList();
 }
-function closePq(){ closeHome(); if ($('#pvdt').hidden) return; $('#pvdt').hidden = true; syncNav(); }
+function closePq(){ closeHome(); closeCmd(); if ($('#pvdt').hidden) return; $('#pvdt').hidden = true; syncNav(); }
 async function pqAdd(files){
   files = [...files].filter(f => /pdf/i.test(f.type || '') || /\.pdf$/i.test(f.name || ''));
   if (!files.length) { toast('Seuls les fichiers PDF sont acceptés ici', 'err'); return; }
@@ -3053,7 +3067,7 @@ function modeCrumbs(){
 }
 function refreshMode(){ if (E.mode === 'photos') loadPhotos(); else if (E.mode === 'search') runSearch(SR.q, true); else navigate(E.cur, true); }
 function syncNav(){
-  const cur = !$('#home').hidden ? 'home' : !$('#devis').hidden ? 'devis' : !$('#pvdt').hidden ? 'pvdt' : E.mode === 'photos' ? 'photos' : 'files';
+  const cur = !$('#home').hidden ? 'home' : !$('#cmdView').hidden ? 'cmd' : !$('#devis').hidden ? 'devis' : !$('#pvdt').hidden ? 'pvdt' : E.mode === 'photos' ? 'photos' : 'files';
   $$('#navtabs [data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === cur));
 }
 /* ---------- À faire par chantier (v2.3) : consultation et case à cocher (l'écriture se fait au stylo sur la tablette) ----------
@@ -3203,22 +3217,38 @@ async function openPlanFile(f){
     await BGPlan.importXml(await (await blobOf(f)).text(), s ? s.id : null);
   } catch (e) { toast('Planning : ' + e.message, 'err'); }
 }
-/* ---------- Commandes de matériaux par chantier + fournisseurs : module partagé commandes.js ---------- */
+/* ---------- Commandes de matériaux par chantier + fournisseurs : module partagé commandes.js ----------
+   Section « Commandes » sous la barre d'onglets (comme Devis) : chantiers à gauche, commandes du chantier à droite. */
+const CMDP = {site:null};
+const cmdLogo = s => s && s.logo ? `<span class="slogo"><img src="${s.logo}" alt=""></span>` : `<span class="slogo none">${esc(initials(s ? s.name : '?'))}</span>`;
 if (window.BGCmd) BGCmd.init({
   split:true,
-  sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), folder:siteFolderName(s), number:s.number || ''})),
+  sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), name:s.name, folder:siteFolderName(s), number:s.number || ''})),
   api:(url, opt) => api(url, opt), apiRaw:url => api(url, {}, true),
   ensureFolder:async parts => { let id = P.rootId; for (const n of parts) id = await ensureChild(id, n); return id; },
   online:() => !!P.rootId && navigator.onLine, loadScript,
-  comp:id => { const s = S.sites.find(x => x.id === id), c = (s && compById(s.comp)) || (S.companies || [])[0]; return c ? {name:c.name || '', addr:c.addr || '', tel:c.tel || '', email:c.email || '', logo:c.logo || ''} : {}; }
+  comp:id => { const s = S.sites.find(x => x.id === id), c = (s && compById(s.comp)) || (S.companies || [])[0]; return c ? {name:c.name || '', addr:c.addr || '', tel:c.tel || '', email:c.email || '', logo:c.logo || ''} : {}; },
+  active:() => !$('#cmdView').hidden,
+  logoHTML:id => cmdLogo(S.sites.find(x => x.id === id))
 });
+function renderCmdSites(){
+  const sites = S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}));
+  $('#cmdSites').innerHTML = sites.length ? sites.map(s => `<button class="dz-pick ${s.id === CMDP.site ? 'cur' : ''}" data-cmdsite="${esc(s.id)}">${cmdLogo(s)}<span class="t"><b>${esc(s.name)}</b><small>${esc(s.number || 'Chantier')}</small></span></button>`).join('') : '<p class="dz-empty">Aucun chantier.</p>';
+}
+function cmdMount(){ renderCmdSites(); try { BGCmd.mount({head:$('#cmdHead'), info:$('#cmdInfo'), list:$('#cmdList'), scroll:$('#cmdMain')}, CMDP.site); } catch (e) { toast('Commandes : ' + e.message, 'err'); } }
 function openCommandes(){
   if (!window.BGCmd) { toast('Module Commandes non chargé : recharge la page', 'err'); return; }
-  let sid = null;
+  if (!$('#viewer').hidden) hideViewer();
   const top = chainIds(E.cur)[1], n = top && FN.get(top), s = n && siteByFolder(n.name);
-  if (s) sid = s.id;
-  BGCmd.open(sid).catch(e => toast('Commandes : ' + e.message, 'err'));
+  let sid = s ? s.id : CMDP.site; if (!sid) { try { sid = localStorage.getItem('baugest.cmd.site'); } catch (e) {} }
+  closeDevis();
+  CMDP.site = sid && S.sites.some(x => x.id === sid) ? sid : null;
+  $('#cmdView').hidden = false; syncNav();
+  cmdMount();
 }
+function closeCmd(){ if ($('#cmdView').hidden) return; if (window.BGCmd) BGCmd.leave(); $('#cmdView').hidden = true; syncNav(); }
+$('#cmdSites').addEventListener('click', e => { const b = e.target.closest('[data-cmdsite]'); if (!b) return; CMDP.site = b.dataset.cmdsite; try { localStorage.setItem('baugest.cmd.site', CMDP.site); } catch (x) {} cmdMount(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cmdView').hidden && !document.querySelector('.scrim') && window.BGCmd && BGCmd.back()) e.preventDefault(); });
 function openPlanning(){
   if (!window.BGPlan) { toast('Module Planning non chargé : recharge la page', 'err'); return; }
   let sid = null;
@@ -3229,7 +3259,6 @@ function openPlanning(){
 $('#navtabs').addEventListener('click', e => {
   const b = e.target.closest('[data-nav]'); if (!b) return;
   const n = b.dataset.nav;
-  if (n !== 'cmd' && window.BGCmd && BGCmd.isOpen()) BGCmd.close();
   if (n === 'plan') { openPlanning(); return; }
   if (n === 'cmd') { openCommandes(); return; }
   if (n === 'home') { openHome(); return; }
@@ -4863,7 +4892,7 @@ $('#resizer').addEventListener('pointerdown', e => {
 const typing = e => e.target.closest && e.target.closest('input, textarea, select, [contenteditable]');
 document.addEventListener('keydown', e => {
   if (document.querySelector('.scrim')) return;
-  if (window.BGCmd && BGCmd.isOpen()) return;
+  if (!$('#cmdView').hidden && $('#viewer').hidden) return;
   if ((!$('#devis').hidden || !$('#dzMapP').hidden) && $('#viewer').hidden) return;
   if (e.key === ' ' && !typing(e)) { if (!$('#viewer').hidden) { spaceHeld = true; V.panes.forEach(p => p.stage.classList.add('pan')); e.preventDefault(); } }
   if (e.key === 'F5') { e.preventDefault(); if ($('#viewer').hidden) navigate(E.cur, true); return; }
