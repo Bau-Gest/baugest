@@ -1544,6 +1544,15 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
       <label class="field"><span>Lieu de la séance</span><input type="text" id="seMeetPlace" placeholder="Baraque de chantier, bureau de la DT…" autocomplete="off"></label>
       <p class="hint" id="seMeetHint"></p>
     </div>
+    <div class="field"><span>Livraisons (commandes de matériaux)</span>
+      <label class="field"><span>Adresse du chantier</span><input type="text" id="seSiteAddr" placeholder="Rue du Bourg 12, 1913 Saillon" autocomplete="off"></label>
+      <div class="two">
+        <label class="field"><span>Contremaître</span><input type="text" id="seFore" list="seForeList" placeholder="Nom (proposé si déjà saisi)" autocomplete="off"></label>
+        <label class="field"><span>Téléphone</span><input type="tel" id="seForeTel" placeholder="079 123 45 67" autocomplete="off"></label>
+      </div>
+      <datalist id="seForeList"></datalist>
+      <p class="hint">Repris dans chaque commande : adresse de livraison et contremaître à appeler. Les contremaîtres saisis restent proposés.</p>
+    </div>
     <div class="field"><span>Notre entreprise sur ce chantier</span>
       <select id="seComp"></select>
       <input type="text" id="seAbbr" placeholder="Abréviations dans les PV : DUP, Ent. Dupont" autocomplete="off" aria-label="Abréviations de l'entreprise dans les PV">
@@ -2331,7 +2340,7 @@ const ICON_FOLDER = '<svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1
 const KEY = 'photochantier.v1';
 const DEF = {
   v: 1, companies: [], devis: [], ddel: {}, logoOn: true, logoPos: 'tr', logoSize: 18, logoBg: false, logoLib: [], stampLines: {site:true, tags:true, date:true, gps:true, note:true},
-  stamp: true, quality: 'standard', tagPrompt: true, tagDelay: 5, structure: 'A', autoRotate: true, mapLayer: 'Plan CH', home: 'auto', docTitles: {}, theme: 'dark', pvKeys: [], pvNotif: false, tdLists: [],
+  stamp: true, quality: 'standard', tagPrompt: true, tagDelay: 5, structure: 'A', autoRotate: true, mapLayer: 'Plan CH', home: 'auto', docTitles: {}, theme: 'dark', pvKeys: [], pvNotif: false, tdLists: [], foremen: [],
   tags: ['fouille','réseau EU','réseau EC','coffrage','armature','bétonnage','remblayage','enrobé','bordures','défaut','avant','après'],
   sites: [
     {id:'ex1', number:'000001', name:'Exemple Saillon', lat:46.17170, lon:7.18830, radius:300, example:true},
@@ -2369,7 +2378,7 @@ function save(){
   if (ch || (S.drive.rootId && S.drive.token && S.drive.rootId !== S.syncRoot)) scheduleSync();
 }
 /* ---------- Synchronisation des chantiers et réglages entre appareils (v1.4) ---------- */
-const SYNC_FIELDS = ['companies', 'tags', 'logoLib', 'docLay', 'docTitles', 'stamp', 'logoOn', 'logoPos', 'logoSize', 'logoBg', 'stampLines', 'quality', 'tagPrompt', 'tagDelay', 'structure', 'pvKeys', 'tdLists'];
+const SYNC_FIELDS = ['companies', 'tags', 'logoLib', 'docLay', 'docTitles', 'stamp', 'logoOn', 'logoPos', 'logoSize', 'logoBg', 'stampLines', 'quality', 'tagPrompt', 'tagDelay', 'structure', 'pvKeys', 'tdLists', 'foremen'];
 const SYNC_NAME = 'Réglages PhotoChantier (ne pas supprimer).json';
 S.smod = S.smod || {}; S.sdel = S.sdel || {}; S.fmod = S.fmod || {}; S.remap = S.remap || {}; S.migrate = S.migrate || {};
 for (const s of S.sites) if (!s.example && !S.smod[s.id]) S.smod[s.id] = 1;
@@ -3305,6 +3314,8 @@ function openSiteEdit(id, useHere){
   $('#seComp').innerHTML = '<option value="">' + (compList().length ? '— Aucune —' : 'Aucune entreprise (à créer dans Devis › Entreprises)') + '</option>'
     + compList().map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
   $('#seComp').value = s?.comp && compById(s.comp) ? s.comp : ''; $('#seAbbr').value = s?.abbr || '';
+  $('#seSiteAddr').value = s?.addr || ''; $('#seFore').value = s?.fore?.name || ''; $('#seForeTel').value = s?.fore?.tel || '';
+  $('#seForeList').innerHTML = foremenList().map(f => `<option value="${esc(f.name)}">${esc(f.tel || '')}</option>`).join('');
   renderSeMeet();
   seLogo = s?.logo || null; renderSeLogo();
   seCustomOn = !!s?.layout; seLay = clone(layoutFor(s)); renderSeLayout();
@@ -3347,6 +3358,7 @@ async function searchAddr(){
     if (!j.length) { seMsg('Adresse introuvable. Essaie avec la localité ou utilise ta position.'); return; }
     $('#seLat').value = (+j[0].lat).toFixed(6); $('#seLon').value = (+j[0].lon).toFixed(6);
     seMsg('Trouvé : ' + j[0].display_name, true); updateMapLink();
+    if (!$('#seSiteAddr').value.trim()) $('#seSiteAddr').value = q;
   } catch (e) { seMsg('Recherche d’adresse indisponible ici. Utilise ta position ou saisis les coordonnées.'); }
 }
 function saveSite(){
@@ -3364,11 +3376,27 @@ function saveSite(){
     if (meet) tgt.meet = meet; else delete tgt.meet;
     if (comp) tgt.comp = comp; else delete tgt.comp;
     if (abbr) tgt.abbr = abbr; else delete tgt.abbr;
+    const addr = $('#seSiteAddr').value.trim(), fn = $('#seFore').value.trim(), ft = $('#seForeTel').value.trim();
+    if (addr) tgt.addr = addr; else delete tgt.addr;
+    if (fn) { tgt.fore = {name:fn, tel:ft}; foremenRemember(fn, ft); } else delete tgt.fore;
     if (meet || calMap()['se:' + tgt.id]) calTouch('se:' + tgt.id); }
   if (seLogo && !S.logoLib.includes(seLogo)) { S.logoLib.unshift(seLogo); S.logoLib = S.logoLib.slice(0, 30); }
   save(); closeSheet($('#sheetSiteEdit')); renderSites(); renderSiteChip(); renderDpLayout(); note('Chantier enregistré');
   if (!$('#desk').hidden) { renderDeskSites(); renderDesk(); }
   ensureSiteFolders();
+}
+
+/* ---------- Contremaîtres (fiche chantier, repris dans les commandes) : S.foremen synchronisé + ceux des chantiers ---------- */
+const foreKey = n => String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+function foremenList(){
+  const m = new Map();
+  for (const f of [...S.sites.map(x => x.fore).filter(Boolean), ...(Array.isArray(S.foremen) ? S.foremen : [])]) if (f && f.name) m.set(foreKey(f.name), {name:f.name, tel:f.tel || (m.get(foreKey(f.name)) || {}).tel || ''});
+  return [...m.values()].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+}
+function foremenRemember(name, tel){
+  if (!Array.isArray(S.foremen)) S.foremen = [];
+  const k = foreKey(name), f = S.foremen.find(x => foreKey(x.name) === k);
+  if (f) { f.name = name; if (tel) f.tel = tel; } else S.foremen.push({name, tel:tel || ''});
 }
 
 /* ---------- Dossiers créés avec chaque chantier ---------- */
@@ -5627,6 +5655,7 @@ function bind(){
   $('#seLogoRemove').addEventListener('click', () => { seLogo = null; renderSeLogo(); });
   $('#seLogoLib').addEventListener('click', e => { const b = e.target.closest('[data-lib]'); if (!b) return; seLogo = allLogos()[+b.dataset.lib]; renderSeLogo(); });
   $('#seAddrGo').addEventListener('click', searchAddr);
+  $('#seFore').addEventListener('input', () => { const f = foremenList().find(x => foreKey(x.name) === foreKey($('#seFore').value)); if (f && f.tel && !$('#seForeTel').value.trim()) $('#seForeTel').value = f.tel; });
   $('#seAddr').addEventListener('keydown', e => { if (e.key === 'Enter') searchAddr(); });
   $('#seLat').addEventListener('input', updateMapLink); $('#seLon').addEventListener('input', updateMapLink);
   $('#seSave').addEventListener('click', saveSite);
@@ -9769,14 +9798,13 @@ function initPlanning(){
 function initCommandes(){
   if (!window.BGCmd) return;
   BGCmd.init({
-    sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), name:s.name, folder:siteFolder(s), number:s.number || ''})),
+    sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), name:s.name, folder:siteFolder(s), number:s.number || '', addr:s.addr || '', fore:s.fore || null})),
     api, apiRaw:async url => { if (!tokenValid()) throw Object.assign(new Error('Session Google expirée'), {status:401}); const r = await fetch(url, {headers:{Authorization:'Bearer ' + S.drive.token}}); if (!r.ok) throw Object.assign(new Error('Erreur ' + r.status), {status:r.status}); return r; },
     ensureFolder:parts => ensurePath(parts), online:() => driveReady() && navigator.onLine, loadScript,
     comp:id => { const s = siteById(id), c = (s && compById(s.comp)) || compList()[0]; return c ? {name:c.name || '', addr:c.addr || '', tel:c.tel || '', email:c.email || '', logo:c.logo || ''} : {}; },
-    parse451:(buf, name) => soumParseFile(buf, name),
-    soumCache:sid => SOUMCACHE.get(sid).then(c => c && c.data),
     active:() => !$('#desk').hidden && desk.mode === 'cmd',
     logoHTML:sid => logoHTML(siteById(sid)),
+    editSite:sid => openSiteEdit(sid),
     onNav:() => backSchedule()
   });
 }

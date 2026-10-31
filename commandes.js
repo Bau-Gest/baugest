@@ -1,44 +1,42 @@
 /* =====================================================================
-   BauGest — Commandes de matériaux par chantier + liste des fournisseurs (tous chantiers)
-   Module partagé par la tablette (index.html, rubrique « Commandes » du bureau, comme Soumission) et le PC (pc.html, section « Commandes ») :
-   BGCmd.init({...}) puis BGCmd.mount({head, info, list, scroll}, idChantier) ; l'affichage reprend les classes et couleurs de la page hôte.
-   Positions proposées = soumission du chantier (« <Chantier>/Soumission » : « – positions.json », Word BauBit, .crbx lu par la tablette).
+   BauGest — Commandes de matériaux par chantier (formulaire au clavier) + fournisseurs + articles déjà commandés
+   Module partagé par la tablette (index.html, rubrique « Commandes » du bureau) et le PC (pc.html, section « Commandes ») :
+   BGCmd.init({...}) puis BGCmd.mount({head, info, list, scroll}, idChantier) ; affichage dans les éléments de l'hôte (classes et couleurs de l'hôte).
+   Même formulaire sur PC et tablette : lignes Désignation (proposée d'après les articles déjà saisis) / Quantité / Unité (liste), pas de lien avec la soumission.
+   Livraison = adresse du chantier (s.addr) + contremaître du chantier (s.fore {name, tel}), repris dans chaque commande.
    Drive :
    - <Chantier>/Commandes/<N°> – <fournisseur>.json (appProperties kind='commande', uid, site, n) + même nom .pdf (kind='cmdpdf', uid)
-   - <Chantier>/Commandes/Soumission – positions pour les commandes.json (kind='cmdsoum', src) : copie d'une soumission .crbx lue par la tablette, pour le PC
-   - <Racine>/BauGest – fournisseurs (ne pas supprimer).json (kind='suppliers') : {v:1, list:[{id, name, addr, contact, tel, mail, tags, note, fav, m, del?}]}
-   Commande : {v:1, uid, siteId, n, no, free (commande libre : soumission masquée), sup, supSnap, st, created, m, dlv:{date, time, place, contact, unload}, note, by,
-     lines:[{id, can, p, t, q, u, sq}], ink:{n (nb de lignes), s:[{w, p:[[x, y]]}]} (écriture au stylet, largeur 1000, ligne = 100), sentAt, pdfAt}
+   - <Racine>/BauGest – fournisseurs (ne pas supprimer).json (kind='suppliers') : {v:1, list:[fournisseurs], items:[{k, t, u, n, m}]}
+     fournisseur {id, name, addr, contact, tel, mail, note, fav, m, del?} ; article = désignation déjà commandée (k = clé sans accents, u = dernière unité, n = nb d'utilisations)
+   Commande : {v:1, uid, siteId, n, no, sup, supSnap, st, created, m, dlv:{date, time, place, fore, tel, unload}, note, by, lines:[{id, t, q, u}], sentAt, pdfAt}
    ===================================================================== */
 (function (root) {
 'use strict';
 
 const PDFLIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
 const DRV = 'https://www.googleapis.com/drive/v3/files', UPL = 'https://www.googleapis.com/upload/drive/v3/files';
-const SUP_NAME = 'BauGest – fournisseurs (ne pas supprimer).json', SOUMC_NAME = 'Soumission – positions pour les commandes.json', DIR = 'Commandes';
-const FOURN = /fourni|livr|mat[ée]ri|achat|approvision|stock/i;
+const SUP_NAME = 'BauGest – fournisseurs (ne pas supprimer).json', DIR = 'Commandes';
 const ST = {b:'Brouillon', e:'Envoyée', c:'Confirmée', p:'Livrée en partie', l:'Livrée', x:'Annulée'}, ST_ORDER = ['b', 'e', 'c', 'p', 'l', 'x'];
+const UNITS = ['pce', 'm', 'm²', 'm³', 'ml', 'kg', 't', 'l', 'sac', 'palette', 'rouleau', 'paquet', 'carton', 'boîte', 'barre', 'plaque', 'big bag', 'camion', 'gl', 'h', 'jour'];
 const UNLOAD = ['', 'Camion-grue', 'Hayon', 'Basculant', 'Chariot élévateur', 'À la main'];
-const SRC = /\.(crbx|e1s|01s|docx)$/i, S451 = /\.(crbx|e1s|01s)$/i, POS = /^(.*?)\s+[–-]\s+positions\.json$/i;
 
 const pad2 = n => String(n).padStart(2, '0');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
 const qEsc = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 const clean = s => String(s || '').normalize('NFC').replace(/[\/\\:*?"<>|#%]+/g, '').replace(/\s+/g, ' ').trim();
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const fold = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 const fmtQ = v => v == null || !isFinite(v) ? '' : String(Math.round(v * 1000) / 1000).replace(/\B(?=(\d{3})+(?!\d))/g, '’');
 const numIn = s => { const v = parseFloat(String(s || '').replace(/['’\s]/g, '').replace(',', '.')); return isFinite(v) ? v : null; };
 const isoToday = () => { const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
 const chDate = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${m[3]}.${m[2]}.${m[1]}` : ''; };
 const chShort = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${m[3]}.${m[2]}.${m[1].slice(2)}` : ''; };
 const wdName = iso => { const d = new Date(iso + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('fr-CH', {weekday:'long'}); };
-const posKey = l => (l.can || '') + '|' + (l.p || '');
 const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem('baugest.' + k) || ''; localStorage.setItem('baugest.' + k, v); } catch (e) { return ''; } };
 
 let H = null;
-const U = {siteId:undefined, els:null, showSoum:false, inkTool:'pen', inkUndo:[], view:'list', orders:[], cur:null, soum:null, soumInfo:'', soumBusy:false, q:'', mode:'f', rest:false, supQ:'', supSel:null, dlgs:[], saveT:0, tok:0, info:''};
-const SUP = {list:[], fileId:null, loaded:false, dirty:false};
+const U = {siteId:undefined, els:null, view:'list', orders:[], cur:null, supQ:'', supSel:null, dlgs:[], saveT:0, tok:0, info:''};
+const MEM = {list:[], items:[], fileId:null, loaded:false, dirty:false, pushT:0};
 
 /* ---------- petits outils ---------- */
 function toast(msg, ms = 3200){
@@ -46,17 +44,19 @@ function toast(msg, ms = 3200){
   const t = document.createElement('div'); t.className = 'bc-toast'; t.textContent = msg;
   box.appendChild(t); while (box.children.length > 3) box.firstElementChild.remove(); setTimeout(() => t.remove(), ms);
 }
+const btnCls = () => (H && H.cls && H.cls.btn) || 'btn';
 function dlg({title, body = '', buttons = [{label:'OK', value:true, pri:true}], onOpen, width}){
   return new Promise(res => {
     const sc = document.createElement('div'); sc.className = 'bc-scrim';
     sc.innerHTML = `<div class="bc-dlg" role="dialog" aria-label="${esc(title)}" ${width ? `style="width:min(${width}px,100%)"` : ''}><h2>${esc(title)}</h2><div class="bc-db">${body}</div>`
-      + `<div class="bc-df">${buttons.map((b, i) => `<button class="${(H && H.cls && H.cls.btn) || 'btn'}${b.pri ? ' primary' : ''}${b.dang ? ' danger bc-dang' : ''}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
+      + `<div class="bc-df">${buttons.map((b, i) => `<button class="${btnCls()}${b.pri ? ' primary' : ''}${b.dang ? ' danger bc-dang' : ''}" data-i="${i}">${esc(b.label)}</button>`).join('')}</div></div>`;
     document.body.appendChild(sc);
     const box = sc.firstElementChild;
-    const done = v => { const k = U.dlgs.indexOf(entry); if (k >= 0) U.dlgs.splice(k, 1); sc.remove(); if (H.onNav) H.onNav(); res(v); };
+    const key = e => { if (e.key === 'Escape' && U.dlgs[U.dlgs.length - 1] === entry) { e.preventDefault(); e.stopPropagation(); done(null); } };
+    const done = v => { const k = U.dlgs.indexOf(entry); if (k >= 0) U.dlgs.splice(k, 1); document.removeEventListener('keydown', key, true); sc.remove(); if (H.onNav) H.onNav(); res(v); };
     const fire = i => { const b = buttons[i]; if (b.check && !b.check(box)) return; done(b.value === undefined ? box : b.value); };
     const entry = {close:() => done(null)}; U.dlgs.push(entry); if (H.onNav) H.onNav();
-    sc.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(null); } });
+    document.addEventListener('keydown', key, true);
     sc.addEventListener('pointerdown', e => { if (e.target === sc) sc.dataset.down = '1'; });
     sc.addEventListener('click', e => { if (e.target === sc && sc.dataset.down) done(null); delete sc.dataset.down; });
     box.querySelectorAll('.bc-df button').forEach(b => b.addEventListener('click', () => fire(+b.dataset.i)));
@@ -120,53 +120,65 @@ function upload(blob, md, id){
 const trash = id => H.api(`${DRV}/${encodeURIComponent(id)}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})});
 const cmdDir = s => H.ensureFolder([s.folder, DIR]);
 
-/* ---------- fournisseurs (liste commune à tous les chantiers) ---------- */
-const supLive = () => SUP.list.filter(x => !x.del);
-const supById = id => SUP.list.find(x => x.id === id) || null;
+/* ---------- mémoire commune (tous chantiers) : fournisseurs + articles déjà saisis ---------- */
+const supLive = () => MEM.list.filter(x => !x.del);
+const supById = id => MEM.list.find(x => x.id === id) || null;
 const supSorted = () => supLive().slice().sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || a.name.localeCompare(b.name, 'fr'));
-const supTags = s => String(s.tags || '').split(/[,;]/).map(x => x.trim()).filter(Boolean);
-function supMerge(a, b){
-  const m = new Map(); for (const x of [...(a || []), ...(b || [])]) { if (!x || !x.id) continue; const o = m.get(x.id); if (!o || (x.m || 0) > (o.m || 0)) m.set(x.id, x); }
+function mergeBy(a, b, key){
+  const m = new Map(); for (const x of [...(a || []), ...(b || [])]) { if (!x || !x[key]) continue; const o = m.get(x[key]); if (!o || (x.m || 0) > (o.m || 0)) m.set(x[key], o ? Object.assign({}, x, {n:Math.max(x.n || 0, o.n || 0)}) : x); }
   return [...m.values()];
 }
-async function supLoad(){
+const memSig = () => MEM.list.map(x => x.id + ':' + (x.m || 0)).sort().join('|') + '#' + MEM.items.map(x => x.k + ':' + (x.m || 0)).sort().join('|');
+const memLocal = () => DB.set('suppliers', {list:MEM.list, items:MEM.items, fileId:MEM.fileId, dirty:MEM.dirty});
+async function memLoad(){
   const loc = await DB.get('suppliers');
-  if (loc && !SUP.loaded) { SUP.list = loc.list || []; SUP.fileId = loc.fileId || null; SUP.dirty = !!loc.dirty; }
-  SUP.loaded = true;
+  if (loc && !MEM.loaded) { MEM.list = loc.list || []; MEM.items = loc.items || []; MEM.fileId = loc.fileId || null; MEM.dirty = !!loc.dirty; }
+  MEM.loaded = true;
   if (!online()) return;
   try {
     const fs = await listQ("trashed=false and appProperties has { key='kind' and value='suppliers' }", 'files(id,modifiedTime)');
     fs.sort((a, b) => String(b.modifiedTime).localeCompare(String(a.modifiedTime)));
     if (fs[0]) {
-      const j = await getJson(fs[0].id), rem = (j && j.list) || [], sig = l => l.map(x => x.id + ':' + (x.m || 0)).sort().join('|');
-      SUP.fileId = fs[0].id; SUP.list = supMerge(rem, SUP.list); SUP.dirty = sig(SUP.list) !== sig(rem);
+      const j = await getJson(fs[0].id) || {}; MEM.fileId = fs[0].id;
+      const before = memSig(); MEM.list = mergeBy(j.list, MEM.list, 'id'); MEM.items = mergeBy(j.items, MEM.items, 'k');
+      const rem = {list:j.list || [], items:j.items || []}, sigR = rem.list.map(x => x.id + ':' + (x.m || 0)).sort().join('|') + '#' + rem.items.map(x => x.k + ':' + (x.m || 0)).sort().join('|');
+      MEM.dirty = memSig() !== sigR || (MEM.dirty && before !== sigR);
     }
-    await DB.set('suppliers', {list:SUP.list, fileId:SUP.fileId, dirty:SUP.dirty});
-    if (SUP.dirty) await supPush();
-  } catch (e) { U.info = 'Fournisseurs : ' + e.message; }
+    await memLocal();
+    if (MEM.dirty) await memPush();
+  } catch (e) { U.info = 'Fournisseurs / articles : ' + e.message; }
 }
-async function supPush(){
-  await DB.set('suppliers', {list:SUP.list, fileId:SUP.fileId, dirty:true});
+async function memPush(){
+  MEM.dirty = true; await memLocal();
   if (!online()) return;
   try {
-    const blob = new Blob([JSON.stringify({v:1, updatedAt:new Date().toISOString(), list:SUP.list})], {type:'application/json'});
-    if (SUP.fileId) await upload(blob, {}, SUP.fileId);
-    else { const rootId = await H.ensureFolder([]); const r = await upload(blob, {name:SUP_NAME, parents:[rootId], mimeType:'application/json', appProperties:{pc:'1', site:'none', kind:'suppliers'}, description:'Liste des fournisseurs des commandes de matériaux (BauGest, tous chantiers)'}); SUP.fileId = r.id; }
-    SUP.dirty = false; await DB.set('suppliers', {list:SUP.list, fileId:SUP.fileId, dirty:false});
-  } catch (e) { toast('Fournisseurs gardés sur l’appareil : ' + e.message); }
+    const blob = new Blob([JSON.stringify({v:1, updatedAt:new Date().toISOString(), list:MEM.list, items:MEM.items})], {type:'application/json'});
+    if (MEM.fileId) await upload(blob, {}, MEM.fileId);
+    else { const rootId = await H.ensureFolder([]); const r = await upload(blob, {name:SUP_NAME, parents:[rootId], mimeType:'application/json', appProperties:{pc:'1', site:'none', kind:'suppliers'}, description:'Fournisseurs et articles des commandes de matériaux (BauGest, tous chantiers)'}); MEM.fileId = r.id; }
+    MEM.dirty = false; await memLocal();
+  } catch (e) { /* gardé sur l'appareil, renvoyé plus tard */ }
 }
-function supSave(s){ s.m = Date.now(); const i = SUP.list.findIndex(x => x.id === s.id); if (i >= 0) SUP.list[i] = s; else SUP.list.push(s); SUP.dirty = true; return supPush(); }
-/* fournisseurs proposés pour les lignes de la commande (mots-clés ↔ désignations) */
-function supSuggest(o){
-  const txt = fold(o.lines.map(l => l.t).join(' ')); if (!txt.trim()) return [];
-  return supLive().map(s => ({s, k:supTags(s).filter(t => t.length > 2 && txt.includes(fold(t))).length})).filter(x => x.k).sort((a, b) => b.k - a.k || (b.s.fav ? 1 : 0) - (a.s.fav ? 1 : 0)).slice(0, 3).map(x => x.s);
+const memPushLater = () => { clearTimeout(MEM.pushT); MEM.pushT = setTimeout(memPush, 2500); };
+function supSave(s){ s.m = Date.now(); const i = MEM.list.findIndex(x => x.id === s.id); if (i >= 0) MEM.list[i] = s; else MEM.list.push(s); return memPush(); }
+/* article saisi → gardé pour les propositions suivantes (désignation + dernière unité) */
+function rememberItem(t, u){
+  t = String(t || '').replace(/\s+/g, ' ').trim(); if (t.length < 2) return;
+  const k = fold(t), it = MEM.items.find(x => x.k === k);
+  if (it) { if (it.t === t && it.u === (u || it.u)) return; it.t = t; if (u) it.u = u; it.m = Date.now(); }
+  else MEM.items.push({k, t, u:u || '', n:0, m:Date.now()});
+  memLocal(); memPushLater(); refreshItemsList();
 }
+function countItems(o){ for (const l of o.lines) { const it = MEM.items.find(x => x.k === fold(l.t)); if (it) { it.n = (it.n || 0) + 1; it.m = Date.now(); } } memLocal(); memPushLater(); }
+const itemOf = t => MEM.items.find(x => x.k === fold(t)) || null;
+const itemsSorted = () => MEM.items.slice().sort((a, b) => (b.n || 0) - (a.n || 0) || a.t.localeCompare(b.t, 'fr'));
+function refreshItemsList(){ const dl = document.getElementById('bcItems'); if (dl) dl.innerHTML = itemsSorted().map(x => `<option value="${esc(x.t)}">${esc(x.u || '')}</option>`).join(''); }
 
 /* ---------- commandes du chantier ---------- */
 const recName = o => `${o.no} – ${clean(o.supSnap && o.supSnap.name) || 'sans fournisseur'}`;
 async function loadOrders(){
   const sid = U.siteId, tok = ++U.tok, s = site(sid);
   let recs = (await DB.all()).filter(r => r.siteId === sid);
+  recs.forEach(r => { r.o = norm(r.o); });
   U.orders = recs; U.info = online() ? '' : 'Hors ligne ou non connecté à Google · commandes de cet appareil seulement';
   renderSoft();
   if (!online() || !s) return;
@@ -191,10 +203,12 @@ async function loadOrders(){
 }
 function norm(o){
   o = o || {};
+  const d = o.dlv || {};
   return {v:1, uid:o.uid || uid(), siteId:o.siteId || U.siteId, n:+o.n || 1, no:o.no || '', sup:o.sup || null, supSnap:o.supSnap || null, st:ST[o.st] ? o.st : 'b',
-    created:o.created || Date.now(), m:o.m || Date.now(), dlv:Object.assign({date:'', time:'', place:'', contact:'', unload:''}, o.dlv || {}), note:o.note || '', by:o.by || '',
-    free:!!o.free, ink:{n:Math.max(3, +(o.ink && o.ink.n) || 3), s:((o.ink && o.ink.s) || []).filter(x => x && Array.isArray(x.p) && x.p.length)},
-    lines:(o.lines || []).map(l => ({id:l.id || uid(), can:l.can || '', p:l.p || '', t:l.t || '', q:l.q == null ? null : +l.q, u:l.u || '', sq:l.sq == null ? null : +l.sq})),
+    created:o.created || Date.now(), m:o.m || Date.now(),
+    dlv:{date:d.date || '', time:d.time || '', place:d.place || '', fore:d.fore != null ? d.fore : (d.contact || ''), tel:d.tel || '', unload:d.unload || ''},
+    note:o.note || '', by:o.by || '',
+    lines:(o.lines || []).map(l => ({id:l.id || uid(), t:l.t || '', q:l.q == null ? null : +l.q, u:l.u || ''})),
     sentAt:o.sentAt || null, pdfAt:o.pdfAt || null};
 }
 async function push(rec){
@@ -211,7 +225,7 @@ async function push(rec){
       rec.driveId = r.id; rec.driveMod = r.modifiedTime; rec.dirty = false;
       if (rec.pdfId && rec.pdfName !== recName(rec.o)) { try { await H.api(`${DRV}/${encodeURIComponent(rec.pdfId)}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:recName(rec.o) + '.pdf'})}); rec.pdfName = recName(rec.o); } catch (e) {} }
       await DB.put(strip(rec));
-    } catch (e) { U.info = 'Commande gardée sur l’appareil : ' + e.message; renderSoft(); }
+    } catch (e) { U.info = 'Commande gardée sur l’appareil : ' + e.message; setInfo(); }
   })();
   await rec._p; rec._p = null;
   if (rec._again) { rec._again = false; return push(rec); }
@@ -223,80 +237,23 @@ function touch(rec){
 }
 async function flush(){ clearTimeout(U.saveT); const r = U.cur; if (r && r.dirty) await push(r); }
 
-/* quantités déjà commandées par position (commandes non annulées), sans la commande en cours si demandé */
-function orderedMap(exceptUid){
-  const m = new Map();
-  for (const r of U.orders) { if (r.o.st === 'x' || r.uid === exceptUid) continue; for (const l of r.o.lines) if (l.p && l.q != null) m.set(posKey(l), (m.get(posKey(l)) || 0) + l.q); }
-  return m;
-}
-
-/* ---------- soumission du chantier ---------- */
-async function loadSoum(){
-  const sid = U.siteId, s = site(sid), tok = U.tok;
-  U.soum = null; U.soumInfo = ''; U.soumBusy = true;
-  const c = await DB.get('soum:' + sid);
-  if (c) U.soum = c.data;
-  else if (H.soumCache) { try { U.soum = await H.soumCache(sid); } catch (e) {} }
-  if (!online() || !s) { U.soumBusy = false; if (!U.soum) U.soumInfo = 'Soumission pas encore lue sur cet appareil (hors ligne).'; renderSoft(); return; }
-  try {
-    const dir = await H.ensureFolder([s.folder, 'Soumission']);
-    const fs = await listQ(`'${qEsc(dir)}' in parents and trashed=false and mimeType!='application/vnd.google-apps.folder'`);
-    const byNew = (a, b) => String(b.createdTime).localeCompare(String(a.createdTime));
-    const base = n => String(n).replace(/\.[a-z0-9]{1,5}$/i, '').trim();
-    const srcs = fs.filter(f => /\.(crbx|e1s|01s|docx?|pdf|xlsx?)$/i.test(f.name)).sort(byNew);
-    let pick = null, parts = null, kind = '';
-    for (const j of fs.filter(f => POS.test(f.name)).sort(byNew)) if (srcs.some(f => base(f.name) === POS.exec(j.name)[1].trim())) { pick = j; kind = 'json'; break; }
-    if (!pick && root.BGSoum) for (const f of srcs) { const ps = root.BGSoum.partsOf(fs, f.name); if (ps) { parts = ps; pick = ps[0]; kind = 'json'; break; } }
-    if (!pick) { pick = srcs.find(f => SRC.test(f.name)) || null; kind = pick ? (S451.test(pick.name) ? '451' : 'docx') : ''; }
-    const mod = pick ? (parts ? parts.map(x => x.modifiedTime).join('|') : pick.modifiedTime) : '';
-    let data = null;
-    if (!pick) U.soumInfo = srcs.length ? 'Soumission pas encore lue : ouvre la rubrique Soumission (ou demande la lecture par Claude).' : 'Pas de soumission dans le dossier « Soumission » du chantier : lignes hors soumission seulement.';
-    else if (c && c.id === pick.id && c.mod === mod) data = c.data;
-    else if (kind === 'json') data = JSON.parse(parts ? (await Promise.all(parts.map(getBuf))).map(b => new TextDecoder().decode(b)).join('') : new TextDecoder().decode(await getBuf(pick.id)));
-    else if (kind === 'docx') data = await root.BGSoum.parseDocx(await getBuf(pick.id), pick.name);
-    else if (H.parse451) {
-      data = await H.parse451(await getBuf(pick.id), pick.name);
-      /* copie lisible par le PC (qui ne lit pas les .crbx) */
-      try {
-        const cd = await cmdDir(s), old = await listQ(`'${qEsc(cd)}' in parents and trashed=false and appProperties has { key='kind' and value='cmdsoum' }`, 'files(id)');
-        const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
-        await upload(blob, old[0] ? {appProperties:{src:pick.id}} : {name:SOUMC_NAME, parents:[cd], mimeType:'application/json', description:`Positions de « ${pick.name} » pour les commandes de matériaux (BauGest)`, appProperties:{pc:'1', site:sid, kind:'cmdsoum', src:pick.id}}, old[0] && old[0].id);
-      } catch (e) {}
-    } else {
-      const cp = await listQ(`trashed=false and appProperties has { key='kind' and value='cmdsoum' } and appProperties has { key='site' and value='${qEsc(sid)}' }`);
-      const f = cp.find(x => x.appProperties.src === pick.id);
-      if (f) data = await getJson(f.id);
-      else U.soumInfo = `Soumission « ${pick.name} » (.crbx) : ouvre une fois les Commandes de ce chantier sur la tablette pour la rendre lisible ici.`;
-    }
-    if (tok !== U.tok) return;
-    if (data) { U.soum = data; await DB.set('soum:' + sid, {id:pick.id, mod, name:pick.name, data}); }
-    else if (pick && !U.soumInfo) U.soumInfo = 'Soumission illisible.';
-  } catch (e) { if (tok === U.tok) U.soumInfo = 'Lecture de la soumission impossible : ' + e.message + (U.soum ? ' · version gardée sur l’appareil' : ''); }
-  if (tok !== U.tok) return;
-  U.soumBusy = false; renderSoft();
-}
-const soumPos = () => ((U.soum && U.soum.pos) || []).filter(p => !p.h);
-const canTitle = can => { const c = ((U.soum && U.soum.cans) || []).find(x => x.can === can); return c ? c.titre || '' : ''; };
-
-/* ---------- interface : affichée dans la page hôte (bureau tablette / section PC), classes et couleurs de l'hôte ---------- */
+/* ---------- interface : affichée dans la page hôte (bureau tablette / section PC) ---------- */
 const ic = p => `<svg class="ic bc-ic" viewBox="0 0 24 24">${p}</svg>`;
 const I = {x:ic('<path d="M18 6 6 18M6 6l12 12"/>'), plus:ic('<path d="M12 5v14M5 12h14"/>'), back:ic('<path d="M15 18l-6-6 6-6"/>'), del:ic('<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>'),
-  pdf:ic('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6"/>'), ok:ic('<path d="m5 12 5 5 9-10"/>'), truck:ic('<path d="M3 6h11v10H3zM14 9h4l3 3v4h-7M7 19a2 2 0 1 0 0-.1M17 19a2 2 0 1 0 0-.1"/>'),
-  pen:ic('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'), erase:ic('<path d="m7 21-4-4L14 6l7 7-8 8zM10 10l7 7M7 21h14"/>'), undo:ic('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
+  pdf:ic('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6"/>'), truck:ic('<path d="M3 6h11v10H3zM14 9h4l3 3v4h-7M7 19a2 2 0 1 0 0-.1M17 19a2 2 0 1 0 0-.1"/>'),
   sup:ic('<path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/>'), list:ic('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>')};
-const B = (label, attrs, kind = '') => `<button class="${(H.cls && H.cls.btn) || 'btn'}${kind === 'pri' ? ' primary' : kind === 'dang' ? ' danger bc-dang' : kind === 'on' ? ' on bc-on' : ''}" ${attrs}>${label}</button>`;
+const B = (label, attrs, kind = '') => `<button class="${btnCls()}${kind === 'pri' ? ' primary' : kind === 'dang' ? ' danger bc-dang' : ''}" ${attrs}>${label}</button>`;
 function css(){ return `
 .bc-ic{width:19px;height:19px}
 .bc-dang{color:var(--bad,#ef5f58)}
+.bc-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .bc-acts select{width:auto!important;max-width:230px;min-height:40px;background:var(--surface2,#262a30);border:1px solid var(--line,#353a41);color:var(--text,#ecebe6);border-radius:8px;padding:0 10px;font:15px var(--body,sans-serif)}
-.bc-root{display:block}
 .bc-root *{box-sizing:border-box}
-.bc-cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start}
-.bc-cols.l{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+.bc-cols{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}
 .bc-card{background:var(--surface,#1c1f23);border:1px solid var(--line,#353a41);border-radius:12px;padding:12px 14px;margin-bottom:14px}
 .bc-card h3{margin:0 0 10px;font:700 18px/1.1 var(--display,sans-serif);letter-spacing:.03em;color:var(--muted,#9da2a8);text-transform:uppercase}
 .bc-card h3 .bc-ic{vertical-align:-3px;margin-right:6px}
-.bc-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.bc-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
 .bc-kpi div{background:var(--surface,#1c1f23);border:1px solid var(--line,#353a41);border-radius:12px;padding:10px 12px}
 .bc-kpi b{display:block;font:700 28px/1.1 var(--display,sans-serif)}
 .bc-kpi span{color:var(--muted,#9da2a8);font-size:13px}
@@ -313,53 +270,35 @@ function css(){ return `
 .bc-st{display:inline-block;border-radius:6px;padding:2px 8px;font-size:12.5px;font-weight:600;white-space:nowrap;border:1px solid var(--line,#353a41)}
 .bc-st.b{color:var(--muted,#9da2a8)}.bc-st.e{background:var(--signal-soft,#3b3219);border-color:var(--signal,#f2c230)}
 .bc-st.c{color:#3b82d6;border-color:#3b82d6}.bc-st.p{color:var(--warn,#f0a04b);border-color:var(--warn,#f0a04b)}.bc-st.l{color:var(--ok,#48c985);border-color:var(--ok,#48c985)}.bc-st.x{color:var(--bad,#ef5f58);border-color:var(--bad,#ef5f58)}
-.bc-bar{height:6px;background:var(--surface2,#262a30);border-radius:3px;overflow:hidden;margin-top:4px;width:110px;margin-left:auto}
-.bc-bar i{display:block;height:100%;background:var(--ok,#48c985)}
 .bc-empty{padding:26px;text-align:center;color:var(--muted,#9da2a8)}
-.bc-srch{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
-.bc-srch input[type=search]{flex:1;min-width:150px}
-.bc-pill{border:1px solid var(--line,#353a41);border-radius:18px;padding:7px 13px;font:600 13.5px var(--body,sans-serif);color:var(--muted,#9da2a8);background:transparent;cursor:pointer}
-.bc-pill.on{border-color:var(--signal,#f2c230);color:var(--text,#ecebe6);background:var(--signal-soft,#3b3219)}
-.bc-can{font:700 15px var(--display,sans-serif);color:var(--text,#ecebe6);padding:12px 4px 4px;letter-spacing:.04em;text-transform:uppercase;border-bottom:2px solid var(--signal,#f2c230)}
-.bc-pos{display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid var(--line,#353a41)}
-.bc-pos .p{font-family:var(--mono,monospace);font-size:12.5px;color:var(--muted,#9da2a8);width:64px;flex:none;padding-top:2px}
-.bc-pos .t{flex:1;min-width:0}
-.bc-pos .q{text-align:right;font-size:13px;white-space:nowrap;padding-top:2px}
-.bc-add{width:40px;height:40px;border-radius:10px;background:var(--signal,#f2c230);color:var(--signal-ink,#1b1600);border:0;display:grid;place-items:center;flex:none;cursor:pointer}
-.bc-add.on{background:var(--surface2,#262a30);color:var(--ok,#48c985);border:1px solid var(--ok,#48c985)}
 .bc-fld{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;min-width:0}
 .bc-fld label{font-size:13px;color:var(--muted,#9da2a8)}
-.bc-root input:not([type=checkbox]),.bc-root select,.bc-root textarea,.bc-dlg input:not([type=checkbox]),.bc-dlg select,.bc-dlg textarea{background:var(--surface2,#262a30);border:1px solid var(--line,#353a41);color:var(--text,#ecebe6);border-radius:8px;padding:9px 10px;font:15px var(--body,sans-serif);min-width:0;max-width:100%}
+.bc-root input:not([type=checkbox]),.bc-root select,.bc-root textarea,.bc-dlg input:not([type=checkbox]),.bc-dlg select,.bc-dlg textarea{background:var(--surface2,#262a30);border:1px solid var(--line,#353a41);color:var(--text,#ecebe6);border-radius:8px;padding:9px 10px;font:15px var(--body,sans-serif);min-width:0;max-width:100%;min-height:42px}
 .bc-fld>input,.bc-fld>select,.bc-fld>textarea{width:100%}
-.bc-row{display:flex;gap:10px}.bc-row>.bc-fld{flex:1}
-.bc-lines input{width:100%;padding:7px 8px!important}
-.bc-lines input.q{width:92px;text-align:right}
-.bc-lines input.u{width:66px}
+.bc-row{display:flex;gap:10px;flex-wrap:wrap}.bc-row>.bc-fld{flex:1 1 160px}
+.bc-lines td{padding:6px 4px}
+.bc-lines td.nr{width:34px;color:var(--muted,#9da2a8);text-align:right;padding-right:8px}
+.bc-lines input[data-f="t"]{width:100%}
+.bc-lines input[data-f="q"]{width:100px;text-align:right}
+.bc-lines select[data-f="u"]{width:118px}
+.bc-lines td.x{width:52px}
 .bc-tag{display:inline-block;background:var(--surface2,#262a30);border-radius:5px;padding:1px 7px;font-size:12px;color:var(--muted,#9da2a8);margin:2px 3px 0 0}
 .bc-sup{display:flex;gap:12px;align-items:center;padding:10px 6px;border-bottom:1px solid var(--line,#353a41);cursor:pointer}
 .bc-sup.on{background:var(--signal-soft,#3b3219)}
 .bc-av{width:42px;height:42px;border-radius:10px;background:var(--surface2,#262a30);display:grid;place-items:center;font:700 17px var(--display,sans-serif);flex:none}
 .bc-hint{background:var(--signal-soft,#3b3219);border:1px dashed var(--signal,#f2c230);border-radius:8px;padding:8px 10px;font-size:13.5px;margin:0 0 12px}
-.bc-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.bc-ink{position:relative;border:1px solid var(--line,#353a41);border-radius:8px;background:var(--surface2,#262a30);touch-action:pan-y;-webkit-user-select:none;user-select:none}
-.bc-ink svg{display:block;width:100%;height:auto}
-.bc-ink line{stroke:var(--line,#353a41);stroke-width:1.5}
-.bc-ink path{fill:none;stroke:var(--text,#ecebe6);stroke-linecap:round;stroke-linejoin:round}
-.bc-ink.er{cursor:cell}
-.bc-inkbar .bc-on{background:var(--signal-soft,#3b3219);border-color:var(--signal,#f2c230);color:var(--text,#ecebe6)}
-.bc-inkbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+.bc-addr{background:var(--surface2,#262a30);border-radius:8px;padding:8px 10px;margin-bottom:10px}
+.bc-addr b{display:block}
+.bc-srch{display:flex;gap:8px;margin-bottom:8px}
+.bc-srch input{flex:1}
 .bc-scrim{position:fixed;inset:0;z-index:90;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px}
 .bc-dlg{background:var(--surface,#1c1f23);color:var(--text,#ecebe6);border:1px solid var(--line,#353a41);border-radius:14px;width:min(520px,100%);max-height:92vh;display:flex;flex-direction:column;font:15px/1.4 var(--body,sans-serif)}
 .bc-dlg h2{margin:0;padding:14px 16px 6px;font:700 22px var(--display,sans-serif);text-transform:uppercase;letter-spacing:.02em}
 .bc-db{padding:6px 16px;overflow:auto}
 .bc-df{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;flex-wrap:wrap}
-.bc-choice{display:grid;gap:10px}
-.bc-choice button{display:block;text-align:left;width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line,#353a41);background:var(--surface2,#262a30);color:var(--text,#ecebe6);font:15px var(--body,sans-serif);cursor:pointer}
-.bc-choice button b{display:block;font-size:16px;margin-bottom:2px}
-.bc-choice button small{color:var(--muted,#9da2a8)}
 .bc-toasts{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:95;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
 .bc-toast{background:#000d;color:#fff;padding:9px 14px;border-radius:8px;font:14px var(--body,sans-serif);max-width:90vw}
-@media (max-width:980px){.bc-cols,.bc-cols.l{grid-template-columns:minmax(0,1fr)}.bc-kpi{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:980px){.bc-cols{grid-template-columns:minmax(0,1fr)}}
 `; }
 const active = () => { try { return !!(U.els && (!H.active || H.active())); } catch (e) { return false; } };
 function bindEls(els){
@@ -369,20 +308,21 @@ function bindEls(els){
     el.addEventListener('click', e => { if (active()) onClick(e); });
     el.addEventListener('input', e => { if (active()) onInput(e); });
     el.addEventListener('change', e => { if (active()) onChange(e); });
-    el.addEventListener('pointerdown', e => { if (active()) inkDown(e); });
+    el.addEventListener('keydown', e => { if (active()) onKey(e); });
   }
 }
 function mount(els, siteId){
   if (!H) throw new Error('BGCmd.init() manquant');
   if (!document.getElementById('bcCss')) { const st = document.createElement('style'); st.id = 'bcCss'; st.textContent = css(); document.head.appendChild(st); }
+  if (!document.getElementById('bcItems')) { const dl = document.createElement('datalist'); dl.id = 'bcItems'; document.body.appendChild(dl); }
   U.els = els; bindEls(els);
-  if (!SUP.loaded) supLoad().then(() => { if (U.view !== 'list') render(); });
+  if (!MEM.loaded) memLoad().then(() => { refreshItemsList(); if (U.view !== 'list') render(); });
   const sid = siteId && site(siteId) ? siteId : null;
-  if (sid !== U.siteId) { flush(); U.siteId = sid; U.view = 'list'; U.cur = null; U.info = ''; return loadSite(); }
+  if (sid !== U.siteId) { flush(); U.siteId = sid; U.view = U.view === 'sup' ? 'sup' : 'list'; U.cur = null; U.info = ''; return loadSite(); }
   render();
 }
-function setInfo(){ const el = U.els.info; if (!el) return; const t = U.info; el.hidden = !t; el.textContent = t || ''; }
-function renderSoft(){ if (!active()) return; if (U.view === 'edit') { refreshPos(); setInfo(); } else render(); }
+function setInfo(){ const el = U.els && U.els.info; if (!el) return; const t = U.info; el.hidden = !t; el.textContent = t || ''; }
+function renderSoft(){ if (!active()) return; if (U.view === 'edit') setInfo(); else render(); }
 function render(){
   if (!active()) return;
   if (H.onNav) H.onNav();
@@ -394,163 +334,83 @@ function render(){
 function head(title, small, acts, backBtn){
   const s = site(U.siteId);
   U.els.head.innerHTML = `${backBtn ? B(I.back + '<span>' + esc(backBtn) + '</span>', 'data-ca="list"') : (H.logoHTML && s ? H.logoHTML(U.siteId) : '')}<div class="t"><small>${esc(small)}</small><h2>${esc(title)}</h2></div><div class="dk-acts bc-acts">${acts}</div>`;
-  return s;
 }
 const stBadge = st => `<span class="bc-st ${st}">${ST[st]}</span>`;
 const late = o => o.dlv.date && o.dlv.date < isoToday() && /[ecp]/.test(o.st);
-/* part commandée des fournitures, par CAN (montants de la soumission si connus, sinon quantités) */
-function coverage(){
-  const om = orderedMap(), by = new Map();
-  for (const p of soumPos()) {
-    if (!FOURN.test(p.t) || !(p.q > 0)) continue;
-    const w = p.m > 0 ? p.m : p.q, got = Math.min(1, (om.get(posKey(p)) || 0) / p.q);
-    const c = by.get(p.can) || {can:p.can, w:0, g:0}; c.w += w; c.g += w * got; by.set(p.can, c);
-  }
-  const rows = [...by.values()].sort((a, b) => a.can.localeCompare(b.can)), W = rows.reduce((a, c) => a + c.w, 0), G = rows.reduce((a, c) => a + c.g, 0);
-  return {rows, pct:W ? Math.round(G / W * 100) : null};
-}
-const objOf = o => o.lines.map(l => l.t).filter(Boolean).slice(0, 2).join(' · ').slice(0, 70) || (o.ink.s.length ? '✎ liste écrite au stylet' : '—');
+const objOf = o => o.lines.map(l => l.t).filter(Boolean).slice(0, 2).join(' · ').slice(0, 70) || '—';
+const nLines = o => o.lines.filter(l => (l.t || '').trim()).length;
 function renderList(){
   const s = site(U.siteId);
-  if (!s) { head('Commandes', 'Commandes de matériaux', B('Fournisseurs', 'data-ca="sups"')); U.els.list.innerHTML = '<p class="bc-empty">Choisis un chantier pour voir et faire ses commandes.</p>'; return; }
+  if (!s) { head('Commandes', 'Commandes de matériaux', B(I.sup + '<span>Fournisseurs</span>', 'data-ca="sups"')); U.els.list.innerHTML = '<p class="bc-empty">Choisis un chantier pour voir et faire ses commandes.</p>'; return; }
   head(s.name || s.label, (s.number || 'Chantier') + ' · Commandes', B(I.sup + '<span>Fournisseurs</span>', 'data-ca="sups"') + B(I.plus + '<span>Nouvelle commande</span>', 'data-ca="new"', 'pri'));
   const os = U.orders.map(r => r.o).sort((a, b) => b.n - a.n), t = isoToday(), in7 = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); })();
   const soon = os.filter(o => /[ecp]/.test(o.st) && o.dlv.date && o.dlv.date >= t && o.dlv.date <= in7).sort((a, b) => (a.dlv.date + a.dlv.time).localeCompare(b.dlv.date + b.dlv.time));
-  const cv = coverage();
-  const rows = os.map(o => `<tr data-co="${esc(o.uid)}"><td class="bc-mono" style="white-space:nowrap">${esc(o.no)}${o.free ? ' <span class="bc-tag">libre</span>' : ''}</td><td>${esc((o.supSnap && o.supSnap.name) || '—')}</td><td>${esc(objOf(o))}</td>
-    <td class="${late(o) ? 'bc-warn' : ''}" style="white-space:nowrap">${o.dlv.date ? esc(chShort(o.dlv.date) + (o.dlv.time ? ' · ' + o.dlv.time : '')) + (late(o) ? ' ⚠' : '') : '<span class="bc-mut">—</span>'}</td><td>${stBadge(o.st)}</td><td class="bc-n">${o.lines.length + (o.ink.s.length ? ' + ✎' : '')}</td></tr>`).join('');
-  U.els.list.innerHTML = `<div class="bc-root"><div class="bc-kpi"><div><b>${os.filter(o => o.st !== 'x').length}</b><span>commandes</span></div><div><b>${soon.length}</b><span>livraisons à venir (7 j)</span></div>
-      <div><b class="${os.some(late) ? 'bc-warn' : ''}">${os.filter(late).length}</b><span>en retard de livraison</span></div><div><b>${cv.pct == null ? '–' : cv.pct + ' %'}</b><span>des fournitures de la soumission commandées</span></div></div>
-    <div class="bc-cols l"><div><div class="bc-card"><h3>${I.list}Commandes</h3>${os.length ? `<table class="bc-t"><tr><th>N°</th><th>Fournisseur</th><th>Objet</th><th>Livraison</th><th>État</th><th class="bc-n">Lignes</th></tr>${rows}</table>` : '<p class="bc-empty">Aucune commande pour ce chantier. « Nouvelle commande » pour commencer.</p>'}</div></div>
-    <div><div class="bc-card"><h3>Fournitures de la soumission</h3>${U.soumBusy && !U.soum ? '<div class="bc-mut bc-sm">Lecture de la soumission…</div>' : cv.rows.length
-      ? `<div class="bc-sm bc-mut" style="margin-bottom:6px">Part commandée, par CAN</div><table class="bc-t">${cv.rows.map(c => { const p = Math.round(c.g / c.w * 100); return `<tr><td>${esc(c.can + ' ' + canTitle(c.can))}</td><td class="bc-n">${p} %<div class="bc-bar"><i style="width:${p}%"></i></div></td></tr>`; }).join('')}</table>`
-      : `<div class="bc-mut bc-sm">${esc(U.soumInfo || 'Aucune position de fourniture reconnue dans la soumission.')}</div>`}</div>
-    <div class="bc-card"><h3>${I.truck}Prochaines livraisons</h3>${soon.length ? soon.map(o => `<div class="bc-sm" style="padding:3px 0">${esc(wdName(o.dlv.date).slice(0, 2))} ${esc(chShort(o.dlv.date))}${o.dlv.time ? ' ' + esc(o.dlv.time) : ''} · <b>${esc((o.supSnap && o.supSnap.name) || '—')}</b> — ${esc(o.no)}</div>`).join('') : '<div class="bc-mut bc-sm">Rien dans les 7 prochains jours.</div>'}</div></div></div></div>`;
+  const rows = os.map(o => `<tr data-co="${esc(o.uid)}"><td class="bc-mono" style="white-space:nowrap">${esc(o.no)}</td><td>${esc((o.supSnap && o.supSnap.name) || '—')}</td><td>${esc(objOf(o))}</td>
+    <td class="${late(o) ? 'bc-warn' : ''}" style="white-space:nowrap">${o.dlv.date ? esc(chShort(o.dlv.date) + (o.dlv.time ? ' · ' + o.dlv.time : '')) + (late(o) ? ' ⚠' : '') : '<span class="bc-mut">—</span>'}</td><td>${stBadge(o.st)}</td><td class="bc-n">${nLines(o)}</td></tr>`).join('');
+  const miss = [!s.addr && 'l’adresse du chantier', !(s.fore && s.fore.name) && 'le contremaître'].filter(Boolean);
+  U.els.list.innerHTML = `<div class="bc-root">${miss.length ? `<div class="bc-hint">À compléter dans la fiche du chantier : ${miss.join(' et ')} (repris dans chaque commande pour la livraison).${H.editSite ? ' ' + B('<span>Compléter la fiche du chantier</span>', 'data-ca="site"') : ''}</div>` : ''}
+    <div class="bc-kpi"><div><b>${os.filter(o => o.st !== 'x').length}</b><span>commandes</span></div><div><b>${soon.length}</b><span>livraisons à venir (7 j)</span></div>
+      <div><b class="${os.some(late) ? 'bc-warn' : ''}">${os.filter(late).length}</b><span>en retard de livraison</span></div></div>
+    <div class="bc-cols"><div><div class="bc-card"><h3>${I.list}Commandes</h3>${os.length ? `<table class="bc-t"><tr><th>N°</th><th>Fournisseur</th><th>Objet</th><th>Livraison</th><th>État</th><th class="bc-n">Lignes</th></tr>${rows}</table>` : '<p class="bc-empty">Aucune commande pour ce chantier. « Nouvelle commande » pour commencer.</p>'}</div></div>
+    <div><div class="bc-card"><h3>${I.truck}Prochaines livraisons</h3>${soon.length ? soon.map(o => `<div class="bc-sm" style="padding:3px 0">${esc(wdName(o.dlv.date).slice(0, 2))} ${esc(chShort(o.dlv.date))}${o.dlv.time ? ' ' + esc(o.dlv.time) : ''} · <b>${esc((o.supSnap && o.supSnap.name) || '—')}</b> — ${esc(o.no)}</div>`).join('') : '<div class="bc-mut bc-sm">Rien dans les 7 prochains jours.</div>'}</div>
+    <div class="bc-card"><h3>Livraison sur ce chantier</h3><div class="bc-sm"><b>${esc(s.addr || 'Adresse à compléter')}</b></div><div class="bc-sm bc-mut">Contremaître : ${esc(s.fore && s.fore.name ? [s.fore.name, s.fore.tel].filter(Boolean).join(' · ') : 'à compléter')}</div></div></div></div></div>`;
 }
 
-/* ---------- édition d'une commande ---------- */
-function posRows(){
-  const o = U.cur.o, om = orderedMap(o.uid), inO = new Map(o.lines.filter(l => l.p).map(l => [posKey(l), l]));
-  const words = fold(U.q).split(/\s+/).filter(Boolean);
-  let list = soumPos().filter(p => (U.mode === 'all' || FOURN.test(p.t)) && (!words.length || words.every(w => fold(p.can + '.' + p.p + ' ' + p.t + ' ' + p.u).includes(w))));
-  if (U.rest) list = list.filter(p => !(p.q > 0) || (om.get(posKey(p)) || 0) < p.q);
-  const n = list.length; list = list.slice(0, 300);
-  let can = null, h = '';
-  for (const p of list) {
-    if (p.can !== can) { can = p.can; h += `<div class="bc-can">${esc(can)} · ${esc(canTitle(can))}</div>`; }
-    const done = om.get(posKey(p)) || 0, on = inO.has(posKey(p)), rest = p.q > 0 ? Math.max(0, p.q - done) : null;
-    h += `<div class="bc-pos"><span class="p">${esc(p.p)}</span><span class="t">${esc(p.t)}<br><span class="bc-sm bc-mut">Soumission ${p.q != null ? esc(fmtQ(p.q) + ' ' + p.u) : esc(p.u || '—')} · déjà commandé ${esc(fmtQ(done) || '0')}${done && p.q > 0 && done >= p.q ? ' ✓' : ''}</span></span>
-      <span class="q">${rest != null ? esc(fmtQ(rest) + ' ' + p.u) + '<br><span class="bc-sm bc-mut">restant</span>' : ''}</span>
-      <button class="bc-add ${on ? 'on' : ''}" data-cpos="${esc(posKey(p))}" title="${on ? 'Retirer de la commande' : 'Ajouter à la commande'}">${on ? I.ok : I.plus}</button></div>`;
-  }
-  if (!n) h = `<p class="bc-empty">${U.soum ? (U.mode === 'f' ? 'Aucune fourniture trouvée. Essaie « Tout ».' : 'Aucune position trouvée.') : esc(U.soumInfo || (U.soumBusy ? 'Lecture de la soumission…' : 'Pas de soumission.'))}</p>`;
-  else if (n > 300) h += `<div class="bc-mut bc-sm" style="padding:8px">… ${n - 300} autres positions : précise la recherche.</div>`;
-  return h;
+/* ---------- formulaire de commande ---------- */
+const unitSel = u => `<select data-f="u" aria-label="Unité">${(u && !UNITS.includes(u) ? [u, ...UNITS] : UNITS).map(x => `<option ${x === (u || 'pce') ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>`;
+function lineRow(l, i){
+  return `<tr data-l="${esc(l.id)}"><td class="nr">${i + 1}</td><td><input data-f="t" list="bcItems" value="${esc(l.t)}" placeholder="Désignation (proposée d’après les articles déjà commandés)" autocomplete="off" enterkeyhint="next"></td>
+    <td><input data-f="q" inputmode="decimal" value="${esc(l.q == null ? '' : String(l.q))}" placeholder="Qté" enterkeyhint="next"></td><td>${unitSel(l.u)}</td>
+    <td class="x">${B(I.x, 'data-ca="ldel" title="Retirer la ligne" aria-label="Retirer la ligne"')}</td></tr>`;
 }
-function linesHTML(){
-  const o = U.cur.o;
-  if (!o.lines.length) return `<div class="bc-mut bc-sm">${o.free ? 'Tape tes lignes (+ Ligne) ou écris la liste au stylet ci-dessous.' : 'Aucune ligne. Touche + sur une position de la soumission, ou « + Ligne » pour écrire librement.'}</div>`;
-  return `<table class="bc-t bc-lines"><tr><th>Pos.</th><th>Désignation</th><th class="bc-n">Qté</th><th>Un.</th><th></th></tr>${o.lines.map(l => `<tr data-l="${esc(l.id)}">
-    <td class="bc-mono bc-mut" style="white-space:nowrap">${esc(l.p || '—')}</td><td><input data-f="t" value="${esc(l.t)}" placeholder="Désignation (texte libre)"></td>
-    <td class="bc-n"><input class="q" data-f="q" inputmode="decimal" value="${esc(l.q == null ? '' : String(l.q))}"></td><td><input class="u" data-f="u" value="${esc(l.u)}" placeholder="pce"></td>
-    <td>${B(I.x, 'data-ca="ldel" title="Retirer la ligne" aria-label="Retirer la ligne"')}</td></tr>`).join('')}</table>`;
-}
+const linesHTML = () => `<table class="bc-t bc-lines"><tr><th></th><th>Désignation</th><th class="bc-n">Quantité</th><th>Unité</th><th></th></tr>${U.cur.o.lines.map(lineRow).join('')}</table>`;
 function supBlock(){
-  const o = U.cur.o, s = o.sup && supById(o.sup), sn = o.supSnap, sug = s ? [] : supSuggest(o);
+  const o = U.cur.o, s = o.sup && supById(o.sup), sn = o.supSnap;
   return `<div class="bc-fld"><label>Fournisseur (liste commune à tous les chantiers)</label><select data-k="sup"><option value="">— Choisir —</option>${supSorted().map(x => `<option value="${esc(x.id)}" ${x.id === o.sup ? 'selected' : ''}>${x.fav ? '★ ' : ''}${esc(x.name)}${x.addr ? ' – ' + esc(x.addr.split(',').pop().trim()) : ''}</option>`).join('')}
     ${o.sup && !s && sn ? `<option value="${esc(o.sup)}" selected>${esc(sn.name)} (supprimé de la liste)</option>` : ''}<option value="__new">+ Nouveau fournisseur…</option></select></div>
-    ${sn ? `<div class="bc-sm bc-mut">${esc([sn.contact, sn.tel, sn.mail].filter(Boolean).join(' · ') || 'Contact à compléter dans la fiche du fournisseur')}</div>${s && supTags(s).length ? `<div class="bc-sm" style="margin-top:4px">Habituel pour : ${supTags(s).map(t => `<span class="bc-tag">${esc(t)}</span>`).join('')}</div>` : ''}${s && s.note ? `<div class="bc-sm bc-warn" style="margin-top:4px">${esc(s.note)}</div>` : ''}` : ''}
-    ${sug.length ? `<div class="bc-sm" style="margin-top:6px">Proposé : ${sug.map(x => `<button class="bc-pill" data-csug="${esc(x.id)}">${x.fav ? '★ ' : ''}${esc(x.name)}</button>`).join(' ')}</div>` : ''}`;
+    ${sn ? `<div class="bc-sm bc-mut">${esc([sn.contact, sn.tel, sn.mail].filter(Boolean).join(' · ') || 'Contact à compléter dans la fiche du fournisseur')}</div>${s && s.note ? `<div class="bc-sm bc-warn" style="margin-top:4px">${esc(s.note)}</div>` : ''}` : ''}`;
 }
-/* ---------- écriture au stylet (liste libre) : traits en unités, largeur 1000, une ligne = 100 ---------- */
-const INK_W = 1000, INK_LH = 100, INK_MAX = 40;
-const inkPath = st => st.p.length === 1 ? `M${st.p[0][0]} ${st.p[0][1]}h.1` : 'M' + st.p.map(q => q[0] + ' ' + q[1]).join('L');
-function inkSvg(){
-  const k = U.cur.o.ink, h = k.n * INK_LH;
-  let g = ''; for (let i = 1; i <= k.n; i++) g += `<line x1="20" y1="${i * INK_LH - 14}" x2="${INK_W - 20}" y2="${i * INK_LH - 14}"/>`;
-  return `<svg viewBox="0 0 ${INK_W} ${h}" preserveAspectRatio="none" style="aspect-ratio:${INK_W}/${h}">${g}${k.s.map(st => `<path d="${inkPath(st)}" stroke-width="${st.w || 3.2}"/>`).join('')}<path class="bc-live" d="" stroke-width="3.2"/></svg>`;
-}
-function inkHTML(){
-  return `<div class="bc-inkbar">${B(I.pen + '<span>Stylo</span>', 'data-ca="inkpen"', U.inkTool === 'pen' ? 'on' : '')}${B(I.erase + '<span>Gomme</span>', 'data-ca="inkerase"', U.inkTool === 'erase' ? 'on' : '')}${B(I.undo + '<span>Annuler</span>', 'data-ca="inkundo"')}${B(I.plus + '<span>Ligne</span>', 'data-ca="inkline"')}<span class="bc-grow" style="flex:1"></span>${B('Tout effacer', 'data-ca="inkclear"', 'dang')}</div>
-    <div class="bc-ink ${U.inkTool === 'erase' ? 'er' : ''}" id="bcInk">${inkSvg()}</div>
-    <div class="bc-sm bc-mut" style="margin-top:6px">Stylet ou souris : écrire · doigt : faire défiler. Imprimé tel quel dans le PDF.</div>`;
-}
-const refreshInk = () => { const el = U.els.list.querySelector('#bcInk'); if (el) { el.innerHTML = inkSvg(); el.classList.toggle('er', U.inkTool === 'erase'); }
-  U.els.list.querySelectorAll('[data-ca="inkpen"],[data-ca="inkerase"]').forEach(b => { const on = (b.dataset.ca === 'inkpen') === (U.inkTool === 'pen'); b.classList.toggle('on', on); b.classList.toggle('bc-on', on); }); };
-function inkPt(e, svg){ const r = svg.getBoundingClientRect(), k = U.cur.o.ink; return [Math.round((e.clientX - r.left) / r.width * INK_W * 10) / 10, Math.round((e.clientY - r.top) / r.height * k.n * INK_LH * 10) / 10]; }
-function inkDown(e){
-  const box = e.target.closest('#bcInk'); if (!box || !U.cur || e.pointerType === 'touch') return;
-  const svg = box.querySelector('svg'), r = U.cur, k = r.o.ink; e.preventDefault();
-  const before = JSON.stringify(k.s);
-  try { box.setPointerCapture(e.pointerId); } catch (x) {}
-  if (U.inkTool === 'erase') {
-    const hit = pt => { const n0 = k.s.length; k.s = k.s.filter(st => !st.p.some(q => Math.hypot(q[0] - pt[0], q[1] - pt[1]) < 22)); return k.s.length !== n0; };
-    let any = hit(inkPt(e, svg)); if (any) refreshInk();
-    const mv = ev => { if (hit(inkPt(ev, box.querySelector('svg')))) { any = true; refreshInk(); } };
-    const up = () => { box.removeEventListener('pointermove', mv); box.removeEventListener('pointerup', up); box.removeEventListener('pointercancel', up); if (any) { U.inkUndo.push(before); touch(r); } };
-    box.addEventListener('pointermove', mv); box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
-    return;
-  }
-  const st = {w:3.2, p:[inkPt(e, svg)]}, live = svg.querySelector('.bc-live');
-  const mv = ev => { for (const c of (ev.getCoalescedEvents ? ev.getCoalescedEvents() : [ev])) { const q = inkPt(c, svg), l = st.p[st.p.length - 1]; if (Math.hypot(q[0] - l[0], q[1] - l[1]) >= 2) st.p.push(q); } live.setAttribute('d', inkPath(st)); };
-  const up = () => {
-    box.removeEventListener('pointermove', mv); box.removeEventListener('pointerup', up); box.removeEventListener('pointercancel', up);
-    U.inkUndo.push(before); k.s.push(st);
-    const maxY = Math.max(...st.p.map(q => q[1])); if (maxY > (k.n - 1) * INK_LH && k.n < INK_MAX) k.n++;   // on écrit sur la dernière ligne → une ligne de plus
-    touch(r); refreshInk();
-  };
-  box.addEventListener('pointermove', mv); box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
-}
-
 function renderEdit(){
-  const r = U.cur, o = r.o, ro = o.st !== 'b', s = site(U.siteId), showSoum = !o.free || U.showSoum;
-  head('Commande ' + o.no, (s ? (s.number || 'Chantier') + ' · ' + (s.name || '') : '') + (o.free ? ' · commande libre' : ''),
+  const r = U.cur, o = r.o, ro = o.st !== 'b', s = site(U.siteId), d = o.dlv;
+  head('Commande ' + o.no, s ? (s.number || 'Chantier') + ' · ' + (s.name || '') : '',
     `<select data-k="st" title="État de la commande">${ST_ORDER.map(k => `<option value="${k}" ${k === o.st ? 'selected' : ''}>${ST[k]}</option>`).join('')}</select>`
     + B(I.del + '<span>Supprimer</span>', 'data-ca="odel"', 'dang') + (r.pdfId ? B('<span>PDF enregistré</span>', 'data-ca="pdfopen"') : '') + B(I.pdf + '<span>Créer le PDF</span>', 'data-ca="pdf"', 'pri'), 'Commandes');
-  const d = o.dlv;
-  const soumCard = `<div class="bc-card"><h3>Positions de la soumission</h3>
-      <div class="bc-srch"><input type="search" data-k="q" placeholder="Chercher : tube, Ø, DN, béton, n° de position…" value="${esc(U.q)}">
-        <button class="bc-pill ${U.mode === 'f' ? 'on' : ''}" data-cmode="f">Fournitures</button><button class="bc-pill ${U.mode === 'all' ? 'on' : ''}" data-cmode="all">Tout</button>
-        <button class="bc-pill ${U.rest ? 'on' : ''}" data-ca="rest">Pas encore tout commandé</button>${o.free ? `<button class="bc-pill" data-ca="soumhide">Masquer</button>` : ''}</div>
-      ${U.soumInfo && U.soum ? `<div class="bc-sm bc-warn">${esc(U.soumInfo)}</div>` : ''}
-      <div id="bcPos">${posRows()}</div></div>`;
-  const linesCard = `<div class="bc-card"><h3>Lignes (<span id="bcNl">${o.lines.length}</span>)</h3><div id="bcLines">${linesHTML()}</div>
-      <div class="bc-acts" style="margin-top:10px">${B(I.plus + '<span>Ligne</span>', 'data-ca="lnew"')}${o.free && !U.showSoum ? B(I.list + '<span>Ajouter depuis la soumission</span>', 'data-ca="soumshow"') : ''}</div></div>`;
-  const inkCard = `<div class="bc-card"><h3>${I.pen}Liste écrite au stylet</h3>${inkHTML()}</div>`;
-  const right = `${ro ? `<div class="bc-hint">Commande ${esc(ST[o.st].toLowerCase())}${o.sentAt ? ' le ' + new Date(o.sentAt).toLocaleDateString('fr-CH') : ''} : une modification demande de refaire le PDF et de le renvoyer.</div>` : ''}
+  U.els.list.innerHTML = `<div class="bc-root">${ro ? `<div class="bc-hint">Commande ${esc(ST[o.st].toLowerCase())}${o.sentAt ? ' le ' + new Date(o.sentAt).toLocaleDateString('fr-CH') : ''} : une modification demande de refaire le PDF et de le renvoyer.</div>` : ''}
+    <div class="bc-cols"><div>
+      <div class="bc-card"><h3>${I.list}Articles</h3><div id="bcLines">${linesHTML()}</div>
+        <div class="bc-acts" style="margin-top:10px">${B(I.plus + '<span>Ligne</span>', 'data-ca="lnew"')}<span class="bc-sm bc-mut">Entrée = champ suivant · les articles saisis sont proposés la prochaine fois</span></div></div>
+      <div class="bc-card"><h3>Remarques</h3><div class="bc-fld"><label>Imprimées sur le PDF</label><textarea rows="2" data-k="note">${esc(o.note)}</textarea></div>
+        <div class="bc-fld"><label>Commandé par</label><input data-k="by" value="${esc(o.by)}" placeholder="Nom, fonction"></div></div></div>
+    <div>
       <div class="bc-card"><h3>Fournisseur</h3><div id="bcSup">${supBlock()}</div></div>
       <div class="bc-card"><h3>${I.truck}Livraison</h3>
+        <div class="bc-fld"><label>Adresse de livraison (adresse du chantier)</label><input data-d="place" value="${esc(d.place)}" placeholder="Adresse du chantier"></div>
         <div class="bc-row"><div class="bc-fld"><label>Date</label><input type="date" data-d="date" value="${esc(d.date)}"></div><div class="bc-fld"><label>Heure</label><input type="time" data-d="time" value="${esc(d.time)}"></div></div>
-        <div class="bc-fld"><label>Lieu de livraison</label><input data-d="place" value="${esc(d.place)}" placeholder="Adresse du chantier, accès…"></div>
-        <div class="bc-row"><div class="bc-fld"><label>Contact sur place</label><input data-d="contact" value="${esc(d.contact)}" placeholder="Nom · téléphone"></div>
-          <div class="bc-fld"><label>Déchargement</label><select data-d="unload">${UNLOAD.map(x => `<option value="${esc(x)}" ${x === d.unload ? 'selected' : ''}>${esc(x || '—')}</option>`).join('')}</select></div></div></div>
-      <div class="bc-card"><h3>Remarques</h3><div class="bc-fld"><label>Imprimées sur le PDF</label><textarea rows="2" data-k="note">${esc(o.note)}</textarea></div>
-        <div class="bc-fld"><label>Commandé par</label><input data-k="by" value="${esc(o.by)}" placeholder="Nom, fonction"></div></div>`;
-  U.els.list.innerHTML = showSoum
-    ? `<div class="bc-root bc-cols"><div>${soumCard}</div><div>${linesCard}${inkCard}${right}</div></div>`
-    : `<div class="bc-root bc-cols"><div>${linesCard}${inkCard}</div><div>${right}</div></div>`;
+        <div class="bc-row"><div class="bc-fld"><label>Contremaître</label><input data-d="fore" value="${esc(d.fore)}" placeholder="Nom"></div><div class="bc-fld"><label>Téléphone</label><input type="tel" data-d="tel" value="${esc(d.tel)}" placeholder="079 …"></div></div>
+        <div class="bc-fld"><label>Déchargement</label><select data-d="unload">${UNLOAD.map(x => `<option value="${esc(x)}" ${x === d.unload ? 'selected' : ''}>${esc(x || '—')}</option>`).join('')}</select></div></div></div></div></div>`;
 }
-const refreshPos = () => { const el = U.els && U.els.list.querySelector('#bcPos'); if (el) el.innerHTML = posRows(); };
-const refreshLines = () => { const L = U.els.list, el = L.querySelector('#bcLines'); if (el) el.innerHTML = linesHTML(); const n = L.querySelector('#bcNl'); if (n) n.textContent = U.cur.o.lines.length; const s = L.querySelector('#bcSup'); if (s && !U.cur.o.sup) s.innerHTML = supBlock(); };
+const refreshLines = () => { const el = U.els.list.querySelector('#bcLines'); if (el) el.innerHTML = linesHTML(); };
 function setSup(o, s){ o.sup = s ? s.id : null; o.supSnap = s ? {name:s.name, addr:s.addr || '', contact:s.contact || '', tel:s.tel || '', mail:s.mail || ''} : null; }
+function addLine(focus){
+  const o = U.cur.o, last = o.lines[o.lines.length - 1];
+  if (last && !last.t.trim() && last.q == null) { if (focus) focusLine(last.id); return; }
+  const l = {id:uid(), t:'', q:null, u:'pce'}; o.lines.push(l); touch(U.cur);
+  const tb = U.els.list.querySelector('#bcLines table'); if (tb) tb.insertAdjacentHTML('beforeend', lineRow(l, o.lines.length - 1)); else refreshLines();
+  if (focus) focusLine(l.id);
+}
+const focusLine = (id, f = 't') => { const el = U.els.list.querySelector(`tr[data-l="${id}"] [data-f="${f}"]`); if (el) el.focus(); };
 
 async function newOrder(){
   const s = site(U.siteId); if (!s) return;
-  const hasSoum = soumPos().length > 0;
-  const kind = await dlg({title:'Nouvelle commande', width:520, buttons:[{label:'Annuler', value:null}], body:`<div class="bc-choice">
-    <button data-k="soum" ${hasSoum ? '' : 'disabled style="opacity:.5"'}><b>Depuis la soumission</b><small>${hasSoum ? 'Choisir les positions (fournitures) de la soumission du chantier ; lignes libres possibles en plus.' : esc(U.soumInfo || 'Pas de soumission lue pour ce chantier.')}</small></button>
-    <button data-k="free"><b>Commande libre</b><small>Sans la soumission : lignes tapées (clavier ou dictée) et / ou liste écrite au stylet.</small></button></div>`,
-    onOpen:(box, done) => box.querySelectorAll('.bc-choice button').forEach(b => b.addEventListener('click', () => { if (!b.disabled) done(b.dataset.k); }))});
-  if (!kind) return;
-  const n = U.orders.reduce((a, r) => Math.max(a, r.o.n || 0), 0) + 1, last = U.orders.map(r => r.o).sort((a, b) => b.created - a.created)[0];
-  const o = norm({siteId:U.siteId, n, no:`CMD-${clean(s.number) || 'CH'}-${pad2(n)}`, by:pref('cmdBy'), free:kind === 'free',
-    dlv:{date:'', time:'07:00', place:last ? last.dlv.place : (s.addr || ''), contact:last ? last.dlv.contact : '', unload:''}});
-  if (o.free) o.lines.push({id:uid(), can:'', p:'', t:'', q:null, u:'', sq:null});
+  const n = U.orders.reduce((a, r) => Math.max(a, r.o.n || 0), 0) + 1;
+  const o = norm({siteId:U.siteId, n, no:`CMD-${clean(s.number) || 'CH'}-${pad2(n)}`, by:pref('cmdBy'),
+    dlv:{date:'', time:'07:00', place:s.addr || '', fore:(s.fore && s.fore.name) || '', tel:(s.fore && s.fore.tel) || '', unload:''}, lines:[{t:'', q:null, u:'pce'}]});
   const rec = {uid:o.uid, siteId:U.siteId, o, driveId:null, dirty:true};
   U.orders.push(rec); await DB.put(rec);
   openOrder(rec);
+  focusLine(o.lines[0].id);
 }
-function openOrder(rec){ U.cur = rec; U.view = 'edit'; U.q = ''; U.showSoum = false; U.inkUndo = []; U.inkTool = 'pen'; render(); if (U.els.scroll) U.els.scroll.scrollTop = 0; }
+function openOrder(rec){ U.cur = rec; U.view = 'edit'; render(); if (U.els.scroll) U.els.scroll.scrollTop = 0; }
 async function delOrder(){
   const r = U.cur; if (!r) return;
   if (!(await confirmDlg('Supprimer la commande', `Supprimer la commande ${esc(r.o.no)} et son PDF ? (corbeille du Drive, récupérable 30 jours)`, 'Supprimer', true))) return;
@@ -558,13 +418,12 @@ async function delOrder(){
   try { for (const id of [r.driveId, r.pdfId]) if (id && online()) await trash(id); } catch (e) { toast('Drive : ' + e.message); }
   await DB.del(r.uid); U.orders = U.orders.filter(x => x !== r); U.cur = null; U.view = 'list'; render();
 }
-const newSupDlg = pre => supEdit(Object.assign({id:uid(), name:'', addr:'', contact:'', tel:'', mail:'', tags:'', note:'', fav:false}, pre || {}), true);
+const newSupDlg = () => supEdit({id:uid(), name:'', addr:'', contact:'', tel:'', mail:'', note:'', fav:false}, true);
 function supForm(s){
   return `<div class="bc-fld"><label>Nom</label><input id="bsName" value="${esc(s.name)}" autofocus></div>
     <div class="bc-fld"><label>Adresse</label><input id="bsAddr" value="${esc(s.addr)}" placeholder="Rue, NPA Localité"></div>
     <div class="bc-row"><div class="bc-fld"><label>Contact</label><input id="bsCont" value="${esc(s.contact)}"></div><div class="bc-fld"><label>Téléphone</label><input id="bsTel" type="tel" value="${esc(s.tel)}"></div></div>
     <div class="bc-fld"><label>Mail des commandes</label><input id="bsMail" type="email" value="${esc(s.mail)}"></div>
-    <div class="bc-fld"><label>Matériaux (mots-clés séparés par des virgules → fournisseur proposé automatiquement)</label><input id="bsTags" value="${esc(s.tags)}" placeholder="tube, PP, armature, grave…"></div>
     <div class="bc-fld"><label>Note</label><input id="bsNote" value="${esc(s.note)}" placeholder="Délai, heure limite de commande…"></div>
     <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="bsFav" ${s.fav ? 'checked' : ''}> Favori (proposé en premier)</label>`;
 }
@@ -572,7 +431,7 @@ async function supEdit(s, isNew){
   const box = await dlg({title:isNew ? 'Nouveau fournisseur' : 'Fournisseur', width:560, body:`<div class="bc-root">${supForm(s)}</div>`, buttons:[{label:'Annuler', value:null}, {label:'Enregistrer', pri:true, check:b => { const ok = !!b.querySelector('#bsName').value.trim(); if (!ok) toast('Nom du fournisseur manquant'); return ok; }}]});
   if (!box) return null;
   const v = id => box.querySelector(id).value.trim();
-  const n = Object.assign({}, s, {name:v('#bsName'), addr:v('#bsAddr'), contact:v('#bsCont'), tel:v('#bsTel'), mail:v('#bsMail'), tags:v('#bsTags'), note:v('#bsNote'), fav:box.querySelector('#bsFav').checked});
+  const n = Object.assign({}, s, {name:v('#bsName'), addr:v('#bsAddr'), contact:v('#bsCont'), tel:v('#bsTel'), mail:v('#bsMail'), note:v('#bsNote'), fav:box.querySelector('#bsFav').checked});
   await supSave(n);
   for (const r of U.orders) if (r.o.sup === n.id && r.o.st === 'b') { setSup(r.o, n); touch(r); }
   return n;
@@ -581,55 +440,37 @@ async function supEdit(s, isNew){
 /* ---------- fournisseurs (écran) ---------- */
 function renderSup(){
   head('Fournisseurs', 'Tous les chantiers', B(I.plus + '<span>Fournisseur</span>', 'data-ca="supnew"', 'pri'), 'Commandes');
-  const words = fold(U.supQ).split(/\s+/).filter(Boolean), list = supSorted().filter(s => !words.length || words.every(w => fold([s.name, s.addr, s.contact, s.tags].join(' ')).includes(w)));
-  const sel = U.supSel && supById(U.supSel), hist = sel ? histOf(sel.id) : [];
+  const sel = U.supSel && supById(U.supSel), hist = sel ? U.orders.map(r => r.o).filter(o => o.sup === sel.id).sort((a, b) => b.n - a.n) : [];
   U.els.list.innerHTML = `<div class="bc-root bc-cols"><div>
-      <div class="bc-srch"><input type="search" data-k="supq" placeholder="Chercher un fournisseur ou un matériau…" value="${esc(U.supQ)}"></div>
-      <div class="bc-card" style="padding:0 6px" id="bcSupList">${supListHTML(list)}</div></div>
+      <div class="bc-srch"><input type="search" data-k="supq" placeholder="Chercher un fournisseur…" value="${esc(U.supQ)}"></div>
+      <div class="bc-card" style="padding:0 6px" id="bcSupList">${supListHTML()}</div></div>
     <div>${sel ? `<div class="bc-card"><h3>${esc(sel.name)}</h3>
       <div class="bc-sm">${esc(sel.addr || '')}</div><div class="bc-sm">${esc([sel.contact, sel.tel].filter(Boolean).join(' · '))}</div><div class="bc-sm">${esc(sel.mail || '')}</div>
-      ${sel.note ? `<div class="bc-sm bc-warn" style="margin-top:6px">${esc(sel.note)}</div>` : ''}<div style="margin-top:6px">${supTags(sel).map(t => `<span class="bc-tag">${esc(t)}</span>`).join('')}</div>
+      ${sel.note ? `<div class="bc-sm bc-warn" style="margin-top:6px">${esc(sel.note)}</div>` : ''}
       <div class="bc-acts" style="margin-top:12px">${B('<span>Modifier</span>', 'data-ca="supedit"')}${B(I.del + '<span>Supprimer</span>', 'data-ca="supdel"', 'dang')}</div></div>
       <div class="bc-card"><h3>Commandes de ce chantier</h3>${hist.length ? hist.map(o => `<div class="bc-sm" style="padding:3px 0"><span class="bc-mono">${esc(o.no)}</span> · ${stBadge(o.st)} ${o.dlv.date ? '· livraison ' + esc(chShort(o.dlv.date)) : ''}</div>`).join('') : '<div class="bc-sm bc-mut">Aucune commande à ce fournisseur sur ce chantier.</div>'}</div>`
       : '<p class="bc-empty">Choisis un fournisseur dans la liste.</p>'}</div></div>`;
 }
-function supListHTML(list){
+function supListHTML(){
+  const words = fold(U.supQ).split(/\s+/).filter(Boolean), list = supSorted().filter(s => !words.length || words.every(w => fold([s.name, s.addr, s.contact].join(' ')).includes(w)));
   return list.length ? list.map(s => `<div class="bc-sup ${s.id === U.supSel ? 'on' : ''}" data-csup="${esc(s.id)}"><div class="bc-av">${esc(s.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase())}</div>
-    <div style="flex:1;min-width:0"><b>${esc(s.name)}</b>${s.fav ? ' ★' : ''}<br><span class="bc-sm bc-mut">${esc([s.addr, s.contact, s.tel].filter(Boolean).join(' · '))}</span><br>${supTags(s).map(t => `<span class="bc-tag">${esc(t)}</span>`).join('')}</div></div>`).join('')
+    <div style="flex:1;min-width:0"><b>${esc(s.name)}</b>${s.fav ? ' ★' : ''}<br><span class="bc-sm bc-mut">${esc([s.addr, s.contact, s.tel].filter(Boolean).join(' · '))}</span></div></div>`).join('')
     : `<p class="bc-empty">${supLive().length ? 'Aucun fournisseur trouvé.' : 'Aucun fournisseur. Ajoute-les ici ou directement depuis une commande.'}</p>`;
 }
-const histOf = id => U.orders.map(r => r.o).filter(o => o.sup === id).sort((a, b) => b.n - a.n);
 
 /* ---------- événements (délégués sur la tête et la liste de l'hôte) ---------- */
 async function onClick(e){
-  const b = e.target.closest('[data-ca],[data-co],[data-cpos],[data-cmode],[data-csug],[data-csup]'); if (!b) return;
-  const a = b.dataset.ca, r = U.cur, o = r && r.o, L = U.els.list;
+  const b = e.target.closest('[data-ca],[data-co],[data-csup]'); if (!b) return;
+  const a = b.dataset.ca, r = U.cur, o = r && r.o;
   if (b.dataset.co) { const rec = U.orders.find(x => x.uid === b.dataset.co); if (rec) openOrder(rec); return; }
   if (b.dataset.csup) { U.supSel = b.dataset.csup; renderSup(); return; }
-  if (b.dataset.cmode) { U.mode = b.dataset.cmode; L.querySelectorAll('[data-cmode]').forEach(x => x.classList.toggle('on', x.dataset.cmode === U.mode)); refreshPos(); return; }
-  if (b.dataset.csug) { const s = supById(b.dataset.csug); if (s) { setSup(o, s); touch(r); L.querySelector('#bcSup').innerHTML = supBlock(); } return; }
-  if (b.dataset.cpos) {
-    const k = b.dataset.cpos, i = o.lines.findIndex(l => l.p && posKey(l) === k);
-    if (i >= 0) o.lines.splice(i, 1);
-    else { const p = soumPos().find(x => posKey(x) === k); if (!p) return; const done = orderedMap(o.uid).get(k) || 0;
-      o.lines = o.lines.filter(l => l.p || l.t || l.q != null);   // ligne libre vide de départ retirée
-      o.lines.push({id:uid(), can:p.can, p:p.p, t:p.t, u:p.u || '', sq:p.q == null ? null : p.q, q:p.q > 0 ? Math.max(0, Math.round((p.q - done) * 1000) / 1000) : (p.q == null ? 1 : p.q)}); }
-    touch(r); refreshPos(); refreshLines(); return;
-  }
   switch (a) {
     case 'list': await flush(); U.view = 'list'; U.cur = null; render(); break;
     case 'new': newOrder(); break;
     case 'sups': U.view = 'sup'; render(); break;
-    case 'rest': U.rest = !U.rest; b.classList.toggle('on', U.rest); refreshPos(); break;
-    case 'soumshow': U.showSoum = true; renderEdit(); break;
-    case 'soumhide': U.showSoum = false; renderEdit(); break;
-    case 'lnew': o.lines.push({id:uid(), can:'', p:'', t:'', q:null, u:'', sq:null}); touch(r); refreshLines(); { const ins = L.querySelector('#bcLines tr:last-child input[data-f="t"]'); if (ins) ins.focus(); } break;
-    case 'ldel': { const id = b.closest('[data-l]').dataset.l; o.lines = o.lines.filter(l => l.id !== id); touch(r); refreshLines(); refreshPos(); break; }
-    case 'inkpen': U.inkTool = 'pen'; refreshInk(); break;
-    case 'inkerase': U.inkTool = 'erase'; refreshInk(); break;
-    case 'inkundo': if (U.inkUndo.length) { o.ink.s = JSON.parse(U.inkUndo.pop()); touch(r); refreshInk(); } break;
-    case 'inkline': if (o.ink.n < INK_MAX) { o.ink.n++; touch(r); refreshInk(); } break;
-    case 'inkclear': if (o.ink.s.length && await confirmDlg('Tout effacer', 'Effacer toute la liste écrite au stylet ?', 'Effacer', true)) { U.inkUndo.push(JSON.stringify(o.ink.s)); o.ink.s = []; o.ink.n = 3; touch(r); refreshInk(); } break;
+    case 'site': if (H.editSite && U.siteId) H.editSite(U.siteId); break;
+    case 'lnew': addLine(true); break;
+    case 'ldel': { const id = b.closest('[data-l]').dataset.l; o.lines = o.lines.filter(l => l.id !== id); if (!o.lines.length) o.lines.push({id:uid(), t:'', q:null, u:'pce'}); touch(r); refreshLines(); break; }
     case 'odel': delOrder(); break;
     case 'pdf': makeAndSave(); break;
     case 'pdfopen': openSavedPdf(); break;
@@ -639,17 +480,23 @@ async function onClick(e){
       s.del = Date.now(); await supSave(s); U.supSel = null; renderSup(); break; }
   }
 }
+function lineOf(t){ const row = t.closest('[data-l]'); return row && U.cur ? U.cur.o.lines.find(x => x.id === row.dataset.l) : null; }
 function onInput(e){
   const t = e.target, k = t.dataset.k, r = U.cur;
-  if (k === 'q') { U.q = t.value; refreshPos(); return; }
-  if (k === 'supq') { U.supQ = t.value; const words = fold(U.supQ).split(/\s+/).filter(Boolean); U.els.list.querySelector('#bcSupList').innerHTML = supListHTML(supSorted().filter(s => !words.length || words.every(w => fold([s.name, s.addr, s.contact, s.tags].join(' ')).includes(w)))); return; }
+  if (k === 'supq') { U.supQ = t.value; U.els.list.querySelector('#bcSupList').innerHTML = supListHTML(); return; }
   if (!r || U.view !== 'edit') return;
   if (k === 'note' || k === 'by') { r.o[k] = t.value; if (k === 'by') pref('cmdBy', t.value); touch(r); return; }
   if (t.dataset.d) { r.o.dlv[t.dataset.d] = t.value; touch(r); return; }
-  const f = t.dataset.f, row = t.closest('[data-l]');
-  if (f && row) { const l = r.o.lines.find(x => x.id === row.dataset.l); if (!l) return; if (f === 'q') l.q = numIn(t.value); else l[f] = t.value; touch(r); if (f === 'q') refreshPosLater(); }
+  const f = t.dataset.f, l = lineOf(t);
+  if (!f || !l) return;
+  if (f === 'q') l.q = numIn(t.value);
+  else if (f === 't') {
+    l.t = t.value;
+    const it = itemOf(t.value); /* article choisi dans les propositions → son unité */
+    if (it && it.u && it.t === t.value.trim()) { l.u = it.u; const sel = t.closest('tr').querySelector('[data-f="u"]'); if (sel) { if (![...sel.options].some(x => x.value === it.u)) sel.insertAdjacentHTML('afterbegin', `<option>${esc(it.u)}</option>`); sel.value = it.u; } }
+  }
+  touch(r);
 }
-let posT = 0; const refreshPosLater = () => { clearTimeout(posT); posT = setTimeout(refreshPos, 600); };
 async function onChange(e){
   const t = e.target, k = t.dataset.k, r = U.cur;
   if (!r || U.view !== 'edit') return;
@@ -659,7 +506,20 @@ async function onChange(e){
     else setSup(r.o, supById(t.value));
     touch(r); U.els.list.querySelector('#bcSup').innerHTML = supBlock(); return;
   }
-  if (t.dataset.d === 'unload') { r.o.dlv.unload = t.value; touch(r); }
+  if (t.dataset.d === 'unload') { r.o.dlv.unload = t.value; touch(r); return; }
+  const f = t.dataset.f, l = lineOf(t);
+  if (!l) return;
+  if (f === 'u') { l.u = t.value; touch(r); }
+  if (f === 't' || f === 'u') rememberItem(l.t, l.u);
+}
+/* Entrée : désignation → quantité → unité → nouvelle ligne */
+function onKey(e){
+  if (e.key !== 'Enter' || U.view !== 'edit') return;
+  const t = e.target, f = t.dataset.f, l = lineOf(t); if (!f || !l) return;
+  e.preventDefault();
+  if (f === 't') focusLine(l.id, 'q');
+  else if (f === 'q') focusLine(l.id, 'u');
+  else if (f === 'u') { const o = U.cur.o, i = o.lines.indexOf(l); if (i < o.lines.length - 1) focusLine(o.lines[i + 1].id); else addLine(true); }
 }
 
 /* ---------- PDF de la commande (A4, sans prix) ---------- */
@@ -671,10 +531,10 @@ async function logoPng(src){
 }
 async function makePdf(o){
   await loadScript(PDFLIB_URL);
-  const {PDFDocument, StandardFonts, rgb, LineCapStyle} = root.PDFLib, s = site(o.siteId) || {label:''}, co = (H.comp && H.comp(o.siteId)) || {};
+  const {PDFDocument, StandardFonts, rgb} = root.PDFLib, s = site(o.siteId) || {label:''}, co = (H.comp && H.comp(o.siteId)) || {};
   const doc = await PDFDocument.create(); doc.setTitle(winAnsi('Commande ' + o.no)); doc.setCreator('BauGest');
   const F = await doc.embedFont(StandardFonts.Helvetica), FB = await doc.embedFont(StandardFonts.HelveticaBold);
-  const W = 595.28, Hh = 841.89, M = 42, K = rgb(.07, .07, .07), G = rgb(.4, .42, .45), Y = rgb(.949, .761, .188), LN = rgb(.82, .82, .82), INK = rgb(.11, .15, .2);
+  const W = 595.28, Hh = 841.89, M = 42, K = rgb(.07, .07, .07), G = rgb(.4, .42, .45), Y = rgb(.949, .761, .188), LN = rgb(.82, .82, .82);
   let logo = null; if (co.logo) try { const png = await logoPng(co.logo); if (png) logo = await doc.embedPng(png); } catch (e) {}
   const wrap = (txt, f, sz, w) => { const out = []; for (const para of winAnsi(String(txt || '').replace(/\r/g, '')).split('\n')) { let line = ''; for (const wd of para.split(/\s+/)) { const t = line ? line + ' ' + wd : wd; if (f.widthOfTextAtSize(t, sz) <= w || !line) line = t; else { out.push(line); line = wd; } } out.push(line); } return out; };
   const pages = []; let pg, y;
@@ -682,7 +542,6 @@ async function makePdf(o){
   const TR = (t, x, yy, o2 = {}) => { const f = o2.b ? FB : F, sz = o2.s || 10; T(t, x - f.widthOfTextAtSize(winAnsi(t), sz), yy, o2); };
   const newPage = () => { pg = doc.addPage([W, Hh]); pages.push(pg); y = Hh - M; };
   newPage();
-  /* en-tête : logo à gauche, entreprise à droite */
   let hTop = 0;
   if (logo) { const h = 46, w = Math.min(170, logo.width * h / logo.height), h2 = w * logo.height / logo.width; pg.drawImage(logo, {x:M, y:y - h2, width:w, height:h2}); hTop = h2; }
   let ry = y - 9; for (const [t, b] of [[co.name, 1], [co.addr], [[co.tel, co.email].filter(Boolean).join(' · ')]]) if (t) { TR(t, W - M, ry, {s:b ? 11 : 9, b, c:b ? K : G}); ry -= b ? 14 : 12; }
@@ -690,49 +549,30 @@ async function makePdf(o){
   pg.drawRectangle({x:M, y, width:W - 2 * M, height:2.2, color:Y}); y -= 28;
   T('Commande de matériaux N° ' + o.no, M, y, {s:17, b:1}); y -= 16;
   T(`Chantier ${s.label}`, M, y, {s:10.5}); TR('Date : ' + new Date().toLocaleDateString('fr-CH'), W - M, y, {s:10.5}); y -= 16;
-  /* cadres fournisseur / livraison */
+  /* cadres fournisseur / livraison (adresse du chantier + contremaître) */
   const sn = o.supSnap || {}, d = o.dlv, bw = (W - 2 * M - 14) / 2;
   const box1 = [sn.name || '—', ...(sn.addr ? wrap(sn.addr, F, 9.5, bw - 16) : []), [sn.contact, sn.tel].filter(Boolean).join(' · '), sn.mail || ''].filter(Boolean);
   const when = d.date ? (wdName(d.date).replace(/^./, c => c.toUpperCase()) + ' ' + chDate(d.date) + (d.time ? ' · ' + d.time : '')) : 'Date à convenir';
-  const box2 = [when, ...(d.place ? wrap(d.place, F, 9.5, bw - 16) : []), d.contact ? 'Contact : ' + d.contact : '', d.unload ? 'Déchargement : ' + d.unload : ''].filter(Boolean);
+  const box2 = [when, ...(d.place ? wrap(d.place, F, 9.5, bw - 16) : ['Adresse : chantier ' + s.label]), d.fore || d.tel ? 'Contremaître : ' + [d.fore, d.tel].filter(Boolean).join(' · ') : '', d.unload ? 'Déchargement : ' + d.unload : ''].filter(Boolean);
   const bh = 26 + Math.max(box1.length, box2.length) * 12.5;
-  [[box1, 'FOURNISSEUR', M], [box2, 'LIVRAISON', M + bw + 14]].forEach(([ls, tt, x]) => {
+  [[box1, 'FOURNISSEUR', M], [box2, 'LIVRAISON SUR LE CHANTIER', M + bw + 14]].forEach(([ls, tt, x]) => {
     pg.drawRectangle({x, y:y - bh, width:bw, height:bh, borderColor:LN, borderWidth:.8});
     T(tt, x + 8, y - 13, {s:7.5, b:1, c:G}); ls.forEach((l, i) => T(l, x + 8, y - 27 - i * 12.5, {s:9.5, b:i === 0}));
   });
   y -= bh + 20;
-  /* tableau des lignes tapées */
   const lines = o.lines.filter(l => (l.t || '').trim() || l.q != null);
-  if (lines.length) {
-    const cP = M, cD = M + 62, cQ = W - M - 58, cU = W - M - 50, dW = cQ - cD - 60;
-    const headRow = () => { pg.drawRectangle({x:M, y:y - 5, width:W - 2 * M, height:17, color:Y}); T('Pos.', cP + 4, y, {s:9, b:1}); T('Désignation', cD, y, {s:9, b:1}); TR('Quantité', cQ, y, {s:9, b:1}); T('Unité', cU, y, {s:9, b:1}); y -= 20; };
-    headRow();
-    for (const l of lines) {
-      const ls = wrap(l.t || '', F, 9.5, dW), h = ls.length * 11.5 + 6;
-      if (y - h < M + 40) { newPage(); headRow(); }
-      T(l.p || '—', cP + 4, y, {s:9, c:G}); ls.forEach((t, i) => T(t, cD, y - i * 11.5, {s:9.5})); TR(fmtQ(l.q), cQ, y, {s:9.5, b:1}); T(l.u || '', cU, y, {s:9.5});
-      y -= h; pg.drawLine({start:{x:M, y:y + 6}, end:{x:W - M, y:y + 6}, thickness:.5, color:LN}); y -= 4;
-    }
-    y -= 6;
-  }
-  /* liste écrite au stylet : imprimée telle quelle (traits vectoriels) */
-  const st = o.ink.s;
-  if (st.length) {
-    const maxY = Math.max(...st.flatMap(x => x.p.map(q => q[1]))), nl = Math.min(o.ink.n, Math.ceil((maxY + 10) / INK_LH)), hU = nl * INK_LH;
-    let k = (W - 2 * M) / INK_W; const avail = Hh - 2 * M - 40;
-    if (hU * k > avail) k = avail / hU;
-    if (y - 16 - hU * k < M + 30) newPage();
-    T(lines.length ? 'Liste manuscrite :' : 'Liste du matériel :', M, y, {s:9.5, b:1}); y -= 8;
-    const top = y, wPt = INK_W * k;
-    pg.drawRectangle({x:M, y:top - hU * k, width:wPt, height:hU * k, borderColor:LN, borderWidth:.6});
-    for (let i = 1; i < nl; i++) pg.drawLine({start:{x:M + 4, y:top - (i * INK_LH - 14) * k}, end:{x:M + wPt - 4, y:top - (i * INK_LH - 14) * k}, thickness:.3, color:LN});
-    for (const x of st) pg.drawSvgPath(inkPath(x), {x:M, y:top, scale:k, borderColor:INK, borderWidth:(x.w || 3.2), borderLineCap:LineCapStyle ? LineCapStyle.Round : undefined});
-    y = top - hU * k - 14;
-  }
-  /* remarques + signatures */
+  const cN = M + 4, cD = M + 30, cQ = W - M - 70, cU = W - M - 62, dW = cQ - cD - 60;
+  const headRow = () => { pg.drawRectangle({x:M, y:y - 5, width:W - 2 * M, height:17, color:Y}); T('N°', cN, y, {s:9, b:1}); T('Désignation', cD, y, {s:9, b:1}); TR('Quantité', cQ, y, {s:9, b:1}); T('Unité', cU, y, {s:9, b:1}); y -= 20; };
+  headRow();
+  lines.forEach((l, i) => {
+    const ls = wrap(l.t || '', F, 9.5, dW), h = ls.length * 11.5 + 6;
+    if (y - h < M + 40) { newPage(); headRow(); }
+    T(String(i + 1), cN, y, {s:9, c:G}); ls.forEach((t, j) => T(t, cD, y - j * 11.5, {s:9.5})); TR(fmtQ(l.q), cQ, y, {s:9.5, b:1}); T(l.u || '', cU, y, {s:9.5});
+    y -= h; pg.drawLine({start:{x:M, y:y + 6}, end:{x:W - M, y:y + 6}, thickness:.5, color:LN}); y -= 4;
+  });
   const nlr = o.note ? wrap(o.note, F, 9.5, W - 2 * M - 70) : [];
   if (y - (nlr.length * 12 + 110) < M + 20) newPage();
-  y -= 6;
+  y -= 10;
   if (nlr.length) { T('Remarques :', M, y, {s:9.5, b:1}); nlr.forEach((t, i) => T(t, M + 66, y - i * 12, {s:9.5})); y -= nlr.length * 12 + 6; }
   T('Merci de confirmer la commande et le délai de livraison par retour de mail.', M, y, {s:9.5}); y -= 52;
   pg.drawLine({start:{x:M, y}, end:{x:M + bw, y}, thickness:.7, color:G}); pg.drawLine({start:{x:M + bw + 14, y}, end:{x:W - M, y}, thickness:.7, color:G});
@@ -745,10 +585,12 @@ async function makePdf(o){
 async function makeAndSave(){
   const r = U.cur; if (!r) return;
   const o = r.o;
-  if (!o.lines.some(l => (l.t || '').trim() || l.q != null) && !o.ink.s.length) { toast('Ajoute au moins une ligne ou écris la liste au stylet'); return; }
+  if (!o.lines.some(l => (l.t || '').trim())) { toast('Ajoute au moins un article'); return; }
   if (!o.sup) { if (!(await confirmDlg('Pas de fournisseur', 'Créer le PDF sans fournisseur ?', 'Créer quand même'))) return; }
+  for (const l of o.lines) rememberItem(l.t, l.u);
   let blob;
   try { toast('Préparation du PDF…', 1500); blob = await makePdf(o); } catch (e) { toast('PDF : ' + e.message, 5000); return; }
+  if (!o.pdfAt) countItems(o);
   o.pdfAt = Date.now(); touch(r);
   const name = recName(o) + '.pdf';
   let saved = '';
@@ -788,12 +630,10 @@ function markSent(){ const r = U.cur; if (!r) return; r.o.st = 'e'; r.o.sentAt =
 
 /* ---------- chargement / retour ---------- */
 async function loadSite(){
-  U.tok++; U.orders = []; U.soum = null; U.soumInfo = '';
+  U.tok++; U.orders = [];
   render();
-  if (!U.siteId) return;
-  await Promise.all([loadOrders(), loadSoum()]);
+  if (U.siteId) await loadOrders();
 }
-/* retour Android / Échap : fenêtre ouverte → la ferme ; commande ou fournisseurs → liste des commandes */
 function back(){
   if (!active()) return false;
   if (U.dlgs.length) { U.dlgs[U.dlgs.length - 1].close(); return true; }
@@ -801,12 +641,10 @@ function back(){
   return false;
 }
 const depth = () => active() ? (U.view !== 'list' ? 1 : 0) + U.dlgs.length : 0;
-/* l'hôte quitte la rubrique : enregistrer */
 function leave(){ flush(); U.dlgs.slice().forEach(d => d.close()); }
-/* livraisons prévues (accueil) : commandes gardées sur l'appareil */
 async function deliveries(from, to){
   return (await DB.all()).map(r => r.o).filter(o => o && /[ecp]/.test(o.st) && o.dlv && o.dlv.date >= from && o.dlv.date <= to);
 }
 
-root.BGCmd = {init:h => { H = h; }, mount, back, depth, leave, isActive:active, deliveries, makePdf, _U:U, _SUP:SUP};
+root.BGCmd = {init:h => { H = h; }, mount, back, depth, leave, isActive:active, deliveries, makePdf, _U:U, _MEM:MEM};
 })(typeof window !== 'undefined' ? window : this);

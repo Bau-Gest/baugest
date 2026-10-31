@@ -3223,13 +3223,14 @@ const CMDP = {site:null};
 const cmdLogo = s => s && s.logo ? `<span class="slogo"><img src="${s.logo}" alt=""></span>` : `<span class="slogo none">${esc(initials(s ? s.name : '?'))}</span>`;
 if (window.BGCmd) BGCmd.init({
   split:true,
-  sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), name:s.name, folder:siteFolderName(s), number:s.number || ''})),
+  sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), name:s.name, folder:siteFolderName(s), number:s.number || '', addr:s.addr || '', fore:s.fore || null})),
   api:(url, opt) => api(url, opt), apiRaw:url => api(url, {}, true),
   ensureFolder:async parts => { let id = P.rootId; for (const n of parts) id = await ensureChild(id, n); return id; },
   online:() => !!P.rootId && navigator.onLine, loadScript,
   comp:id => { const s = S.sites.find(x => x.id === id), c = (s && compById(s.comp)) || (S.companies || [])[0]; return c ? {name:c.name || '', addr:c.addr || '', tel:c.tel || '', email:c.email || '', logo:c.logo || ''} : {}; },
   active:() => !$('#cmdView').hidden,
-  logoHTML:id => cmdLogo(S.sites.find(x => x.id === id))
+  logoHTML:id => cmdLogo(S.sites.find(x => x.id === id)),
+  editSite:id => editSiteDlg(id).then(() => { if (!$('#cmdView').hidden) cmdMount(); })
 });
 function renderCmdSites(){
   const sites = S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}));
@@ -3248,7 +3249,7 @@ function openCommandes(){
 }
 function closeCmd(){ if ($('#cmdView').hidden) return; if (window.BGCmd) BGCmd.leave(); $('#cmdView').hidden = true; syncNav(); }
 $('#cmdSites').addEventListener('click', e => { const b = e.target.closest('[data-cmdsite]'); if (!b) return; CMDP.site = b.dataset.cmdsite; try { localStorage.setItem('baugest.cmd.site', CMDP.site); } catch (x) {} cmdMount(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cmdView').hidden && !document.querySelector('.scrim') && window.BGCmd && BGCmd.back()) e.preventDefault(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !e.defaultPrevented && !$('#cmdView').hidden && !document.querySelector('.scrim') && window.BGCmd && BGCmd.back()) e.preventDefault(); });
 function openPlanning(){
   if (!window.BGPlan) { toast('Module Planning non chargé : recharge la page', 'err'); return; }
   let sid = null;
@@ -4273,6 +4274,8 @@ function sdHint(dlg){
 async function editSiteDlg(id){
   const s = siteById(id); if (!s) { toast('Chantier introuvable', 'err'); return; }
   const m = s.meet || {}, comps = compList(), opt = (v, l, cur) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(l)}</option>`;
+  let R0 = null; try { R0 = await readSettings(); } catch (e) {}
+  const fores = foremenPc(R0);
   const r = await dialog({title:'Chantier ' + siteLabel(s), width:580, buttons:[{label:'Annuler', value:null}, {label:'Enregistrer', primary:true}], body:`
     <div class="se-g2"><label class="se-f"><span>N° de chantier</span><input type="text" id="sdNum" value="${esc(s.number || '')}"></label>
       <label class="se-f"><span>Nom court</span><input type="text" id="sdName" value="${esc(s.name || '')}"></label></div>
@@ -4286,19 +4289,33 @@ async function editSiteDlg(id){
       <label class="se-f"><span>Durée</span><select id="sdDur">${[[60, '1 h'], [90, '1 h 30'], [120, '2 h'], [180, '3 h']].map(([v, l]) => opt(v, l, m.dur || 90)).join('')}</select></label></div>
     <label class="se-f"><span>Lieu de la séance</span><input type="text" id="sdPlace" value="${esc(m.place || '')}" placeholder="Baraque de chantier, bureau de la DT…"></label>
     <small class="muted" id="sdHint"></small>
+    <h4>Livraisons (commandes de matériaux)</h4>
+    <label class="se-f"><span>Adresse du chantier</span><input type="text" id="sdAddr" value="${esc(s.addr || '')}" placeholder="Rue du Bourg 12, 1913 Saillon"></label>
+    <div class="se-g2"><label class="se-f"><span>Contremaître</span><input type="text" id="sdFore" list="sdForeList" value="${esc(s.fore?.name || '')}" placeholder="Nom (proposé si déjà saisi)" autocomplete="off"></label>
+      <label class="se-f"><span>Téléphone</span><input type="tel" id="sdForeTel" value="${esc(s.fore?.tel || '')}" placeholder="079 123 45 67"></label></div>
+    <datalist id="sdForeList">${fores.map(f => `<option value="${esc(f.name)}">${esc(f.tel || '')}</option>`).join('')}</datalist>
+    <small class="muted">Repris dans chaque commande : adresse de livraison et contremaître à appeler.</small>
     <h4>Notre entreprise sur ce chantier</h4>
     <select id="sdComp">${opt('', comps.length ? '— Aucune —' : 'Aucune entreprise (à créer dans Devis › Entreprises)', s.comp || '')}${comps.map(c => opt(c.id, c.name, s.comp || '')).join('')}</select>
     <input type="text" id="sdAbbr" value="${esc(s.abbr || '')}" placeholder="Abréviations dans les PV : DUP, Ent. Dupont" aria-label="Abréviations de l'entreprise dans les PV">
     <small class="muted">Sert à repérer dans les PV DT et les mails les points qui concernent cette entreprise.</small>`,
-    onOpen:dlg => { sdHint(dlg); ['#sdFrom', '#sdTime', '#sdEvery'].forEach(k => dlg.querySelector(k).addEventListener('input', () => sdHint(dlg))); }});
+    onOpen:dlg => { sdHint(dlg); ['#sdFrom', '#sdTime', '#sdEvery'].forEach(k => dlg.querySelector(k).addEventListener('input', () => sdHint(dlg)));
+      dlg.querySelector('#sdFore').addEventListener('input', () => { const f = fores.find(x => foreKey(x.name) === foreKey(dlg.querySelector('#sdFore').value)), t = dlg.querySelector('#sdForeTel'); if (f && f.tel && !t.value.trim()) t.value = f.tel; }); }});
   if (!r) return;
   const v = k => r.querySelector(k).value.trim(), num = k => parseFloat(v(k).replace(',', '.'));
   const lat = num('#sdLat'), lon = num('#sdLon');
   const patch = {number:v('#sdNum'), name:v('#sdName') || s.name, radius:+v('#sdRadius') || 300,
     lat:lat >= -90 && lat <= 90 ? lat : s.lat, lon:lon >= -180 && lon <= 180 ? lon : s.lon,
-    meet:sdMeet(r), comp:v('#sdComp') || undefined, abbr:v('#sdAbbr') || undefined};
+    meet:sdMeet(r), comp:v('#sdComp') || undefined, abbr:v('#sdAbbr') || undefined,
+    addr:v('#sdAddr') || undefined, fore:v('#sdFore') ? {name:v('#sdFore'), tel:v('#sdForeTel')} : undefined};
   try { await saveSitePc(id, patch); toast('Chantier enregistré · visible sur la tablette à la prochaine synchronisation', 'ok'); }
   catch (e) { toast('Enregistrement impossible : ' + e.message, 'err', 6000); }
+}
+const foreKey = n => String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+function foremenPc(R){
+  const m = new Map(), sites = (R && Array.isArray(R.sites) ? R.sites : S.sites) || [];
+  for (const f of [...sites.map(x => x.fore).filter(Boolean), ...((R && R.fields && Array.isArray(R.fields.foremen)) ? R.fields.foremen : [])]) if (f && f.name) m.set(foreKey(f.name), {name:f.name, tel:f.tel || (m.get(foreKey(f.name)) || {}).tel || ''});
+  return [...m.values()].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 }
 async function saveSitePc(id, patch){
   const fid = await settingsFileId(); if (!fid) throw new Error('fichier de réglages introuvable (ouvre une fois BauGest sur la tablette)');
@@ -4308,6 +4325,12 @@ async function saveSitePc(id, patch){
   for (const k in patch) if (patch[k] === undefined) delete site[k]; else site[k] = patch[k];
   delete site.example;
   R.smod = R.smod || {}; R.smod[id] = Date.now();
+  if (patch.fore && patch.fore.name) { /* contremaître gardé dans la liste commune (réglages synchronisés, champ foremen) */
+    R.fields = R.fields || {}; R.fmod = R.fmod || {};
+    const L = Array.isArray(R.fields.foremen) ? R.fields.foremen : [], f = L.find(x => foreKey(x.name) === foreKey(patch.fore.name));
+    if (f) { f.name = patch.fore.name; if (patch.fore.tel) f.tel = patch.fore.tel; } else L.push({name:patch.fore.name, tel:patch.fore.tel || ''});
+    R.fields.foremen = L; R.fmod.foremen = Date.now();
+  }
   await api(`${UPL}/${encodeURIComponent(fid)}?uploadType=media&fields=id,modifiedTime`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(R)});
   if (Array.isArray(R.sites)) S.sites = R.sites;
   const newName = siteFolderName(site);
