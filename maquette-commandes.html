@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maquette – Commandes de matériaux</title>
+<style>
+:root{--asphalt:#131518;--surface:#1c1f23;--surface2:#262a30;--line:#353a41;--text:#ecebe6;--muted:#9da2a8;--signal:#f2c230;--signal-ink:#1b1600;--signal-soft:#3b3219;--ok:#48c985;--warn:#f0a04b;--bad:#ef5f58;--display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;--body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:#0b0c0e;color:var(--text);font:15px/1.4 var(--body)}
+.tabs{display:flex;gap:6px;padding:10px 14px;background:#0b0c0e;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.tabs button{background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:600 14px var(--body);cursor:pointer}
+.tabs button.on{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+.tabs .note{color:var(--muted);font-size:13px;align-self:center;margin-left:auto}
+.screen{display:none;margin:0 14px 20px;border:1px solid var(--line);border-radius:12px;overflow:hidden;min-height:720px;background:var(--asphalt)}
+.screen.on{display:flex}
+.rail{width:86px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:4px;flex:none}
+.rail .logo{width:44px;height:44px;border-radius:10px;background:var(--signal);color:var(--signal-ink);font:700 20px var(--display);display:grid;place-items:center;margin-bottom:8px}
+.rail .it{width:76px;padding:8px 2px;border-radius:8px;text-align:center;font-size:11.5px;color:var(--muted)}
+.rail .it i{display:block;font-style:normal;font-size:20px;margin-bottom:2px}
+.rail .it.on{background:var(--signal-soft);color:var(--signal)}
+.rail .it.new{position:relative}
+.rail .it.new:after{content:"nouveau";position:absolute;top:-2px;right:-2px;background:var(--ok);color:#000;font-size:9px;border-radius:5px;padding:0 4px}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{height:54px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+.top h1{font:600 22px var(--display);margin:0;letter-spacing:.3px}
+.chip{background:var(--surface2);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:13px}
+.chip.y{background:var(--signal-soft);border-color:#6b5a22;color:var(--signal)}
+.sp{flex:1}
+.btn{background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px 14px;font:600 14px var(--body)}
+.btn.y{background:var(--signal);color:var(--signal-ink);border-color:var(--signal)}
+.btn.s{padding:5px 10px;font-size:13px}
+.body{flex:1;display:flex;min-height:0}
+.col{padding:14px 16px;overflow:auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font:600 17px var(--display);letter-spacing:.3px;color:var(--muted);text-transform:uppercase}
+.kpi{display:flex;gap:10px;margin-bottom:12px}
+.kpi div{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font:600 24px var(--display)}
+.kpi span{color:var(--muted);font-size:12.5px}
+table{border-collapse:collapse;width:100%}
+th{font-weight:600;color:var(--muted);font-size:12.5px;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid #2a2e34;font-size:14px;vertical-align:top}
+td.n,th.n{text-align:right;font-family:var(--mono);font-size:13px;white-space:nowrap}
+.mono{font-family:var(--mono);font-size:13px}
+.st{display:inline-block;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600}
+.st.b{background:#33373e;color:var(--muted)}
+.st.e{background:var(--signal-soft);color:var(--signal)}
+.st.c{background:#1c3550;color:#7fb8ff}
+.st.l{background:#173826;color:var(--ok)}
+.st.p{background:#3f2a14;color:var(--warn)}
+.bar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:4px;width:110px}
+.bar i{display:block;height:100%;background:var(--ok)}
+.bar i.w{background:var(--warn)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.search{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.search input,.fld input,.fld select,.fld textarea{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;font:14px var(--body)}
+.search input{flex:1;min-width:160px}
+.pill{border:1px solid var(--line);border-radius:16px;padding:5px 10px;font-size:12.5px;color:var(--muted)}
+.pill.on{border-color:var(--signal);color:var(--signal)}
+.pos{display:flex;gap:10px;align-items:flex-start;padding:9px 6px;border-bottom:1px solid #2a2e34}
+.pos .p{font-family:var(--mono);font-size:12.5px;color:var(--muted);width:62px;flex:none}
+.pos .t{flex:1}
+.pos .q{width:120px;text-align:right;font-family:var(--mono);font-size:12.5px}
+.pos .add{width:34px;height:34px;border-radius:8px;background:var(--signal);color:var(--signal-ink);font-weight:700;display:grid;place-items:center;flex:none}
+.pos .add.done{background:#173826;color:var(--ok)}
+.can{font:600 14px var(--display);color:var(--signal);padding:10px 6px 4px;letter-spacing:.4px}
+.fld{display:flex;flex-direction:column;gap:4px;margin-bottom:9px}
+.fld input,.fld select,.fld textarea{width:100%;min-width:0}
+.fld label{font-size:12.5px;color:var(--muted)}
+.row2{display:flex;gap:10px}.row2>.fld{flex:1}
+.qin{width:72px;background:var(--surface2);border:1px solid var(--signal);color:var(--text);border-radius:6px;padding:4px 6px;text-align:right;font:13px var(--mono)}
+.hint{background:var(--signal-soft);border:1px dashed #6b5a22;color:var(--signal);border-radius:8px;padding:8px 10px;font-size:13px;margin-top:6px}
+.sup{display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid #2a2e34}
+.sup .av{width:40px;height:40px;border-radius:10px;background:var(--surface2);display:grid;place-items:center;font:700 16px var(--display);color:var(--signal);flex:none}
+.sup .nm{flex:1}
+.tag{display:inline-block;background:var(--surface2);border-radius:5px;padding:1px 7px;font-size:11.5px;color:var(--muted);margin:2px 3px 0 0}
+.star{color:var(--signal)}
+/* PDF */
+.paper-wrap{flex:1;background:#4a4d52;display:flex;justify-content:center;padding:22px;overflow:auto}
+.paper{background:#fff;color:#111;width:595px;min-height:842px;padding:34px 38px;font:11px/1.35 Arial,sans-serif;box-shadow:0 6px 24px #0008}
+.paper .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #f2c230;padding-bottom:10px}
+.paper .lg{width:120px;height:44px;background:#eee;border:1px solid #ccc;display:grid;place-items:center;color:#888;font-size:10px}
+.paper h2{margin:16px 0 4px;font:700 20px Arial}
+.paper .two{display:flex;gap:16px;margin-top:12px}
+.paper .box{flex:1;border:1px solid #ccc;padding:8px 10px;border-radius:3px}
+.paper .box b{display:block;font-size:9px;color:#666;text-transform:uppercase;margin-bottom:3px}
+.paper table{margin-top:14px}
+.paper th{color:#111;font-size:10px;background:#f2c230;border:0;padding:5px 6px}
+.paper td{color:#111;font-size:10.5px;border-bottom:1px solid #ddd;padding:5px 6px}
+.paper td.n{font:10.5px Arial}
+.paper .ft{margin-top:22px;display:flex;gap:16px}
+.paper .sig{flex:1;border-top:1px solid #999;padding-top:4px;font-size:9.5px;color:#555;margin-top:36px}
+.paper .foot{margin-top:40px;font-size:9px;color:#777;border-top:1px solid #ddd;padding-top:5px}
+.legend{padding:10px 14px 0;color:var(--muted);font-size:13px}
+.legend b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <button class="on" data-s="1">1 · Commandes du chantier</button>
+  <button data-s="2">2 · Nouvelle commande</button>
+  <button data-s="3">3 · PDF de la commande</button>
+  <button data-s="4">4 · Fournisseurs (tous chantiers)</button>
+  <span class="note">Maquette tablette · données fictives</span>
+</div>
+
+<!-- ============ 1. LISTE ============ -->
+<section class="screen on" id="s1">
+  <nav class="rail">
+    <div class="logo">BG</div>
+    <div class="it"><i>📷</i>Photos</div><div class="it"><i>📐</i>Plans</div><div class="it"><i>📝</i>Documents</div>
+    <div class="it"><i>📋</i>PV DT</div><div class="it"><i>📑</i>Soumission</div>
+    <div class="it on new"><i>📦</i>Commandes</div>
+    <div class="it"><i>📅</i>Planning</div><div class="it"><i>💬</i>Devis</div><div class="it"><i>☑</i>À faire</div>
+  </nav>
+  <div class="main">
+    <div class="top"><h1>Commandes</h1><span class="chip y">2417 Collecteur EU – Rte de Morat</span><span class="sp"></span><button class="btn">Fournisseurs</button><button class="btn y">+ Nouvelle commande</button></div>
+    <div class="body">
+      <div class="col" style="flex:1.6">
+        <div class="kpi">
+          <div><b>7</b><span>commandes</span></div>
+          <div><b>2</b><span>livraisons à venir (7 j)</span></div>
+          <div><b style="color:var(--warn)">1</b><span>en retard de livraison</span></div>
+          <div><b>38 %</b><span>des fournitures de la soumission commandées</span></div>
+        </div>
+        <div class="card">
+          <h3>Commandes</h3>
+          <table>
+            <tr><th>N°</th><th>Fournisseur</th><th>Objet</th><th>Livraison</th><th>État</th><th class="n">Lignes</th></tr>
+            <tr><td class="mono">CMD-2417-07</td><td>Debrunner Acifer</td><td>Fers d'armature Ø10–Ø16</td><td>04.11.26 · 07:00</td><td><span class="st b">Brouillon</span></td><td class="n">5</td></tr>
+            <tr><td class="mono">CMD-2417-06</td><td>Hägi Tuyaux SA</td><td>Tubes PP SN8 DN 250 + coudes</td><td>03.11.26 · matin</td><td><span class="st e">Envoyée</span></td><td class="n">8</td></tr>
+            <tr><td class="mono">CMD-2417-05</td><td>Creabeton Matériaux</td><td>Chambres Ø1000 + cadres</td><td>05.11.26</td><td><span class="st c">Confirmée</span></td><td class="n">4</td></tr>
+            <tr><td class="mono">CMD-2417-04</td><td>Gravière du Moulin</td><td>Grave 0/45 – 1re étape</td><td>29.10.26</td><td><span class="st p">Livrée en partie</span></td><td class="n">2</td></tr>
+            <tr><td class="mono">CMD-2417-03</td><td>Hägi Tuyaux SA</td><td>Tubes PP DN 160 raccordements</td><td style="color:var(--warn)">27.10.26 ⚠</td><td><span class="st c">Confirmée</span></td><td class="n">6</td></tr>
+            <tr><td class="mono">CMD-2417-02</td><td>Gravière du Moulin</td><td>Sable d'enrobage 0/4</td><td>22.10.26</td><td><span class="st l">Livrée</span></td><td class="n">1</td></tr>
+            <tr><td class="mono">CMD-2417-01</td><td>Holcim Béton</td><td>Béton maigre C12/15</td><td>20.10.26</td><td><span class="st l">Livrée</span></td><td class="n">1</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="col" style="flex:1;border-left:1px solid var(--line)">
+        <div class="card">
+          <h3>Fournitures de la soumission</h3>
+          <div class="small muted" style="margin-bottom:8px">Commandé / prévu, par CAN</div>
+          <table>
+            <tr><td>237 Canalisations</td><td class="n">62 %<div class="bar"><i style="width:62%"></i></div></td></tr>
+            <tr><td>211 Fouilles (graves, sable)</td><td class="n">45 %<div class="bar"><i style="width:45%"></i></div></td></tr>
+            <tr><td>241 Béton coulé sur place</td><td class="n">18 %<div class="bar"><i style="width:18%"></i></div></td></tr>
+            <tr><td>222 Bordures, pavages</td><td class="n">0 %<div class="bar"><i style="width:0"></i></div></td></tr>
+            <tr><td>223 Revêtements</td><td class="n">0 %<div class="bar"><i style="width:0"></i></div></td></tr>
+            <tr><td>Hors soumission</td><td class="n">3 lignes</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Prochaines livraisons</h3>
+          <div class="small">Lu 03.11 · Hägi Tuyaux — DN 250 (8 lignes)</div>
+          <div class="small">Me 05.11 · Creabeton — chambres Ø1000</div>
+          <div class="small muted" style="margin-top:6px">Aussi affiché dans l'accueil (« Cette semaine »)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. NOUVELLE COMMANDE ============ -->
+<section class="screen" id="s2">
+  <nav class="rail">
+    <div class="logo">BG</div>
+    <div class="it"><i>📷</i>Photos</div><div class="it"><i>📐</i>Plans</div><div class="it"><i>📝</i>Documents</div>
+    <div class="it"><i>📋</i>PV DT</div><div class="it"><i>📑</i>Soumission</div>
+    <div class="it on new"><i>📦</i>Commandes</div>
+    <div class="it"><i>📅</i>Planning</div><div class="it"><i>💬</i>Devis</div><div class="it"><i>☑</i>À faire</div>
+  </nav>
+  <div class="main">
+    <div class="top"><h1>Commande CMD-2417-07</h1><span class="st b">Brouillon</span><span class="sp"></span><button class="btn">Annuler</button><button class="btn">Enregistrer</button><button class="btn y">Créer le PDF</button></div>
+    <div class="body">
+      <!-- gauche : positions soumission -->
+      <div class="col" style="flex:1.25;border-right:1px solid var(--line)">
+        <div class="card" style="padding-bottom:4px">
+          <h3>Fournitures de la soumission</h3>
+          <div class="search"><input placeholder="Chercher : tube, Ø, DN, béton…" value="armature"><span class="pill on">Fournitures seules</span><span class="pill">Tout</span><span class="pill">Pas encore commandé</span></div>
+          <div class="can">241 · CONSTRUCTIONS EN BÉTON COULÉ SUR PLACE</div>
+          <div class="pos"><span class="p">241.411</span><span class="t">Acier d'armature B500B, Ø 10 mm, fourniture et pose<br><span class="small muted">Soumission 1 850 kg · déjà commandé 0</span></span><span class="q">1 850 kg</span><span class="add done">✓</span></div>
+          <div class="pos"><span class="p">241.412</span><span class="t">Acier d'armature B500B, Ø 12 mm<br><span class="small muted">Soumission 2 400 kg · déjà commandé 0</span></span><span class="q">2 400 kg</span><span class="add done">✓</span></div>
+          <div class="pos"><span class="p">241.413</span><span class="t">Acier d'armature B500B, Ø 16 mm<br><span class="small muted">Soumission 1 100 kg · déjà commandé 0</span></span><span class="q">1 100 kg</span><span class="add done">✓</span></div>
+          <div class="pos"><span class="p">241.421</span><span class="t">Treillis d'armature K 335<br><span class="small muted">Soumission 320 m² · déjà commandé 120 m²</span></span><span class="q">200 m² restants</span><span class="add">+</span></div>
+          <div class="pos"><span class="p">241.431</span><span class="t">Distanceurs et écarteurs<br><span class="small muted">Soumission gl · pas de quantité</span></span><span class="q">1 gl</span><span class="add done">✓</span></div>
+          <div class="hint">Toucher <b>+</b> ajoute la position à la commande avec la quantité restante (modifiable). Les positions viennent du fichier « – positions.json » de la rubrique Soumission.</div>
+          <div style="margin:10px 0 8px"><button class="btn s">+ Ligne hors soumission</button></div>
+        </div>
+      </div>
+      <!-- droite : la commande -->
+      <div class="col" style="flex:1">
+        <div class="card">
+          <h3>Fournisseur</h3>
+          <div class="fld"><label>Fournisseur (liste commune à tous les chantiers)</label><select><option>★ Debrunner Acifer – Givisiez</option></select></div>
+          <div class="small muted">Contact : M. Rossier · 026 460 12 34 · commandes.givisiez@d-a.ch</div>
+          <div class="small" style="margin-top:4px">Habituel pour : <span class="tag">Armature</span><span class="tag">Treillis</span><span class="tag">Coffrage</span></div>
+        </div>
+        <div class="card">
+          <h3>Livraison</h3>
+          <div class="row2"><div class="fld"><label>Date</label><input value="04.11.2026"></div><div class="fld"><label>Heure</label><input value="07:00"></div></div>
+          <div class="fld"><label>Lieu</label><input value="Chantier – Rte de Morat 12, 1700 Fribourg (accès par le parking)"></div>
+          <div class="row2"><div class="fld"><label>Contact sur place</label><input value="Joel · 079 …"></div><div class="fld"><label>Déchargement</label><select><option>Camion-grue</option></select></div></div>
+        </div>
+        <div class="card">
+          <h3>Lignes (5)</h3>
+          <table>
+            <tr><th>Pos.</th><th>Désignation</th><th class="n">Qté</th><th>Un.</th></tr>
+            <tr><td class="mono">241.411</td><td>Acier B500B Ø 10</td><td class="n"><input class="qin" value="650"></td><td>kg</td></tr>
+            <tr><td class="mono">241.412</td><td>Acier B500B Ø 12</td><td class="n"><input class="qin" value="1 200"></td><td>kg</td></tr>
+            <tr><td class="mono">241.413</td><td>Acier B500B Ø 16</td><td class="n"><input class="qin" value="480"></td><td>kg</td></tr>
+            <tr><td class="mono">241.431</td><td>Distanceurs h = 40 mm</td><td class="n"><input class="qin" value="300"></td><td>pce</td></tr>
+            <tr><td class="mono muted">—</td><td>Fil à ligaturer recuit <span class="tag">hors soum.</span></td><td class="n"><input class="qin" value="5"></td><td>rlx</td></tr>
+          </table>
+          <div class="fld" style="margin-top:10px"><label>Remarques (imprimées sur le PDF)</label><textarea rows="2">Selon liste de pliage jointe – étape 1 chambre CH3.</textarea></div>
+          <div class="small muted">Joindre : <span class="tag">📐 plan</span><span class="tag">📷 photo</span><span class="tag">📎 liste de pliage</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. PDF ============ -->
+<section class="screen" id="s3">
+  <nav class="rail">
+    <div class="logo">BG</div>
+    <div class="it"><i>📷</i>Photos</div><div class="it"><i>📐</i>Plans</div><div class="it"><i>📝</i>Documents</div>
+    <div class="it"><i>📋</i>PV DT</div><div class="it"><i>📑</i>Soumission</div>
+    <div class="it on new"><i>📦</i>Commandes</div>
+    <div class="it"><i>📅</i>Planning</div><div class="it"><i>💬</i>Devis</div><div class="it"><i>☑</i>À faire</div>
+  </nav>
+  <div class="main">
+    <div class="top"><h1>CMD-2417-07 · PDF</h1><span class="sp"></span><button class="btn">Modifier</button><button class="btn">Partager / Mail</button><button class="btn y">Marquer « Envoyée »</button></div>
+    <div class="paper-wrap">
+      <div class="paper">
+        <div class="hd"><div class="lg">Logo entreprise</div><div style="text-align:right;font-size:10px">Entreprise Exemple SA<br>Rue de l'Industrie 5 · 1700 Fribourg<br>026 000 00 00</div></div>
+        <h2>Commande de matériaux N° CMD-2417-07</h2>
+        <div style="font-size:10.5px">Chantier 2417 – Collecteur EU, Rte de Morat · Fribourg, le 31.10.2026</div>
+        <div class="two">
+          <div class="box"><b>Fournisseur</b>Debrunner Acifer SA<br>Rte du Moulin 3 · 1763 Givisiez<br>M. Rossier · 026 460 12 34</div>
+          <div class="box"><b>Livraison</b>Mardi 04.11.2026 · 07:00<br>Rte de Morat 12, 1700 Fribourg<br>Contact : Joel · 079 … · camion-grue</div>
+        </div>
+        <table>
+          <tr><th>Pos.</th><th>Désignation</th><th class="n">Quantité</th><th>Unité</th></tr>
+          <tr><td>241.411</td><td>Acier d'armature B500B, Ø 10 mm</td><td class="n">650</td><td>kg</td></tr>
+          <tr><td>241.412</td><td>Acier d'armature B500B, Ø 12 mm</td><td class="n">1 200</td><td>kg</td></tr>
+          <tr><td>241.413</td><td>Acier d'armature B500B, Ø 16 mm</td><td class="n">480</td><td>kg</td></tr>
+          <tr><td>241.431</td><td>Distanceurs h = 40 mm</td><td class="n">300</td><td>pce</td></tr>
+          <tr><td>—</td><td>Fil à ligaturer recuit</td><td class="n">5</td><td>rlx</td></tr>
+        </table>
+        <div style="margin-top:12px"><b>Remarques :</b> Selon liste de pliage jointe – étape 1 chambre CH3.</div>
+        <div style="margin-top:6px">Merci de confirmer la commande et le délai par retour de mail.</div>
+        <div class="ft"><div class="sig">Commandé par : Joel Magano, conducteur de travaux</div><div class="sig">Confirmation fournisseur (date, signature)</div></div>
+        <div class="foot">Établi le 31.10.2026 · page 1 / 1</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. FOURNISSEURS ============ -->
+<section class="screen" id="s4">
+  <nav class="rail">
+    <div class="logo">BG</div>
+    <div class="it"><i>📷</i>Photos</div><div class="it"><i>📐</i>Plans</div><div class="it"><i>📝</i>Documents</div>
+    <div class="it"><i>📋</i>PV DT</div><div class="it"><i>📑</i>Soumission</div>
+    <div class="it on new"><i>📦</i>Commandes</div>
+    <div class="it"><i>📅</i>Planning</div><div class="it"><i>💬</i>Devis</div><div class="it"><i>☑</i>À faire</div>
+  </nav>
+  <div class="main">
+    <div class="top"><h1>Fournisseurs</h1><span class="chip">Tous les chantiers</span><span class="sp"></span><button class="btn y">+ Fournisseur</button></div>
+    <div class="body">
+      <div class="col" style="flex:1.2;border-right:1px solid var(--line)">
+        <div class="search"><input placeholder="Chercher un fournisseur ou un matériau…"><span class="pill on">Tous</span><span class="pill">Canalisations</span><span class="pill">Graves</span><span class="pill">Béton</span><span class="pill">Armature</span></div>
+        <div class="card" style="padding:0 4px">
+          <div class="sup"><div class="av">DA</div><div class="nm"><b>Debrunner Acifer</b> <span class="star">★</span><br><span class="small muted">Givisiez · M. Rossier</span><br><span class="tag">Armature</span><span class="tag">Treillis</span><span class="tag">Coffrage</span></div><div class="small muted" style="text-align:right">12 commandes<br>3 chantiers</div></div>
+          <div class="sup"><div class="av">HT</div><div class="nm"><b>Hägi Tuyaux SA</b> <span class="star">★</span><br><span class="small muted">Düdingen · Mme Bapst</span><br><span class="tag">Tubes PP / PVC</span><span class="tag">Raccords</span></div><div class="small muted" style="text-align:right">9 commandes<br>2 chantiers</div></div>
+          <div class="sup"><div class="av">CB</div><div class="nm"><b>Creabeton Matériaux</b><br><span class="small muted">Lyss · service commandes</span><br><span class="tag">Chambres</span><span class="tag">Bordures</span><span class="tag">Pavés</span></div><div class="small muted" style="text-align:right">4 commandes<br>2 chantiers</div></div>
+          <div class="sup"><div class="av">GM</div><div class="nm"><b>Gravière du Moulin</b><br><span class="small muted">Posieux · dispatch</span><br><span class="tag">Graves</span><span class="tag">Sable</span><span class="tag">Évacuation</span></div><div class="small muted" style="text-align:right">7 commandes<br>4 chantiers</div></div>
+          <div class="sup"><div class="av">HB</div><div class="nm"><b>Holcim Béton</b><br><span class="small muted">Fribourg · centrale</span><br><span class="tag">Béton prêt à l'emploi</span></div><div class="small muted" style="text-align:right">5 commandes<br>3 chantiers</div></div>
+        </div>
+      </div>
+      <div class="col" style="flex:1">
+        <div class="card">
+          <h3>Fiche fournisseur</h3>
+          <div class="fld"><label>Nom</label><input value="Debrunner Acifer SA"></div>
+          <div class="fld"><label>Adresse</label><input value="Rte du Moulin 3, 1763 Givisiez"></div>
+          <div class="row2"><div class="fld"><label>Contact</label><input value="M. Rossier"></div><div class="fld"><label>Téléphone</label><input value="026 460 12 34"></div></div>
+          <div class="fld"><label>Mail des commandes</label><input value="commandes.givisiez@d-a.ch"></div>
+          <div class="fld"><label>Matériaux (mots-clés → proposé automatiquement)</label><input value="armature, treillis, acier, coffrage"></div>
+          <div class="fld"><label>Note</label><input value="Commande avant 14:00 → livraison le lendemain"></div>
+          <div class="small muted">☐ Favori · ★ = proposé en premier</div>
+        </div>
+        <div class="card">
+          <h3>Dernières commandes</h3>
+          <div class="small">CMD-2417-07 · 2417 Collecteur EU · brouillon</div>
+          <div class="small">CMD-2398-11 · 2398 Villa Dupont · livrée 15.10</div>
+          <div class="small">CMD-2391-04 · 2391 Pont du Gottéron · livrée 02.10</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="legend"><b>Rangement Drive prévu :</b> &lt;Chantier&gt;/Commandes/CMD-2417-07 – Debrunner Acifer.json + .pdf · liste des fournisseurs dans le fichier de réglages commun (synchronisé tablette / PC).</div>
+
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='s'+b.dataset.s));
+});
+</script>
+</body>
+</html>
