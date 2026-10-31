@@ -670,7 +670,7 @@ body.bp-split #app{left:var(--bp-w,55%)}
     <div class="brand">Bau<b>Gest</b><small>PC</small></div>
     <button id="btnBack" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Plans &amp; documents</button>
     <button id="btnViewerShow" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Visionneuse</button>
-    <div class="navtabs" id="navtabs"><button data-nav="home"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</button><button data-nav="photos"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M9 8.5h.01"/></svg>Photos</button><button data-nav="files" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg>Plans &amp; documents</button><button data-nav="pvdt"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/></svg>PV DT</button><button data-nav="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button><button data-nav="plan"><svg class="ic" viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/></svg>Planning</button></div>
+    <div class="navtabs" id="navtabs"><button data-nav="home"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</button><button data-nav="photos"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M9 8.5h.01"/></svg>Photos</button><button data-nav="files" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg>Plans &amp; documents</button><button data-nav="pvdt"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/></svg>PV DT</button><button data-nav="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button><button data-nav="plan"><svg class="ic" viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/></svg>Planning</button><button data-nav="cmd"><svg class="ic" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></svg>Commandes</button></div>
     <div class="gsearch"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="gSearch" placeholder="Rechercher dans tous les chantiers" title="Nom, date (2026-09), indice (ind C)… puis Entrée"></div>
     <div class="grow"></div>
     <button id="btnSync" class="btn syncbtn" hidden title="Zoom et défilement liés entre les deux volets"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Lier les vues</button>
@@ -787,6 +787,7 @@ body.bp-split #app{left:var(--bp-w,55%)}
 
 <script src="planning.js"></script>
 <script src="soumission.js"></script>
+<script src="commandes.js"></script>
 <script>
 (() => {
 'use strict';
@@ -3202,6 +3203,22 @@ async function openPlanFile(f){
     await BGPlan.importXml(await (await blobOf(f)).text(), s ? s.id : null);
   } catch (e) { toast('Planning : ' + e.message, 'err'); }
 }
+/* ---------- Commandes de matériaux par chantier + fournisseurs : module partagé commandes.js ---------- */
+if (window.BGCmd) BGCmd.init({
+  split:true,
+  sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), folder:siteFolderName(s), number:s.number || ''})),
+  api:(url, opt) => api(url, opt), apiRaw:url => api(url, {}, true),
+  ensureFolder:async parts => { let id = P.rootId; for (const n of parts) id = await ensureChild(id, n); return id; },
+  online:() => !!P.rootId && navigator.onLine, loadScript,
+  comp:id => { const s = S.sites.find(x => x.id === id), c = (s && compById(s.comp)) || (S.companies || [])[0]; return c ? {name:c.name || '', addr:c.addr || '', tel:c.tel || '', email:c.email || '', logo:c.logo || ''} : {}; }
+});
+function openCommandes(){
+  if (!window.BGCmd) { toast('Module Commandes non chargé : recharge la page', 'err'); return; }
+  let sid = null;
+  const top = chainIds(E.cur)[1], n = top && FN.get(top), s = n && siteByFolder(n.name);
+  if (s) sid = s.id;
+  BGCmd.open(sid).catch(e => toast('Commandes : ' + e.message, 'err'));
+}
 function openPlanning(){
   if (!window.BGPlan) { toast('Module Planning non chargé : recharge la page', 'err'); return; }
   let sid = null;
@@ -3212,7 +3229,9 @@ function openPlanning(){
 $('#navtabs').addEventListener('click', e => {
   const b = e.target.closest('[data-nav]'); if (!b) return;
   const n = b.dataset.nav;
+  if (n !== 'cmd' && window.BGCmd && BGCmd.isOpen()) BGCmd.close();
   if (n === 'plan') { openPlanning(); return; }
+  if (n === 'cmd') { openCommandes(); return; }
   if (n === 'home') { openHome(); return; }
   if (!$('#viewer').hidden) hideViewer();
   if (n === 'devis') { openDevis(); return; }
@@ -4844,6 +4863,7 @@ $('#resizer').addEventListener('pointerdown', e => {
 const typing = e => e.target.closest && e.target.closest('input, textarea, select, [contenteditable]');
 document.addEventListener('keydown', e => {
   if (document.querySelector('.scrim')) return;
+  if (window.BGCmd && BGCmd.isOpen()) return;
   if ((!$('#devis').hidden || !$('#dzMapP').hidden) && $('#viewer').hidden) return;
   if (e.key === ' ' && !typing(e)) { if (!$('#viewer').hidden) { spaceHeld = true; V.panes.forEach(p => p.stage.classList.add('pan')); e.preventDefault(); } }
   if (e.key === 'F5') { e.preventDefault(); if ($('#viewer').hidden) navigate(E.cur, true); return; }

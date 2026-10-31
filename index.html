@@ -1457,6 +1457,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <button data-rail="pvdt"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/></svg>PV DT</button>
   <button data-rail="mails"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Mails</button>
   <button data-rail="soum"><svg class="ic" viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5M15 15h1M15 18h1M8 18h5"/></svg>Soumission</button>
+  <button data-rail="cmd"><svg class="ic" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></svg>Commandes</button>
   <button data-rail="plan"><svg class="ic" viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/></svg>Planning</button>
   <button data-rail="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button>
   <button data-rail="todo"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg>À faire<span class="badge red" data-tdbadge hidden>0</span></button>
@@ -2312,6 +2313,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
 
 <script src="planning.js"></script>
 <script src="soumission.js"></script>
+<script src="commandes.js"></script>
 <script>
 (() => {
 'use strict';
@@ -4589,6 +4591,7 @@ function goSection(k){
   }
   if (k === 'devis') { if (galOpen) closeGallery(); if (!dzOpen) openDevis(); return; }
   if (k === 'plan') { openPlanning(); return; }
+  if (k === 'cmd') { openCommandes(); return; }
   if (k === 'todo' && !isTabletScreen()) { openTodo(); return; }
   // plans, docs, pvdt, soum : bureau des documents
   if (galOpen) closeGallery();
@@ -9681,6 +9684,7 @@ const isOpen = sel => { const el = $(sel); return !!el && !el.hidden; };
 function backLayers(){
   let n = stack.length;
   if (window.BGPlan && BGPlan.isOpen()) n++;
+  if (window.BGCmd) n += BGCmd.depth();
   if (isOpen('#docEditor')) { n++; if (ed.drawer) n++; }
   if (isOpen('#sketch')) n++;
   if (isOpen('#viewer')) n++;
@@ -9698,6 +9702,7 @@ function backLayers(){
 }
 function backCloseTop(){
   if (window.BGPlan && BGPlan.back()) return true;
+  if (window.BGCmd && BGCmd.back()) return true;
   if (stack.length) { closeSheet(); return true; }
   if (isOpen('#docEditor')) {
     if (ed.drawer) { if (Date.now() - ed.toolsT > 800) edTools(!ed.toolsOpen); return true; }
@@ -9759,6 +9764,24 @@ function initPlanning(){
     logos:id => { const s = siteById(id), c = s && compById(s.comp); return {comp:(c && c.logo) || '', site:(s && s.logo) || '', lib:[...compList().map(x => x.logo), ...allLogos()].filter(Boolean)}; },
     onToggle:() => { syncRail(); backSchedule(); }
   });
+}
+/* ---------- Commandes de matériaux par chantier + fournisseurs : module partagé commandes.js ---------- */
+function initCommandes(){
+  if (!window.BGCmd) return;
+  BGCmd.init({
+    sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), folder:siteFolder(s), number:s.number || ''})),
+    api, apiRaw:async url => { if (!tokenValid()) throw Object.assign(new Error('Session Google expirée'), {status:401}); const r = await fetch(url, {headers:{Authorization:'Bearer ' + S.drive.token}}); if (!r.ok) throw Object.assign(new Error('Erreur ' + r.status), {status:r.status}); return r; },
+    ensureFolder:parts => ensurePath(parts), online:() => driveReady() && navigator.onLine, loadScript,
+    comp:id => { const s = siteById(id), c = (s && compById(s.comp)) || compList()[0]; return c ? {name:c.name || '', addr:c.addr || '', tel:c.tel || '', email:c.email || '', logo:c.logo || ''} : {}; },
+    parse451:(buf, name) => soumParseFile(buf, name),
+    soumCache:sid => SOUMCACHE.get(sid).then(c => c && c.data),
+    onToggle:() => { syncRail(); backSchedule(); }, onNav:() => backSchedule()
+  });
+}
+function openCommandes(){
+  if (!window.BGCmd) { note('Module Commandes non chargé : rouvre BauGest avec du réseau.', 3500); return; }
+  const c = currentSite(), sid = desk.site && desk.site !== '__none' ? desk.site : c ? c.id : null;
+  BGCmd.open(sid).catch(e => note('Commandes : ' + e.message, 4000));
 }
 function openPlanning(){
   if (!window.BGPlan) { note('Module Planning non chargé : rouvre BauGest avec du réseau.', 3500); return; }
@@ -11010,7 +11033,7 @@ async function init(){
   const todoParam = new URLSearchParams(location.search).get('todo');
   if (shareParam !== null || pvParam || todoParam) history.replaceState(null, '', location.pathname + location.hash);
   await DB.open();
-  bind(); bindDocs(); bindPlans(); bindPvdt(); bindMailsT(); bindSoum(); bindDevis(); bindSketch(); bindDzSel(); bindDzMap(); bindMemoView(); bindCalc(); bindTodo(); initPlanning(); applyBrand(); renderSiteChip(); renderActiveTag();
+  bind(); bindDocs(); bindPlans(); bindPvdt(); bindMailsT(); bindSoum(); bindDevis(); bindSketch(); bindDzSel(); bindDzMap(); bindMemoView(); bindCalc(); bindTodo(); initPlanning(); initCommandes(); applyBrand(); renderSiteChip(); renderActiveTag();
   startGeo();
   if (isTabletScreen()) { keepAwake(); document.addEventListener('pointerdown', keepAwake, {passive:true}); }
   if (auth === 'cid') note('Client ID enregistré. Ouvre Paramètres › Google Drive › Connecter.', 4500);
