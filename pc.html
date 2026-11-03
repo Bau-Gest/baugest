@@ -5314,7 +5314,29 @@ async function mlSiteOfSender(email){
 async function mlKnown(mid){
   try { return (await listAll(`trashed=false and appProperties has { key='kind' and value='mail' } and appProperties has { key='mid' and value='${qEsc(mid)}' }`, 'id')).length > 0; } catch (e) { return false; }
 }
-const mlReady = r => (r.st === 'wait' || r.st === 'err') && r.siteId && (r.mail || r.items.length);
+const mlReady = r => (r.st === 'wait' || r.st === 'err') && r.siteId && r.siteId !== '__devis' && (r.mail || r.items.length);
+/* fichier déposé rangé dans une fiche devis : photos → Devis particuliers/<fiche>/Photos, autres fichiers → dossier de la fiche */
+async function mlToDevis(r, d, cnt){
+  const done = [], lab = 'Devis · ' + devName(d) + (devCity(d) ? ' – ' + devCity(d) : '');
+  for (const it of r.items) {
+    if (it.type === 'skip') continue;
+    const t = new Date(r.file.lastModified || Date.now());
+    if (it.type === 'photo') {
+      let blob = it.blob;
+      if (!/^jpe?g$/.test(extOf(it.name)) && blob.type !== 'image/jpeg') blob = await toJpeg(blob);
+      const name = `${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}_${pad2(t.getHours())}h${pad2(t.getMinutes())}_${slug('Devis-' + devName(d))}_${newUid().slice(-4)}.jpg`;
+      const f = await putFile({md:{name, parents:[await dzPath(d, 'Photos')], mimeType:'image/jpeg', description:[`Fiche : ${lab}`, 'Date : ' + dFmt(t) + ' ' + tFmt(t), 'Importée depuis BauGest PC'].join('\n'),
+        appProperties:{pc:'1', site:devSid(d), taken:t.toISOString(), tags:'', imp:'1'}}, blob:new Blob([blob], {type:'image/jpeg'})});
+      done.push({name, type:'photo', fid:f.id}); cnt.photo++;
+    } else {
+      const md = {name:it.name, parents:[await dzPath(d)], description:`Fiche : ${lab}\nDéposé avec BauGest PC`, appProperties:{pc:'1', site:devSid(d)}};
+      if (it.mime) md.mimeType = it.mime;
+      const f = await putFile({md, blob:it.blob}); done.push({name:md.name, type:'doc', fid:f.id}); cnt.doc++;
+    }
+  }
+  if (DV.cur === d.id && !$('#devis').hidden) dzLoadPhotos(d);
+  return done;
+}
 async function mlGo(){
   if (ML.busy) return;
   const rows = ML.q.filter(mlReady); if (!rows.length) return;
@@ -5322,6 +5344,15 @@ async function mlGo(){
   const cnt = {pv:0, plan:0, photo:0, doc:0, mail:0};
   for (const r of rows) {
     r.st = 'up'; r.msg = ''; hmRenderType('drop');
+    if (String(r.siteId).startsWith('devis:')) {
+      const d = devById(r.siteId.slice(6)), j = job(r.name);
+      try {
+        if (!d) throw new Error('fiche devis introuvable');
+        const done = await mlToDevis(r, d, cnt);
+        r.st = 'ok'; r.msg = `Rangé dans le devis ${devName(d)} (${ML_TYPES[done[0] && done[0].type] || 'fichier'})`; j.done('Classé · ' + r.name);
+      } catch (e) { r.st = 'err'; r.msg = e.message || String(e); j.done('Erreur · ' + r.name + ' : ' + r.msg, true); }
+      hmRenderType('drop'); continue;
+    }
     const site = r.siteId === 'none' ? null : S.sites.find(s => s.id === r.siteId), sid = site ? site.id : 'none', when = r.mail && r.mail.date || new Date(r.file.lastModified || Date.now());
     const j = job((r.mail ? 'Mail · ' + (r.mail.subject || r.name) : r.name));
     try {
@@ -5391,8 +5422,12 @@ function mlItemRow(r, it){
 function mlRow(r){
   const dis = r.st === 'up' || r.st === 'ok' || r.st === 'dup' ? 'disabled' : '', m = r.mail;
   const st = r.st === 'read' ? 'Lecture…' : r.st === 'up' ? 'Envoi…' : r.st === 'ok' ? '✓ ' + r.msg : r.st === 'dup' ? r.msg : r.st === 'err' ? 'Erreur : ' + r.msg : '';
-  const tag = r.st === 'read' ? '' : r.siteId ? (r.auto ? '<span class="pq-tag ok">détecté</span>' : '') : '<span class="pq-tag bad">à choisir</span>';
-  const sel = `<select data-f="siteId" ${dis}><option value="">Chantier…</option>${pqSites().map(s => `<option value="${esc(s.id)}" ${s.id === r.siteId ? 'selected' : ''}>${esc(siteLabel(s))}</option>`).join('')}<option value="none" ${r.siteId === 'none' ? 'selected' : ''}>À classer (sans chantier)</option></select>`;
+  const isDv = !m && r.kind !== 'mail' && (r.siteId === '__devis' || String(r.siteId).startsWith('devis:'));
+  const tag = r.st === 'read' ? '' : r.siteId && r.siteId !== '__devis' ? (r.auto ? '<span class="pq-tag ok">détecté</span>' : '') : '<span class="pq-tag bad">à choisir</span>';
+  /* « Devis » = une seule option ; la liste des fiches s'ouvre seulement quand on la choisit */
+  const dvs = (S.devis || []).slice().sort((a, b) => (b.mod || 0) - (a.mod || 0));
+  const sel = `<select data-f="siteId" ${dis}><option value="">Chantier…</option>${pqSites().map(s => `<option value="${esc(s.id)}" ${s.id === r.siteId ? 'selected' : ''}>${esc(siteLabel(s))}</option>`).join('')}<option value="none" ${r.siteId === 'none' ? 'selected' : ''}>À classer (sans chantier)</option>${!m && r.kind !== 'mail' ? `<option value="__devis" ${isDv ? 'selected' : ''}>Devis…</option>` : ''}</select>`
+    + (isDv ? `<select data-f="dvId" ${dis}><option value="">${dvs.length ? 'Fiche devis…' : 'Aucune fiche devis'}</option>${dvs.map(d => `<option value="${esc(d.id)}" ${'devis:' + d.id === r.siteId ? 'selected' : ''}>${esc(devName(d) + (devCity(d) ? ' – ' + devCity(d) : ''))}</option>`).join('')}</select>` : '');
   const head = m ? `${ML_IC.mail}<span class="nm"><b>${esc(m.subject || '(sans objet)')}</b><small>${esc([m.from.name || m.from.email, mlWhen(m.date), r.items.length ? r.items.length + ' pièce' + (r.items.length > 1 ? 's' : '') + ' jointe' + (r.items.length > 1 ? 's' : '') : 'sans pièce jointe'].filter(Boolean).join(' · '))}</small></span>`
     : `${r.kind === 'mail' ? ML_IC.mail : ML_IC.file}<span class="nm"><b>${esc(r.name)}</b><small>${esc(fmtSize(r.file.size))}</small></span>`;
   return `<div class="ml-row ${r.st}" data-ml="${esc(r.id)}"><div class="ml-h">${head}<span class="ml-site">${sel}${tag}</span>
@@ -5402,7 +5437,7 @@ function mlRow(r){
     ${(m || r.st !== 'read') && r.items.length ? `<div class="ml-its">${r.items.map(it => mlItemRow(r, it)).join('')}</div>` : ''}</div>`;
 }
 function mlDropBody(){
-  const ready = ML.q.filter(mlReady).length, miss = ML.q.filter(r => r.st === 'wait' && !r.siteId).length;
+  const ready = ML.q.filter(mlReady).length, miss = ML.q.filter(r => r.st === 'wait' && (!r.siteId || r.siteId === '__devis')).length;
   return `<label class="ml-drop${ML.q.length ? ' mini' : ''}" id="mlDrop"><svg class="ic big" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
       <b>Glisse ici tes mails Outlook et tes fichiers</b><span>PV DT, plans, photos, documents : les pièces jointes sont extraites et rangées dans le bon chantier.</span>
       <input type="file" id="mlFile" multiple hidden><span class="btn">Choisir des fichiers…</span></label>
@@ -5416,7 +5451,9 @@ function mlBind(root){
     const row = e.target.closest('[data-ml]'), f = e.target.dataset.f; if (!row || !f) return;
     const r = ML.q.find(x => x.id === row.dataset.ml); if (!r) return;
     const ir = e.target.closest('[data-mli]'), it = ir && r.items.find(x => x.id === ir.dataset.mli);
-    if (it) it[f] = e.target.value.trim(); else { r[f] = e.target.value; if (f === 'siteId') r.auto = false; }
+    if (it) it[f] = e.target.value.trim();
+    else if (f === 'dvId') { r.siteId = e.target.value ? 'devis:' + e.target.value : '__devis'; r.auto = false; }
+    else { r[f] = e.target.value; if (f === 'siteId') r.auto = false; }
     hmRenderType('drop');
   });
   root.addEventListener('click', e => {
