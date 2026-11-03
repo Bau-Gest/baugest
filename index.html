@@ -328,6 +328,9 @@ input:focus,select:focus{outline:2px solid var(--signal);outline-offset:0;border
 .imp-sites .pick{padding:9px 12px}
 .imp-sites .pick .t b{font-size:16px}
 .imp-sites .pick .slogo{width:36px;height:36px}
+.imp-sites .imp-dv{margin-left:22px;width:calc(100% - 22px)}
+.imp-sites .imp-dvbtn .chev{margin-left:auto;transition:transform .15s}
+.imp-sites .imp-dvbtn[aria-expanded="true"] .chev{transform:rotate(90deg)}
 .imp-label{margin:0;font:700 12.5px/1 var(--body);text-transform:uppercase;letter-spacing:.12em;color:var(--signal)}
 .inbox-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;padding:0 5px;background:var(--signal);color:var(--signal-ink);font:700 12px/20px var(--body)}
 #galImport{position:relative}
@@ -1691,7 +1694,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <div class="sheet-body">
     <div class="imp-head"><b id="impCount"></b><button id="impAll" class="btn">Tout</button><label class="btn file-btn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Ajouter<input type="file" id="impFile" accept="image/*" multiple></label></div>
     <div id="impGrid" class="imp-grid"></div>
-    <p class="imp-label">Ranger dans le chantier</p>
+    <p class="imp-label">Ranger dans</p>
     <div id="impSites" class="imp-sites"></div>
     <p class="imp-label">Étiquettes (facultatif)</p>
     <div id="impTags" class="chips"></div>
@@ -3519,7 +3522,8 @@ function siteAt(p){
   for (const s of S.sites) { const d = dist(p.lat, p.lon, s.lat, s.lon); if (d <= (s.radius || 300) && d < bd) { bd = d; best = s; } }
   return best;
 }
-const imp = {items:[], meta:{}, sel:new Set(), site:undefined, sug:null, tags:new Set(), urls:[], busy:false};
+const imp = {items:[], meta:{}, sel:new Set(), site:undefined, sug:null, tags:new Set(), urls:[], busy:false, dvOpen:false};
+const impDevis = () => String(imp.site || '').startsWith('devis:') ? devById(imp.site.slice(6)) : null;
 function impSuggest(){
   const sug = [...new Set(imp.items.filter(it => imp.meta[it.id]?.pos).map(it => siteAt(imp.meta[it.id].pos)?.id || ''))];
   imp.sug = sug.length === 1 && sug[0] ? sug[0] : null;
@@ -3542,7 +3546,7 @@ async function openImport(){
   const ids = new Set(items.map(i => i.id));
   imp.sel = new Set([...imp.sel].filter(id => ids.has(id)));
   if ($('#sheetImport').hidden) {
-    imp.sel = new Set(ids); imp.tags = new Set(); imp.site = undefined; imp.sug = null;
+    imp.sel = new Set(ids); imp.tags = new Set(); imp.site = undefined; imp.sug = null; imp.dvOpen = false;
     $('#impNote').value = ''; $('#impStamp').checked = true; $('#impMsg').hidden = true;
   }
   for (const it of items) await impMeta(it);
@@ -3564,12 +3568,21 @@ function renderImport(){
   }).join('');
   const sorted = S.sites.slice().sort((a, b) => (a.id === imp.sug ? -1 : b.id === imp.sug ? 1 : 0) || ((siteDist(a) ?? 1e12) - (siteDist(b) ?? 1e12)));
   $('#impSites').innerHTML = sorted.map(s => `<button class="pick ${imp.site === s.id ? 'cur' : ''}" data-isite="${esc(s.id)}">${logoHTML(s)}<span class="t"><b>${esc(siteLabel(s))}</b><small>${s.id === imp.sug ? 'Détecté par le GPS de la photo' : 'Rayon ' + fmtDist(s.radius || 300) + (s.example ? ' · exemple' : '')}</small></span></button>`).join('')
-    + `<button class="pick ${imp.site === '__none' ? 'cur' : ''}" data-isite="__none"><span class="t"><b>À classer</b><small>Dossier de tri, hors chantier</small></span></button>`;
+    + `<button class="pick ${imp.site === '__none' ? 'cur' : ''}" data-isite="__none"><span class="t"><b>À classer</b><small>Dossier de tri, hors chantier</small></span></button>`
+    + impDevisHTML();
   $('#impTags').innerHTML = S.tags.map(t => `<button class="chip ${imp.tags.has(t) ? 'on' : ''}" data-itag="${esc(t)}" aria-pressed="${imp.tags.has(t)}">${esc(t)}</button>`).join('');
   const go = $('#impGo');
   go.disabled = imp.busy || !k || imp.site === undefined;
-  go.textContent = imp.busy ? 'Import…' : !k ? 'Sélectionne des photos' : imp.site === undefined ? 'Choisis un chantier' : `Importer ${k} photo${k > 1 ? 's' : ''}`;
+  go.textContent = imp.busy ? 'Import…' : !k ? 'Sélectionne des photos' : imp.site === undefined ? 'Choisis un chantier ou un devis' : `Importer ${k} photo${k > 1 ? 's' : ''}`;
   $('#impDrop').disabled = imp.busy || !k;
+}
+/* bouton « Devis » : la liste des fiches s'ouvre seulement quand on le touche */
+function impDevisHTML(){
+  const list = devList().slice().sort((a, b) => (a.id === activeDevis ? -1 : b.id === activeDevis ? 1 : 0) || ((b.mod || 0) - (a.mod || 0)));
+  const cur = impDevis(), open = imp.dvOpen === true || (!!cur && imp.dvOpen !== 'shut');
+  const sub = cur ? esc(devName(cur) + (devCity(cur) ? ' – ' + devCity(cur) : '')) : list.length ? `${list.length} fiche${list.length > 1 ? 's' : ''} · touche pour choisir` : 'Aucune fiche devis';
+  return `<button class="pick imp-dvbtn ${cur ? 'cur' : ''}" data-idv aria-expanded="${open && list.length ? 'true' : 'false'}"><span class="slogo none" aria-hidden="true">D</span><span class="t"><b>Devis</b><small>${sub}</small></span><svg class="ic chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>`
+    + (open ? list.map(d => `<button class="pick imp-dv ${imp.site === devSid(d) ? 'cur' : ''}" data-isite="${esc(devSid(d))}">${compLogoHTML(compById(d.comp))}<span class="t"><b>${esc(devName(d))}</b><small>${esc(devCity(d) || 'Localité à préciser')}${d.id === activeDevis ? ' · fiche de la caméra' : ''}</small></span></button>`).join('') : '');
 }
 function impMsg(t, ok){ const m = $('#impMsg'); m.textContent = t; m.className = 'msg' + (ok ? ' ok' : ''); m.hidden = !t; }
 async function decodeImage(blob){
@@ -3581,7 +3594,9 @@ async function decodeImage(blob){
 async function doImport(){
   if (imp.busy || imp.site === undefined || !imp.sel.size) return;
   imp.busy = true; renderImport();
-  const site = imp.site === '__none' ? null : S.sites.find(s => s.id === imp.site) || null;
+  const dv = impDevis();
+  if (String(imp.site).startsWith('devis:') && !dv) { imp.busy = false; imp.site = undefined; impMsg('Fiche devis introuvable'); renderImport(); return; }
+  const site = dv || imp.site === '__none' ? null : S.sites.find(s => s.id === imp.site) || null;
   const tags = S.tags.filter(t => imp.tags.has(t)), noteTxt = $('#impNote').value.trim(), stamp = $('#impStamp').checked;
   const todo = imp.items.filter(it => imp.sel.has(it.id));
   let ok = 0, bad = 0, lastPath = '';
@@ -3592,13 +3607,13 @@ async function doImport(){
       const m = await impMeta(it);
       const src = await decodeImage(it.blob);
       if (!src.width) throw new Error('image vide');
-      const info = {time:m.time, site:site ? {...site} : null, pos:m.pos, tags:tags.slice(), note:noteTxt, imported:true};
+      const info = {time:m.time, site:site ? {...site} : null, devis:dv ? dzInfo(dv) : null, pos:m.pos, tags:tags.slice(), note:noteTxt, imported:true};
       const thumb = thumbOf(src);
       const blob = await render(src, info, {stamp});
       src.close?.();
       const name = fileName(info), path = pathFor(info);
       await DB.put({id:'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), blob, created:Date.now(), thumb,
-        meta:{name, path, description:describe(info), siteId:site ? site.id : 'none', taken:info.time.toISOString(), tags:tags.slice(), imported:true, ...(info.pos ? {lat:info.pos.lat, lon:info.pos.lon} : {})}, error:''});
+        meta:{name, path, description:describe(info), siteId:dv ? devSid(dv) : site ? site.id : 'none', taken:info.time.toISOString(), tags:tags.slice(), imported:true, ...(info.pos ? {lat:info.pos.lat, lon:info.pos.lon} : {})}, error:''});
       await INBOX.del([it.id]); imp.sel.delete(it.id); delete imp.meta[it.id];
       ok++; lastPath = path.join(' / '); setLastThumb(thumb);
     } catch (e) { bad++; }
@@ -3607,13 +3622,14 @@ async function doImport(){
   imp.items = (await INBOX.all()).filter(i => !isPdfItem(i)).sort((a, b) => a.received - b.received);
   await refreshQueue(); processQueue(); refreshInboxBadge();
   refreshView();
+  if (dv && !$('#devis').hidden && dz.cur === dv.id) dzLoadPhotos();
   const msg = `${ok} photo${ok > 1 ? 's' : ''} importée${ok > 1 ? 's' : ''}` + (lastPath ? ' → ' + lastPath : '') + (bad ? ` · ${bad} illisible${bad > 1 ? 's' : ''} (format non pris en charge)` : '');
   if (!imp.items.length) { closeSheet($('#sheetImport')); note(msg, 3800); }
   else {
     for (const it of imp.items) await impMeta(it);
     if (!imp.sel.size) imp.sel = new Set(imp.items.map(i => i.id));
     impMsg(msg + (bad ? '' : ' · il reste des photos à ranger'), !bad);
-    imp.site = undefined; imp.sug = null; impSuggest(); renderImport();
+    imp.site = undefined; imp.sug = null; imp.dvOpen = false; impSuggest(); renderImport();
   }
 }
 async function addFilesToInbox(files){
@@ -3629,7 +3645,18 @@ async function addFilesToInbox(files){
 function bindImport(){
   $('#impGrid').addEventListener('click', e => { const b = e.target.closest('[data-imp]'); if (!b || imp.busy) return; const id = b.dataset.imp; imp.sel.has(id) ? imp.sel.delete(id) : imp.sel.add(id); renderImport(); });
   $('#impAll').addEventListener('click', () => { if (imp.sel.size === imp.items.length) imp.sel.clear(); else imp.sel = new Set(imp.items.map(i => i.id)); renderImport(); });
-  $('#impSites').addEventListener('click', e => { const b = e.target.closest('[data-isite]'); if (!b || imp.busy) return; imp.site = b.dataset.isite; impMsg(''); renderImport(); });
+  $('#impSites').addEventListener('click', e => {
+    if (imp.busy) return;
+    if (e.target.closest('[data-idv]')) {
+      const open = imp.dvOpen === true || (imp.dvOpen !== 'shut' && !!impDevis());
+      imp.dvOpen = open ? 'shut' : true;
+      if (!devList().length) impMsg('Aucune fiche devis : crée-la d’abord dans Devis.');
+      renderImport(); return;
+    }
+    const b = e.target.closest('[data-isite]'); if (!b) return;
+    imp.site = b.dataset.isite; if (!imp.site.startsWith('devis:')) imp.dvOpen = false;
+    impMsg(''); renderImport();
+  });
   $('#impTags').addEventListener('click', e => { const b = e.target.closest('[data-itag]'); if (!b) return; const t = b.dataset.itag; imp.tags.has(t) ? imp.tags.delete(t) : imp.tags.add(t); renderImport(); });
   $('#impGo').addEventListener('click', doImport);
   $('#impFile').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; addFilesToInbox(f); });
