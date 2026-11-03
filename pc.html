@@ -456,6 +456,14 @@ body.bp-split #app{left:var(--bp-w,55%)}
 #btnTodo{position:relative}
 #tdBadge{position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font:700 11px/18px var(--body);text-align:center}
 .tdp-opt{display:flex;gap:8px;align-items:center;color:var(--muted)}
+.td-new{display:grid;grid-template-columns:1fr auto;gap:6px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
+.td-new input[data-tdn="t"]{grid-column:1/-1;font-size:15px}
+.td-new .r{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.td-new .r select[data-tdn="sid"]{max-width:230px;min-width:0;flex:1 1 150px}
+.td-new .r input[type=date]{width:150px}
+.td-new>.btn{align-self:end}
+.hm-td{display:grid;gap:10px}
+.hm-td .tdp-sec h4{font-size:14px}
 .tdp-sec{display:grid;gap:6px}
 .tdp-sec h4{margin:6px 0 0;font:700 17px var(--display);text-transform:uppercase;letter-spacing:.03em}
 .tdp-sec h4 span{display:inline-block;min-width:20px;padding:0 6px;border-radius:10px;background:var(--surface2);font:700 12px/20px var(--body);text-align:center}
@@ -3151,7 +3159,7 @@ function tdBody(){
   const dvList = [...devTodo(), ...dvMore];
   const blocks = sites.map(s => sec(s.id, siteLabel(s))).join('') + tdLists().map(l => sec('td:' + l.id, l.name + ' · hors chantier')).join('')
     + (dvList.length ? `<section class="tdp-sec"><h4>Devis à faire <span>${devTodo().length}</span></h4>${dvList.map(dvOne).join('')}</section>` : '');
-  return `<label class="tdp-opt"><input type="checkbox" id="tdpDone"${TDP.done ? ' checked' : ''}> Afficher l’historique (tâches faites)</label>${blocks || '<p class="muted">Rien à faire. Les tâches s’écrivent au stylo sur la tablette.</p>'}`;
+  return `<label class="tdp-opt"><input type="checkbox" id="tdpDone"${TDP.done ? ' checked' : ''}> Afficher l’historique (tâches faites)</label>${blocks || '<p class="muted">Rien à faire. Tape une nouvelle tâche ci-dessus, ou écris-la au stylo sur la tablette.</p>'}`;
 }
 async function tdToggle(sid, id){
   const f = TDP.files[sid]; if (!f || TDP.busy) return;
@@ -3170,11 +3178,75 @@ async function tdToggle(sid, id){
   } catch (e) { toast('À faire : ' + e.message, 'err'); }
   finally { TDP.busy = false; }
 }
+/* ---------- nouvelle tâche tapée au clavier (PC) : même format que la tablette (texte t, sans écriture au stylo) ---------- */
+const TD_PRI_PC = {g:'Normal', o:'Important', r:'Urgent'};
+function tdTargetsPc(){
+  const sites = S.sites.filter(s => !s.example).sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}));
+  return [...sites.map(s => ({sid:s.id, k:'site', label:siteLabel(s), s})), ...tdLists().map(l => ({sid:'td:' + l.id, k:'list', label:l.name, l})),
+    ...(S.devis || []).filter(d => !d.sent).map(d => ({sid:'devis:' + d.id, k:'devis', label:'Devis ' + devName(d) + (devCity(d) ? ' – ' + devCity(d) : ''), d}))];
+}
+const tdTargetPc = sid => tdTargetsPc().find(g => g.sid === sid) || null;
+function tdNewHTML(def){
+  const all = tdTargetsPc(); let last = def || ''; if (!last) { try { last = localStorage.getItem('baugest.pc.tdSid') || ''; } catch (e) {} }
+  if (!all.some(g => g.sid === last)) last = all[0] ? all[0].sid : '';
+  const og = (k, lab) => { const l = all.filter(g => g.k === k); return l.length ? `<optgroup label="${lab}">${l.map(g => `<option value="${esc(g.sid)}" ${g.sid === last ? 'selected' : ''}>${esc(g.label)}</option>`).join('')}</optgroup>` : ''; };
+  return `<div class="td-new"><input type="text" data-tdn="t" maxlength="300" placeholder="Nouvelle tâche… (Entrée pour ajouter)" autocomplete="off">
+    <div class="r"><select data-tdn="sid" title="Chantier ou liste">${og('site', 'Chantiers')}${og('list', 'Listes hors chantier')}${og('devis', 'Devis à faire')}</select>
+      <select data-tdn="pri" title="Priorité">${Object.entries(TD_PRI_PC).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+      <input type="date" data-tdn="due" title="Rappel (facultatif)"></div>
+    <button class="btn primary" data-tdadd>Ajouter</button></div>`;
+}
+async function tdTodoParent(g){
+  if (g.k === 'site') return ensureChild(P.rootId, siteFolderName(g.s));
+  if (g.k === 'list') return ensureChild(await ensureChild(P.rootId, 'À faire hors chantier'), clean(g.l.name) || 'Liste');
+  return dzPath(g.d);
+}
+async function tdAddPc(sid, o){
+  const g = tdTargetPc(sid); if (!g) throw new Error('chantier ou liste introuvable');
+  while (TDP.busy) await new Promise(r => setTimeout(r, 150));
+  TDP.busy = true;
+  try {
+    await tdLoad().catch(() => {});
+    const now = Date.now(), t = {id:newUid(), c:now, m:now, ink:[], iv:newUid(), pri:o.pri || 'g', due:o.due || null, rep:0, ln:null, done:null, del:null, t:o.t};
+    const f = TDP.files[sid];
+    let j = {v:1, siteId:sid, site:g.label, updatedAt:'', tasks:[]};
+    if (f) { const r = await (await api(`${DRV}/${encodeURIComponent(f.id)}?alt=media`, {}, true)).json(); if (r && Array.isArray(r.tasks)) j = r; }
+    j.tasks.push(t); j.updatedAt = new Date().toISOString();
+    const blob = new Blob([JSON.stringify(j)], {type:'application/json'}), n = String(j.tasks.filter(tdOpen).length);
+    const out = f ? await putFile({id:f.id, md:{appProperties:{n}}, blob})
+      : await putFile({md:{name:'À faire (ne pas supprimer).json', parents:[await tdTodoParent(g)], mimeType:'application/json',
+          description:`À faire BauGest ${g.k === 'site' ? 'du chantier' : g.k === 'devis' ? 'de la fiche' : 'de la liste'} « ${g.label} »`, appProperties:{pc:'1', kind:'todo', site:sid, n}}, blob});
+    TDP.lists[sid] = j.tasks; TDP.files[sid] = {...(f || {}), id:out.id || (f && f.id), modifiedTime:out.modifiedTime || '', appProperties:{site:sid}};
+    tdBadge();
+    return t;
+  } finally { TDP.busy = false; }
+}
+/* lit le formulaire « nouvelle tâche » contenu dans root ; true si ajoutée */
+async function tdNewSubmit(root){
+  const box = root.querySelector('.td-new'); if (!box || box.dataset.busy) return false;
+  const q = k => box.querySelector(`[data-tdn="${k}"]`), txt = q('t').value.replace(/\s+/g, ' ').trim(), sid = q('sid').value;
+  if (!txt) { q('t').focus(); return false; }
+  if (!sid) { toast('Choisis un chantier ou une liste', 'err'); return false; }
+  const dv = q('due').value, due = /^\d{4}-\d{2}-\d{2}$/.test(dv) ? new Date(dv + 'T07:00:00').getTime() : null;
+  box.dataset.busy = '1'; box.querySelector('[data-tdadd]').disabled = true;
+  try {
+    await tdAddPc(sid, {t:txt, pri:q('pri').value, due});
+    try { localStorage.setItem('baugest.pc.tdSid', sid); } catch (e) {}
+    q('t').value = ''; q('due').value = ''; q('pri').value = 'g';
+    toast('Tâche ajoutée · ' + (tdTargetPc(sid)?.label || ''), 'ok', 2200);
+    return true;
+  } catch (e) { toast('À faire : ' + e.message, 'err'); return false; }
+  finally { delete box.dataset.busy; const b = box.querySelector('[data-tdadd]'); if (b) b.disabled = false; }
+}
 async function openTodoPc(){
   try { await tdLoad(); } catch (e) { toast('À faire : ' + e.message, 'err'); }
-  dialog({title:'À faire', width:720, body:'<div id="tdpBody"></div>', buttons:[{label:'Fermer', value:null, primary:true}], onOpen:(dlg, done) => {
+  dialog({title:'À faire', width:720, body:'<div id="tdpNew">' + tdNewHTML() + '</div><div id="tdpBody"></div>', buttons:[{label:'Fermer', value:null, primary:true}], onOpen:(dlg, done) => {
     const draw = () => { dlg.querySelector('#tdpBody').innerHTML = tdBody(); };
     draw();
+    const add = async () => { if (await tdNewSubmit(dlg.querySelector('#tdpNew'))) { draw(); if (hmShown()) { hmRenderType('todo'); hmRenderType('today'); hmRenderType('sites'); } dlg.querySelector('[data-tdn="t"]').focus(); } };
+    const kh = e => { if (!dlg.isConnected) { window.removeEventListener('keydown', kh, true); return; } if (e.key === 'Enter' && dlg.contains(e.target) && e.target.matches('[data-tdn="t"]')) { e.preventDefault(); e.stopPropagation(); add(); } };
+    window.addEventListener('keydown', kh, true);
+    dlg.addEventListener('click', e => { if (e.target.closest('[data-tdadd]')) add(); });
     dlg.addEventListener('change', async e => {
       if (e.target.id === 'tdpDone') { TDP.done = e.target.checked; draw(); return; }
       const dv = e.target.closest('[data-dvsent]'); if (dv) { const d = devById(dv.dataset.dvsent); if (d) { d.sent = d.sent ? null : Date.now(); devSave(d); if (!$('#devis').hidden) { renderDzList(); if (DV.cur === d.id) renderDzHead(d); } } draw(); return; }
@@ -5571,7 +5643,8 @@ const HM_TYPES = {
   today:{name:'Aujourd’hui et semaine', w:5, h:9, mw:3, mh:4},
   quick:{name:'Actions rapides', w:7, h:3, mw:3, mh:2},
   mails:{name:'Derniers mails résumés', w:7, h:6, mw:4, mh:3},
-  sites:{name:'Chantiers', w:12, h:5, mw:4, mh:3}
+  sites:{name:'Chantiers', w:12, h:5, mw:4, mh:3},
+  todo:{name:'À faire', w:5, h:7, mw:3, mh:3}
 };
 const HM_TILES = {
   newplan:{l:'Nouveau planning', ic:'<path d="M3 4h18M3 20h18M5 8h7M8 12h9"/><path d="M18 14v6M15 17h6"/>'},
@@ -5588,11 +5661,20 @@ const HM_TILES = {
 };
 const HM_DEF = () => [
   {id:'b1', t:'drop', w:7, h:6}, {id:'b2', t:'today', w:5, h:9}, {id:'b3', t:'quick', w:7, h:3, o:{tiles:['newplan', 'plan', 'pvdt', 'newdevis', 'photos', 'todo']}},
-  {id:'b4', t:'mails', w:7, h:6, o:{site:'', imp:false}}, {id:'b5', t:'sites', w:5, h:6, o:{sites:[]}}];
+  {id:'b4', t:'mails', w:7, h:6, o:{site:'', imp:false}}, {id:'b5', t:'sites', w:5, h:6, o:{sites:[]}}, {id:'b6', t:'todo', w:5, h:7, o:{site:''}}];
+/* bloc « À faire » ajouté une seule fois aux accueils déjà réglés (03.11.2026) */
+function hmAddTodoOnce(){
+  try { if (localStorage.getItem('baugest.pcHome.td')) return; localStorage.setItem('baugest.pcHome.td', '1'); } catch (e) { return; }
+  if (!HMS.lay || HMS.lay.some(b => b.t === 'todo')) return;
+  const k = HMS.lay.findIndex(b => b.t === 'today');
+  HMS.lay.splice(k < 0 ? 0 : k + 1, 0, {id:'b' + Date.now().toString(36), t:'todo', w:5, h:7, o:{site:''}});
+  hmSave();
+}
 const HMS = {lay:null, at:0, edit:false, fid:'', loaded:false, timer:0, saveT:0, drag:null};
 function hmRead(){
   try { const j = JSON.parse(localStorage.getItem(HM_KEY) || 'null'); if (j && Array.isArray(j.lay)) { HMS.lay = j.lay.filter(b => HM_TYPES[b.t]); HMS.at = j.at || 0; } } catch (e) {}
   if (!HMS.lay || !HMS.lay.length) { HMS.lay = HM_DEF(); HMS.at = 0; }
+  hmAddTodoOnce();
 }
 function hmSave(){
   HMS.at = Date.now();
@@ -5616,6 +5698,7 @@ async function hmPull(){
     if (j && Array.isArray(j.lay) && (j.at || 0) > HMS.at) {
       HMS.lay = j.lay.filter(b => HM_TYPES[b.t]); HMS.at = j.at;
       try { localStorage.setItem(HM_KEY, JSON.stringify({lay:HMS.lay, at:HMS.at})); } catch (e) {}
+      if (!HMS.lay.some(b => b.t === 'todo')) { try { localStorage.removeItem('baugest.pcHome.td'); } catch (e) {} hmAddTodoOnce(); }
       hmRender();
     }
   } catch (e) {}
@@ -5727,6 +5810,19 @@ function hmSites(b){
       <div class="acts"><button data-hmph="${esc(s.id)}">Photos</button><button data-hmpv="${esc(s.id)}">PV DT</button><button data-hmplan="${esc(s.id)}">Planning</button><button data-hmmem="${esc(s.id)}">Mémoire</button><button data-hmsi="${esc(s.id)}" title="Infos et séances">ⓘ</button></div></div>`;
   }).join('')}</div>`;
 }
+function hmTodo(b){
+  const o = b.o || {}, now = Date.now();
+  const gs = tdTargetsPc().filter(g => !o.site || g.sid === o.site);
+  if (o.site && !gs.length) { const d = (S.devis || []).find(x => 'devis:' + x.id === o.site); if (d) gs.push({sid:o.site, k:'devis', label:'Devis ' + devName(d), d}); }
+  const secs = gs.map(g => {
+    const open = (TDP.lists[g.sid] || []).filter(tdOpen).sort(tdSort); if (!open.length) return '';
+    return `<section class="tdp-sec"><h4>${esc(g.label)} <span>${open.length}</span></h4>${open.map(t => tdRow(t, g.sid)).join('')}</section>`;
+  }).filter(Boolean);
+  const late = gs.reduce((n, g) => n + (TDP.lists[g.sid] || []).filter(t => tdOpen(t) && t.due && t.due < now).length, 0);
+  return `<div class="hm-td">${tdNewHTML(o.site)}${late ? `<p class="hm-empty" style="color:#e5312b;margin:0">${late} tâche${late > 1 ? 's' : ''} en retard</p>` : ''}
+    ${secs.length ? secs.join('') : `<p class="hm-empty">${HMD.at ? 'Rien à faire.' : 'Lecture du Drive…'}</p>`}
+    <button class="btn" data-hm="todo">Tout voir (historique, devis à faire)</button></div>`;
+}
 function hmBody(b){
   try {
     if (b.t === 'drop') return mlDropBody();
@@ -5734,10 +5830,12 @@ function hmBody(b){
     if (b.t === 'quick') return hmQuick(b);
     if (b.t === 'mails') return hmMails(b);
     if (b.t === 'sites') return hmSites(b);
+    if (b.t === 'todo') return hmTodo(b);
   } catch (e) { console.warn(e); return `<p class="hm-empty">Erreur : ${esc(e.message)}</p>`; }
   return '';
 }
 function hmTitle(b){
+  if (b.t === 'todo' && b.o && b.o.site) { const g = tdTargetPc(b.o.site); if (g) return 'À faire · ' + g.label; }
   if (b.t === 'mails' && b.o && b.o.site) { const s = S.sites.find(x => x.id === b.o.site); if (s) return 'Mails · ' + (s.number || s.name); }
   if (b.t === 'mails' && b.o && b.o.imp) return 'Mails importants';
   return HM_TYPES[b.t].name;
@@ -5774,7 +5872,7 @@ async function hmAddDlg(){
     buttons:[{label:'Annuler', value:null}], onOpen:(dlg, done) => dlg.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) done(b.dataset.k); })});
   if (!v) return;
   const T = HM_TYPES[v];
-  HMS.lay.unshift({id:'b' + Date.now().toString(36), t:v, w:T.w, h:T.h, o:v === 'quick' ? {tiles:HM_DEF()[2].o.tiles.slice()} : {}});
+  HMS.lay.unshift({id:'b' + Date.now().toString(36), t:v, w:T.w, h:T.h, o:v === 'quick' ? {tiles:HM_DEF()[2].o.tiles.slice()} : v === 'todo' ? {site:''} : {}});
   hmSave(); hmRender();
 }
 async function hmSetDlg(id){
@@ -5785,10 +5883,12 @@ async function hmSetDlg(id){
   if (b.t === 'mails') body = `<label class="hm-f">Chantier<select id="hsSite"><option value="">Tous les chantiers</option>${sites.map(s => `<option value="${esc(s.id)}" ${s.id === b.o.site ? 'selected' : ''}>${esc(siteLabel(s))}</option>`).join('')}</select></label>
     <label class="hm-chk"><input type="checkbox" id="hsImp" ${b.o.imp ? 'checked' : ''}> Seulement les mails importants</label><p class="muted">Astuce : ajoute plusieurs blocs « mails », un par chantier suivi de près.</p>`;
   if (b.t === 'quick') { const on = b.o.tiles && b.o.tiles.length ? b.o.tiles : HM_DEF()[2].o.tiles; body = `<p class="muted">Coche les boutons à afficher (dans l’ordre de la liste).</p><div class="hm-chks">${Object.entries(HM_TILES).map(([k, t]) => `<label class="hm-chk"><input type="checkbox" value="${k}" ${on.includes(k) ? 'checked' : ''}> ${esc(t.l)}</label>`).join('')}</div>`; }
+  if (b.t === 'todo') body = `<label class="hm-f">Afficher<select id="hsTd"><option value="">Tous les chantiers et listes</option>${tdTargetsPc().map(g => `<option value="${esc(g.sid)}" ${g.sid === b.o.site ? 'selected' : ''}>${esc(g.label)}</option>`).join('')}</select></label><p class="muted">Astuce : ajoute plusieurs blocs « À faire », un par chantier suivi de près.</p>`;
   if (b.t === 'sites') { const on = b.o.sites || []; body = `<p class="muted">Chantiers affichés (aucun coché = tous).</p><div class="hm-chks">${sites.map(s => `<label class="hm-chk"><input type="checkbox" value="${esc(s.id)}" ${on.includes(s.id) ? 'checked' : ''}> ${esc(siteLabel(s))}</label>`).join('')}</div>`; }
   const dlg = await dialog({title:'Régler · ' + HM_TYPES[b.t].name, width:480, body, buttons:[{label:'Annuler', value:null}, {label:'Enregistrer', primary:true}]});
   if (!dlg) return;
   if (b.t === 'mails') { b.o.site = dlg.querySelector('#hsSite').value; b.o.imp = dlg.querySelector('#hsImp').checked; }
+  else if (b.t === 'todo') b.o.site = dlg.querySelector('#hsTd').value;
   else { const v = $$('.hm-chks input:checked', dlg).map(i => i.value); if (b.t === 'quick') b.o.tiles = v; else b.o.sites = v; }
   hmSave(); hmRender();
 }
@@ -5883,7 +5983,25 @@ function hmBindEdit(){
     h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
   });
 }
+function hmTdRefresh(){ hmRenderType('todo'); hmRenderType('today'); hmRenderType('sites'); }
+function hmBindTodo(){
+  const g = $('#hmGrid');
+  const add = async box => { const id = box.closest('[data-hw]').dataset.hw; if (await tdNewSubmit(box.closest('.hw-b'))) { hmTdRefresh(); const i = $(`[data-hw="${CSS.escape(id)}"] [data-tdn="t"]`); if (i) i.focus(); } };
+  g.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.td-new [data-tdn="t"]')) { e.preventDefault(); add(e.target.closest('.td-new')); } });
+  g.addEventListener('click', async e => {
+    if (HMS.edit) return;
+    const b = e.target.closest('.td-new [data-tdadd]'); if (b) { add(b.closest('.td-new')); return; }
+    const a = e.target.closest('.hm-td [data-tdf]'); if (!a) return;
+    e.preventDefault();
+    try { const m = await meta(a.dataset.tdf); m._k = kindOf(m); openIn(0, m, [m]); } catch (x) { toast('Fichier introuvable : ' + x.message, 'err'); }
+  });
+  g.addEventListener('change', async e => {
+    const c = e.target.closest('.hm-td [data-tdc]'); if (!c || HMS.edit) return;
+    c.disabled = true; await tdToggle(c.dataset.tds, c.dataset.tdc); hmTdRefresh();
+  });
+}
 function bindHome(){
+  hmBindTodo();
   $('#home').addEventListener('click', hmClick);
   mlBind($('#hmGrid'));
   hmBindEdit();
