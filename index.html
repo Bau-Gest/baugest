@@ -1555,6 +1555,9 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
       </div>
       <datalist id="seForeList"></datalist>
       <p class="hint">Repris dans chaque commande : adresse de livraison et contremaître à appeler. Les contremaîtres saisis restent proposés.</p>
+      <label class="field"><span>Adresse de facturation</span><textarea id="seBill" rows="3" placeholder="Entreprise, rue, NPA localité (vide = adresse de notre entreprise)" style="width:100%;min-height:76px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:16px var(--body);resize:vertical"></textarea></label>
+      <select id="seBillPick" aria-label="Reprendre une adresse de facturation déjà utilisée"></select>
+      <p class="hint">Reprise dans chaque commande (cadre « Facturation », référence = N° et nom du chantier).</p>
     </div>
     <div class="field"><span>Notre entreprise sur ce chantier</span>
       <select id="seComp"></select>
@@ -3320,6 +3323,8 @@ function openSiteEdit(id, useHere){
   $('#seComp').value = s?.comp && compById(s.comp) ? s.comp : ''; $('#seAbbr').value = s?.abbr || '';
   $('#seSiteAddr').value = s?.addr || ''; $('#seFore').value = s?.fore?.name || ''; $('#seForeTel').value = s?.fore?.tel || '';
   $('#seForeList').innerHTML = foremenList().map(f => `<option value="${esc(f.name)}">${esc(f.tel || '')}</option>`).join('');
+  $('#seBill').value = s?.bill || '';
+  { const bl = billList(s?.id); $('#seBillPick').hidden = !bl.length; $('#seBillPick').innerHTML = '<option value="">Reprendre une adresse déjà utilisée…</option>' + bl.map((b, i) => `<option value="${i}">${esc(b.replace(/\n/g, ', '))}</option>`).join(''); }
   renderSeMeet();
   seLogo = s?.logo || null; renderSeLogo();
   seCustomOn = !!s?.layout; seLay = clone(layoutFor(s)); renderSeLayout();
@@ -3383,6 +3388,8 @@ function saveSite(){
     const addr = $('#seSiteAddr').value.trim(), fn = $('#seFore').value.trim(), ft = $('#seForeTel').value.trim();
     if (addr) tgt.addr = addr; else delete tgt.addr;
     if (fn) { tgt.fore = {name:fn, tel:ft}; foremenRemember(fn, ft); } else delete tgt.fore;
+    const bill = $('#seBill').value.replace(/\r/g, '').split('\n').map(x => x.trim()).filter(Boolean).join('\n');
+    if (bill) tgt.bill = bill; else delete tgt.bill;
     if (meet || calMap()['se:' + tgt.id]) calTouch('se:' + tgt.id); }
   if (seLogo && !S.logoLib.includes(seLogo)) { S.logoLib.unshift(seLogo); S.logoLib = S.logoLib.slice(0, 30); }
   save(); closeSheet($('#sheetSiteEdit')); renderSites(); renderSiteChip(); renderDpLayout(); note('Chantier enregistré');
@@ -3396,6 +3403,11 @@ function foremenList(){
   const m = new Map();
   for (const f of [...S.sites.map(x => x.fore).filter(Boolean), ...(Array.isArray(S.foremen) ? S.foremen : [])]) if (f && f.name) m.set(foreKey(f.name), {name:f.name, tel:f.tel || (m.get(foreKey(f.name)) || {}).tel || ''});
   return [...m.values()].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+}
+/* adresses de facturation déjà saisies dans les autres chantiers (proposées dans la fiche chantier) */
+function billList(exceptId){
+  const m = new Map(); for (const x of S.sites) if (x.bill && x.id !== exceptId) m.set(foreKey(x.bill), x.bill);
+  return [...m.values()].sort((a, b) => a.localeCompare(b, 'fr'));
 }
 function foremenRemember(name, tel){
   if (!Array.isArray(S.foremen)) S.foremen = [];
@@ -5683,6 +5695,7 @@ function bind(){
   $('#seLogoRemove').addEventListener('click', () => { seLogo = null; renderSeLogo(); });
   $('#seLogoLib').addEventListener('click', e => { const b = e.target.closest('[data-lib]'); if (!b) return; seLogo = allLogos()[+b.dataset.lib]; renderSeLogo(); });
   $('#seAddrGo').addEventListener('click', searchAddr);
+  $('#seBillPick').addEventListener('change', e => { const b = billList(editId)[+e.target.value]; if (e.target.value !== '' && b) $('#seBill').value = b; e.target.value = ''; });
   $('#seFore').addEventListener('input', () => { const f = foremenList().find(x => foreKey(x.name) === foreKey($('#seFore').value)); if (f && f.tel && !$('#seForeTel').value.trim()) $('#seForeTel').value = f.tel; });
   $('#seAddr').addEventListener('keydown', e => { if (e.key === 'Enter') searchAddr(); });
   $('#seLat').addEventListener('input', updateMapLink); $('#seLon').addEventListener('input', updateMapLink);
@@ -9826,7 +9839,7 @@ function initPlanning(){
 function initCommandes(){
   if (!window.BGCmd) return;
   BGCmd.init({
-    sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), name:s.name, folder:siteFolder(s), number:s.number || '', addr:s.addr || '', fore:s.fore || null})),
+    sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), name:s.name, folder:siteFolder(s), number:s.number || '', addr:s.addr || '', fore:s.fore || null, bill:s.bill || ''})),
     api, apiRaw:async url => { if (!tokenValid()) throw Object.assign(new Error('Session Google expirée'), {status:401}); const r = await fetch(url, {headers:{Authorization:'Bearer ' + S.drive.token}}); if (!r.ok) throw Object.assign(new Error('Erreur ' + r.status), {status:r.status}); return r; },
     ensureFolder:parts => ensurePath(parts), online:() => driveReady() && navigator.onLine, loadScript,
     comp:id => { const s = siteById(id), c = (s && compById(s.comp)) || compList()[0]; return c ? {name:c.name || '', addr:c.addr || '', tel:c.tel || '', email:c.email || '', logo:c.logo || ''} : {}; },

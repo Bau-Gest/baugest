@@ -3300,7 +3300,7 @@ const CMDP = {site:null};
 const cmdLogo = s => s && s.logo ? `<span class="slogo"><img src="${s.logo}" alt=""></span>` : `<span class="slogo none">${esc(initials(s ? s.name : '?'))}</span>`;
 if (window.BGCmd) BGCmd.init({
   split:true,
-  sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), name:s.name, folder:siteFolderName(s), number:s.number || '', addr:s.addr || '', fore:s.fore || null})),
+  sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), name:s.name, folder:siteFolderName(s), number:s.number || '', addr:s.addr || '', fore:s.fore || null, bill:s.bill || ''})),
   api:(url, opt) => api(url, opt), apiRaw:url => api(url, {}, true),
   ensureFolder:async parts => { let id = P.rootId; for (const n of parts) id = await ensureChild(id, n); return id; },
   online:() => !!P.rootId && navigator.onLine, loadScript,
@@ -4354,6 +4354,7 @@ async function editSiteDlg(id){
   const m = s.meet || {}, comps = compList(), opt = (v, l, cur) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(l)}</option>`;
   let R0 = null; try { R0 = await readSettings(); } catch (e) {}
   const fores = foremenPc(R0);
+  const bills = (() => { const m = new Map(); for (const x of ((R0 && Array.isArray(R0.sites)) ? R0.sites : S.sites)) if (x.bill && x.id !== id) m.set(foreKey(x.bill), x.bill); return [...m.values()].sort((a, b) => a.localeCompare(b, 'fr')); })();
   const r = await dialog({title:isNew ? 'Nouveau chantier' : 'Chantier ' + siteLabel(s), width:580, buttons:[{label:'Annuler', value:null}, {label:isNew ? 'Créer le chantier' : 'Enregistrer', primary:true, check:d => {
     if (!isNew) return true;
     const g = k => d.querySelector(k).value.trim(), la = parseFloat(g('#sdLat').replace(',', '.')), lo = parseFloat(g('#sdLon').replace(',', '.'));
@@ -4378,6 +4379,9 @@ async function editSiteDlg(id){
       <label class="se-f"><span>Téléphone</span><input type="tel" id="sdForeTel" value="${esc(s.fore?.tel || '')}" placeholder="079 123 45 67"></label></div>
     <datalist id="sdForeList">${fores.map(f => `<option value="${esc(f.name)}">${esc(f.tel || '')}</option>`).join('')}</datalist>
     <small class="muted">Repris dans chaque commande : adresse de livraison et contremaître à appeler.</small>
+    <label class="se-f"><span>Adresse de facturation</span><textarea id="sdBill" rows="3" placeholder="Entreprise, rue, NPA localité (vide = adresse de notre entreprise)" style="width:100%;border-radius:7px;border:1px solid var(--line);background:var(--surface2);color:var(--text);padding:6px 10px;font:inherit;resize:vertical">${esc(s.bill || '')}</textarea></label>
+    ${bills.length ? `<select id="sdBillPick" aria-label="Reprendre une adresse de facturation déjà utilisée"><option value="">Reprendre une adresse déjà utilisée…</option>${bills.map((b, i) => `<option value="${i}">${esc(b.replace(/\n/g, ', '))}</option>`).join('')}</select>` : ''}
+    <small class="muted">Reprise dans chaque commande (cadre « Facturation », référence = N° et nom du chantier).</small>
     <h4>Notre entreprise sur ce chantier</h4>
     <select id="sdComp">${opt('', comps.length ? '— Aucune —' : 'Aucune entreprise (à créer dans Devis › Entreprises)', s.comp || '')}${comps.map(c => opt(c.id, c.name, s.comp || '')).join('')}</select>
     <input type="text" id="sdAbbr" value="${esc(s.abbr || '')}" placeholder="Abréviations dans les PV : DUP, Ent. Dupont" aria-label="Abréviations de l'entreprise dans les PV">
@@ -4385,6 +4389,7 @@ async function editSiteDlg(id){
     onOpen:dlg => { sdHint(dlg); ['#sdFrom', '#sdTime', '#sdEvery'].forEach(k => dlg.querySelector(k).addEventListener('input', () => sdHint(dlg)));
       addrSuggest(dlg.querySelector('#sdAddr'), x => { dlg.querySelector('#sdAddr').value = [x.street, [x.npa, x.city].filter(Boolean).join(' ')].filter(Boolean).join(', ') || x.label;
         if (isFinite(x.lat) && isFinite(x.lon)) { dlg.querySelector('#sdLat').value = x.lat.toFixed(6); dlg.querySelector('#sdLon').value = x.lon.toFixed(6); } });
+      const bp = dlg.querySelector('#sdBillPick'); if (bp) bp.addEventListener('change', () => { const b = bills[+bp.value]; if (bp.value !== '' && b) dlg.querySelector('#sdBill').value = b; bp.value = ''; });
       dlg.querySelector('#sdFore').addEventListener('input', () => { const f = fores.find(x => foreKey(x.name) === foreKey(dlg.querySelector('#sdFore').value)), t = dlg.querySelector('#sdForeTel'); if (f && f.tel && !t.value.trim()) t.value = f.tel; }); }});
   if (!r) return null;
   const v = k => r.querySelector(k).value.trim(), num = k => parseFloat(v(k).replace(',', '.'));
@@ -4392,7 +4397,7 @@ async function editSiteDlg(id){
   const patch = {number:v('#sdNum'), name:v('#sdName') || s.name, radius:+v('#sdRadius') || 300,
     lat:lat >= -90 && lat <= 90 ? lat : s.lat, lon:lon >= -180 && lon <= 180 ? lon : s.lon,
     meet:sdMeet(r), comp:v('#sdComp') || undefined, abbr:v('#sdAbbr') || undefined,
-    addr:v('#sdAddr') || undefined, fore:v('#sdFore') ? {name:v('#sdFore'), tel:v('#sdForeTel')} : undefined};
+    addr:v('#sdAddr') || undefined, bill:v('#sdBill').replace(/\r/g, '').split('\n').map(x => x.trim()).filter(Boolean).join('\n') || undefined, fore:v('#sdFore') ? {name:v('#sdFore'), tel:v('#sdForeTel')} : undefined};
   try { const nid = await saveSitePc(id, patch); toast(isNew ? 'Chantier créé · dossiers créés sur le Drive, visible sur la tablette à la prochaine synchronisation' : 'Chantier enregistré · visible sur la tablette à la prochaine synchronisation', 'ok'); return nid; }
   catch (e) { toast('Enregistrement impossible : ' + e.message, 'err', 6000); return null; }
 }
