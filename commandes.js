@@ -723,10 +723,14 @@ const b64buf = buf => { const by = new Uint8Array(buf); let bin = ''; for (let i
 const encW = t => /^[\x20-\x7e]*$/.test(t) ? t : `=?UTF-8?B?${b64u(t)}?=`;
 const lines76 = b => b.replace(/.{1,76}/g, '$&\r\n');
 /* brouillon Outlook : X-Unsent = s'ouvre comme un nouveau mail prêt à envoyer */
+/* texte HTML : Outlook ouvre le brouillon en format HTML → signature avec image utilisable (Insérer › Signature) */
+const htmlOf = body => `<html><head><meta charset="utf-8"></head><body><div style="font-family:Calibri,Arial,sans-serif;font-size:11pt">${String(body).replace(/\s+$/, '').split('\n').map(l => l.trim() ? esc(l) : '&nbsp;').map(l => `<p style="margin:0">${l}</p>`).join('')}<p style="margin:0">&nbsp;</p></div></body></html>`;
 async function emlOf(to, subject, body, pdfBlob, pdfName){
-  const bd = 'bgcmd' + uid(), pdf = b64buf(await pdfBlob.arrayBuffer());
+  const bd = 'bgcmd' + uid(), ba = bd + 'a', pdf = b64buf(await pdfBlob.arrayBuffer());
   return new Blob([['X-Unsent: 1', `To: ${to.join(', ')}`, `Subject: ${encW(subject)}`, `Date: ${new Date().toUTCString()}`, 'MIME-Version: 1.0', `Content-Type: multipart/mixed; boundary="${bd}"`, '', `--${bd}`,
-    'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', lines76(b64u(body.replace(/\r?\n/g, '\r\n'))) + `--${bd}`,
+    `Content-Type: multipart/alternative; boundary="${ba}"`, '', `--${ba}`,
+    'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', lines76(b64u(body.replace(/\r?\n/g, '\r\n'))) + `--${ba}`,
+    'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', lines76(b64u(htmlOf(body))) + `--${ba}--`, '', `--${bd}`,
     `Content-Type: application/pdf; name="${encW(pdfName)}"`, `Content-Disposition: attachment; filename="${encW(pdfName)}"`, 'Content-Transfer-Encoding: base64', '', lines76(pdf) + `--${bd}--`, ''].join('\r\n')], {type:'message/rfc822'});
 }
 async function copyText(t){ try { await navigator.clipboard.writeText(t); return true; } catch (e) { return false; } }
@@ -745,9 +749,10 @@ async function sendMail(blob){
     markSent(true);
     if (!pref('cmdEmlTip')) { pref('cmdEmlTip', '1');
       dlg({title:'Ouvrir dans Outlook', width:560, body:`<p>Le mail est téléchargé (fichier <b>${esc(recName(o))}.eml</b>). Ouvre-le : Outlook affiche le mail prêt, avec les destinataires, l’objet, le texte et le PDF. Contrôle puis <b>Envoyer</b>.</p>
+        <p><b>Signature</b> : le mail est en format HTML. Si Outlook ne l’ajoute pas tout seul, clique en bas du texte puis <b>Insérer › Signature</b> (ou onglet Message › Signature) : ta signature avec l’image s’ajoute.</p>
         <p><b>À faire une seule fois</b> pour que les suivants s’ouvrent tout seuls : dans la liste des téléchargements du navigateur (en haut à droite), sur ce fichier : <b>⋮ / … → « Toujours ouvrir les fichiers de ce type »</b>.</p>
         <p class="bc-sm bc-mut">Si Windows demande avec quelle application l’ouvrir : choisis Outlook et coche « Toujours ».</p>`, buttons:[{label:'OK', value:true, pri:true}]}); }
-    else toast('Mail prêt : il s’ouvre dans Outlook · contrôle puis Envoyer', 4500);
+    else toast('Mail prêt : il s’ouvre dans Outlook · signature : Insérer › Signature · contrôle puis Envoyer', 5500);
     savePdf(r, blob).then(m => { if (/^Pas|^Hors/.test(m)) toast(m, 5000); });
     return;
   }
