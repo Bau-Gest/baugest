@@ -512,6 +512,54 @@ body.bp-split #app{left:var(--bp-w,55%)}
 .navtabs button{white-space:nowrap;padding:0 10px}
 @media (max-width:1700px){.gsearch input{width:200px}}
 @media (max-width:1450px){.navtabs button{padding:0 7px}.navtabs button .ic{display:none}.gsearch input{width:150px}}
+/* ---------- Ergonomie PC (10.11.2026) : chantier actif, recherche rapide, volet À faire, menu ⚙ ---------- */
+.scrim{z-index:72}
+.top{min-width:0}
+.top>*{flex:none}
+.top .grow{flex:1 1 0;min-width:0}
+.top .gsite{flex:0 1 220px;height:32px;min-width:110px;font-weight:600;border-color:var(--signal)}
+.top .gsite.none{font-weight:400;border-color:var(--line);color:var(--muted)}
+.top .gsearch{flex:0 1 280px;min-width:96px}
+.top .gsearch input{width:100%;min-width:0;padding-right:58px}
+.kbdh{position:absolute;right:5px;height:22px;padding:0 6px;border:1px solid var(--line);border-radius:5px;background:var(--surface2);color:var(--muted);font:600 11px var(--mono);cursor:pointer}
+.kbdh:hover{color:var(--text);border-color:var(--signal)}
+@media (max-width:1700px){.top .gsearch{flex-basis:210px}.top .gsite{flex-basis:190px}#btnSplit{font-size:0;gap:0;padding:0 8px}}
+@media (max-width:1450px){.top{gap:6px}.top .brand small{display:none}.top .gsearch{flex-basis:160px}.top .gsite{flex-basis:160px}}
+/* la barre se resserre selon SA largeur (volet À faire ou double vue du planning ouverts) */
+.top{container-type:inline-size;container-name:top}
+@container top (max-width:1450px){.navtabs button{padding:0 7px}.navtabs button .ic{display:none}.top .brand small{display:none}#btnSplit{font-size:0;gap:0;padding:0 8px}.top .gsearch{flex-basis:160px}.top .gsite{flex-basis:160px}}
+@container top (max-width:1250px){#btnBack,#btnViewerShow,#btnSync{font-size:0;gap:0;padding:0 8px}.top .gsearch input{padding-right:8px}.kbdh{display:none}}
+@container top (max-width:1150px){.top{gap:5px;padding:0 8px}.top .brand{font-size:19px;margin-right:2px}.navtabs button{padding:0 5px;font-size:13px;letter-spacing:0}
+  .top .gsearch{flex:none;min-width:0;width:32px;height:32px;justify-content:center;border-radius:7px;cursor:pointer}.top .gsearch:hover{background:var(--surface2)}.top .gsearch input{display:none}.top .gsearch .ic{position:static;width:18px;height:18px;color:var(--text)}}
+#tdDock{position:fixed;top:0;right:0;bottom:0;width:min(var(--td-w,380px),45vw);z-index:56;background:var(--surface);border-left:1px solid var(--line);display:grid;grid-template-rows:48px auto minmax(0,1fr);min-height:0}
+body.td-dock #app{right:min(var(--td-w,380px),45vw)}
+body.td-dock #bgPlan:not(.bp-split){right:min(var(--td-w,380px),45vw)}
+body.td-dock #toasts{right:calc(min(var(--td-w,380px),45vw) + 16px)}
+.tdk-h{display:flex;align-items:center;gap:6px;padding:0 8px 0 14px;border-bottom:1px solid var(--line)}
+.tdk-h b{font:700 18px var(--display);letter-spacing:.04em;text-transform:uppercase}
+.tdk-h small{color:var(--muted)}
+.tdk-new{padding:10px 10px 0}
+.tdk-body{overflow:auto;padding:10px 10px 30px;display:grid;gap:10px;align-content:start}
+.tdk-rs{position:absolute;left:-4px;top:0;bottom:0;width:8px;cursor:col-resize;z-index:2}
+.tdk-rs:hover,.tdk-rs.on{background:var(--signal);opacity:.5}
+#tdDock .tdp-sec.cur h4{color:var(--signal)}
+#tdDock .td-new .r input[type=date]{width:auto;flex:1 1 130px}
+#pal{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.45);display:grid;justify-items:center;align-content:start;padding-top:11vh}
+.pal-box{width:min(680px,94vw);max-height:74vh;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.55);overflow:hidden}
+.pal-box input{height:48px;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0 16px;font-size:17px;background:none;outline:none}
+.pal-list{overflow:auto;padding:6px}
+.pal-g{padding:8px 10px 3px;font:700 11px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pal-i{display:flex;align-items:center;gap:10px;width:100%;min-height:34px;padding:5px 10px;border:0;border-radius:7px;background:none;color:var(--text);text-align:left}
+.pal-i.on{background:var(--sel);box-shadow:inset 2px 0 0 var(--sel-line)}
+.pal-i b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pal-i small{flex:1;min-width:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pal-i kbd,.kb-t kbd{font:11px var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 5px;white-space:nowrap}
+.pal-e{padding:14px 12px;color:var(--muted)}
+.pal-f{padding:7px 14px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+.kb-t{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 26px}
+.kb-t h4{grid-column:1/-1;margin:10px 0 2px;font:700 14px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kb-t div{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:3px 0;border-bottom:1px solid var(--line)}
+.kb-t div span:last-child{flex:none}
 /* dépôt et tri */
 .ml-drop{display:grid;justify-items:center;gap:6px;padding:20px 14px;border:2px dashed var(--line);border-radius:12px;background:var(--surface2);text-align:center;cursor:pointer;transition:border-color .12s,background .12s}
 .ml-drop:hover{border-color:var(--muted)}
@@ -691,16 +739,18 @@ body.bp-split #app{left:var(--bp-w,55%)}
     <button id="btnBack" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Plans &amp; documents</button>
     <button id="btnViewerShow" class="btn ghost" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Visionneuse</button>
     <div class="navtabs" id="navtabs"><button data-nav="home"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</button><button data-nav="photos"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M9 8.5h.01"/></svg>Photos</button><button data-nav="files" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg>Plans &amp; documents</button><button data-nav="pvdt"><svg class="ic" viewBox="0 0 24 24"><path d="M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8.5 12.5l2 2 4-4M8.5 17.5h7"/></svg>PV DT</button><button data-nav="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button><button data-nav="plan"><svg class="ic" viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/></svg>Planning</button><button data-nav="cmd"><svg class="ic" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></svg>Commandes</button></div>
-    <div class="gsearch"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="gSearch" placeholder="Rechercher dans tous les chantiers" title="Nom, date (2026-09), indice (ind C)… puis Entrée"></div>
+    <select id="gSite" class="gsite none" title="Chantier actif : Photos, Plans &amp; documents, PV DT, Planning, Commandes et À faire le suivent" aria-label="Chantier actif"><option value="">Chantier…</option></select>
+    <div class="gsearch"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="search" id="gSearch" placeholder="Rechercher dans tous les chantiers" title="Nom, date (2026-09), indice (ind C)… puis Entrée"><button type="button" id="palBtn" class="kbdh" title="Recherche rapide : chantiers, devis, fichiers, actions (Ctrl + K)">Ctrl K</button></div>
     <div class="grow"></div>
     <button id="btnSync" class="btn syncbtn" hidden title="Zoom et défilement liés entre les deux volets"><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Lier les vues</button>
-    <button id="btnSites" class="ibtn" title="Chantiers : créer ou modifier les infos d'un chantier" aria-label="Chantiers"><svg class="ic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg></button>
-    <button id="btnTodo" class="ibtn" title="À faire : tâches de tous les chantiers (écrites au stylo sur la tablette)" aria-label="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span id="tdBadge" hidden>0</span></button>
+    <button id="btnSites" class="ibtn" hidden title="Chantiers : créer ou modifier les infos d'un chantier" aria-label="Chantiers"><svg class="ic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg></button>
+    <button id="btnTodo" class="ibtn" title="À faire : afficher ou masquer le volet (Alt + A)" aria-label="À faire"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span id="tdBadge" hidden>0</span></button>
     <button id="btnSplit" class="btn" title="Afficher deux fichiers côte à côte"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg>Double vue</button>
-    <button id="btnContrast" class="ibtn" title="Fort contraste (noir sur blanc)" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
-    <button id="btnTheme" class="ibtn" title="Thème clair / sombre"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
-    <span id="acct" class="acct"></span>
-    <button id="btnLogout" class="ibtn" title="Changer de compte ou de dossier"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+    <button id="btnContrast" class="ibtn" hidden title="Fort contraste (noir sur blanc)" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
+    <button id="btnTheme" class="ibtn" hidden title="Thème clair / sombre"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    <span id="acct" class="acct" hidden></span>
+    <button id="btnMore" class="ibtn" title="Réglages : chantiers, thème, raccourcis, compte" aria-label="Réglages" aria-haspopup="menu"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    <button id="btnLogout" class="ibtn" hidden title="Changer de compte ou de dossier"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
   </header>
 
   <aside class="side" id="side">
@@ -806,6 +856,19 @@ body.bp-split #app{left:var(--bp-w,55%)}
 </div>
 
 <div id="menu" class="menu" hidden></div>
+<aside id="tdDock" hidden aria-label="À faire">
+  <div class="tdk-rs" id="tdkRs" title="Glisser pour régler la largeur"></div>
+  <header class="tdk-h"><b>À faire</b><small id="tdkN"></small><span style="flex:1"></span>
+    <button class="ibtn" id="tdkRef" title="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
+    <button class="ibtn" id="tdkX" title="Fermer le volet (Alt + A)"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></header>
+  <div class="tdk-new" id="tdpNew"></div>
+  <div class="tdk-body" id="tdpBody"></div>
+</aside>
+<div id="pal" hidden><div class="pal-box" role="dialog" aria-label="Recherche rapide">
+  <input type="text" id="palQ" placeholder="Chantier, devis, fichier ou action…" autocomplete="off" spellcheck="false">
+  <div class="pal-list" id="palList"></div>
+  <div class="pal-f">↑ ↓ choisir · Entrée ouvrir · Échap fermer</div>
+</div></div>
 <div id="toasts"></div>
 <div id="jobs" hidden><div class="jh"><span id="jobsTitle">Transferts</span><button id="jobsClose" class="ibtn" title="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><div class="jl" id="jobsList"></div></div>
 <iframe id="printFrame" title="Impression"></iframe>
@@ -926,9 +989,15 @@ const confirmDlg = (title, html, yes = 'Confirmer', danger = false) => dialog({t
 
 /* ---------- réglages propres au PC ---------- */
 const PCKEY = 'baugest.pc';
-const P = Object.assign({token:'', exp:0, email:'', rootId:'', rootName:'', view:'grid', tile:150, sort:'name', dir:1, theme:'', split:false, sideW:270, perPage:1, caption:true, lastFolder:''},
+const P = Object.assign({token:'', exp:0, email:'', rootId:'', rootName:'', view:'grid', tile:150, sort:'name', dir:1, theme:'', split:false, sideW:270, perPage:1, caption:true, lastFolder:'', tdDock:false, tdW:380},
   (() => { try { return JSON.parse(localStorage.getItem(PCKEY) || '{}'); } catch (e) { return {}; } })());
 function saveP(){ try { localStorage.setItem(PCKEY, JSON.stringify(P)); } catch (e) {} }
+/* états de l'ergonomie PC (bloc « Ergonomie PC » en fin de script) : chantier actif, historique du navigateur, recherche rapide, volet À faire */
+const ACT = {site:'', sig:null};
+try { ACT.site = localStorage.getItem('baugest.pc.site') || localStorage.getItem('baugest.pc.pqSite') || localStorage.getItem('baugest.cmd.site') || ''; } catch (e) {}
+const HIST = {on:false, lock:0, skip:0, i:0, key:null, keys:[], t:0};
+const PAL = {items:[], cur:0, tok:0, t:0, files:null, fq:''};
+const TDK = {n:0};
 window.addEventListener('storage', e => {
   if (e.key !== PCKEY || !e.newValue) return;
   try { const n = JSON.parse(e.newValue); if (n.token && n.exp > P.exp) { P.token = n.token; P.exp = n.exp; } } catch (err) {}
@@ -1355,6 +1424,8 @@ async function navigate(id, keepSel){
   if (E.mode !== 'folder') { leaveMode(); keepSel = false; }
   if (E.cur !== id) { E.filter = ''; $('#tbFilter').value = ''; }
   E.cur = id; P.lastFolder = id; saveP();
+  { const fs = siteByFolder(chainNames(id)[0] || ''); if (fs) actSet(fs.id); }
+  histTick();
   if (!keepSel) { E.sel.clear(); E.anchor = null; E.focus = null; }
   /* ouvre les dossiers parents dans l'arbre */
   for (const x of chainIds(id)) { const n = FN.get(x); if (x !== id && n) { n.open = true; if (n.kids === null) await loadKids(x).catch(() => {}); } }
@@ -2082,6 +2153,7 @@ function startPan(p, e){
 function showViewer(){ $('#viewer').hidden = false; syncTopBtns(); }
 function hideViewer(){ for (const p of V.panes) if (p.textIn) commitText(p); $('#viewer').hidden = true; syncTopBtns(); filesEl.focus(); }
 function syncTopBtns(){
+  histTick();
   const vis = !$('#viewer').hidden, any = V.panes.some(p => p.item);
   $('#btnBack').hidden = !vis; $('#btnViewerShow').hidden = vis || !any;
   $('#btnSplit').classList.toggle('on', P.split);
@@ -2918,6 +2990,7 @@ function openPq(){
   closeDevis();
   $('#pvdt').hidden = false; syncNav();
   const sites = pqSites();
+  if (actSite()) PQ.site = ACT.site;
   if (!PQ.site || !sites.some(s => s.id === PQ.site)) { try { PQ.site = localStorage.getItem('baugest.pc.pqSite') || ''; } catch (e) {} if (!sites.some(s => s.id === PQ.site)) PQ.site = sites[0]?.id || ''; }
   renderPq(); pqLoadList();
 }
@@ -3038,7 +3111,7 @@ function renderPqList(){
 }
 function bindPq(){
   $('#pqFile').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; pqAdd(f); });
-  $('#pqSite').addEventListener('change', e => { PQ.site = e.target.value; try { localStorage.setItem('baugest.pc.pqSite', PQ.site); } catch (err) {} pqLoadList(); });
+  $('#pqSite').addEventListener('change', e => { PQ.site = e.target.value; try { localStorage.setItem('baugest.pc.pqSite', PQ.site); } catch (err) {} actSet(PQ.site); pqLoadList(); });
   $('#pqRefresh').addEventListener('click', pqLoadList);
   $('#pqSiteInfo').addEventListener('click', () => PQ.site && editSiteDlg(PQ.site));
   $('#pqQueue').addEventListener('change', e => {
@@ -3081,6 +3154,7 @@ function refreshMode(){ if (E.mode === 'photos') loadPhotos(); else if (E.mode =
 function syncNav(){
   const cur = !$('#home').hidden ? 'home' : !$('#cmdView').hidden ? 'cmd' : !$('#devis').hidden ? 'devis' : !$('#pvdt').hidden ? 'pvdt' : E.mode === 'photos' ? 'photos' : 'files';
   $$('#navtabs [data-nav]').forEach(b => b.classList.toggle('on', b.dataset.nav === cur));
+  actPaint(); histTick();
 }
 /* ---------- À faire par chantier (v2.3) : consultation et case à cocher (l'écriture se fait au stylo sur la tablette) ----------
    Fichier « <Chantier>/À faire (ne pas supprimer).json » (appProperties kind='todo'), même format que la tablette. */
@@ -3123,6 +3197,7 @@ const devTodo = () => (S.devis || []).filter(d => !d.sent).sort((a, b) => (a.cre
 function tdBadge(){
   let n = 0; for (const sid in TDP.lists) if (tdKnown(sid)) n += TDP.lists[sid].filter(tdUrgent).length;
   const b = $('#tdBadge'); b.textContent = String(n); b.hidden = !n;
+  TDK.n = n; titleBadge(); tdDockDraw();
 }
 function tdInk(ink){
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -3145,11 +3220,11 @@ function tdRow(t, sid){
     <div>${txt ? `<b>${esc(txt)}</b>` : img ? `<img alt="Tâche écrite au stylo" src="${img}">` : '<i>(vide)</i>'}${t.ln && t.ln.th ? `<img class="th" alt="" src="${esc(t.ln.th)}">` : ''}${meta ? `<small>${meta}</small>` : ''}</div></div>`;
 }
 function tdBody(){
-  const sites = S.sites.filter(s => !s.example).sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}));
+  const sites = S.sites.filter(s => !s.example).sort((a, b) => (b.id === ACT.site) - (a.id === ACT.site) || siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}));
   const sec = (sid, label) => {
     const all = (TDP.lists[sid] || []).filter(t => !t.del), open = all.filter(t => !t.done).sort(tdSort), done = all.filter(t => t.done).sort((a, b) => b.done - a.done);
     if (!open.length && !(TDP.done && done.length)) return '';
-    return `<section class="tdp-sec"><h4>${esc(label)} <span>${open.length}</span></h4>${open.map(t => tdRow(t, sid)).join('')}${TDP.done && done.length ? '<p class="tdp-h">Historique</p>' + done.map(t => tdRow(t, sid)).join('') : ''}</section>`;
+    return `<section class="tdp-sec${sid === ACT.site ? ' cur' : ''}"><h4>${esc(label)} <span>${open.length}</span></h4>${open.map(t => tdRow(t, sid)).join('')}${TDP.done && done.length ? '<p class="tdp-h">Historique</p>' + done.map(t => tdRow(t, sid)).join('') : ''}</section>`;
   };
   const dvRow = d => `<div class="tdp-row tdp-dv${d.sent ? ' done' : ''}"><label title="Cocher quand le devis est envoyé"><input type="checkbox" data-dvsent="${esc(d.id)}"${d.sent ? ' checked' : ''}></label>
     <div><b>${d.sent ? 'Devis envoyé' : 'Faire et envoyer le devis'} · <a href="#" data-dvo="${esc(d.id)}">${esc(devName(d) + (devCity(d) ? ' – ' + devCity(d) : ''))}</a></b><small>${esc([d.sent ? 'Envoyé le ' + dFmt(new Date(d.sent)) : d.visit ? 'Visite ' + dzFmtVisit(d.visit) : 'Visite à fixer', 'Fiche du ' + dFmt(new Date(d.created || Date.now()))].join(' · '))}</small></div></div>`;
@@ -3238,29 +3313,9 @@ async function tdNewSubmit(root){
   } catch (e) { toast('À faire : ' + e.message, 'err'); return false; }
   finally { delete box.dataset.busy; const b = box.querySelector('[data-tdadd]'); if (b) b.disabled = false; }
 }
-async function openTodoPc(){
-  try { await tdLoad(); } catch (e) { toast('À faire : ' + e.message, 'err'); }
-  dialog({title:'À faire', width:720, body:'<div id="tdpNew">' + tdNewHTML() + '</div><div id="tdpBody"></div>', buttons:[{label:'Fermer', value:null, primary:true}], onOpen:(dlg, done) => {
-    const draw = () => { dlg.querySelector('#tdpBody').innerHTML = tdBody(); };
-    draw();
-    const add = async () => { if (await tdNewSubmit(dlg.querySelector('#tdpNew'))) { draw(); if (hmShown()) { hmRenderType('todo'); hmRenderType('today'); hmRenderType('sites'); } dlg.querySelector('[data-tdn="t"]').focus(); } };
-    const kh = e => { if (!dlg.isConnected) { window.removeEventListener('keydown', kh, true); return; } if (e.key === 'Enter' && dlg.contains(e.target) && e.target.matches('[data-tdn="t"]')) { e.preventDefault(); e.stopPropagation(); add(); } };
-    window.addEventListener('keydown', kh, true);
-    dlg.addEventListener('click', e => { if (e.target.closest('[data-tdadd]')) add(); });
-    dlg.addEventListener('change', async e => {
-      if (e.target.id === 'tdpDone') { TDP.done = e.target.checked; draw(); return; }
-      const dv = e.target.closest('[data-dvsent]'); if (dv) { const d = devById(dv.dataset.dvsent); if (d) { d.sent = d.sent ? null : Date.now(); devSave(d); if (!$('#devis').hidden) { renderDzList(); if (DV.cur === d.id) renderDzHead(d); } } draw(); return; }
-      const c = e.target.closest('[data-tdc]'); if (c) { await tdToggle(c.dataset.tds, c.dataset.tdc); draw(); }
-    });
-    dlg.addEventListener('click', async e => {
-      const o = e.target.closest('[data-dvo]'); if (o) { e.preventDefault(); done(null); openDevis(o.dataset.dvo); return; }
-      const a = e.target.closest('[data-tdf]'); if (!a) return;
-      e.preventDefault(); done(null);
-      try { const m = await meta(a.dataset.tdf); m._k = kindOf(m); openIn(0, m, [m]); } catch (x) { toast('Fichier introuvable : ' + x.message, 'err'); }
-    });
-  }});
-}
-$('#btnTodo').addEventListener('click', openTodoPc);
+/* le volet « À faire » (à droite, reste ouvert pendant qu'on lit un plan ou un PV) : voir tdDockOpen dans le bloc « Ergonomie PC » */
+function openTodoPc(){ tdDockOpen(true); }
+$('#btnTodo').addEventListener('click', () => { if ($('#tdDock').hidden) tdDockOpen(true); else tdDockClose(); });
 $('#btnSites').addEventListener('click', () => sitesDlg());
 setInterval(() => { if (!document.hidden && !$('#app').hidden) tdLoad().catch(() => {}); }, 120000);
 
@@ -3272,6 +3327,8 @@ if (window.BGPlan) BGPlan.init({
   onSplit:() => setTimeout(() => dispatchEvent(new Event('resize')), 50),
   popout:PLAN_WIN ? null : (sid, uid) => { const w = window.open(location.pathname + '#planning=' + encodeURIComponent(sid || '') + (uid ? '&plan=' + encodeURIComponent(uid) : ''), 'bgplanning', 'popup,width=1500,height=950'); if (!w) toast('Fenêtre bloquée : autorise les fenêtres pop-up pour ce site', 'err'); },
   onClose:() => { if (PLAN_WIN) window.close(); },
+  keysOff:e => !!document.querySelector('.scrim') || !!(e.target && e.target.closest && e.target.closest('#tdDock')),
+  onToggle:on => { if (on) { const b = document.querySelector('#bgPlan #bpSite'); if (b && b.value) actSet(b.value); } histTick(); },
   sites:() => S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true})).map(s => ({id:s.id, label:siteLabel(s), folder:siteFolderName(s)})),
   api:(url, opt) => api(url, opt),
   ensureFolder:async parts => { let id = P.rootId; for (const n of parts) id = await ensureChild(id, n); return id; },
@@ -3306,6 +3363,7 @@ if (window.BGCmd) BGCmd.init({
   online:() => !!P.rootId && navigator.onLine, loadScript,
   comp:id => { const s = S.sites.find(x => x.id === id), c = (s && compById(s.comp)) || (S.companies || [])[0]; return c ? {name:c.name || '', addr:c.addr || '', tel:c.tel || '', email:c.email || '', logo:c.logo || ''} : {}; },
   active:() => !$('#cmdView').hidden,
+  onNav:() => histTick(),
   logoHTML:id => cmdLogo(S.sites.find(x => x.id === id)),
   editSite:id => editSiteDlg(id).then(() => { if (!$('#cmdView').hidden) cmdMount(); })
 });
@@ -3318,21 +3376,21 @@ function openCommandes(){
   if (!window.BGCmd) { toast('Module Commandes non chargé : recharge la page', 'err'); return; }
   if (!$('#viewer').hidden) hideViewer();
   const top = chainIds(E.cur)[1], n = top && FN.get(top), s = n && siteByFolder(n.name);
-  let sid = s ? s.id : CMDP.site; if (!sid) { try { sid = localStorage.getItem('baugest.cmd.site'); } catch (e) {} }
+  let sid = actSite() ? ACT.site : s ? s.id : CMDP.site; if (!sid) { try { sid = localStorage.getItem('baugest.cmd.site'); } catch (e) {} }
   closeDevis();
   CMDP.site = sid && S.sites.some(x => x.id === sid) ? sid : null;
   $('#cmdView').hidden = false; syncNav();
   cmdMount();
 }
 function closeCmd(){ if ($('#cmdView').hidden) return; if (window.BGCmd) BGCmd.leave(); $('#cmdView').hidden = true; syncNav(); }
-$('#cmdNewSite').addEventListener('click', async () => { const id = await editSiteDlg(null); if (id) { CMDP.site = id; cmdMount(); } });
-$('#cmdSites').addEventListener('click', e => { const b = e.target.closest('[data-cmdsite]'); if (!b) return; CMDP.site = b.dataset.cmdsite; try { localStorage.setItem('baugest.cmd.site', CMDP.site); } catch (x) {} cmdMount(); });
+$('#cmdNewSite').addEventListener('click', async () => { const id = await editSiteDlg(null); if (id) { CMDP.site = id; actSet(id); cmdMount(); } });
+$('#cmdSites').addEventListener('click', e => { const b = e.target.closest('[data-cmdsite]'); if (!b) return; CMDP.site = b.dataset.cmdsite; try { localStorage.setItem('baugest.cmd.site', CMDP.site); } catch (x) {} actSet(CMDP.site); cmdMount(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !e.defaultPrevented && !$('#cmdView').hidden && !document.querySelector('.scrim') && window.BGCmd && BGCmd.back()) e.preventDefault(); });
 function openPlanning(){
   if (!window.BGPlan) { toast('Module Planning non chargé : recharge la page', 'err'); return; }
   let sid = null;
   const top = chainIds(E.cur)[1], n = top && FN.get(top), s = n && siteByFolder(n.name);
-  if (s) sid = s.id; else { try { sid = localStorage.getItem('baugest.pc.pqSite'); } catch (e) {} }
+  if (actSite()) sid = ACT.site; else if (s) sid = s.id; else { try { sid = localStorage.getItem('baugest.pc.pqSite'); } catch (e) {} }
   BGPlan.open(sid).catch(e => toast('Planning : ' + e.message, 'err'));
 }
 $('#navtabs').addEventListener('click', e => {
@@ -3346,7 +3404,12 @@ $('#navtabs').addEventListener('click', e => {
   if (n === 'pvdt') { openPq(); return; }
   closeDevis();
   if (n === 'photos') openPhotos();
-  else { if (E.mode !== 'folder') navigate(E.cur || P.rootId); else syncNav(); }
+  else {
+    /* le chantier actif a changé dans un autre onglet : on ouvre son dossier (même rubrique si elle existe) */
+    const as = actSite(), cs = siteByFolder(chainNames(E.cur)[0] || '');
+    if (as && cs && cs.id !== as.id) actGoFolder(as);
+    else if (E.mode !== 'folder') navigate(E.cur || P.rootId); else syncNav();
+  }
 });
 
 const phSiteLabel = id => {
@@ -3363,12 +3426,14 @@ function phSiteOptions(){
 }
 function openPhotos(site){
   closeDevis();
-  if (site) PHO.site = site;
+  if (site) { PHO.site = site; PHO.actAt = ACT.site; if (S.sites.some(x => x.id === site)) actSet(site); }
   else {
     const names = E.mode === 'folder' ? chainNames(E.cur) : [];
-    const s = siteByFolder(names[0] || '');
-    if (s) PHO.site = s.id;
-    else if (names[0] === DZ_ROOT && names[1]) { const d = (S.devis || []).find(x => clean(x.folder || '') === names[1]); PHO.site = d ? 'devis:' + d.id : (PHO.site || '__all'); }
+    const s = siteByFolder(names[0] || ''), as = actSite();
+    if (names[0] === DZ_ROOT && names[1]) { const d = (S.devis || []).find(x => clean(x.folder || '') === names[1]); PHO.site = d ? 'devis:' + d.id : (PHO.site || '__all'); PHO.actAt = ACT.site; }
+    else if (PHO.site && !S.sites.some(x => x.id === PHO.site) && PHO.actAt === ACT.site) { /* « Tous les chantiers », « À classer » ou un devis choisi exprès : gardé tant que le chantier actif n'a pas changé */ }
+    else if (as) PHO.site = as.id;
+    else if (s) PHO.site = s.id;
     else if (!PHO.site) PHO.site = '__all';
   }
   E.mode = 'photos'; E.sel.clear(); E.anchor = null; E.items = [];
@@ -3434,7 +3499,7 @@ function phChanged(reload){
   if (reload) { loadPhotos(); return; }
   E.sel.clear(); renderPhTags(); renderFiles(); if (PHO.view === 'map') drawPhMap();
 }
-$('#phSite').addEventListener('change', e => { PHO.site = e.target.value; renderCrumbs(); phChanged(true); });
+$('#phSite').addEventListener('change', e => { PHO.site = e.target.value; if (S.sites.some(x => x.id === PHO.site)) actSet(PHO.site); PHO.actAt = ACT.site; renderCrumbs(); phChanged(true); histTick(); });
 $('#phRange').addEventListener('change', e => {
   const wasWide = !rangeBounds().from;
   PHO.range = e.target.value; $('#phCustom').hidden = PHO.range !== 'custom';
@@ -5121,7 +5186,14 @@ async function start(){
       } catch (e) { toast('Fichier introuvable : ' + e.message, 'err'); }
     }
     await navigate(start);
-    if (!PLAN_WIN) openHome(); else filesEl.focus();
+    if (PLAN_WIN) filesEl.focus();
+    else {
+      /* page rechargée : on rouvre l'écran où on était (gardé dans l'historique du navigateur), sinon l'Accueil */
+      const st = history.state;
+      if (st && st.bg && st.nav) { HIST.i = st.i || 0; await histGo(st); } else openHome();
+      HIST.on = true; histSync();
+      if (P.tdDock) tdDockOpen(false);
+    }
   } catch (e) {
     $('#files').innerHTML = `<div class="empty">Google Drive inaccessible : ${esc(e.message)}<br><br><button class="btn" id="retry">Réessayer</button></div>`;
     $('#retry').addEventListener('click', () => start());
@@ -5899,7 +5971,7 @@ async function hmSetDlg(id){
 }
 async function hmPickSite(title){
   const sites = pqSites(); if (!sites.length) { toast('Aucun chantier', 'err'); return null; }
-  let def = ''; try { def = localStorage.getItem('baugest.pc.pqSite') || ''; } catch (e) {}
+  let def = actSite() ? ACT.site : ''; if (!def) { try { def = localStorage.getItem('baugest.pc.pqSite') || ''; } catch (e) {} }
   return dialog({title, width:440, body:`<div class="hm-addl">${sites.map(s => `<button class="btn${s.id === def ? ' primary' : ''}" data-k="${esc(s.id)}">${esc(siteLabel(s))}</button>`).join('')}</div>`,
     buttons:[{label:'Annuler', value:null}], onOpen:(dlg, done) => dlg.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) done(b.dataset.k); })});
 }
@@ -5923,7 +5995,7 @@ async function hmQuickAct(k){
   if (k === 'photos') { openPhotos('__all'); return; }
   if (k === 'files') { closeHome(); navigate(E.cur || P.rootId); return; }
   if (k === 'todo') { openTodoPc(); return; }
-  if (k === 'search') { $('#gSearch').focus(); return; }
+  if (k === 'search') { palOpen(); return; }
   if (k === 'mails') { const i = $('#mlFile'); if (i) i.click(); else toast('Ajoute le bloc « Déposer et trier » à l’accueil', 'err'); return; }
   if (k === 'site') { const sid = await hmPickSite('Infos de quel chantier ?'); if (sid) editSiteDlg(sid); }
 }
@@ -5937,7 +6009,7 @@ function hmClick(e){
   if ((b = e.target.closest('[data-hmm]'))) { mlOpen(b.dataset.hmm); return; }
   if ((b = e.target.closest('[data-hmmem]'))) { mlMemory(b.dataset.hmmem); return; }
   if ((b = e.target.closest('[data-hm="todo"]'))) { openTodoPc(); return; }
-  if ((b = e.target.closest('[data-hmpv]'))) { PQ.site = b.dataset.hmpv; try { localStorage.setItem('baugest.pc.pqSite', PQ.site); } catch (x) {} openPq(); return; }
+  if ((b = e.target.closest('[data-hmpv]'))) { PQ.site = b.dataset.hmpv; try { localStorage.setItem('baugest.pc.pqSite', PQ.site); } catch (x) {} actSet(PQ.site); openPq(); return; }
   if ((b = e.target.closest('[data-hmpvf]'))) { const f = HMD.pvs.find(x => x.id === b.dataset.hmpvf); if (f) { f._k = kindOf(f); openIn(0, f, HMD.pvs); } return; }
   if ((b = e.target.closest('[data-hmdv]'))) { openDevis(b.dataset.hmdv); return; }
   if ((b = e.target.closest('[data-hmplan]'))) { hmPlan(b.dataset.hmplan || null, b.dataset.uid); return; }
@@ -6018,7 +6090,398 @@ function bindHome(){
 }
 bindHome();
 
-window.BauGestPC = {V, E, P, PHO, DV, ML, HMS, HMD, S: () => S};
+/* =====================================================================
+   Ergonomie PC (10.11.2026) : chantier actif commun aux onglets, bouton Retour du navigateur,
+   recherche rapide Ctrl+K + raccourcis, volet « À faire » à droite, menu ⚙ de la barre du haut.
+   Rien n'est retiré : les boutons Chantiers, Thème, Contraste et Compte restent dans la page (cachés), le menu ⚙ les actionne.
+   ===================================================================== */
+function navCur(){ return !$('#home').hidden ? 'home' : !$('#cmdView').hidden ? 'cmd' : !$('#devis').hidden ? 'devis' : !$('#pvdt').hidden ? 'pvdt' : E.mode === 'photos' ? 'photos' : 'files'; }
+function planFull(){ return !!window.BGPlan && BGPlan.isOpen() && !document.body.classList.contains('bp-split'); }
+function modalOpen(){ return !!document.querySelector('.scrim, .bc-scrim, .bp-scrim'); }
+async function planLeave(){ if (planFull()) { try { await BGPlan.close(); } catch (e) {} } }
+async function goNav(n){
+  if (n !== 'plan') await planLeave();
+  const b = document.querySelector(`#navtabs [data-nav="${n}"]`); if (b) b.click();
+}
+
+/* ---------- chantier actif : le même pour Photos, Plans & documents, PV DT, Planning, Commandes et À faire ----------
+   ACT.site (localStorage 'baugest.pc.site'). Choisi dans la barre du haut, ou repris du chantier choisi dans un onglet
+   (liste des Photos, des PV DT, des Commandes, du Planning, dossier ouvert dans l'explorateur). */
+function actSite(){ return ACT.site ? S.sites.find(s => s.id === ACT.site && !s.example) || null : null; }
+function actPaint(){
+  const el = $('#gSite'); if (!el || $('#app').hidden) return;
+  const sites = S.sites.filter(s => !s.example).slice().sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}));
+  const sig = sites.map(s => s.id + '\u0001' + siteLabel(s)).join('\u0002');
+  if (sig !== ACT.sig) {
+    ACT.sig = sig;
+    el.innerHTML = '<option value="" disabled hidden>Chantier…</option>' + sites.map(s => `<option value="${esc(s.id)}">${esc(siteLabel(s))}</option>`).join('') + '<option value="__edit">Créer / modifier les chantiers…</option>';
+  }
+  const v = sites.some(s => s.id === ACT.site) ? ACT.site : '';
+  if (el.value !== v) el.value = v;
+  el.classList.toggle('none', !v);
+}
+function actSet(id){
+  if (!id || id === ACT.site || !S.sites.some(s => s.id === id)) { actPaint(); return; }
+  ACT.site = id; try { localStorage.setItem('baugest.pc.site', id); } catch (e) {}
+  actPaint(); tdDockSite();
+}
+/* dossier du chantier dans l'explorateur ; si on était dans une rubrique d'un autre chantier (Plans, Photos…), la même rubrique */
+async function actGoFolder(s){
+  try {
+    const names = E.mode === 'folder' ? chainNames(E.cur) : [], cs = siteByFolder(names[0] || '');
+    let id = await ensureChild(P.rootId, siteFolderName(s));
+    await ensureChain(id).catch(() => {});
+    if (cs && cs.id !== s.id && names[1]) {
+      const n = FN.get(id); if (n && n.kids === null) await loadKids(id).catch(() => {});
+      const k = ((FN.get(id) || {}).kids || []).map(x => FN.get(x)).find(x => x && x.name === names[1]);
+      if (k) id = k.id;
+    }
+    if (!$('#viewer').hidden) hideViewer();
+    closeDevis();
+    await navigate(id);
+  } catch (e) { toast('Dossier introuvable : ' + e.message, 'err'); }
+}
+/* applique le chantier actif à l'écran affiché (choix dans la barre du haut ou dans la recherche rapide) */
+function actApply(){
+  const s = actSite(); if (!s) return;
+  if (window.BGPlan && BGPlan.isOpen()) {
+    const b = document.querySelector('#bgPlan #bpSite');
+    if (b && b.value !== s.id) { b.value = s.id; b.dispatchEvent(new Event('change', {bubbles:true})); }
+    if (planFull()) return;
+  }
+  const nav = navCur();
+  if (nav === 'photos') { if (PHO.site !== s.id) { PHO.site = s.id; PHO.actAt = s.id; $('#phSite').value = s.id; renderCrumbs(); phChanged(true); } }
+  else if (nav === 'pvdt') { if (PQ.site !== s.id) { PQ.site = s.id; try { localStorage.setItem('baugest.pc.pqSite', s.id); } catch (e) {} renderPq(); pqLoadList(); } }
+  else if (nav === 'cmd') { if (CMDP.site !== s.id) { CMDP.site = s.id; try { localStorage.setItem('baugest.cmd.site', s.id); } catch (e) {} cmdMount(); } }
+  else if (nav === 'files') { const cs = E.mode === 'folder' ? siteByFolder(chainNames(E.cur)[0] || '') : null; if (!cs || cs.id !== s.id) actGoFolder(s); }
+}
+$('#gSite').addEventListener('change', e => {
+  const v = e.target.value; e.target.blur();
+  if (v === '__edit') { actPaint(); sitesDlg(); return; }
+  if (!v) { actPaint(); return; }
+  actSet(v); actApply();
+});
+/* chantier changé dans le Planning (liste du module) → chantier actif */
+document.addEventListener('change', e => { if (e.target && e.target.id === 'bpSite' && e.target.closest('#bgPlan')) actSet(e.target.value); });
+
+/* ---------- bouton Retour du navigateur (et de la souris) : chaque onglet, dossier ou fichier ouvert est une étape ----------
+   L'écran est gardé dans history.state (l'adresse ne change pas) : Retour / Suivant le rouvrent, recharger la page aussi. */
+function histState(){
+  const st = {bg:1, nav:planFull() ? 'plan' : navCur()};
+  if (st.nav === 'files') { if (E.mode === 'search') st.q = SR.q; else st.dir = E.cur || ''; }
+  else if (st.nav === 'photos') st.site = PHO.site || '';
+  else if (st.nav === 'devis') st.dv = DV.cur || '';
+  else if (st.nav === 'cmd') st.cv = window.BGCmd && BGCmd._U && BGCmd._U.view !== 'list' ? 1 : 0;
+  const it = st.nav !== 'plan' && !$('#viewer').hidden && V.panes[0] && V.panes[0].item;
+  if (it) st.file = it.id;
+  return st;
+}
+/* deux états de même base = même étape (autre photo dans la visionneuse, autre fiche devis, autre filtre photos) */
+function histBase(st){ return [st.nav, st.dir || '', st.q || '', st.cv || 0, st.file ? 'F' : ''].join('|'); }
+function histTick(){ if (!HIST.on || HIST.lock || HIST.t) return; HIST.t = setTimeout(() => { HIST.t = 0; histSync(); }, 0); }
+function histSync(){
+  if (!HIST.on || HIST.lock) return;
+  const st = histState(), k = JSON.stringify(st);
+  if (k === HIST.key) return;
+  const prev = HIST.key ? JSON.parse(HIST.key) : null;
+  try {
+    if (!prev || histBase(prev) === histBase(st)) history.replaceState({...st, i:HIST.i}, '');
+    else if (HIST.i > 0 && HIST.keys[HIST.i - 1] === k) { HIST.skip++; HIST.i--; history.back(); }   /* fichier refermé, dossier parent… : on revient à l'étape d'avant au lieu d'en ajouter une */
+    else { HIST.i++; HIST.keys.length = HIST.i; history.pushState({...st, i:HIST.i}, ''); }
+  } catch (e) {}
+  HIST.key = k; HIST.keys[HIST.i] = k;
+}
+function scrimClose(){
+  const a = $$('.scrim'), sc = a[a.length - 1]; if (!sc) return false;
+  sc.dispatchEvent(new MouseEvent('mousedown', {bubbles:true})); return true;
+}
+/* une fenêtre est ouverte : Retour la ferme et on reste sur l'écran */
+function histCloseTop(){
+  if (!$('#pal').hidden) { palClose(); return true; }
+  if (window.BGCmd && BGCmd._U && BGCmd._U.dlgs && BGCmd._U.dlgs.length) { BGCmd.back(); return true; }
+  if (document.querySelector('.bp-scrim') && window.BGPlan && BGPlan.isOpen()) { BGPlan.back(); return true; }
+  return scrimClose();
+}
+async function histGo(st){
+  HIST.lock++;
+  try {
+    if (st.nav !== 'plan') await planLeave();
+    if (st.nav === 'plan') { if (!planFull()) openPlanning(); }
+    else if (st.nav === 'home') { if ($('#home').hidden) openHome(); }
+    else if (st.nav === 'photos') { if (navCur() !== 'photos' || (st.site && PHO.site !== st.site)) openPhotos(st.site || undefined); }
+    else if (st.nav === 'pvdt') { if ($('#pvdt').hidden) openPq(); }
+    else if (st.nav === 'cmd') { if ($('#cmdView').hidden) openCommandes(); if (!st.cv && window.BGCmd && BGCmd._U && BGCmd._U.view !== 'list') BGCmd.back(); }
+    else if (st.nav === 'devis') { if ($('#devis').hidden || (st.dv && DV.cur !== st.dv)) await openDevis(st.dv || undefined); }
+    else {
+      closeDevis();
+      if (st.q) { if (E.mode !== 'search' || SR.q !== st.q) await runSearch(st.q); }
+      else {
+        let dir = st.dir || P.rootId;
+        if (dir !== P.rootId && !(await ensureChain(dir).catch(() => false))) dir = P.rootId;
+        if (E.mode !== 'folder' || E.cur !== dir) await navigate(dir);
+      }
+    }
+    const p0 = V.panes[0];
+    if (st.file && st.nav !== 'plan') {
+      if (p0.item && p0.item.id === st.file) { if ($('#viewer').hidden) showViewer(); }
+      else { try { const m = await meta(st.file); m._k = kindOf(m); await openIn(0, m, E.shown.some(x => x.id === m.id) ? E.shown : [m]); } catch (e) {} }
+    } else if (!$('#viewer').hidden) hideViewer();
+  } catch (e) {}
+  finally {
+    HIST.lock--;
+    if (!HIST.lock && HIST.on) { const cur = histState(); HIST.key = JSON.stringify(cur); HIST.keys[HIST.i] = HIST.key; try { history.replaceState({...cur, i:HIST.i}, ''); } catch (e) {} }
+  }
+}
+window.addEventListener('popstate', e => {
+  const st = e.state; if (!st || !st.bg) return;
+  if (HIST.skip) { HIST.skip--; HIST.i = st.i || 0; return; }
+  if (!HIST.on) return;
+  if (histCloseTop()) { const d = HIST.i - (st.i || 0); if (d) { HIST.skip++; history.go(d); } return; }
+  HIST.i = st.i || 0;
+  histGo(st);
+});
+
+/* ---------- volet « À faire » à droite : reste ouvert pendant qu'on lit un plan, un PV ou le planning ----------
+   Même contenu que l'ancienne fenêtre (nouvelle tâche au clavier, tâches par chantier / liste / devis, historique). */
+function tdDockDraw(){
+  if ($('#tdDock').hidden) return;
+  $('#tdpBody').innerHTML = tdBody();
+  $('#tdkN').textContent = TDK.n ? TDK.n + ' en retard ou du jour' : '';
+}
+function tdDockSite(){
+  if ($('#tdDock').hidden) return;
+  const box = $('#tdpNew .td-new'), sel = box && box.querySelector('[data-tdn="sid"]'), txt = box && box.querySelector('[data-tdn="t"]');
+  if (sel && txt && !txt.value && actSite() && [...sel.options].some(o => o.value === ACT.site)) sel.value = ACT.site;
+  tdDockDraw();
+}
+function tdDockW(){ document.documentElement.style.setProperty('--td-w', Math.max(300, Math.min(700, +P.tdW || 380)) + 'px'); }
+function tdDockOpen(focus){
+  const d = $('#tdDock');
+  if (d.hidden) {
+    tdDockW();
+    d.hidden = false; document.body.classList.add('td-dock'); $('#btnTodo').classList.add('on');
+    if (!P.tdDock) { P.tdDock = true; saveP(); }
+    $('#tdpNew').innerHTML = tdNewHTML(actSite() ? ACT.site : '');
+    tdDockDraw();
+    setTimeout(() => dispatchEvent(new Event('resize')), 60);
+    tdLoad().catch(e => toast('À faire : ' + e.message, 'err'));
+  }
+  if (focus) setTimeout(() => { const i = $('#tdpNew [data-tdn="t"]'); if (i) i.focus(); }, 60);
+}
+function tdDockClose(){
+  const d = $('#tdDock'); if (d.hidden) return;
+  d.hidden = true; document.body.classList.remove('td-dock'); $('#btnTodo').classList.remove('on');
+  P.tdDock = false; saveP();
+  setTimeout(() => dispatchEvent(new Event('resize')), 60);
+}
+(function bindTdDock(){
+  const d = $('#tdDock');
+  const add = async () => { if (await tdNewSubmit($('#tdpNew'))) { tdDockDraw(); if (hmShown()) hmTdRefresh(); const i = $('#tdpNew [data-tdn="t"]'); if (i) i.focus(); } };
+  d.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('[data-tdn="t"]')) { e.preventDefault(); add(); } });
+  d.addEventListener('click', async e => {
+    if (e.target.closest('[data-tdadd]')) { add(); return; }
+    if (e.target.closest('#tdkX')) { tdDockClose(); return; }
+    if (e.target.closest('#tdkRef')) { tdLoad().then(() => toast('À faire actualisé', '', 1500)).catch(x => toast('À faire : ' + x.message, 'err')); return; }
+    const o = e.target.closest('[data-dvo]');
+    if (o) { e.preventDefault(); await planLeave(); openDevis(o.dataset.dvo); return; }
+    const a = e.target.closest('[data-tdf]'); if (!a) return;
+    e.preventDefault();
+    await planLeave();
+    try { const m = await meta(a.dataset.tdf); m._k = kindOf(m); openIn(P.split ? V.active : 0, m, [m]); } catch (x) { toast('Fichier introuvable : ' + x.message, 'err'); }
+  });
+  d.addEventListener('change', async e => {
+    if (e.target.id === 'tdpDone') { TDP.done = e.target.checked; tdDockDraw(); return; }
+    const dv = e.target.closest('[data-dvsent]');
+    if (dv) { const x = devById(dv.dataset.dvsent); if (x) { x.sent = x.sent ? null : Date.now(); devSave(x); if (!$('#devis').hidden) { renderDzList(); if (DV.cur === x.id) renderDzHead(x); } } tdBadge(); if (hmShown()) hmTdRefresh(); return; }
+    const c = e.target.closest('[data-tdc]');
+    if (c) { c.disabled = true; await tdToggle(c.dataset.tds, c.dataset.tdc); tdDockDraw(); if (hmShown()) hmTdRefresh(); }
+  });
+  $('#tdkRs').addEventListener('pointerdown', e => {
+    e.preventDefault(); const rs = e.currentTarget; rs.classList.add('on');
+    const mv = ev => { P.tdW = Math.max(300, Math.min(700, innerWidth - ev.clientX)); tdDockW(); };
+    const up = () => { rs.classList.remove('on'); saveP(); window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); dispatchEvent(new Event('resize')); };
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+  });
+  setInterval(() => { if (!d.hidden && !document.hidden && P.rootId && !TDP.busy) tdLoad().catch(() => {}); }, 180000);
+})();
+/* nombre de tâches en retard ou du jour dans le titre de l'onglet du navigateur : « (3) BauGest PC » */
+function titleBadge(){
+  if (document.getElementById('pinLock')) return;
+  const base = document.title.replace(/^\(\d+\) /, ''), t = (TDK.n ? '(' + TDK.n + ') ' : '') + base;
+  if (document.title !== t) document.title = t;
+}
+if (document.getElementById('pinLock')) new MutationObserver((m, ob) => { if (!document.getElementById('pinLock')) { ob.disconnect(); titleBadge(); } }).observe(document.body, {childList:true});
+
+/* ---------- menu ⚙ de la barre du haut : Chantiers, raccourcis, thème, contraste, compte ---------- */
+$('#btnMore').addEventListener('click', e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  showMenu(r.right, r.bottom + 4, [
+    {label:'Chantiers : créer ou modifier…', fn:() => $('#btnSites').click()},
+    {label:'Recherche rapide', kbd:'Ctrl K', fn:() => palOpen()},
+    {label:'Raccourcis clavier', kbd:'?', fn:keysDlg},
+    '-',
+    {label:document.documentElement.dataset.theme === 'light' ? 'Thème sombre' : 'Thème clair', fn:() => $('#btnTheme').click()},
+    {label:P.contrast ? 'Fort contraste : désactiver' : 'Fort contraste (noir sur blanc)', fn:() => $('#btnContrast').click()},
+    '-',
+    {label:'Compte et dossier' + (P.email ? ' · ' + P.email : ''), fn:() => $('#btnLogout').click()}]);
+});
+
+/* ---------- raccourcis clavier : liste (touche ? ou menu ⚙) ---------- */
+function keysDlg(){
+  if (document.querySelector('.kb-t')) return;
+  const sec = (t, rows) => `<h4>${t}</h4>` + rows.map(([a, b]) => `<div><span>${a}</span><span>${b.split(' / ').map(k => `<kbd>${k}</kbd>`).join(' ')}</span></div>`).join('');
+  dialog({title:'Raccourcis clavier', width:760, body:`<div class="kb-t">${
+    sec('Partout', [['Recherche rapide : chantiers, devis, fichiers, actions', 'Ctrl K'], ['Changer d’onglet (Accueil … Commandes)', 'Alt 1 … 7'], ['Volet À faire : afficher / masquer', 'Alt A'], ['Écran précédent / suivant', 'Alt ← / Alt →'], ['Fermer une fenêtre, un fichier', 'Échap'], ['Cette liste', '?']])
+    + sec('Explorateur', [['Se déplacer', '← ↑ ↓ →'], ['Ouvrir', 'Entrée'], ['Ouvrir dans le volet droit (double vue)', 'Maj Entrée'], ['Tout sélectionner', 'Ctrl A'], ['Renommer', 'F2'], ['Mettre à la corbeille', 'Suppr'], ['Dossier parent', 'Retour arrière'], ['Actualiser', 'F5'], ['Imprimer la sélection', 'Ctrl P']])
+    + sec('Visionneuse', [['Fichier précédent / suivant', '← / →'], ['Zoom', '+ / −'], ['Page entière / largeur', '0 / W'], ['Déplacer la page', 'Espace + glisser'], ['Annoter (marche / arrêt)', 'E'], ['Outils : main, stylo, surligneur, trait, flèche', 'V / P / H / L / A'], ['Outils : rectangle, ellipse, nuage, texte, gomme', 'R / O / N / T / G'], ['Annuler / rétablir', 'Ctrl Z / Ctrl Y'], ['Enregistrer les annotations', 'Ctrl S'], ['Imprimer', 'Ctrl P'], ['Changer de volet (double vue)', 'Tab']])
+    + sec('Planning', [['Tâche précédente / suivante', '↑ / ↓'], ['Modifier la tâche', 'Entrée'], ['Nouvelle tâche', 'Inser'], ['Niveau + / −', 'Tab / Maj Tab'], ['Ajouter à la sélection / plage', 'Ctrl clic / Maj clic'], ['Tout sélectionner', 'Ctrl A'], ['Supprimer', 'Suppr'], ['Annuler / rétablir', 'Ctrl Z / Ctrl Y']])
+  }</div>`, buttons:[{label:'Fermer', value:null, primary:true}]});
+}
+
+/* ---------- recherche rapide (Ctrl+K) : chantiers, fiches devis, actions, fichiers du Drive ---------- */
+function palNorm(t){ return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+function palOpen(q){
+  if (PLAN_WIN || $('#app').hidden) return;
+  $('#menu').hidden = true;
+  $('#pal').hidden = false;
+  const i = $('#palQ'); i.value = q || ''; PAL.files = null; PAL.fq = ''; PAL.cur = 0;
+  palDraw(); i.focus(); i.select();
+}
+function palClose(){ if ($('#pal').hidden) return; $('#pal').hidden = true; PAL.tok++; clearTimeout(PAL.t); }
+function palSiteGo(s, n){
+  return async () => {
+    actSet(s.id);
+    if (n === 'dir') { await planLeave(); await actGoFolder(s); if (navCur() !== 'files') syncNav(); return; }
+    if (n) { await goNav(n); return; }
+    /* chantier seul : l'écran affiché suit ; depuis l'Accueil ou les Devis, on ouvre son dossier */
+    if (planFull() || /photos|pvdt|cmd|files/.test(navCur())) actApply(); else actGoFolder(s);
+  };
+}
+function palItems(q){
+  const words = palNorm(q).split(/\s+/).filter(Boolean), hit = t => { const n = palNorm(t); return words.every(w => n.includes(w)); };
+  const as = actSite(), an = as ? siteLabel(as) : '', out = [];
+  const sites = S.sites.filter(s => !s.example).slice().sort((a, b) => (b.id === ACT.site) - (a.id === ACT.site) || siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}));
+  const tabs = [['home', 'Accueil'], ['photos', 'Photos'], ['files', 'Plans & documents'], ['pvdt', 'PV DT'], ['devis', 'Devis'], ['plan', 'Planning'], ['cmd', 'Commandes']];
+  const go = tabs.map(([n, l], i) => ({g:'Aller à', l, s:as && /photos|files|pvdt|plan|cmd/.test(n) ? an : '', k:'Alt ' + (i + 1), fn:() => goNav(n)}));
+  const acts = [
+    {l:'Nouvelle tâche', s:'À faire' + (an ? ' · ' + an : ''), k:'Alt A', fn:() => tdDockOpen(true)},
+    {l:'Nouvelle commande', s:an || 'Commandes', fn:async () => { await goNav('cmd'); setTimeout(() => { const b = document.querySelector('#cmdHead [data-ca="new"]'); if (b) b.focus(); }, 80); }},
+    {l:'Nouvelle fiche devis', fn:async () => { await planLeave(); hmQuickAct('newdevis'); }},
+    {l:'Nouveau planning', s:an, fn:() => as ? hmPlan(as.id, null, true) : hmQuickAct('newplan')},
+    {l:'Nouveau chantier', fn:() => editSiteDlg(null)},
+    {l:'Chantiers : créer ou modifier', fn:() => sitesDlg()},
+    as && {l:'Infos et séances du chantier', s:an, fn:() => editSiteDlg(as.id)},
+    {l:$('#tdDock').hidden ? 'Afficher le volet À faire' : 'Masquer le volet À faire', k:'Alt A', fn:() => $('#btnTodo').click()},
+    {l:'Double vue : deux fichiers côte à côte', fn:() => $('#btnSplit').click()},
+    {l:'Thème clair / sombre', fn:() => $('#btnTheme').click()},
+    {l:'Fort contraste', s:P.contrast ? 'activé' : '', fn:() => $('#btnContrast').click()},
+    {l:'Modifier l’accueil', fn:async () => { await goNav('home'); hmSetEdit(true); }},
+    {l:'Raccourcis clavier', k:'?', fn:keysDlg},
+    {l:'Compte et dossier BauGest', s:P.email || '', fn:() => $('#btnLogout').click()}
+  ].filter(Boolean).map(a => ({g:'Actions', ...a}));
+  if (!words.length) {
+    out.push(...go);
+    out.push(...sites.map(s => ({g:'Chantier actif', l:siteLabel(s), s:s.id === ACT.site ? 'actif' : s.addr || '', fn:palSiteGo(s)})));
+    out.push(...acts);
+    return out;
+  }
+  const hs = sites.filter(s => hit(siteLabel(s) + ' ' + (s.addr || '') + ' ' + (s.abbr || '')));
+  for (const s of hs.slice(0, 6)) {
+    out.push({g:'Chantiers', l:siteLabel(s), s:s.id === ACT.site ? 'actif' : 'Choisir ce chantier', fn:palSiteGo(s)});
+    if (hs.length <= 2) for (const [n, l] of [['dir', 'Dossier'], ['photos', 'Photos'], ['pvdt', 'PV DT'], ['plan', 'Planning'], ['cmd', 'Commandes']]) out.push({g:'Chantiers', l:l + ' · ' + siteLabel(s), s:'', fn:palSiteGo(s, n)});
+  }
+  const dv = (S.devis || []).filter(d => hit('devis ' + devName(d) + ' ' + devCity(d))).sort((a, b) => (b.mod || 0) - (a.mod || 0));
+  for (const d of dv.slice(0, 5)) out.push({g:'Devis', l:devName(d) + (devCity(d) ? ' – ' + devCity(d) : ''), s:d.sent ? 'Devis envoyé' : 'Devis à faire', fn:async () => { await planLeave(); openDevis(d.id); }});
+  out.push(...[...go, ...acts].filter(a => hit(a.l + ' ' + (a.g === 'Aller à' ? 'aller onglet' : ''))).slice(0, 8));
+  const qq = q.trim();
+  if (qq.length >= 2) {
+    if (PAL.files && PAL.fq === qq) {
+      for (const f of PAL.files) out.push({g:'Fichiers', l:displayName(f), s:f._path || '', fn:async () => { await planLeave(); if (f._k === 'folder') { if (!$('#viewer').hidden) hideViewer(); closeDevis(); if (await ensureChain(f.id).catch(() => false)) navigate(f.id); } else openIn(P.split ? V.active : 0, f, [f]); }});
+      if (!PAL.files.length) out.push({g:'Fichiers', l:'Aucun fichier à ce nom', s:'', off:true});
+    } else out.push({g:'Fichiers', l:'Recherche dans le Drive…', s:'', off:true});
+    out.push({g:'Fichiers', l:'Tous les fichiers « ' + qq + ' »', s:'liste complète dans Plans & documents', fn:async () => { await planLeave(); $('#gSearch').value = qq; runSearch(qq); }});
+  }
+  return out;
+}
+async function palFiles(q){
+  const tok = ++PAL.tok;
+  try {
+    const map = await allFolders();
+    const words = q.split(/\s+/).filter(Boolean);
+    const r = await api(DRV + '?' + new URLSearchParams({q:words.map(w => `name contains '${qEsc(w)}'`).join(' and ') + ' and trashed=false', fields:`files(${FIELDS})`, orderBy:'modifiedTime desc', pageSize:'60'}));
+    if (tok !== PAL.tok || $('#pal').hidden) return;
+    const items = [];
+    for (const f of r.files || []) {
+      const par = (f.parents || []).find(x => map.has(x)); if (!par) continue;
+      if (f.mimeType === 'application/vnd.google-apps.shortcut' || f.name === SYNC_NAME || /\(ne pas supprimer\)\.json$/.test(f.name) || (f.appProperties && (f.appProperties.pc === 'tmp' || /^(mesures|settings|todo|suppliers|planlay|pchome)$/.test(f.appProperties.kind || '')))) continue;
+      f._k = kindOf(f); if (f._k === 'folder') noteFolder(f, par);
+      f._path = folderPath(map, par) || (P.rootName || 'BauGest');
+      items.push(f); if (items.length >= 8) break;
+    }
+    PAL.files = items; PAL.fq = q;
+  } catch (e) { if (tok !== PAL.tok) return; PAL.files = []; PAL.fq = q; }
+  if (!$('#pal').hidden && $('#palQ').value.trim() === q) palDraw(true);
+}
+function palDraw(keep){
+  const q = $('#palQ').value, items = palItems(q);
+  PAL.items = items;
+  if (!keep) PAL.cur = 0;
+  const can = items.map((it, i) => it.off ? -1 : i).filter(i => i >= 0);
+  if (!can.includes(PAL.cur)) PAL.cur = can.length ? can.reduce((a, b) => Math.abs(b - PAL.cur) < Math.abs(a - PAL.cur) ? b : a) : -1;
+  let g = '', h = '';
+  items.forEach((it, i) => {
+    if (it.g !== g) { g = it.g; h += `<div class="pal-g">${esc(g)}</div>`; }
+    h += it.off ? `<div class="pal-e">${esc(it.l)}</div>` : `<button type="button" class="pal-i${i === PAL.cur ? ' on' : ''}" data-pi="${i}"><b>${esc(it.l)}</b><small>${esc(it.s || '')}</small>${it.k ? `<kbd>${esc(it.k)}</kbd>` : ''}</button>`;
+  });
+  $('#palList').innerHTML = h || '<div class="pal-e">Rien trouvé.</div>';
+  const on = $('#palList .pal-i.on'); if (on) on.scrollIntoView({block:'nearest'});
+  const qq = q.trim();
+  if (qq.length >= 2 && PAL.fq !== qq) { clearTimeout(PAL.t); PAL.t = setTimeout(() => { if (!$('#pal').hidden && $('#palQ').value.trim() === qq) palFiles(qq); }, 320); }
+}
+function palMove(d){
+  const can = PAL.items.map((it, i) => it.off ? -1 : i).filter(i => i >= 0); if (!can.length) return;
+  const k = can.indexOf(PAL.cur);
+  PAL.cur = can[(k + d + can.length) % can.length];
+  $$('#palList .pal-i').forEach(b => b.classList.toggle('on', +b.dataset.pi === PAL.cur));
+  const on = $('#palList .pal-i.on'); if (on) on.scrollIntoView({block:'nearest'});
+}
+function palRun(i){
+  const it = PAL.items[i]; if (!it || it.off || !it.fn) return;
+  palClose();
+  try { const r = it.fn(); if (r && r.catch) r.catch(e => toast(e.message, 'err')); } catch (e) { toast(e.message, 'err'); }
+}
+$('#palQ').addEventListener('input', () => palDraw());
+$('#pal').addEventListener('mousedown', e => { if (e.target.id === 'pal') palClose(); else if (e.target.id !== 'palQ') e.preventDefault(); });
+$('#palList').addEventListener('click', e => { const b = e.target.closest('[data-pi]'); if (b) palRun(+b.dataset.pi); });
+$('#palList').addEventListener('mousemove', e => { const b = e.target.closest('[data-pi]'); if (b && +b.dataset.pi !== PAL.cur) { PAL.cur = +b.dataset.pi; $$('#palList .pal-i').forEach(x => x.classList.toggle('on', x === b)); } });
+$('#palBtn').addEventListener('click', () => palOpen($('#gSearch').value.trim()));
+/* barre étroite : le champ de recherche est réduit à sa loupe, qui ouvre la recherche rapide */
+document.querySelector('.gsearch').addEventListener('click', () => { if (getComputedStyle($('#gSearch')).display === 'none') palOpen(); });
+
+/* ---------- raccourcis de tout l'écran (branchés sur window avant le module Planning, qui garde sinon le clavier) ---------- */
+window.addEventListener('keydown', e => {
+  if ($('#app').hidden || document.getElementById('pinLock') || PLAN_WIN) return;
+  const ctrl = e.ctrlKey || e.metaKey, k = e.key;
+  if (!$('#pal').hidden) {
+    e.stopImmediatePropagation();
+    if (k === 'Escape') { e.preventDefault(); palClose(); }
+    else if (k === 'ArrowDown' || (k === 'Tab' && !e.shiftKey)) { e.preventDefault(); palMove(1); }
+    else if (k === 'ArrowUp' || k === 'Tab') { e.preventDefault(); palMove(-1); }
+    else if (k === 'Enter') { e.preventDefault(); palRun(PAL.cur); }
+    else if (ctrl && k.toLowerCase() === 'k') { e.preventDefault(); palClose(); }
+    else if (document.activeElement !== $('#palQ')) $('#palQ').focus();
+    return;
+  }
+  if (ctrl && !e.altKey && !e.shiftKey && k.toLowerCase() === 'k') { e.preventDefault(); e.stopImmediatePropagation(); if (!modalOpen()) palOpen(); return; }
+  if (e.altKey && !ctrl && !e.shiftKey) {
+    const m = /^Digit([1-7])$/.exec(e.code || '');
+    if (m && !modalOpen()) { e.preventDefault(); e.stopImmediatePropagation(); goNav(['home', 'photos', 'files', 'pvdt', 'devis', 'plan', 'cmd'][+m[1] - 1]); return; }
+    if (e.code === 'KeyA' && !modalOpen()) { e.preventDefault(); e.stopImmediatePropagation(); if ($('#tdDock').hidden || !$('#tdDock').contains(document.activeElement)) tdDockOpen(true); else tdDockClose(); return; }
+  }
+  if (k === '?' && !ctrl && !e.altKey && !typing(e) && !modalOpen()) { e.preventDefault(); e.stopImmediatePropagation(); keysDlg(); }
+}, true);
+
+window.BauGestPC = {V, E, P, PHO, DV, ML, HMS, HMD, ACT, HIST, S: () => S};
 applyTheme(); syncViewBtns(); syncTopBtns();
 adoptShared();
 if (tokenValid()) start();

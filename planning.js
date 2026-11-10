@@ -2758,6 +2758,7 @@ function bind(el){
     if (U.dlgs.length) { U.dlgs[U.dlgs.length - 1].key(e); e.stopPropagation(); return; }
     if (!root || root.hidden) return;
     if (U.split && !U.inPlan) return;
+    if (H.keysOff && H.keysOff(e)) return;   /* hôte PC : une fenêtre ou un volet de l'hôte a le clavier */
     e.stopPropagation();
     if (e.key === 'Escape') { e.preventDefault(); if (U.msel.size || U.selMode) { U.msel.clear(); U.selMode = false; render(); return; } close(); return; }
     if (!U.plan || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
