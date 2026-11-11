@@ -1359,6 +1359,184 @@ html[data-contrast] .cam-modes{background:rgba(255,255,255,.95);border:2px solid
 html[data-contrast] .cam-modes button{color:#000}
 html[data-contrast] .cam-modes button.on{color:var(--signal-ink)}
 html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
+
+/* ---------- Tablette v3 (nov. 2026) : barre de gauche en 2 groupes, barre du haut unique, chantier actif commun ----------
+   Tout est sous body.tabshell (ou #rail, absent du téléphone) : le téléphone et le PC ne changent pas. */
+:root{--railw:86px}
+.rail{gap:2px;padding:calc(var(--st) + 8px) 6px calc(var(--sb) + 8px) calc(var(--sl) + 6px)}
+.rail button{flex:none;justify-content:center;gap:3px;min-height:50px;padding:0 2px;border-radius:12px;font-size:12.5px}
+.rail button .ic{width:23px;height:23px}
+.rail button.rail-logo{margin:0;min-height:52px;padding:4px 2px}
+.rail button.rail-logo .ic{width:26px;height:26px}
+.rail-lbl{margin:5px 0 0;padding:8px 0 3px;border-top:1px solid var(--line);font:500 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center}
+.rail button.rail-cam{min-height:58px;border:0;background:var(--signal);color:var(--signal-ink);font-weight:700;font-size:13px}
+.rail button.rail-cam .ic,html[data-theme="light"] .rail button.rail-cam .ic,html[data-contrast] .rail button.rail-cam .ic{width:26px;height:26px;color:var(--signal-ink)}
+html[data-contrast] .rail button.rail-cam{border:2px solid #000}
+.rail button.rail-menu{min-height:46px}
+@media (max-height:760px){
+  .rail button{min-height:45px}
+  .rail button.rail-cam{min-height:52px}
+  .rail button.rail-menu{min-height:42px}
+  .rail-lbl{margin-top:3px;padding:6px 0 2px}
+}
+@media (max-height:690px){
+  .rail button{min-height:41px;font-size:12px}
+  .rail-lbl{font-size:0;padding:0;margin:4px 8px}
+}
+/* menu ⚙ (réglages, thème, file d'envoi, aide) et liste des chantiers de la galerie */
+.rail-pop{position:fixed;z-index:45;left:calc(var(--railw) + var(--sl) + 8px);bottom:calc(var(--sb) + 10px);width:310px;display:grid;gap:4px;padding:8px;border:1px solid var(--line);border-radius:14px;
+  background:var(--surface);color:var(--text);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.rail-pop .dk-site{min-height:54px}
+.rail-pop .dk-site > .ic{width:24px;height:24px;flex:none;color:var(--muted);margin:0 4px}
+.rm-n{min-width:24px;height:22px;border-radius:11px;padding:0 7px;background:var(--signal);color:var(--signal-ink);font:700 12.5px/22px var(--body);text-align:center}
+html[data-theme="light"] .rail-pop{--asphalt:#f2f0eb;--surface:#ffffff;--surface2:#e9e6df;--line:#d2cec5;--text:#1b1d21;--muted:#5b6169;--signal-soft:#fbefc4;color-scheme:light}
+html[data-contrast] .rail-pop{--surface:#ffffff;--surface2:#f0efea;--line:#1d1f22;--text:#000000;--muted:#2b2e33;border-width:2px}
+.site-pop{position:absolute;z-index:40;top:calc(var(--st) + 64px);left:12px;width:min(400px,calc(100% - 24px));max-height:72vh;overflow:auto;display:grid;gap:4px;padding:10px;
+  border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.site-pop .dk-gpsgo{display:flex;margin-bottom:4px;border-color:var(--line)}
+.site-pop .dk-gpsgo .ic{width:22px;height:22px;color:var(--ok);flex:none;margin:0 7px}
+/* barre du haut : chantier · rubrique · actions */
+.dk-ttl,.dk-headslot,.sb-logo{display:none}
+body.tabshell :is(#desk,#gallery,#devis) .panel-head{min-height:60px;padding-top:calc(var(--st) + 7px);padding-bottom:7px;gap:10px;flex-wrap:nowrap}
+body.tabshell #desk .panel-head{min-height:60px}
+body.tabshell :is(#desk,#gallery) .panel-head [data-todo]{display:none}
+body.tabshell .dk-top .spacer{display:none}
+body.tabshell .dk-sitebtn{flex:0 1 auto;max-width:330px;min-height:46px;padding:5px 10px 5px 6px;background:var(--surface)}
+body.tabshell #desk.hm-mode .dk-sitebtn{display:flex!important}
+body.tabshell .sb-logo{display:flex;flex:none}
+.sb-logo .slogo{width:34px;height:34px;border-radius:8px;font-size:13px}
+.dk-sitebtn small .here{color:var(--ok)}
+body.tabshell .dk-ttl{display:flex;align-items:center;gap:8px;flex:none;margin:0 4px;font:700 23px/1 var(--display);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.dk-ttl .n{min-width:24px;height:22px;border-radius:11px;padding:0 7px;background:var(--surface2);color:var(--text);font:700 12.5px/22px var(--body);letter-spacing:0;text-align:center}
+body.tabshell #desk.hm-mode .dk-ttl{display:none}
+body.tabshell .dk-headslot{display:flex;flex:1;min-width:0;justify-content:flex-end;overflow-x:auto;scrollbar-width:none}
+.dk-headslot::-webkit-scrollbar{display:none}
+.dk-headslot .dk-head{flex:1;min-width:0;flex-wrap:nowrap;justify-content:flex-end;gap:10px}
+.dk-headslot .dk-head > .slogo,.dk-headslot .dk-head > .t,.dk-headslot .hm-gps,.dk-headslot #dkGalSite{display:none}
+.dk-headslot .dk-acts{flex-wrap:nowrap;gap:8px}
+.dk-headslot .dk-head .btn{flex:none;min-height:46px;white-space:nowrap}
+.dk-headslot .dk-acts .btn.primary{min-height:46px;font-size:15.5px;padding:0 16px}
+.dk-headslot .dk-head > .t.hm-day{display:flex;flex:1;min-width:0;flex-direction:row-reverse;justify-content:flex-end;align-items:baseline;gap:10px;margin-left:4px}
+.dk-headslot .hm-day h2{font-size:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dk-headslot .hm-day small{white-space:nowrap}
+.dk-headslot .dk-head:has(> [data-ca="list"]) > .t{display:block;flex:1;min-width:0}
+.dk-headslot .dk-head:has(> [data-ca="list"]) > .t small{display:none}
+.dk-headslot .dk-head:has(> [data-ca="list"]) > .t h2{margin:0;font-size:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.tabshell .dk-main{padding:14px calc(var(--sr) + 16px) calc(var(--sb) + 24px) 16px;gap:12px}
+body.tabshell #dkList{gap:18px}
+body.tabshell #gallery :is(#galBack,#galSites),body.tabshell #devis :is(#dzBack,#dzCam){display:none}
+@media (max-width:1000px){
+  body.tabshell .dk-sitebtn{max-width:230px}
+  body.tabshell .dk-ttl{font-size:20px}
+  .dk-headslot .dk-acts .btn:not(.primary){width:46px;padding:0;gap:0;font-size:0;justify-content:center}
+  .dk-headslot .dk-acts .btn:not(.primary) .ic{margin:0}
+  .dk-headslot .hm-day small{display:none}
+}
+
+/* ---------- Tablette v3 · écrans ---------- */
+body.tabshell .dk-headslot .hm-day h2{font-size:23px}
+/* puces de filtre (documents, à faire) */
+.dk-chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;min-width:0}
+.dk-chips::-webkit-scrollbar{display:none}
+.dk-chips .chip{flex:none;min-height:42px;gap:8px;background:var(--surface)}
+.dk-chips .chip.on{background:var(--signal)}
+.dk-chips .chip .n{min-width:22px;height:20px;border-radius:10px;padding:0 6px;background:var(--surface2);color:var(--text);font:700 12px/20px var(--body);text-align:center}
+.dk-chips .chip.on .n{background:rgba(0,0,0,.16);color:inherit}
+.dk-chips .chip.dash{border-style:dashed;background:none;color:var(--muted)}
+/* photos : toute la largeur */
+body.tabshell #gallery .gal-filters{max-width:none;padding:10px calc(var(--sr) + 16px) 0 16px}
+body.tabshell #gallery .panel-inner{max-width:none;padding-left:16px;padding-right:calc(var(--sr) + 16px)}
+body.tabshell #gallery .gal-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+body.tabshell #gallery .gal-tags{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+body.tabshell #gallery .gal-tags::-webkit-scrollbar{display:none}
+body.tabshell #gallery .gal-tags .chip{flex:none}
+/* plans : dossiers à gauche, plans à droite */
+.pl-split{display:grid;grid-template-columns:244px minmax(0,1fr);gap:16px;align-items:start;min-width:0}
+.pl-treecol{position:sticky;top:0;display:grid;gap:2px;align-content:start;max-height:calc(100dvh - 104px);overflow:auto;padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.pl-treecol > .pl-tree{margin:0;padding:0;border-left:0}
+.pl-treecol .pl-node{position:relative;min-height:46px;padding-right:2px}
+.pl-treecol .pl-node:hover{background:var(--surface2)}
+.pl-treecol .pl-node.on{background:var(--signal-soft);border-color:transparent}
+.pl-treecol .pl-node .nm{font:700 16px/1.1 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.pl-treecol .pl-node .ct{min-width:22px;text-align:right}
+.pl-treecol .pl-node .pl-more{position:static;flex:none;width:32px;height:36px}
+.pl-treecol .pl-node.pl-cancel{opacity:.72}
+.pl-treecol .pl-node.pl-cancel > .ic{color:var(--muted)}
+.pl-treecol .pl-root{padding-left:12px;padding-right:12px;gap:10px}
+.pl-thint{margin:8px 6px 2px;font-size:12.5px;line-height:1.35;color:var(--muted)}
+.pl-content{display:grid;gap:12px;min-width:0;align-content:start}
+.pl-content .pl-bar{margin-top:0}
+.pl-content .pl-crumbs{padding:3px 6px}
+body.tabshell .pl-content .pl-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+/* documents : 3 colonnes en paysage */
+body.tabshell #dkList .dk-sec:not(.pl-sec) .dk-grid:not(.pl-grid){grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+body.tabshell .dk-sec{gap:10px}
+body.tabshell .dk-sep{padding-bottom:6px;border-bottom-width:1px}
+/* PV DT : lignes plus serrées */
+body.tabshell .pd-row{padding:7px 12px}
+body.tabshell .pd-list{margin-top:0}
+body.tabshell .pd-path{margin:0}
+/* à faire : liste à gauche, bloc d'écriture à droite */
+.td-col{display:grid;gap:12px;min-width:0;align-content:start}
+.td-col #tdDeskList{display:grid;gap:18px}
+body.tabshell .dk-main .td-new{margin-bottom:0}
+/* accueil : points du jour sur une ligne */
+body.tabshell .hm-today{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+body.tabshell .hm-ev{grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:1px 12px;padding:10px 12px}
+body.tabshell .hm-ev .t{min-width:44px}
+body.tabshell .hm-ev b{font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.tabshell .hm-ev small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.tabshell .hm-ev .acts{grid-column:3;grid-row:1 / span 3;margin:0;flex-direction:column;flex-wrap:nowrap;gap:6px}
+body.tabshell .hm-ev .acts .btn{min-height:38px;padding:0 12px;font-size:13.5px}
+body.tabshell .hm-lbl{margin-bottom:6px}
+/* commandes : chiffres sur une ligne */
+body.tabshell .bc-kpi{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+body.tabshell .bc-kpi div{display:flex;align-items:baseline;gap:8px;padding:8px 14px}
+body.tabshell .bc-kpi b{font-size:22px}
+@media (min-width:1001px){
+  body.tabshell #desk[data-mode="mails"] #dkList{grid-template-columns:minmax(0,1fr) 380px;align-items:start;gap:16px}
+  body.tabshell #desk[data-mode="mails"] #dkList > .mlt-mem{grid-column:2;grid-row:1;position:sticky;top:0}
+  body.tabshell #desk[data-mode="mails"] #dkList > .dk-sec{grid-column:1;grid-row:1}
+  body.tabshell #desk[data-mode="mails"] #dkList > .dk-sec:only-child{grid-column:1 / -1}
+  body.tabshell #desk.td-mode #dkList{grid-template-columns:minmax(0,1fr) 430px;align-items:start;gap:16px}
+  body.tabshell #desk.td-mode #dkList > .td-new{grid-column:2;grid-row:1;position:sticky;top:0}
+  body.tabshell #desk.td-mode #dkList > .td-col{grid-column:1;grid-row:1}
+  body.tabshell #desk.td-mode #dkList > .td-col:only-child{grid-column:1 / -1}
+  body.tabshell #desk.hm-mode #dkList{grid-template-columns:minmax(0,1fr) 320px;gap:14px;align-items:start}
+  body.tabshell #desk.hm-mode #dkList > section:nth-child(1){grid-column:1 / -1}
+  body.tabshell #desk.hm-mode #dkList > section:nth-child(2){grid-column:2;grid-row:2}
+  body.tabshell #desk.hm-mode #dkList > section:nth-child(3){grid-column:1;grid-row:2}
+  body.tabshell #desk.hm-mode .hm-week{grid-auto-flow:row;grid-auto-columns:auto;overflow:visible;gap:6px;padding:0}
+  body.tabshell #desk.hm-mode .hm-cols{grid-auto-columns:minmax(290px,1fr)}
+}
+@media (max-width:1000px){
+  .pl-split{grid-template-columns:minmax(0,1fr);gap:12px}
+  .pl-treecol{position:static;display:flex;gap:6px;max-height:none;overflow-x:auto;overflow-y:hidden;padding:6px;scrollbar-width:none}
+  .pl-treecol .pl-tree,.pl-treecol li{display:contents}
+  .pl-treecol .pl-node{flex:none;border-color:var(--line);min-height:42px}
+  .pl-treecol .pl-node .nm{flex:none;max-width:210px}
+  .pl-thint{display:none}
+}
+
+/* ---------- Tablette v3 · réglages fins ---------- */
+body.tabshell .dk-ttl{flex:0 20 auto;min-width:0;overflow:hidden}
+body.tabshell .dk-headslot{flex:1 1 auto}
+.pl-split{grid-template-columns:268px minmax(0,1fr)}
+.pl-treecol .pl-tw.none{width:8px}
+body.tabshell .hm-ev .t{grid-column:1;grid-row:1 / span 3}
+body.tabshell .hm-ev .k{grid-column:2;grid-row:1}
+body.tabshell .hm-ev b{grid-column:2;grid-row:2}
+body.tabshell .hm-ev small{grid-column:2;grid-row:3}
+@media (min-width:1001px){
+  body.tabshell #desk.td-mode #dkList{grid-template-columns:minmax(0,1fr) minmax(440px,46%)}
+  body.tabshell #desk.td-mode .td-ph{right:112px;top:14px;font-size:15px}
+}
+@media (max-width:1000px){
+  .pl-split{grid-template-columns:minmax(0,1fr)}
+  body.tabshell .dk-ttl .n{display:none}
+  body.tabshell .dk-sitebtn{max-width:210px}
+  .dk-headslot .dk-acts .btn.primary{padding:0 12px;font-size:14.5px}
+}
 </style>
 </head>
 <body>
@@ -1454,6 +1632,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
 <!-- Ergonomie v2 : barre des rubriques (tablette) -->
 <nav id="rail" class="rail" hidden aria-label="Rubriques">
   <button class="rail-logo" data-rail="home" aria-label="Accueil" title="Accueil"><svg class="ic" viewBox="0 0 24 24"><path d="M3 21h8M7 21V4M4 4h16M7 4l4 4M7 8l4-4M18 4v6M16 10h4v3h-4z"/></svg><span>Bau<b>Gest</b></span></button>
+  <p class="rail-lbl">Chantier</p>
   <button data-rail="photos"><svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 16l5-5 4 4 3-3 4 4M9 8.5h.01"/></svg>Photos</button>
   <button data-rail="plans"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg>Plans</button>
   <button data-rail="docs"><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5"/></svg>Documents</button>
@@ -1462,11 +1641,19 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
   <button data-rail="soum"><svg class="ic" viewBox="0 0 24 24"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5M15 15h1M15 18h1M8 18h5"/></svg>Soumission</button>
   <button data-rail="cmd"><svg class="ic" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></svg>Commandes</button>
   <button data-rail="plan"><svg class="ic" viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M5 8h7M8 12h9M12 16h6"/></svg>Planning</button>
+  <p class="rail-lbl">Général</p>
   <button data-rail="devis"><svg class="ic" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>Devis</button>
   <button data-rail="todo"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg>À faire<span class="badge red" data-tdbadge hidden>0</span></button>
   <span class="rail-grow"></span>
-  <button data-rail="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Réglages</button>
+  <button class="rail-cam" data-rail="camera"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>Caméra</button>
+  <button class="rail-menu" data-rail="menu" aria-haspopup="true" aria-expanded="false" aria-label="Menu : réglages, thème, file d'envoi, aide"><svg class="ic" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Menu</button>
 </nav>
+<div id="railMenu" class="rail-pop" hidden role="menu" aria-label="Menu">
+  <button class="dk-site" data-rmenu="settings"><svg class="ic" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="t"><b>Réglages</b><small>Drive, chantiers, entreprises…</small></span></button>
+  <button class="dk-site" data-rmenu="theme"><svg class="ic" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg><span class="t"><b>Thème</b><small id="rmTheme">Sombre</small></span></button>
+  <button class="dk-site" data-rmenu="queue"><svg class="ic" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.9-9.9A6 6 0 0 1 17.7 9 4.5 4.5 0 0 1 17 18M12 12v8M9 15l3-3 3 3"/></svg><span class="t"><b>File d'envoi</b><small>Photos et documents en attente</small></span><span id="rmQueue" class="rm-n" hidden>0</span></button>
+  <button class="dk-site" data-rmenu="help"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/></svg><span class="t"><b>Aide</b><small>Mode d'emploi</small></span></button>
+</div>
 
 <button id="fabCam" class="fab-cam" hidden aria-label="Caméra"><svg class="ic" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg><span>Caméra</span></button>
 
@@ -1712,6 +1899,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
 <section id="gallery" class="panel" hidden aria-labelledby="galTitle">
   <header class="panel-head">
     <button id="galBack" class="icon-btn" aria-label="Retour à la caméra"><svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+    <button id="galSiteBtn" class="dk-gps dk-sitebtn" aria-haspopup="true" aria-expanded="false"><span id="galSiteLogo" class="sb-logo"></span><span class="t"><b id="galSiteName">Chantier</b><small id="galSiteSub">Changer de chantier</small></span><svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
     <h1 id="galTitle" style="flex:1;min-width:0">Photos</h1>
     <button id="galImport" class="icon-btn" aria-label="Importer des photos d'autres applications"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg><span id="galImportBadge" class="inbox-badge" hidden>0</span></button>
     <button class="icon-btn hd-contrast contrast-btn" aria-label="Fort contraste" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
@@ -1719,6 +1907,7 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <button id="galRefresh" class="icon-btn" aria-label="Actualiser"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button>
     <button id="galSelect" class="btn" style="padding:0 14px">Choisir</button>
   </header>
+  <nav id="galSitePop" class="site-pop" hidden aria-label="Chantiers"></nav>
   <div class="gal-filters" id="galFilters">
     <div class="gf-row">
       <div class="vtabs" role="tablist" aria-label="Affichage"><button id="tabGrid" role="tab" aria-selected="true" class="on"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Photos</button><button id="tabMap" role="tab" aria-selected="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Carte</button></div>
@@ -1751,7 +1940,8 @@ html[data-contrast] :is(.mn-grid .ic,.rail button.on .ic,.rail-logo){color:#000}
     <div class="brand"><span>Bau<b>Gest</b></span></div>
     <h1 id="dkTitle" class="sr">Documents</h1>
     <button id="dkGps" class="dk-gps" aria-label="Aller au chantier détecté"><span id="dkGpsDot" class="dot"></span><span class="t"><b id="dkGpsName">À classer</b><small id="dkGpsSub">Recherche GPS…</small></span></button>
-    <button id="dkSiteBtn" class="dk-gps dk-sitebtn" aria-haspopup="true" aria-expanded="false"><span class="t"><b id="dkSiteName">Chantier</b><small>Changer de chantier</small></span><svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button id="dkSiteBtn" class="dk-gps dk-sitebtn" aria-haspopup="true" aria-expanded="false"><span id="dkSiteLogo" class="sb-logo"></span><span class="t"><b id="dkSiteName">Chantier</b><small id="dkSiteSub">Changer de chantier</small></span><svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+    <b id="dkTtl" class="dk-ttl"></b><div id="dkHeadSlot" class="dk-headslot"></div>
     <div id="dkModes" class="dk-modes" hidden><button data-dmode="plans">Plans</button><button data-dmode="docs">Documents</button><button data-dmode="pvdt">PV DT</button><button data-dmode="mails">Mails</button><button data-dmode="soum">Soumission</button><button data-dmode="cmd">Commandes</button><button data-dmode="todo">À faire</button><button data-dmode="devis">Devis</button></div>
     <span class="spacer"></span>
     <button class="icon-btn hd-contrast contrast-btn" aria-label="Fort contraste" aria-pressed="false"><svg class="ic" viewBox="0 0 24 24"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
@@ -3756,7 +3946,7 @@ function refreshView(){ if ($('#gallery').hidden) return; if (gal.view === 'map'
 function matchSite(id){ return gal.site === '__all' || (gal.site === '__none' ? (!id || id === 'none') : id === gal.site); }
 function openGallery(){
   const cur = currentSite();
-  gal.site = cur ? cur.id : '__all'; gal.sel.clear(); gal.selMode = false; gal.tag = null;
+  gal.site = isTabletScreen() && desk.site ? desk.site : cur ? cur.id : '__all'; gal.sel.clear(); gal.selMode = false; gal.tag = null;
   $('#gallery').hidden = false; renderGalSites(); renderRange(); setView(gal.view);
 }
 function closeGallery(){ $('#gallery').hidden = true; gal.urls.forEach(u => URL.revokeObjectURL(u)); gal.urls = []; }
@@ -3764,6 +3954,28 @@ function renderGalSites(){
   const b = (id, inner, txt) => `<button class="gsite ${txt ? 'txt' : ''} ${gal.site === id ? 'on' : ''}" data-gsite="${esc(id)}">${inner}</button>`;
   $('#galSites').innerHTML = b('__all', 'Toutes', 1) + S.sites.map(s => b(s.id, logoHTML(s) + esc(siteLabel(s)))).join('') + b('__none', 'À classer', 1);
   $('#galSites .on')?.scrollIntoView({inline:'center', block:'nearest'});
+  galSiteSync();
+}
+/* tablette : le chantier de la galerie se choisit en haut à gauche, comme dans les autres rubriques */
+function galSiteSync(){
+  if (!$('#galSiteBtn')) return;
+  const s = gal.site !== '__all' && gal.site !== '__none' ? siteById(gal.site) : null, c = currentSite();
+  $('#galSiteLogo').innerHTML = s ? logoHTML(s) : `<span class="slogo none" aria-hidden="true">${gal.site === '__all' ? '∗' : '?'}</span>`;
+  $('#galSiteName').textContent = s ? s.name : gal.site === '__all' ? 'Tous les chantiers' : 'À classer';
+  $('#galSiteSub').innerHTML = s ? (esc(s.number || '') + (c && c.id === s.id ? (s.number ? ' · ' : '') + '<span class="here">sur place</span>' : '') || 'Changer de chantier') : gal.site === '__all' ? 'Toutes les photos' : 'Photos sans chantier';
+}
+function galSitePop(on){
+  const p = $('#galSitePop'); if (!p) return;
+  const show = on === undefined ? p.hidden : !!on;
+  if (show) {
+    const c = currentSite();
+    const b = (id, logo, name, sub, cls) => `<button class="dk-site ${cls || ''} ${gal.site === id ? 'on' : ''}" data-gpick="${esc(id)}">${logo}<span class="t"><b>${esc(name)}</b><small>${esc(sub)}</small></span></button>`;
+    const none = t => `<span class="slogo none" aria-hidden="true">${t}</span>`;
+    p.innerHTML = (c ? `<button class="dk-site dk-gpsgo" data-gpick="__gps"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg><span class="t"><b>${esc(siteLabel(c))}</b><small>Chantier où je suis (GPS)</small></span></button>` : '')
+      + '<p class="dk-label">Chantiers</p>' + S.sites.map(s => b(s.id, logoHTML(s), s.name, (s.number || '') + (c && c.id === s.id ? ' · ● ici' : ''))).join('')
+      + b('__all', none('∗'), 'Tous les chantiers', 'Toutes les photos') + b('__none', none('?'), 'À classer', 'Photos sans chantier');
+  }
+  p.hidden = !show; $('#galSiteBtn').setAttribute('aria-expanded', String(show));
 }
 async function loadGallery(reset){
   if (gal.loading) return;
@@ -4640,8 +4852,21 @@ function openMenu(){
   m.hidden = !q || q.hidden; m.textContent = q ? q.textContent : '0';
   syncContrastBtns(); openSheet('#sheetMenu');
 }
+function railMenu(on){
+  const m = $('#railMenu'); if (!m) return;
+  const show = on === undefined ? m.hidden : !!on;
+  if (show) {
+    $('#rmTheme').textContent = S.contrast ? 'Fort contraste activé' : S.theme === 'auto' ? 'Comme l’appareil' : S.theme === 'light' ? 'Clair' : 'Sombre';
+    const q = $('#queueBadge'), b = $('#rmQueue'); b.hidden = !q || q.hidden; b.textContent = q ? q.textContent : '0';
+  }
+  m.hidden = !show;
+  const rb = $('#rail [data-rail="menu"]'); if (rb) rb.setAttribute('aria-expanded', String(show));
+}
 function goSection(k){
   const galOpen = !$('#gallery').hidden, dzOpen = !$('#devis').hidden, dkOpen = !$('#desk').hidden;
+  if (k === 'menu') { railMenu(); return; }
+  railMenu(false);
+  if (k === 'camera' && isTabletScreen() && dzOpen && dz.cur) { dzShoot(); return; } // tablette, fiche devis ouverte : la photo va dans la fiche
   if (k === 'settings') { openSettings(); return; }
   if (k === 'contrast') { setContrast(!S.contrast); return; }
   if (k === 'queue') { openSheet('#sheetQueue'); renderQueue(); return; }
@@ -4678,7 +4903,8 @@ function syncRail(){
   const show = shell && !RAIL_OVER.some(sel => { const el = $(sel); return el && !el.hidden; });
   rail.hidden = !show;
   const galPhone = !isTabletScreen() && !$('#gallery').hidden && $('#galBar').hidden && !RAIL_OVER.some(sel => { const el = $(sel); return el && !el.hidden; });
-  const fab = (show && $('#galBar').hidden) || galPhone;
+  const fab = galPhone; // tablette : la caméra est dans la barre de gauche
+  if (!show) { railMenu(false); if ($('#galSitePop')) galSitePop(false); }
   $('#fabCam').hidden = !fab; document.body.classList.toggle('has-fab', fab);
   if (!show) return;
   const cur = !$('#devis').hidden ? 'devis' : !$('#gallery').hidden ? 'photos' : (desk.mode || 'plans');
@@ -4700,6 +4926,36 @@ function bindErgo(){
   $('#galRangeChips').addEventListener('click', e => { const b = e.target.closest('[data-grange]'); if (!b) return; const sel = $('#galRange'); sel.value = b.dataset.grange; sel.dispatchEvent(new Event('change')); renderRangeChips(); });
   new MutationObserver(syncRail).observe($('#galBar'), {attributes:true, attributeFilter:['hidden']});
   $('#rail').addEventListener('click', e => { const b = e.target.closest('[data-rail]'); if (b) goSection(b.dataset.rail); });
+  $('#railMenu').addEventListener('click', e => {
+    const b = e.target.closest('[data-rmenu]'); if (!b) return;
+    const k = b.dataset.rmenu; railMenu(false);
+    if (k === 'theme') { S.theme = document.documentElement.dataset.theme === 'light' && !S.contrast ? 'dark' : 'light'; if (S.contrast) S.contrast = false; save(); applyTheme(); note(S.theme === 'light' ? 'Thème clair' : 'Thème sombre', 1500); }
+    else if (k === 'help') openSettings('g-help');
+    else goSection(k);
+  });
+  document.addEventListener('click', e => {
+    if (!$('#railMenu').hidden && !e.target.closest('#railMenu,[data-rail="menu"]')) railMenu(false);
+    if (!$('#galSitePop').hidden && !e.target.closest('#galSitePop,#galSiteBtn')) galSitePop(false);
+  });
+  $('#galSiteBtn').addEventListener('click', e => { e.stopPropagation(); galSitePop(); });
+  $('#galSitePop').addEventListener('click', e => {
+    const b = e.target.closest('[data-gpick]'); if (!b) return;
+    const id = b.dataset.gpick; galSitePop(false);
+    if (id === '__gps') { const c = currentSite(); if (!c) return; gal.site = c.id; } else gal.site = id;
+    if (siteById(gal.site)) { desk.site = gal.site; desk.tdSel = null; renderDeskSites(); }
+    gal.sel.clear(); gal.tag = null; renderGalSites(); filtersChanged();
+  });
+  /* tablette : l'en-tête de la rubrique (boutons d'action) passe dans la barre du haut */
+  if (isTabletScreen()) {
+    $('#dkHeadSlot').appendChild($('#dkHead'));
+    new MutationObserver(dkTitleSync).observe($('#dkHead'), {childList:true});
+  }
+  /* le chantier choisi dans le Planning devient le chantier actif */
+  document.addEventListener('change', e => {
+    if (!e.target || e.target.id !== 'bpSite' || !isTabletScreen()) return;
+    const v = e.target.value; if (!siteById(v) || desk.site === v) return;
+    desk.site = v; desk.tdSel = null; renderDeskSites(); if (!$('#desk').hidden) loadDocs();
+  });
   $('#dkSiteBtn').addEventListener('click', e => { e.stopPropagation(); setSitesOpen(!document.body.classList.contains('dk-sites-open')); });
   $('#dkSites').addEventListener('click', e => { if (e.target.closest('[data-dsite]')) setSitesOpen(false); });
   $('#dkGpsGo').addEventListener('click', () => { setSitesOpen(false); $('#dkGps').click(); });
@@ -4717,7 +4973,7 @@ const deskHome = () => isTabletScreen() && S.home !== 'camera'; // téléphone :
 function openDesk(){
   if (!isTabletScreen()) desk.mode = 'docs'; else if (!desk.mode) desk.mode = S.home === 'docs' ? 'docs' : S.home === 'plans' ? 'plans' : 'home';
   renderDeskModes();
-  if (!desk.site || (desk.site !== '__none' && !siteById(desk.site))) { const c = currentSite(); desk.site = c ? c.id : (S.sites[0]?.id || '__none'); }
+  if (!desk.site || (desk.site !== '__none' && !siteById(desk.site))) { const c = currentSite(); let last = ''; try { last = localStorage.getItem('baugest.tab.site') || ''; } catch (e) {} desk.site = c ? c.id : siteById(last) ? last : (S.sites[0]?.id || '__none'); }
   $('#desk').hidden = false; stopCamera();
   renderDeskHead(); renderDeskSites(); loadDocs();
 }
@@ -4728,14 +4984,34 @@ function renderDeskHead(){
   $('#dkGpsSub').textContent = manualSite ? 'Choisi à la main' : c ? 'Détecté par GPS' : pos ? 'Aucun chantier dans le rayon' : 'Recherche GPS…';
   $('#dkGpsDot').className = 'dot ' + (manualSite ? (manualSite === '__none' ? '' : 'manual') : c ? 'auto' : '');
   $('#dkGpsGoName').textContent = c ? siteLabel(c) : 'Aucun chantier détecté';
+  dkSiteBtnSync(); if (!$('#gallery').hidden) galSiteSync();
+}
+/* tablette : un seul chantier actif pour toutes les rubriques, affiché en haut à gauche et gardé d'une ouverture à l'autre */
+function dkSiteBtnSync(){
+  const c = currentSite(), ds = desk.site && desk.site !== '__none' ? siteById(desk.site) : null;
+  $('#dkSiteName').textContent = ds ? ds.name : 'À classer';
+  $('#dkSiteLogo').innerHTML = ds ? logoHTML(ds) : '<span class="slogo none" aria-hidden="true">?</span>';
+  $('#dkSiteSub').innerHTML = ds ? (esc(ds.number || '') + (c && c.id === ds.id ? (ds.number ? ' · ' : '') + '<span class="here">sur place</span>' : '') || 'Changer de chantier') : 'hors chantier';
 }
 function renderDeskSites(){
   const c = currentSite();
   const tdm = desk.mode === 'todo' && isTabletScreen(), tsel = tdm ? desk.tdSel : null;
-  const b = (id, s) => `<button class="dk-site ${desk.site === id && !tsel ? 'on' : ''}" data-dsite="${esc(id)}">${s ? logoHTML(s) : '<span class="slogo none" aria-hidden="true">?</span>'}<span class="t"><b>${esc(s ? s.name : 'À classer')}</b><small>${s ? esc(s.number || '') + (c && c.id === s.id ? ' · ● ici' : '') : 'hors chantier'}</small></span></button>`;
-  $('#dkSites').innerHTML = S.sites.map(s => b(s.id, s)).join('') + (tdm ? tdDeskPicks(tsel) : b('__none', null));
-  const ds = desk.site && desk.site !== '__none' ? siteById(desk.site) : null;
-  $('#dkSiteName').textContent = tsel ? (tsel === TD_DV ? 'Devis à faire' : tdLabel(tsel)) : ds ? siteLabel(ds) : 'À classer';
+  const b = (id, s) => `<button class="dk-site ${desk.site === id ? 'on' : ''}" data-dsite="${esc(id)}">${s ? logoHTML(s) : '<span class="slogo none" aria-hidden="true">?</span>'}<span class="t"><b>${esc(s ? s.name : 'À classer')}</b><small>${s ? esc(s.number || '') + (c && c.id === s.id ? ' · ● ici' : '') : 'hors chantier'}</small></span></button>`;
+  $('#dkSites').innerHTML = S.sites.map(s => b(s.id, s)).join('') + b('__none', null);
+  dkSiteBtnSync();
+  if (isTabletScreen() && desk.site) { try { localStorage.setItem('baugest.tab.site', desk.site); } catch (e) {} }
+}
+/* les écouteurs des rubriques valent aussi pour l'en-tête quand il est dans la barre du haut (tablette) */
+function dkOn(type, fn, opt){
+  const m = $('#dkMain'), h = $('#dkHead');
+  m.addEventListener(type, fn, opt);
+  h.addEventListener(type, e => { if (!m.contains(h)) fn(e); }, opt);
+}
+function dkTitleSync(){
+  const el = $('#dkTtl'); if (!el) return;
+  let n = 0;
+  try { const m = desk.mode; n = m === 'plans' ? PL.items.length : m === 'pvdt' ? PDX.items.length : m === 'mails' ? MLT.items.length : m === 'docs' ? desk.items.length : 0; } catch (e) {}
+  el.innerHTML = esc($('#dkTitle').textContent) + (n ? `<span class="n">${n}</span>` : '');
 }
 function recItem(r){
   return {key:'u' + r.uid, uid:r.uid, src:r.demo ? 'demo' : 'local', title:r.doc.title, dtype:r.doc.kind, date:r.doc.date, siteId:r.doc.siteId, thumb:r.thumb || '',
@@ -4815,7 +5091,11 @@ function renderDesk(){
   $('#dkInfo').hidden = !desk.err; $('#dkInfo').textContent = desk.err || '';
   const by = t => desk.items.filter(i => i.dtype === t).sort((a, b) => b.date.localeCompare(a.date) || (b.key > a.key ? 1 : -1));
   const used = DOC_ORDER.filter(t => by(t).length);
-  $('#dkList').innerHTML = used.length ? used.map(t => {
+  /* tablette : filtre par type en haut (seulement les types qui ont au moins 1 document) */
+  if (desk.dty && !used.includes(desk.dty)) desk.dty = '';
+  const tabF = isTabletScreen() && used.length > 1, shown = tabF && desk.dty ? [desk.dty] : used;
+  const chips = tabF ? `<div class="dk-chips" role="group" aria-label="Type de document"><button class="chip ${desk.dty ? '' : 'on'}" data-dty="">Tous<span class="n">${desk.items.length}</span></button>${used.map(t => `<button class="chip ${desk.dty === t ? 'on' : ''}" data-dty="${t}">${esc(DOCS[t].name)}<span class="n">${by(t).length}</span></button>`).join('')}</div>` : '';
+  $('#dkList').innerHTML = used.length ? chips + shown.map(t => {
     const list = by(t), d = DOCS[t];
     return `<section class="dk-sec" id="dks-${t}"><div class="dk-sep"><h3>${esc(d.name)}</h3><span class="n">${list.length}</span><span class="p">${esc(d.purpose)}</span><button class="btn" data-dnew="${t}"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nouveau</button></div>
       <div class="dk-grid">${list.map(docCard).join('')}</div></section>`;
@@ -5513,6 +5793,7 @@ function bindDocs(){
   $('#dkSites').addEventListener('click', e => { const b = e.target.closest('[data-dsite]'); if (!b) return; if (desk.mode === 'todo') { const v = b.dataset.dsite; desk.tdSel = v === TD_DV || tdIsList(v) ? v : null; if (!desk.tdSel) desk.site = v; renderDeskSites(); loadDocs(); $('#dkMain').scrollTop = 0; return; } if (desk.mode === 'plans' && desk.site === b.dataset.dsite && PL.path.length) { plGo([]); return; } desk.site = b.dataset.dsite; renderDeskSites(); loadDocs(); $('#dkMain').scrollTop = 0; });
   $('#desk').addEventListener('click', e => {
     if (e.target.closest('#dkNew')) { openKindPick(); return; }
+    const ty = e.target.closest('[data-dty]'); if (ty) { desk.dty = ty.dataset.dty; renderDesk(); $('#dkMain').scrollTop = 0; return; }
     if (e.target.closest('#dkGalSite')) { openGallery(); gal.site = desk.site; renderGalSites(); loadGallery(true); return; }
     const nw = e.target.closest('[data-dnew]'); if (nw) { openEditor(nw.dataset.dnew, desk.site); return; }
     const c = e.target.closest('[data-doc]'); if (c) { const it = findDoc(c.dataset.doc); if (it) openDocView(it); }
@@ -6013,10 +6294,14 @@ function plTreeHTML(n){
   if (!n.children.length) return '';
   return `<ul class="pl-tree">${n.children.map(c => {
     const open = PL.open.has(plKey(c.path)) || (plUnder(PL.path, c.path) && !plSame(PL.path, c.path)), on = plSame(PL.path, c.path);
-    return `<li><div class="pl-node ${on ? 'on' : ''} ${open ? 'open' : ''}" role="button" tabindex="0" data-plpath="${plAttr(c.path)}" data-pldrop="${plAttr(c.path)}">
-      <span class="pl-tw ${c.children.length ? '' : 'none'}" data-pltog="${plAttr(c.path)}">${PL_IC.chev}</span>${PL_IC.folder}<span class="nm">${esc(c.name)}</span><span class="ct">${plStats(c.path).plans}</span></div>
+    return `<li><div class="pl-node ${on ? 'on' : ''} ${open ? 'open' : ''}${/annul/i.test(c.name) ? ' pl-cancel' : ''}" role="button" tabindex="0" data-plpath="${plAttr(c.path)}" data-pldrop="${plAttr(c.path)}">
+      <span class="pl-tw ${c.children.length ? '' : 'none'}" data-pltog="${plAttr(c.path)}">${PL_IC.chev}</span>${PL_IC.folder}<span class="nm">${esc(c.name)}</span><span class="ct">${plStats(c.path).plans}</span><button class="pl-more" data-plfmenu="${plAttr(c.path)}" aria-label="Actions du dossier">${PL_IC.more}</button></div>
       ${open ? plTreeHTML(c) : ''}</li>`;
   }).join('')}</ul>`;
+}
+function plTreeColInner(){
+  const n = PL.items.filter(it => !/annul/i.test((it.folder || [])[0] || '')).length;
+  return `<div class="pl-node pl-root ${PL.path.length ? '' : 'on'}" role="button" tabindex="0" data-plpath="[]" data-pldrop="[]">${PL_IC.folder}<span class="nm">Tous les plans</span><span class="ct">${n}</span></div>${plTreeHTML(PL.tree)}<p class="pl-thint">Glisse un plan au stylet sur un dossier pour le déplacer (au doigt : appui long puis glisser).</p>`;
 }
 function renderPlans(){
   if (!PL.tree) PL.tree = {id:'', name:'Plans', path:[], children:[]};
@@ -6030,22 +6315,27 @@ function renderPlans(){
     const p = PL.path.slice(0, i + 1);
     return `<span class="sep">›</span><button class="${i === PL.path.length - 1 ? 'cur' : ''}" data-plpath="${plAttr(p)}" data-pldrop="${plAttr(p)}">${esc(n)}</button>`;
   }).join('');
+  /* tablette : les dossiers restent affichés à gauche ; « Tous les plans » (racine) montre les plans de tous les dossiers, sauf les annulés */
+  const split = isTabletScreen(), live = it => !/annul/i.test((it.folder || [])[0] || ''), allMode = split && !q && !PL.path.length;
   let folders = [], plans = [];
   if (q) plans = PL.items.filter(it => plUnder(it.folder || [], PL.path) && String(it.name).toLowerCase().includes(q));
+  else if (allMode) plans = PL.items.filter(live).sort((a, b) => (a.folder || []).join('/').localeCompare((b.folder || []).join('/'), 'fr', {numeric:true}) || String(a.name).localeCompare(String(b.name), 'fr', {numeric:true}));
   else { folders = node.children; plans = PL.items.filter(it => plSame(it.folder || [], PL.path)); }
-  const where = it => q ? ['Plans', ...(it.folder || [])].join(' / ') : '';
+  const where = it => q ? ['Plans', ...(it.folder || [])].join(' / ') : allMode ? (it.folder || []).join(' / ') : '';
+  const tree = split ? `<aside class="pl-treecol" aria-label="Dossiers de plans">${plTreeColInner()}</aside>` : '';
+  if (split) folders = [];
   const list = PL.view === 'list'
     ? `<div class="pl-list"><div class="pl-row hd"><span></span><span>Nom</span><span class="pl-c">Modifié</span><span class="pl-c">Mesures</span><span class="pl-c pl-cst">État</span><span></span></div>${plans.map(p => planRow(p, where(p))).join('')}</div>`
     : `<div class="dk-grid pl-grid">${plans.map(p => planCard(p, where(p))).join('')}</div>`;
   const empty = PL.loading ? 'Chargement…' : q ? 'Aucun plan ne correspond.' : folders.length ? 'Aucun plan à ce niveau. Ouvre un dossier, ou touche « Ajouter un plan » pour en déposer ici.'
-    : PL.path.length ? 'Dossier vide. Touche « Ajouter un plan », ou glisse un plan ici depuis un autre dossier.' : 'Aucun plan pour ce chantier. Touche « Ajouter un plan », dépose des PDF dans son dossier Plans sur ton Drive, ou partage un PDF vers BauGest.';
-  $('#dkList').innerHTML = `<nav class="pl-crumbs" aria-label="Emplacement">${crumbs}<span class="pl-path">Drive : ${esc([siteFolder(s), 'Plans', ...PL.path].join(' / '))}</span></nav>
+    : PL.path.length ? (split && node.children.length ? 'Aucun plan directement dans ce dossier. Ouvre un sous-dossier à gauche, ou touche « Ajouter un plan ».' : 'Dossier vide. Touche « Ajouter un plan », ou glisse un plan ici depuis un autre dossier.') : 'Aucun plan pour ce chantier. Touche « Ajouter un plan », dépose des PDF dans son dossier Plans sur ton Drive, ou partage un PDF vers BauGest.';
+  $('#dkList').innerHTML = `${split ? '<div class="pl-split">' + tree + '<div class="pl-content">' : ''}<nav class="pl-crumbs" aria-label="Emplacement">${crumbs}<span class="pl-path">Drive : ${esc([siteFolder(s), 'Plans', ...PL.path].join(' / '))}</span></nav>
     <div class="pl-bar"><label class="pl-search">${PL_IC.search}<input id="plQ" type="search" placeholder="Chercher un plan ici et dans les sous-dossiers" value="${esc(PL.q)}" autocomplete="off"></label>
       <div class="pl-seg" role="group" aria-label="Affichage"><button data-plview="grid" class="${PL.view === 'grid' ? 'on' : ''}" aria-label="Vignettes">${PL_IC.grid}</button><button data-plview="list" class="${PL.view === 'list' ? 'on' : ''}" aria-label="Liste">${PL_IC.rows}</button></div></div>
     ${folders.length ? `<section class="dk-sec"><div class="dk-sep"><h3>Dossiers</h3><span class="n">${folders.length}</span><span class="p">Glisse un plan au stylet sur un dossier ou sur le chemin (au doigt : appui long puis glisser)</span></div>
       <div class="pl-folders">${folders.map(c => { const st = plStats(c.path); return `<div class="pl-folder${/annul/i.test(c.name) ? ' pl-cancel' : ''}" role="button" tabindex="0" data-plpath="${plAttr(c.path)}" data-pldrop="${plAttr(c.path)}">${PL_IC.bigFolder}<span class="t"><b>${esc(c.name)}</b><small>${st.plans} plan${st.plans > 1 ? 's' : ''} · ${st.mes} mesure${st.mes > 1 ? 's' : ''}</small></span><button class="pl-more" data-plfmenu="${plAttr(c.path)}" aria-label="Actions du dossier">${PL_IC.more}</button></div>`; }).join('')}</div></section>` : ''}
-    <section class="dk-sec"><div class="dk-sep"><h3>${q ? 'Résultats' : 'Plans'}</h3><span class="n">${plans.length}</span><span class="p">${q ? 'Recherche dans ' + esc(['Plans', ...PL.path].join(' / ')) : 'PDF de ' + esc(['Plans', ...PL.path].join(' / '))}</span></div>
-    ${plans.length ? list : `<p class="dk-empty">${empty}</p>`}</section>`;
+    <section class="dk-sec"><div class="dk-sep"><h3>${q ? 'Résultats' : 'Plans'}</h3><span class="n">${plans.length}</span><span class="p">${q ? 'Recherche dans ' + esc(['Plans', ...PL.path].join(' / ')) : allMode ? 'Tous les dossiers' : 'PDF de ' + esc(['Plans', ...PL.path].join(' / '))}</span></div>
+    ${plans.length ? list : `<p class="dk-empty">${empty}</p>`}</section>${split ? '</div></div>' : ''}`;
   $$('#dkList img[data-fallback]').forEach(i => i.addEventListener('error', () => { i.replaceWith(Object.assign(document.createElement('span'), {className:'dk-noimg', textContent:'PDF'})); }, {once:true}));
 }
 function plGo(path){ PL.path = path; PL.q = ''; plSavePath(); renderPlans(); $('#dkMain').scrollTop = 0; }
@@ -6242,7 +6532,7 @@ function plSetOver(t){
   clearTimeout(PLD.hoverT);
   if (t && t.classList.contains('pl-node') && !t.classList.contains('open') && t.querySelector('.pl-tw:not(.none)')) PLD.hoverT = setTimeout(() => {
     if (PLD.over !== t || !PLD.active) return;
-    PL.open.add(plKey(JSON.parse(t.dataset.plpath))); PLD.over = null; renderDeskSites(); plSetOver(plDropAt(PLD.x, PLD.y));
+    PL.open.add(plKey(JSON.parse(t.dataset.plpath))); PLD.over = null; renderDeskSites(); { const tc = $('.pl-treecol'); if (tc) tc.innerHTML = plTreeColInner(); } plSetOver(plDropAt(PLD.x, PLD.y));
   }, 700);
 }
 function plAutoScroll(){
@@ -6308,6 +6598,8 @@ function renderDeskModes(){
   $('#dkTitle').textContent = desk.mode === 'home' ? 'Accueil' : desk.mode === 'plans' ? 'Plans' : desk.mode === 'pvdt' ? 'PV DT' : desk.mode === 'mails' ? 'Mails' : desk.mode === 'soum' ? 'Soumission' : desk.mode === 'cmd' ? 'Commandes' : desk.mode === 'todo' ? 'À faire' : 'Documents';
   $('#desk').classList.toggle('td-mode', desk.mode === 'todo');
   $('#desk').classList.toggle('hm-mode', desk.mode === 'home');
+  $('#desk').dataset.mode = desk.mode || '';
+  dkTitleSync();
   syncRail(); backSchedule();
 }
 async function planUploaded(uid, f){
@@ -6865,23 +7157,24 @@ function bindPlans(){
     if (b.dataset.dmode === desk.mode) return;
     desk.mode = b.dataset.dmode; renderDeskModes(); $('#dkList').innerHTML = ''; loadDocs(); $('#dkMain').scrollTop = 0;
   });
-  $('#dkMain').addEventListener('click', e => {
+  dkOn('click', e => {
     if (desk.mode !== 'plans') return;
     const t = e.target;
     if (t.closest('#plAdd')) { $('#plFile').click(); return; }
     if (t.closest('#plNewFolder')) { plNewFolder(); return; }
     const v = t.closest('[data-plview]'); if (v) { PL.view = v.dataset.plview; try { localStorage.setItem('baugest.plView', PL.view); } catch (err) {} renderPlans(); return; }
     const fm = t.closest('[data-plfmenu]'); if (fm) { e.stopPropagation(); plFolderMenu(fm, JSON.parse(fm.dataset.plfmenu)); return; }
+    const tg = t.closest('[data-pltog]'); if (tg) { const k = plKey(JSON.parse(tg.dataset.pltog)); if (PL.open.has(k)) PL.open.delete(k); else PL.open.add(k); renderPlans(); return; }
     const pm = t.closest('[data-plmenu]'); if (pm) { e.stopPropagation(); plPlanMenu(pm, pm.dataset.plmenu); return; }
     const go = t.closest('[data-plpath]'); if (go) { plGo(JSON.parse(go.dataset.plpath)); return; }
     const c = t.closest('[data-plan]'); if (c) openPlan(c.dataset.plan);
   });
-  $('#dkMain').addEventListener('input', e => {
+  dkOn('input', e => {
     if (e.target.id !== 'plQ') return;
     PL.q = e.target.value; const pos = e.target.selectionStart; renderPlans();
     const q = $('#plQ'); q.focus(); try { q.setSelectionRange(pos, pos); } catch (err) {}
   });
-  $('#dkMain').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-plan],[data-plpath]')) { e.preventDefault(); e.target.click(); } });
+  dkOn('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-plan],[data-plpath]')) { e.preventDefault(); e.target.click(); } });
   $('#dkSites').addEventListener('click', e => {
     const tg = e.target.closest('[data-pltog]');
     if (tg) { e.stopPropagation(); const k = plKey(JSON.parse(tg.dataset.pltog)); if (PL.open.has(k)) PL.open.delete(k); else PL.open.add(k); renderDeskSites(); return; }
@@ -7747,13 +8040,13 @@ function renderPvdtSettings(){
   const n = $('#setPvNotif'); if (n) n.checked = !!S.pvNotif && 'Notification' in window && Notification.permission === 'granted';
 }
 function bindPvdt(){
-  $('#dkMain').addEventListener('click', e => {
+  dkOn('click', e => {
     if (desk.mode !== 'pvdt') return;
     if (e.target.closest('#pdAdd')) { $('#pdFile').click(); return; }
     if (e.target.closest('#pdOldTog')) { PDX.showOld = !PDX.showOld; renderPvdt(); return; }
     const r = e.target.closest('[data-pd]'); if (r) openPvdt(r.dataset.pd);
   });
-  $('#dkMain').addEventListener('keydown', e => { if (desk.mode === 'pvdt' && (e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pd]')) { e.preventDefault(); e.target.click(); } });
+  dkOn('keydown', e => { if (desk.mode === 'pvdt' && (e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pd]')) { e.preventDefault(); e.target.click(); } });
   $('#pdFile').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; pdAddFiles(f); });
   $('#setPvKeys').addEventListener('change', e => { S.pvKeys = e.target.value.split(/[,;]+/).map(x => x.trim()).filter(Boolean).slice(0, 20); save(); note('Noms enregistrés', 2000); });
   $('#setPvNotif').addEventListener('change', async e => {
@@ -8063,7 +8356,7 @@ async function soumRequestCancel(){
   SOUMX.req = null; SOUMCACHE.put({key:sid, data:SOUMX.data, src:SOUMX.src, files:SOUMX.files, need:SOUMX.need, req:null}); renderSoum(); note('Demande annulée', 2500);
 }
 function bindSoum(){
-  $('#dkMain').addEventListener('click', e => {
+  dkOn('click', e => {
     if (desk.mode !== 'soum') return;
     if (e.target.closest('#soAdd')) { $('#soFile').click(); return; }
     if (e.target.closest('#soReset')) { SOUMX.cans.clear(); SOUMX.q = ''; SOUMX.p = ''; renderSoum(); return; }
@@ -8075,7 +8368,7 @@ function bindSoum(){
     if (r && !r.classList.contains('so-th')) { const k = r.dataset.sorow; SOUMX.open.has(k) ? SOUMX.open.delete(k) : SOUMX.open.add(k); r.classList.toggle('open'); }
   });
   let t = 0;
-  $('#dkMain').addEventListener('input', e => {
+  dkOn('input', e => {
     if (desk.mode !== 'soum' || !e.target.matches('#soQ,#soP')) return;
     if (e.target.id === 'soQ') SOUMX.q = e.target.value; else SOUMX.p = e.target.value;
     clearTimeout(t); t = setTimeout(renderSoumTable, 120);
@@ -10460,7 +10753,7 @@ async function tdOpenLink(t, sid){
 /* ---------- panneau ☑ (accès rapide, tous les chantiers) ---------- */
 function tdDefaultSite(){
   if (!$('#devis').hidden && dz.cur && devById(dz.cur)) return 'devis:' + dz.cur;
-  if (!$('#desk').hidden && desk.mode === 'todo' && desk.tdSel) return desk.tdSel === TD_DV ? (devTodo()[0] ? devSid(devTodo()[0]) : null) : desk.tdSel;
+  if (!$('#desk').hidden && desk.mode === 'todo' && desk.tdSel && desk.tdSel !== TD_ALL) return desk.tdSel === TD_DV ? (devTodo()[0] ? devSid(devTodo()[0]) : null) : desk.tdSel;
   if (!$('#planView').hidden && PV.siteId && siteById(PV.siteId)) return PV.siteId;
   if (!$('#pdView').hidden && PDV.siteId && siteById(PDV.siteId)) return PDV.siteId;
   if (!$('#desk').hidden && desk.site && siteById(desk.site)) return desk.site;
@@ -10509,22 +10802,42 @@ function tdDeskPicks(sel){
     + tdLists().map(l => { const k = n('td:' + l.id); return b('td:' + l.id, logoHTML({name:l.name}), l.name, k ? k + ' à faire' : 'Rien à faire'); }).join('')
     + `<button class="dk-site td-addl" data-tdnewlist><span class="slogo none" aria-hidden="true">+</span><span class="t"><b>Nouvelle liste</b><small>Entreprise, administratif, perso…</small></span></button>`;
 }
+const TD_ALL = '__all';
+/* tablette : puces en haut de la liste = chantier actif, toutes les tâches, devis à faire, listes hors chantier */
+function tdSelHTML(){
+  const n = sid => (TD.lists[sid]?.tasks || []).filter(tdOpen).length, s = desk.site && desk.site !== '__none' ? siteById(desk.site) : null, cur = desk.tdSel || (s ? s.id : '');
+  const chip = (id, label, k) => `<button class="chip ${cur === id ? 'on' : ''}" data-tdsel="${esc(id)}">${esc(label)}${k ? `<span class="n">${k}</span>` : ''}</button>`;
+  const tot = tdTargets().reduce((a, g) => a + (g.k === 'devis' ? 0 : n(g.sid)), 0) + devTodo().length;
+  return `<div class="dk-chips td-sel" role="group" aria-label="Liste affichée">${s ? chip(s.id, s.number || s.name, n(s.id)) : ''}${chip(TD_ALL, 'Tous', tot)}${chip(TD_DV, 'Devis à faire', devTodo().length)}${tdLists().map(l => chip('td:' + l.id, l.name, n('td:' + l.id))).join('')}<button class="chip dash" data-tdnewlist>+ Liste</button></div>`;
+}
+function renderTodoAll(){
+  const blocks = tdTargets().filter(g => g.k !== 'devis').map(g => ({g, tasks:(TD.lists[g.sid]?.tasks || []).filter(tdOpen).sort(tdSort)})).filter(b => b.tasks.length)
+    .sort((a, b) => ((b.g.sid === desk.site) - (a.g.sid === desk.site)) || (a.g.k === 'list') - (b.g.k === 'list') || a.g.label.localeCompare(b.g.label, 'fr', {numeric:true}));
+  const dv = tdDevisHTML();
+  $('#tdDeskList').innerHTML = blocks.map(b => `<section class="dk-sec"><div class="dk-sep"><h3>${esc(b.g.label)}</h3><span class="n">${b.tasks.length}</span></div>${tdListHTML(b.tasks, b.g.sid)}</section>`).join('')
+    + (dv.empty ? '' : `<section class="dk-sec"><div class="dk-sep"><h3>Devis à faire</h3><span class="n">${dv.n}</span><span class="p">Coche quand le devis est envoyé</span></div>${dv.html}</section>`)
+    || '<p class="dk-empty">Rien à faire.</p>';
+  tdFillInk($('#tdDeskList'));
+}
 function renderTodo(){
-  if (desk.tdSel && desk.tdSel !== TD_DV && !tdTarget(desk.tdSel)) desk.tdSel = null;
-  const dv = desk.tdSel === TD_DV, g = dv ? null : tdTarget(desk.tdSel || desk.site);
+  const tab = isTabletScreen();
+  if (desk.tdSel === TD_ALL && !tab) desk.tdSel = null;
+  if (desk.tdSel && desk.tdSel !== TD_DV && desk.tdSel !== TD_ALL && !tdTarget(desk.tdSel)) desk.tdSel = null;
+  const all = desk.tdSel === TD_ALL, dv = desk.tdSel === TD_DV, g = dv || all ? null : tdTarget(desk.tdSel || desk.site);
   renderDeskSites();
-  $('#dkHead').innerHTML = dv ? `<span class="slogo none" aria-hidden="true">D</span><div class="t"><small>Hors chantier</small><h2>Devis à faire</h2></div>`
+  $('#dkHead').innerHTML = all ? `<div class="t"><small>Chantiers et listes</small><h2>Toutes les tâches</h2></div>` : dv ? `<span class="slogo none" aria-hidden="true">D</span><div class="t"><small>Hors chantier</small><h2>Devis à faire</h2></div>`
     : g && g.k === 'list' ? `${logoHTML({name:g.label})}<div class="t"><small>Liste hors chantier</small><h2>${esc(g.label)}</h2></div><button class="btn" data-tdlistedit="${esc(g.l.id)}">Renommer / supprimer</button>`
     : `${g ? logoHTML(g.s) : ''}<div class="t"><small>${g ? esc(g.s.number || 'Chantier') : 'Hors chantier'}</small><h2>${esc(g ? g.s.name : 'À classer')}</h2></div>`;
   const info = tdSyncState(); $('#dkInfo').hidden = !info; $('#dkInfo').textContent = info;
-  if (!g && !dv) { $('#dkList').innerHTML = '<p class="dk-empty">Choisis un chantier ou une liste pour voir ses tâches.</p>'; renderDeskModes(); return; }
+  if (!g && !dv && !all) { $('#dkList').innerHTML = `<div class="td-col">${tab ? tdSelHTML() : ''}<p class="dk-empty">Choisis un chantier ou une liste pour voir ses tâches.</p></div>`; renderDeskModes(); return; }
   // le bloc d'écriture n'est recréé qu'au changement de chantier / liste (une tâche en cours d'écriture n'est jamais effacée)
-  const key = dv ? TD_DV : g.sid, pad = $('#tdDeskPad'), st = pad && tdPadState(pad);
+  const key = all ? TD_ALL : dv ? TD_DV : g.sid, pad = $('#tdDeskPad'), st = pad && tdPadState(pad);
   if (!pad || !st || st.key !== key || !$('#tdDeskList')) {
-    $('#dkList').innerHTML = tdNewHTML('tdDeskPad', dv ? {sites:true, ph:'Tâche pour la fiche choisie (relancer le client, demander un prix…) · au stylo'} : {}) + '<div id="tdDeskList"></div>';
-    tdPadInit($('#tdDeskPad'), dv ? {key, pick:'devis', sid:devTodo()[0] ? devSid(devTodo()[0]) : null} : {key, sid:g.sid});
-  } else if (dv) tdPadOpts(pad);
-  dv ? renderTodoDevis() : renderTodoList(g);
+    $('#dkList').innerHTML = tdNewHTML('tdDeskPad', dv ? {sites:true, ph:'Tâche pour la fiche choisie (relancer le client, demander un prix…) · au stylo'} : all ? {sites:true} : {}) + '<div class="td-col"><div id="tdDeskSel"></div><div id="tdDeskList"></div></div>';
+    tdPadInit($('#tdDeskPad'), dv ? {key, pick:'devis', sid:devTodo()[0] ? devSid(devTodo()[0]) : null} : all ? {key, sid:siteById(desk.site) ? desk.site : (tdSites()[0]?.id || null)} : {key, sid:g.sid});
+  } else if (dv || all) tdPadOpts(pad);
+  if ($('#tdDeskSel')) $('#tdDeskSel').innerHTML = tab ? tdSelHTML() : '';
+  all ? renderTodoAll() : dv ? renderTodoDevis() : renderTodoList(g);
   renderDeskModes();
 }
 function renderTodoList(g){
@@ -10701,12 +11014,12 @@ async function openMailT(id){
   $('#mltBody').dataset.sid = sid;
 }
 function bindMailsT(){
-  $('#dkMain').addEventListener('click', e => {
+  dkOn('click', e => {
     if (desk.mode !== 'mails') return;
     if (e.target.closest('#mltTl')) { MLT.tl = !MLT.tl; renderMails(); return; }
     const r = e.target.closest('[data-mlt]'); if (r) openMailT(r.dataset.mlt);
   });
-  $('#dkMain').addEventListener('keydown', e => { if (desk.mode === 'mails' && (e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-mlt]')) { e.preventDefault(); e.target.click(); } });
+  dkOn('keydown', e => { if (desk.mode === 'mails' && (e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-mlt]')) { e.preventDefault(); e.target.click(); } });
   $('#mltBody').addEventListener('click', e => {
     const b = e.target.closest('[data-mlta]'); if (!b) return;
     const sid = $('#mltBody').dataset.sid, t = b.dataset.t;
@@ -10916,9 +11229,11 @@ function bindTodo(){
   $('#tdlOk').addEventListener('click', tdListSave);
   $('#tdlDel').addEventListener('click', tdListDelete);
   $('#tdlName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); tdListSave(); } });
-  $('#dkMain').addEventListener('click', e => {
+  dkOn('click', e => {
     if (desk.mode === 'home') { if (!tdPadClick(e)) hmClick(e); return; }
     if (desk.mode !== 'todo') return;
+    const sel = e.target.closest('[data-tdsel]');
+    if (sel) { const v = sel.dataset.tdsel; desk.tdSel = v === TD_DV || v === TD_ALL || tdIsList(v) ? v : null; renderTodo(); $('#dkMain').scrollTop = 0; return; }
     if (e.target.closest('#tdShowDone')) { TD.showDone = !TD.showDone; renderTodo(); return; }
     lists(e);
   });
