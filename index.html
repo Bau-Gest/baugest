@@ -1026,8 +1026,6 @@ html:not([data-theme="light"]):not([data-contrast]) .td-due.today{color:#f2b233}
 .td-row.td-dv{border-left-color:var(--signal)}
 .td-row.td-dv .td-txt{font-weight:600}
 .td-dvsub{margin:-2px 0 4px 26px}
-.dk-label.td-hc{margin-top:16px}
-.td-addl{border-style:dashed;border-color:var(--line)}
 .td-sh .slogo{width:30px;height:30px;font-size:12px}
 .td-sh b{flex:1;min-width:0;font:700 18px/1.15 var(--display);text-transform:uppercase;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .td-sh .n{min-width:24px;height:22px;border-radius:11px;padding:0 7px;background:var(--surface2);font:700 12.5px/22px var(--body);text-align:center}
@@ -1531,6 +1529,11 @@ body.tabshell .hm-ev small{grid-column:2;grid-row:3}
   body.tabshell #desk.td-mode #dkList{grid-template-columns:minmax(0,1fr) minmax(440px,46%)}
   body.tabshell #desk.td-mode .td-ph{right:112px;top:14px;font-size:15px}
 }
+.td-col > *{min-width:0}
+/* commande ouverte (ou fournisseurs) : ses boutons passent sur une 2e ligne de la barre, avec le n° de la commande */
+body.tabshell #desk .panel-head:has(#dkHead > [data-ca="list"]){flex-wrap:wrap;row-gap:8px}
+body.tabshell #desk .panel-head:has(#dkHead > [data-ca="list"]) .dk-ttl{flex:1 1 auto}
+body.tabshell #desk .panel-head:has(#dkHead > [data-ca="list"]) .dk-headslot{order:9;flex:1 0 100%}
 @media (max-width:1000px){
   .pl-split{grid-template-columns:minmax(0,1fr)}
   body.tabshell .dk-ttl .n{display:none}
@@ -4995,7 +4998,6 @@ function dkSiteBtnSync(){
 }
 function renderDeskSites(){
   const c = currentSite();
-  const tdm = desk.mode === 'todo' && isTabletScreen(), tsel = tdm ? desk.tdSel : null;
   const b = (id, s) => `<button class="dk-site ${desk.site === id ? 'on' : ''}" data-dsite="${esc(id)}">${s ? logoHTML(s) : '<span class="slogo none" aria-hidden="true">?</span>'}<span class="t"><b>${esc(s ? s.name : 'À classer')}</b><small>${s ? esc(s.number || '') + (c && c.id === s.id ? ' · ● ici' : '') : 'hors chantier'}</small></span></button>`;
   $('#dkSites').innerHTML = S.sites.map(s => b(s.id, s)).join('') + b('__none', null);
   dkSiteBtnSync();
@@ -6337,6 +6339,9 @@ function renderPlans(){
     <section class="dk-sec"><div class="dk-sep"><h3>${q ? 'Résultats' : 'Plans'}</h3><span class="n">${plans.length}</span><span class="p">${q ? 'Recherche dans ' + esc(['Plans', ...PL.path].join(' / ')) : allMode ? 'Tous les dossiers' : 'PDF de ' + esc(['Plans', ...PL.path].join(' / '))}</span></div>
     ${plans.length ? list : `<p class="dk-empty">${empty}</p>`}</section>${split ? '</div></div>' : ''}`;
   $$('#dkList img[data-fallback]').forEach(i => i.addEventListener('error', () => { i.replaceWith(Object.assign(document.createElement('span'), {className:'dk-noimg', textContent:'PDF'})); }, {once:true}));
+  /* portrait : les dossiers sont sur une ligne, le dossier ouvert reste visible */
+  const tc = $('#dkList .pl-treecol'), on = tc && tc.querySelector('.pl-node.on');
+  if (on && tc.scrollWidth > tc.clientWidth + 2) tc.scrollLeft += on.getBoundingClientRect().left - tc.getBoundingClientRect().left - 40;
 }
 function plGo(path){ PL.path = path; PL.q = ''; plSavePath(); renderPlans(); $('#dkMain').scrollTop = 0; }
 
@@ -10795,13 +10800,6 @@ function renderTodoPanel(){
 
 /* ---------- rubrique « À faire » du bureau (tablette) ---------- */
 function loadTodo(){ renderTodo(); tdSync(); }
-function tdDeskPicks(sel){
-  const n = sid => (TD.lists[sid]?.tasks || []).filter(tdOpen).length, dv = devTodo().length;
-  const b = (id, logo, name, sub) => `<button class="dk-site ${sel === id ? 'on' : ''}" data-dsite="${esc(id)}">${logo}<span class="t"><b>${esc(name)}</b><small>${esc(sub)}</small></span></button>`;
-  return `<p class="dk-label td-hc">Hors chantier</p>` + b(TD_DV, '<span class="slogo none" aria-hidden="true">D</span>', 'Devis', dv ? dv + ' devis à faire' : 'Aucun devis à faire')
-    + tdLists().map(l => { const k = n('td:' + l.id); return b('td:' + l.id, logoHTML({name:l.name}), l.name, k ? k + ' à faire' : 'Rien à faire'); }).join('')
-    + `<button class="dk-site td-addl" data-tdnewlist><span class="slogo none" aria-hidden="true">+</span><span class="t"><b>Nouvelle liste</b><small>Entreprise, administratif, perso…</small></span></button>`;
-}
 const TD_ALL = '__all';
 /* tablette : puces en haut de la liste = chantier actif, toutes les tâches, devis à faire, listes hors chantier */
 function tdSelHTML(){
@@ -11225,7 +11223,6 @@ function bindTodo(){
   };
   $('#sheetTodo').addEventListener('click', lists);
   $('#sheetTodoEd').addEventListener('click', lists);
-  $('#dkSites').addEventListener('click', e => { if (e.target.closest('[data-tdnewlist]')) { setSitesOpen(false); tdListDlg(); } });
   $('#tdlOk').addEventListener('click', tdListSave);
   $('#tdlDel').addEventListener('click', tdListDelete);
   $('#tdlName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); tdListSave(); } });
