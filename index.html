@@ -2153,6 +2153,7 @@ body.tabshell #desk .panel-head:has(#dkHead > [data-ca="list"]) .dk-headslot{ord
       <button id="dvEdit" class="btn primary"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Modifier</button>
       <button id="dvShare" class="btn"><svg class="ic" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>Partager en PDF</button>
       <button id="dvText" class="btn" hidden><svg class="ic" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>Texte tapé (PDF)</button>
+      <button id="dvMove" class="btn" aria-label="Déplacer vers un autre chantier"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/><path d="M12 14h6M15 11l3 3-3 3"/></svg>Déplacer</button>
       <button id="dvDelete" class="btn danger" aria-label="Supprimer le document"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>Supprimer</button>
     </div>
   </div>
@@ -3632,8 +3633,9 @@ async function ensureSiteFolders(){
 
 /* ---------- Confirmation & suppression de chantiers ---------- */
 let cfCb = null;
-function confirmBox(title, html, yes, cb){
+function confirmBox(title, html, yes, cb, safe){
   $('#cfTitle').textContent = title; $('#cfText').innerHTML = html; $('#cfYes').textContent = yes || 'Supprimer';
+  $('#cfYes').style.cssText = safe ? '' : 'background:var(--bad);border-color:var(--bad);color:#fff';
   cfCb = cb; openSheet('#sheetConfirm');
 }
 async function askDeleteSites(ids){
@@ -4789,14 +4791,20 @@ async function uploadDoc(it, parent){
     appProperties:{pc:'1', kind:'doc', uid:m.uid, dtype:m.dtype, site:m.siteId || 'none', taken:m.taken || '', title:String(m.title || '').slice(0, 50)}};
   if (it.thumb) md.contentHints = {thumbnail:{image:it.thumb.split(',')[1].replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''), mimeType:'image/jpeg'}};
   let f;
-  if (rec.driveId && rec.parentId === parent) {
-    try { f = await driveMultipart(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(rec.driveId)}?uploadType=multipart&fields=id,name,webViewLink,modifiedTime`, 'PATCH', md, it.blob, 'application/json'); }
-    catch (e) { if (e.status !== 404) throw e; }
+  if (rec.driveId) {
+    /* fichier déjà sur le Drive : mis à jour sur place, déplacé si le chantier / le type a changé (même id, jamais de copie) */
+    let old = null;
+    try { old = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(rec.driveId)}?fields=id,name,parents,trashed`); } catch (e) { if (e.status !== 404) throw e; }
+    if (old && !old.trashed) {
+      const from = old.parents || [], moved = !from.includes(parent);
+      const qs = 'uploadType=multipart&fields=id,name,webViewLink,modifiedTime' + (moved ? '&addParents=' + encodeURIComponent(parent) + (from.length ? '&removeParents=' + encodeURIComponent(from.join(',')) : '') : '');
+      try { f = await driveMultipart(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(rec.driveId)}?${qs}`, 'PATCH', md, it.blob, 'application/json'); }
+      catch (e) { if (e.status !== 404) throw e; }
+      /* ancien texte tapé (en-tête de l'ancien chantier) → corbeille ; la tâche Transcription le refait */
+      if (f && (moved || old.name !== m.name)) { try { await trashTranscripts(old.name, from); } catch (e) {} }
+    }
   }
-  if (!f) {
-    f = await driveMultipart('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,modifiedTime', 'POST', {...md, parents:[parent]}, it.blob, 'application/json');
-    if (rec.driveId) { try { await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(rec.driveId)}?fields=id`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})}); } catch (e) {} }
-  }
+  if (!f) f = await driveMultipart('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,modifiedTime', 'POST', {...md, parents:[parent]}, it.blob, 'application/json');
   const cur = await DOCSTORE.get(m.uid);
   if (cur) await DOCSTORE.put({...cur, driveId:f.id, parentId:parent, dirty:cur.saved > it.created ? cur.dirty : false, modified:f.modifiedTime || new Date().toISOString()});
   return f;
@@ -5053,8 +5061,9 @@ async function loadDocsRaw(){
   const tok = ++desk.token, sid = desk.site === '__none' ? 'none' : desk.site;
   desk.loading = true; desk.err = null;
   await seedDemo();
-  const recs = (await DOCSTORE.all()).filter(r => r.doc && r.uid !== '__draft' && (r.doc.siteId || 'none') === sid);
-  const local = recs.map(recItem);
+  const allRecs = (await DOCSTORE.all()).filter(r => r.doc && r.uid !== '__draft');
+  const recs = allRecs.filter(r => (r.doc.siteId || 'none') === sid);
+  let local = recs.map(recItem);
   desk.items = local; renderDesk();
   let more = [];
   if (DEMO && !tokenValid()) desk.err = 'Aperçu : documents d’exemple. Dans l’app, tu verras aussi les documents de ton Drive.';
@@ -5066,12 +5075,15 @@ async function loadDocsRaw(){
       try {
         const q = `trashed=false and mimeType='application/json' and appProperties has { key='kind' and value='doc' } and ${siteClause(sid)}`;
         const res = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, orderBy:'modifiedTime desc', pageSize:'300', fields:'files(id,name,thumbnailLink,modifiedTime,createdTime,appProperties)'}));
-        const known = new Map(recs.map(r => [r.uid, r]));
+        const known = new Map(allRecs.map(r => [r.uid, r])), seen = new Set((res.files || []).map(f => f.id));
         for (const f of res.files || []) {
           const it = driveDocItem(f), rec = known.get(it.uid);
-          if (!rec) more.push(it);
+          if (rec && (rec.doc.siteId || 'none') !== sid) { if (!rec.dirty) { it.stale = true; more.push(it); } }
+          else if (!rec) more.push(it);
           else { const li = local.find(x => x.uid === it.uid); if (li) { li.driveId = f.id; li.fname = f.name || ''; if (!rec.dirty && f.modifiedTime && rec.modified && f.modifiedTime > rec.modified) li.stale = true; if (!li.thumb) li.thumb = it.thumb; } }
         }
+        /* copie locale d'un document déplacé ailleurs (PC ou autre appareil) : plus affichée ici */
+        if ((res.files || []).length < 300) local = local.filter(li => li.dirty || !li.driveId || seen.has(li.driveId));
       } catch (e) { desk.err = 'Lecture du Drive impossible : ' + e.message; }
       try { await markTranscripts(local.concat(more)); } catch (e) {}
     }
@@ -5286,6 +5298,40 @@ function askDeleteDoc(it){
       renderDesk(); note('Document supprimé');
     } catch (e) { note('Suppression impossible : ' + e.message, 4000); }
   });
+}
+/* ---------- Déplacer un document vers un autre chantier (24.11.2026) ----------
+   Le même fichier Drive est déplacé (id et appProperties gardés), l'en-tête est redessiné avec le nouveau chantier,
+   l'ancien texte tapé (PDF) va à la corbeille : la tâche Transcription le refait avec le nouvel en-tête (uploadDoc). */
+function askMoveDoc(it){
+  const cur = it.siteId || 'none';
+  const opts = S.sites.filter(s => s.id !== cur).map(s => `<option value="${esc(s.id)}">${esc(siteLabel(s))}</option>`).join('') + (cur !== 'none' ? '<option value="none">À classer</option>' : '');
+  if (!opts) { note('Aucun autre chantier.', 3000); return; }
+  confirmBox('Déplacer vers un autre chantier', `« ${esc(it.title)} » du ${fmtISO(it.date)}<label class="field" style="margin-top:12px;text-align:left"><span>Nouveau chantier</span><select id="dvMoveSel">${opts}</select></label>`
+    + `<small>L’en-tête prend le n° et le nom du nouveau chantier. Écriture, photos et pages sont gardées.${it.tx ? ' Le texte tapé (PDF) va à la corbeille et sera refait par la tâche Transcription (lu–ve 17:53) ; en attendant, le document s’affiche en manuscrit.' : ''}</small>`,
+    'Déplacer', () => moveDoc(it, $('#dvMoveSel').value), true);
+}
+async function moveDoc(it, sid){
+  try {
+    const rec = docCur && docCur.it === it && docCur.rec ? docCur.rec : await getDocRec(it);
+    if (!rec) throw new Error('document introuvable sur cet appareil');
+    rec.doc = {...rec.doc, siteId:sid, modified:new Date().toISOString()};
+    rec.dirty = true; rec.saved = Date.now(); rec.thumb = await docThumb(rec.doc);
+    await DOCSTORE.put(rec);
+    const draft = await DOCSTORE.get('__draft');
+    if (draft && draft.doc && draft.doc.uid === rec.uid) { draft.doc.siteId = sid; await DOCSTORE.put(draft); }
+    if (!rec.demo || tokenValid()) await enqueueDoc(rec);
+    closeDocView();
+    desk.items = desk.items.filter(d => d.key !== it.key); renderDesk();
+    const s = sid === 'none' ? null : siteById(sid);
+    note(`Déplacé → ${siteFolder(s)} / Documents / ${DOCS[rec.doc.kind].folder}`, 3600);
+    await refreshQueue(); processQueue();
+  } catch (e) { note('Déplacement impossible : ' + e.message, 4500); }
+}
+async function trashTranscripts(name, parents){
+  if (!name || !parents || !parents.length) return;
+  const q = `trashed=false and mimeType='application/pdf' and name='${qEsc(txName(name))}' and (${parents.map(p => `'${qEsc(p)}' in parents`).join(' or ')})`;
+  const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams({q, pageSize:'10', fields:'files(id)'}));
+  for (const f of r.files || []) await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(f.id)}?fields=id`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})});
 }
 
 /* ---------- Éditeur manuscrit ---------- */
@@ -5809,6 +5855,7 @@ function bindDocs(){
   $('#dvText').addEventListener('click', shareTranscript);
   $('#dvMode').addEventListener('click', e => { const b = e.target.closest('[data-dv]'); if (b) showDvMode(b.dataset.dv); });
   $('#dvDelete').addEventListener('click', () => docCur && askDeleteDoc(docCur.it));
+  $('#dvMove').addEventListener('click', () => docCur && askMoveDoc(docCur.it));
   /* éditeur */
   $('#deClose').addEventListener('click', closeEditor);
   bindEdGestures();

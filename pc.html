@@ -1761,12 +1761,60 @@ filesEl.addEventListener('contextmenu', e => {
     if (/\.docx$/i.test(one.name)) en.push({label:'Lire la soumission Word (tableau des positions)', icon:IC.file, fn:() => pcSoumWord(one)});
     if (BGSoum.TASKABLE.test(one.name)) en.push({label:'Demander la lecture par Claude (vendredi 18:30)', icon:IC.file, fn:() => pcSoumRequest(one)});
   }
+  if (one && one._k === 'doc') en.push({label:'Déplacer vers un autre chantier…', icon:IC.folder, fn:() => moveDocPc(one)});
   en.push('-');
   if (one) en.push({label:'Renommer', icon:IC.rename, fn:renameSel, kbd:'F2'});
   if (one) en.push({label:'Ouvrir dans Google Drive', icon:IC.drive, fn:() => window.open(one.webViewLink || `https://drive.google.com/drive/folders/${one.id}`, '_blank', 'noopener')});
   en.push({label:'Mettre à la corbeille', icon:IC.trash, danger:true, fn:trashSel, kbd:'Suppr'});
   showMenu(e.clientX, e.clientY, en);
 });
+/* Document manuscrit → autre chantier (24.11.2026, même logique que la tablette) : même fichier Drive déplacé dans
+   <Chantier>/Documents/<type>, siteId + nom + appProperties + miniature mis à jour (l'en-tête suit le chantier),
+   ancien texte tapé (PDF) à la corbeille → refait par la tâche Transcription. */
+async function moveDocPc(f){
+  const ap = f.appProperties || {}, cur = ap.site || 'none';
+  const opts = S.sites.filter(x => !x.example && x.id !== cur).sort((a, b) => siteLabel(a).localeCompare(siteLabel(b), 'fr', {numeric:true}))
+    .map(x => `<option value="${esc(x.id)}">${esc(siteLabel(x))}</option>`).join('') + (cur !== 'none' ? '<option value="none">À classer</option>' : '');
+  if (!opts) { toast('Aucun autre chantier', 'err'); return; }
+  const r = await dialog({title:'Déplacer vers un autre chantier', width:520, body:`<p>« ${esc(docLabel(f))} »</p><label style="display:grid;gap:6px;margin:10px 0"><span class="muted">Nouveau chantier</span><select id="mvSite">${opts}</select></label>
+    <p class="muted">L’en-tête prend le n° et le nom du nouveau chantier. Écriture, photos et pages sont gardées.${f._tx ? ' Le texte tapé (PDF) va à la corbeille et sera refait par la tâche Transcription (lu–ve 17:53).' : ''}</p>`,
+    buttons:[{label:'Annuler', value:null}, {label:'Déplacer', primary:true}]});
+  if (!r) return;
+  const sid = r.querySelector('#mvSite').value, s = sid === 'none' ? null : siteById(sid);
+  try {
+    toast('Déplacement…');
+    const old = await api(`${DRV}/${encodeURIComponent(f.id)}?fields=id,name,parents`);
+    const doc = await (await api(`${DRV}/${encodeURIComponent(f.id)}?alt=media`, {}, true)).json();
+    if (!doc || !doc.pages) throw new Error('fichier illisible');
+    const kind = DOCS[doc.kind] ? doc.kind : DOCS[ap.dtype] ? ap.dtype : 'libre';
+    doc.uid = doc.uid || ap.uid || newUid(); doc.siteId = sid; doc.modified = new Date().toISOString();
+    let dir = await ensureChild(P.rootId, s ? siteFolderName(s) : 'À classer');
+    dir = await ensureChild(dir, 'Documents'); dir = await ensureChild(dir, DOCS[kind].folder);
+    const name = `${doc.date}_${DOCS[kind].file}_${slug(s ? s.name : 'A-classer')}_${doc.uid.slice(-4)}.json`;
+    const md = {name, mimeType:'application/json',
+      description:[`Chantier : ${siteLabel(s)}`, `Document : ${DOCS[kind].name}`, `Titre : ${doc.title}`, `Date : ${fmtISO(doc.date)}`, `Pages : ${doc.pages.length}`, 'Document modifiable dans l’app (tablette ou téléphone). Partage en PDF depuis l’app.'].join('\n'),
+      appProperties:{...ap, pc:'1', kind:'doc', uid:doc.uid, dtype:kind, site:sid}};
+    try {
+      const imgs = []; for (const pg of doc.pages.slice(0, 1)) for (const im of pg.i || []) { const el = imgEl(im); if (!el.complete) imgs.push(new Promise(ok => { el.addEventListener('load', ok, {once:true}); el.addEventListener('error', ok, {once:true}); })); }
+      await Promise.all(imgs);
+      const c = document.createElement('canvas'), k = 300 / PW; c.width = 300; c.height = Math.round(PH * k);
+      drawPageOf(c.getContext('2d'), k, doc, 0);
+      md.contentHints = {thumbnail:{image:c.toDataURL('image/jpeg', .8).split(',')[1].replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''), mimeType:'image/jpeg'}};
+    } catch (e) {}
+    const from = old.parents || [], moved = !from.includes(dir);
+    const b = 'bgpc' + Math.random().toString(36).slice(2);
+    const body = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`, JSON.stringify(md), `\r\n--${b}\r\nContent-Type: application/json\r\n\r\n`, JSON.stringify(doc), `\r\n--${b}--`]);
+    await api(`${UPL}/${encodeURIComponent(f.id)}?uploadType=multipart&fields=id` + (moved ? '&addParents=' + encodeURIComponent(dir) + (from.length ? '&removeParents=' + encodeURIComponent(from.join(',')) : '') : ''),
+      {method:'PATCH', headers:{'Content-Type':'multipart/related; boundary=' + b}, body});
+    let tx = 0;
+    if (from.length) {
+      const q = `trashed=false and mimeType='application/pdf' and name='${qEsc(old.name.replace(/\.json$/i, '') + '.pdf')}' and (${from.map(x => `'${qEsc(x)}' in parents`).join(' or ')})`;
+      try { for (const t of (await api(DRV + '?' + new URLSearchParams({q, pageSize:'10', fields:'files(id)'}))).files || []) { await api(`${DRV}/${encodeURIComponent(t.id)}?fields=id`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({trashed:true})}); tx++; } } catch (e) {}
+    }
+    toast(`Déplacé → ${s ? siteFolderName(s) : 'À classer'} / Documents / ${DOCS[kind].folder}${tx ? ' · texte tapé refait ce soir par la tâche Transcription' : ''}`, 'ok', 6000);
+    navigate(E.cur, true);
+  } catch (e) { toast('Déplacement impossible : ' + e.message, 'err', 6000); }
+}
 /* Soumission (dossier « <Chantier>/Soumission ») : Word BauBit lu ici → « <nom> – positions.json » ; PDF / .doc / Excel → demande de lecture
    « <nom> – demande de lecture.json » traitée par la tâche « Soumission BauGest » (vendredi 18:30). Module partagé soumission.js. */
 function pcSoumDir(f){ const par = (f.parents && f.parents[0]) || E.cur, n = FN.get(par); return n && n.name === 'Soumission' && FN.get(n.parent) && siteByFolder(FN.get(n.parent).name) ? {dir:par, site:siteByFolder(FN.get(n.parent).name)} : null; }
