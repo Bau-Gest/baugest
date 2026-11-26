@@ -1185,10 +1185,12 @@ const DOCS = {
       purpose:'Séance entre les entreprises du consortium, avec croquis'},
   releve:{name:'Croquis de relevé', title:'Croquis de relevé', folder:'Croquis de relevé', file:'Croquis-releve', bg:'grid', form:false, sign:false, notx:true,
       purpose:'Relevé à main levée, photos cotées (jamais transcrit)'},
+  metre:{name:'Notes de métrés', title:'Notes de métrés', folder:'Notes de métrés', file:'Notes-metres', bg:'lined', form:false, sign:false, notx:true,
+      purpose:'Métrés et calculs pris sur place (jamais transcrit)'},
   libre:{name:'Note libre', title:'Note', folder:'Notes', file:'Note', bg:'lined', form:false, sign:false, notx:true,
       purpose:'Page libre avec l’en-tête'}
 };
-const DOC_ORDER = ['pv', 'journal', 'regie', 'constat', 'releve', 'libre'];
+const DOC_ORDER = ['pv', 'journal', 'regie', 'constat', 'releve', 'metre', 'libre'];
 const DOCLAY_DEF = {logo:true, pos:'left', date:'short', bg:'auto', site:true, form:true, sign:true};
 const PW = 1000, PH = 1414;
 const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
@@ -1349,7 +1351,7 @@ function kindOf(f){
   if (/^image\/(jpeg|png|webp|gif|bmp)$/.test(m) || /^(jpe?g|png|webp|gif|bmp)$/.test(x)) return 'img';
   if (/^image\//.test(m) || /^(heic|heif|tiff?)$/.test(x)) return 'img2';
   if (f.appProperties && (f.appProperties.kind === 'planning' || f.appProperties.kind === 'planningxml')) return 'plan';
-  if ((f.appProperties && f.appProperties.kind === 'doc') || (m === 'application/json' && /_(PV|Rapport-journalier|Bon-de-regie|Constat|Seance-consortium|Croquis-releve|Note)_/.test(n))) return 'doc';
+  if ((f.appProperties && f.appProperties.kind === 'doc') || (m === 'application/json' && /_(PV|Rapport-journalier|Bon-de-regie|Constat|Seance-consortium|Croquis-releve|Notes-metres|Note)_/.test(n))) return 'doc';
   if (m.startsWith('application/vnd.google-apps.') && /document|spreadsheet|presentation|drawing/.test(m)) return 'office';
   if (OFFICE[x] && x !== 'txt' && x !== 'csv') return 'office';
   if (/^text\//.test(m) || /^(txt|csv|md|log|xml|json)$/.test(x)) return 'text';

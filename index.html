@@ -2350,7 +2350,7 @@ body.tabshell #desk .panel-head:has(#dkHead > [data-ca="list"]) .dk-headslot{ord
           <div class="copy"><input type="text" id="rootShow" readonly placeholder="Aucun dossier choisi"><button id="rootPick" class="btn">Choisir</button></div>
         </div>
         <div class="field"><span>Dossiers de chaque chantier</span>
-          <p class="hint" style="margin:0">Créés automatiquement avec chaque nouveau chantier :<br><code>N° Nom / Photos</code><br><code>N° Nom / Documents / PV de séance · Rapports journaliers · Bons de régie · Séances consortium · Notes</code><br><code>N° Nom / Plans</code> (tes propres sous-dossiers)</p>
+          <p class="hint" style="margin:0">Créés automatiquement avec chaque nouveau chantier :<br><code>N° Nom / Photos</code><br><code>N° Nom / Documents / PV de séance · Rapports journaliers · Bons de régie · Séances consortium · Croquis de relevé · Notes de métrés · Notes</code><br><code>N° Nom / Plans</code> (tes propres sous-dossiers)</p>
           <div class="opts" id="structOpts" hidden></div>
         </div>
       </section>
@@ -4599,10 +4599,12 @@ const DOCS = {
       purpose:'Séance entre les entreprises du consortium, avec croquis'},
   releve:{name:'Croquis de relevé', title:'Croquis de relevé', folder:'Croquis de relevé', file:'Croquis-releve', bg:'grid', form:false, sign:false, notx:true,
       purpose:'Relevé à main levée, photos cotées (jamais transcrit)'},
+  metre:{name:'Notes de métrés', title:'Notes de métrés', folder:'Notes de métrés', file:'Notes-metres', bg:'lined', form:false, sign:false, notx:true,
+      purpose:'Métrés et calculs pris sur place (jamais transcrit)'},
   libre:{name:'Note libre', title:'Note', folder:'Notes', file:'Note', bg:'lined', form:false, sign:false, notx:true,
       purpose:'Page libre avec l’en-tête'}
 };
-const DOC_ORDER = ['pv', 'journal', 'regie', 'constat', 'releve', 'libre'];
+const DOC_ORDER = ['pv', 'journal', 'regie', 'constat', 'releve', 'metre', 'libre'];
 const DOCLAY_DEF = {logo:true, pos:'left', date:'short', bg:'auto', site:true, form:true, sign:true};
 const PW = 1000, PH = 1414;
 const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
