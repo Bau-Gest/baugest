@@ -27,7 +27,7 @@ DOCS = {
     "pv": {"title": "PV de séance de chantier", "bg": "lined", "form": True, "sign": False},
     "journal": {"title": "Rapport journalier", "bg": "lined", "form": True, "sign": True},
     "regie": {"title": "Bon de régie", "bg": "plain", "form": True, "sign": True},
-    "constat": {"title": "Constat / défaut", "bg": "plain", "form": True, "sign": True},
+    "constat": {"title": "Séance consortium", "bg": "plain", "form": True, "sign": True},
     "libre": {"title": "Note", "bg": "lined", "form": False, "sign": False},
 }
 # Cases de signature des modèles BauGest (x1, y1, x2, y2) : leur contenu n'est pas transcrit,

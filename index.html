@@ -2350,7 +2350,7 @@ body.tabshell #desk .panel-head:has(#dkHead > [data-ca="list"]) .dk-headslot{ord
           <div class="copy"><input type="text" id="rootShow" readonly placeholder="Aucun dossier choisi"><button id="rootPick" class="btn">Choisir</button></div>
         </div>
         <div class="field"><span>Dossiers de chaque chantier</span>
-          <p class="hint" style="margin:0">Créés automatiquement avec chaque nouveau chantier :<br><code>N° Nom / Photos</code><br><code>N° Nom / Documents / PV de séance · Rapports journaliers · Bons de régie · Constats · Notes</code><br><code>N° Nom / Plans</code> (tes propres sous-dossiers)</p>
+          <p class="hint" style="margin:0">Créés automatiquement avec chaque nouveau chantier :<br><code>N° Nom / Photos</code><br><code>N° Nom / Documents / PV de séance · Rapports journaliers · Bons de régie · Séances consortium · Notes</code><br><code>N° Nom / Plans</code> (tes propres sous-dossiers)</p>
           <div class="opts" id="structOpts" hidden></div>
         </div>
       </section>
@@ -2483,7 +2483,7 @@ body.tabshell #desk .panel-head:has(#dkHead > [data-ca="list"]) .dk-headslot{ord
         <h3>Documents de chantier</h3>
         <ol>
           <li>Sur la tablette, l'app s'ouvre sur les <b>documents</b> du chantier. Sur le téléphone : bouton <b>document</b> en haut de la caméra.</li>
-          <li><b>Nouveau document</b> : PV de séance, rapport journalier, bon de régie, constat ou note libre. Écris au stylet ; la date est toujours en haut.</li>
+          <li><b>Nouveau document</b> : PV de séance, rapport journalier, bon de régie, séance consortium ou note libre. Écris au stylet ; la date est toujours en haut.</li>
           <li>Dès que le stylet touche la page, seul le stylet écrit : le doigt fait défiler et la paume est ignorée.</li>
           <li>Bouton <b>Photo</b> : insère une photo (appareil photo, galerie ou photos du chantier). Outil <b>Déplacer</b> : bouge la photo, coin jaune pour la taille.</li>
           <li><b>Enregistrer</b> range le document sur le Drive dans <span class="mono">Chantier / Documents / type</span>. Il reste <b>modifiable</b> sur la tablette et le téléphone. Sans réseau, il attend dans la file d'envoi.</li>
@@ -2731,7 +2731,7 @@ async function syncSettings(force){
     SYNC.busy = false; renderSyncStatus();
     if (SYNC.again) { SYNC.again = false; scheduleSync(500); }
   }
-  runMigrations();
+  runMigrations(); migConsortium();
 }
 function refreshAfterSync(){
   renderSiteChip();
@@ -2769,6 +2769,40 @@ function applyTheme(){
 }
 applyTheme();
 LIGHT_MQ?.addEventListener?.('change', () => { if (S.theme === 'auto') applyTheme(); });
+/* ---------- Constat → Séance consortium (26.11.2026) ----------
+   Le type « constat » (clé gardée) s'appelle désormais Séance consortium. Une fois par appareil : chaque ancien constat
+   (Drive + appareil) reprend le nouveau titre s'il avait l'ancien, puis repasse par la file d'envoi → uploadDoc déplace
+   le même fichier dans « Séances consortium », le renomme et met l'ancien texte tapé à la corbeille (refait par la Transcription). */
+const OLD_CONSTAT = 'Constat / défaut';
+async function migConsortium(){
+  try { if (localStorage.getItem('baugest.migCons')) return; } catch (e) { return; }
+  if (MIG.cons || !driveReady() || !navigator.onLine) return;
+  MIG.cons = true;
+  try {
+    const recs = new Map();
+    for (const r of await DOCSTORE.all()) if (r.doc && r.uid !== '__draft' && !r.demo && r.doc.kind === 'constat') recs.set(r.uid, r);
+    let token = null;
+    do {
+      const q = `trashed=false and appProperties has { key='kind' and value='doc' } and appProperties has { key='dtype' and value='constat' }`;
+      const p = {q, pageSize:'100', fields:'nextPageToken,files(id,name,appProperties,createdTime,modifiedTime)'}; if (token) p.pageToken = token;
+      const r = await api('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams(p));
+      for (const f of r.files || []) {
+        const it = driveDocItem(f);
+        if (it.uid && recs.has(it.uid)) continue;
+        const rec = await getDocRec({...it, stale:true});
+        if (rec) { rec.driveId = f.id; recs.set(rec.uid, rec); }
+      }
+      token = r.nextPageToken || null;
+    } while (token);
+    for (const r of recs.values()) {
+      if (r.doc.title === OLD_CONSTAT) r.doc.title = docTitle('constat');
+      r.dirty = true; r.saved = Date.now(); r.thumb = await docThumb(r.doc);
+      await DOCSTORE.put(r); await enqueueDoc(r);
+    }
+    try { localStorage.setItem('baugest.migCons', '1'); } catch (e) {}
+    if (recs.size) { note(`${recs.size} constat(s) converti(s) en séance consortium`, 4000); await refreshQueue(); processQueue(); }
+  } catch (e) {} finally { MIG.cons = false; }
+}
 async function runMigrations(){
   const m = S.migrate || {}, olds = Object.keys(m);
   if (!olds.length || MIG.busy) return;
@@ -4561,8 +4595,8 @@ const DOCS = {
       purpose:'Météo, effectifs, machines, travaux, livraisons'},
   regie:{name:'Bon de régie', title:'Bon de régie', folder:'Bons de régie', file:'Bon-de-regie', bg:'plain', form:true, sign:true,
       purpose:'Heures, machines et matériaux hors soumission'},
-  constat:{name:'Constat', title:'Constat / défaut', folder:'Constats', file:'Constat', bg:'plain', form:true, sign:true,
-      purpose:'Défaut, dégât ou réserve, avec croquis'},
+  constat:{name:'Séance consortium', title:'Séance consortium', folder:'Séances consortium', file:'Seance-consortium', bg:'plain', form:true, sign:true,
+      purpose:'Séance entre les entreprises du consortium, avec croquis'},
   releve:{name:'Croquis de relevé', title:'Croquis de relevé', folder:'Croquis de relevé', file:'Croquis-releve', bg:'grid', form:false, sign:false, notx:true,
       purpose:'Relevé à main levée, photos cotées (jamais transcrit)'},
   libre:{name:'Note libre', title:'Note', folder:'Notes', file:'Note', bg:'lined', form:false, sign:false, notx:true,
@@ -5784,7 +5818,7 @@ function docLayHTML(p){
     <label class="field"><span>Fond de page</span><select id="${p}Bg"><option value="auto">Selon le document</option><option value="lined">Ligné</option><option value="grid">Quadrillé</option><option value="plain">Blanc</option></select></label>
     <div class="row"><div class="lbl"><b>N° et nom du chantier</b><small>Sous le titre</small></div><label class="switch"><input type="checkbox" id="${p}Site"><span></span></label></div>
     <div class="row"><div class="lbl"><b>Rubriques préimprimées</b><small>Cases et tableaux de chaque modèle</small></div><label class="switch"><input type="checkbox" id="${p}Form"><span></span></label></div>
-    <div class="row"><div class="lbl"><b>Zone de signatures</b><small>Rapport journalier, bon de régie, constat</small></div><label class="switch"><input type="checkbox" id="${p}Sign"><span></span></label></div>`;
+    <div class="row"><div class="lbl"><b>Zone de signatures</b><small>Rapport journalier, bon de régie, séance consortium</small></div><label class="switch"><input type="checkbox" id="${p}Sign"><span></span></label></div>`;
 }
 function writeLay(p, L){
   $('#' + p + 'Logo').checked = !!L.logo; $$(`input[name=${p}Pos]`).forEach(r => r.checked = r.value === L.pos);

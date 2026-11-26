@@ -1181,8 +1181,8 @@ const DOCS = {
       purpose:'Météo, effectifs, machines, travaux, livraisons'},
   regie:{name:'Bon de régie', title:'Bon de régie', folder:'Bons de régie', file:'Bon-de-regie', bg:'plain', form:true, sign:true,
       purpose:'Heures, machines et matériaux hors soumission'},
-  constat:{name:'Constat', title:'Constat / défaut', folder:'Constats', file:'Constat', bg:'plain', form:true, sign:true,
-      purpose:'Défaut, dégât ou réserve, avec croquis'},
+  constat:{name:'Séance consortium', title:'Séance consortium', folder:'Séances consortium', file:'Seance-consortium', bg:'plain', form:true, sign:true,
+      purpose:'Séance entre les entreprises du consortium, avec croquis'},
   releve:{name:'Croquis de relevé', title:'Croquis de relevé', folder:'Croquis de relevé', file:'Croquis-releve', bg:'grid', form:false, sign:false, notx:true,
       purpose:'Relevé à main levée, photos cotées (jamais transcrit)'},
   libre:{name:'Note libre', title:'Note', folder:'Notes', file:'Note', bg:'lined', form:false, sign:false, notx:true,
@@ -1349,7 +1349,7 @@ function kindOf(f){
   if (/^image\/(jpeg|png|webp|gif|bmp)$/.test(m) || /^(jpe?g|png|webp|gif|bmp)$/.test(x)) return 'img';
   if (/^image\//.test(m) || /^(heic|heif|tiff?)$/.test(x)) return 'img2';
   if (f.appProperties && (f.appProperties.kind === 'planning' || f.appProperties.kind === 'planningxml')) return 'plan';
-  if ((f.appProperties && f.appProperties.kind === 'doc') || (m === 'application/json' && /_(PV|Rapport-journalier|Bon-de-regie|Constat|Note)_/.test(n))) return 'doc';
+  if ((f.appProperties && f.appProperties.kind === 'doc') || (m === 'application/json' && /_(PV|Rapport-journalier|Bon-de-regie|Constat|Seance-consortium|Croquis-releve|Note)_/.test(n))) return 'doc';
   if (m.startsWith('application/vnd.google-apps.') && /document|spreadsheet|presentation|drawing/.test(m)) return 'office';
   if (OFFICE[x] && x !== 'txt' && x !== 'csv') return 'office';
   if (/^text\//.test(m) || /^(txt|csv|md|log|xml|json)$/.test(x)) return 'text';

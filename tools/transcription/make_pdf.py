@@ -4,7 +4,7 @@ Usage : python3 make_pdf.py transcription.json sortie.pdf
 
 transcription.json :
 {
-  "kind": "pv" | "journal" | "regie" | "constat" | "libre",
+  "kind": "pv" | "journal" | "regie" | "constat" (séance consortium) | "libre",
   "title": "PV de séance de chantier",
   "date": "2026-10-02",               (AAAA-MM-JJ)
   "site": "102602 GACO",              (ligne sous le titre, "" si aucune)

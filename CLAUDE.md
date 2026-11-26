@@ -71,7 +71,7 @@ Copies dans le projet Claude « Bau-Gest » : `claude/baugest/*` (peuvent être 
 ├── <N° Nom du chantier>/
 │   ├── Photos/                 (un seul dossier ; nom AAAA-MM-JJ_HHhMM_<chantier>_<étiquettes>.jpg)
 │   ├── Documents/
-│   │   ├── PV de séance/ · Rapports journaliers/ · Bons de régie/ · Constats/ · Croquis de relevé/ · Notes/
+│   │   ├── PV de séance/ · Rapports journaliers/ · Bons de régie/ · Séances consortium/ (ancien « Constats ») · Croquis de relevé/ · Notes/
 │   │   │     (AAAA-MM-JJ_<Type>_<chantier>_<xxxx>.json + .pdf transcrit du même nom)
 │   ├── Plans/
 │   │   ├── <sous-dossiers libres créés par Joel>
@@ -111,6 +111,7 @@ Dossiers créés automatiquement à la création d'un chantier (`siteFolderPaths
 `meet` = séances `{from:'AAAA-MM-JJ' (1re séance → jour de semaine), time:'HH:MM', every:1–4 semaines, dur:min, place?}` ; `comp` = id de notre entreprise (`S.companies`) ; `abbr` = abréviations DT séparées par virgules (aussi ajoutées à `pdKeys`).
 
 **Document manuscrit** (`DOCS`, `DOC_ORDER = pv, journal, regie, constat, releve, libre`) : page logique 1000 × 1414 unités (`PW`, `PH`), traits stylet en JSON. Cases signature : journal, regie, constat (`sign:true`).
+**Séance consortium (26.11.2026)** : le type `constat` (clé gardée pour les données, la transcription et `make_pdf.py`) s'appelle « Séance consortium » (titre « Séance consortium », dossier « Séances consortium », fichier `…_Seance-consortium_…`) ; formulaire inchangé (localisation, constaté par, description, croquis, mesure, signatures), choix de Joel. Conversion unique par appareil (`migConsortium`, clé `baugest.migCons`, tablette + téléphone, après la synchro) : chaque ancien constat (Drive `dtype='constat'` + appareil) prend le nouveau titre s'il avait « Constat / défaut », puis repasse par la file d'envoi → `uploadDoc` déplace et renomme le même fichier, ancien texte tapé à la corbeille (refait par la Transcription). Les dossiers « Constats » vides restent sur le Drive.
 **Éditeur manuscrit (13.10.2026)** : outil par défaut à chaque ouverture = stylo fin noir (`ED_SIZE` 1.7). Zoom 2 doigts interne aux pages (`ed.zoom` 1–3, barres non zoomées ; zoom navigateur bloqué par `touch-action`). Défilement au doigt manuel avec élan (`bindEdGestures`). Tablette (`ed.drawer`, classe `de-drawer`) : le doigt n'écrit jamais ; outils cachés, sortis en glissant le doigt depuis le bord gauche (ou geste « retour » Android, qui sort/rentre les outils au lieu de fermer l'éditeur → fermer avec ✕) ; refermés au contact du stylet ou d'un tap ; double tape au doigt = stylo ⇄ gomme. Téléphone : le doigt écrit toujours (pas de stylet).
 **Visionneuse PV DT (13.10.2026)** : même présentation que l'éditeur (barre `de-top`, ligne d'état, tiroir d'outils `de-tools` à gauche : Marqueur, Stylo + 4 couleurs, Gomme, Annuler, Zoom −/+). Mêmes règles : seul le stylet écrit, outils sortis du bord gauche (ou « retour » Android), double tape = outil ⇄ gomme, défilement avec élan. Outil par défaut = marqueur jaune (`hl`), plus de mode « Lire ». Un PV s'ouvre en haut de la 1re page.
 
